@@ -48,28 +48,36 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   | num val => throwError "toStatements: unexpected expression num {e}"
   | str s => throwError "toStatements: unexpected expression str {e}"
   | app f args => throwError "toStatements: unexpected expression app {e}"
+  | letb binder rhs (pure (name _)) => return [.assignment binder rhs]
+  | pure .. => throwError "invariant violation: pure should appear in simple bind"
   | letb v (.prob_while (.lam state cond) rcomp init) body =>
     let s_tmp : Expression := (.prob_while (.lam state cond) rcomp init)
     let s1 : List Statement ← s_tmp.toStatements
-    let s2 : Statement := .assignment v (.name state)
+    let s2 : Statement := .vardecl v (.name state)
     let s3 : List Statement ← body.toStatements
     return s1 ++ [s2] ++ s3
-  | letb v rhs body => return ((.assignment v rhs) :: (← body.toStatements))
+  | letb v rhs body => return ((.vardecl v rhs) :: (← body.toStatements))
   | ite cond (.throw msg) right =>
     let s1 : Statement := .expect cond msg
     return s1 :: (← right.toStatements)
   | ite cond left right => return [.conditional cond (← left.toStatements) (← right.toStatements)]
   | bind v body => throwError "toStatements: to do {e}"
   | lam v body => throwError "toStatements: unexpected expression lam {e}"
-  | pure e => return [.assignment "o" e]
   | throw e => throwError "WF: throw must appear immediately as the left side of a conditional"
   | prob_until .. => throwError "invariant violation: prob_until should have been compiled away"
+  -- Brittle: it turns out that it is important to know if we're dealing
+  -- with a while or an until to determine if we need to pass the state
   | prob_while (.lam state cond) (.monadic callee args) init =>
-    let s1 : Statement := .assignment state init
-    let s3 : Statement := .loop cond ([.assignment state (.monadic callee args)])
-    return [s1] ++ [s3]
+    let s1 : Statement := .vardecl state init
+    let st : State := extension.getState (← getEnv)
+    if let some defn := st.glob.find? callee
+      then let args := if List.length args = List.length defn.inParam then args else args ++ [.name state]
+           let s3 : Statement := .loop cond ([.assignment state (.monadic callee args)])
+           return [s1] ++ [s3]
+    else let s3 : Statement := .loop cond ([.assignment state (.monadic callee args)])
+         return [s1] ++ [s3]
   | prob_while (.lam state cond) body init =>
-    let s1 : Statement := .assignment state init
+    let s1 : Statement := .vardecl state init
     let s2 : List Statement ← body.toStatements
     -- condition needs to be substituted
     let s3 : Statement := .loop cond s2

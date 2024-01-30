@@ -4,6 +4,7 @@ import Mirror.IR
 namespace Lean.ToDafny
 
 inductive Statement where
+  | vardecl (lhs : String) (rhs : Expression)
   | assignment (lhs : String) (rhs : Expression)
   | loop (cond : Expression) (body: List Statement)
   | conditional (cond : Expression) (ifso ifnot : List Statement)
@@ -28,8 +29,10 @@ mutual
 
 def Statement.print (s : Statement) (depth: Nat) : String :=
   match s with
-  | .assignment lhs rhs =>
+  | .vardecl lhs rhs =>
     indent depth ++ s!"var {lhs} := {rhs};\n"
+  | .assignment lhs rhs =>
+    indent depth ++ s!"{lhs} := {rhs};\n"
   | .loop cond body =>
     indent depth ++ s!"while {cond}\n" ++
     (indent (depth + 1)) ++ s!"decreases *\n" ++
@@ -54,10 +57,11 @@ def sjoin (s : List Statement) (depth: Nat) : String :=
 end
 
 def Method.print (m : Method) : String :=
-  s!"method {m.name} ({printArgs m.inParam m.inParamType})\n" ++
-  (indent 1) ++ s!"returns (o: {m.outParamType.print})\n" ++
-  (indent 1) ++ s!"modifies this\n" ++
-  (indent 1) ++ s!"decreases *\n" ++
-  s!"\{\n{sjoin m.body 1}}\n "
+  (indent 2) ++ s!"method {m.name} ({printArgs m.inParam m.inParamType})\n" ++
+  (indent 3) ++ s!"returns (o: {m.outParamType.print})\n" ++
+  (indent 3) ++ s!"modifies this\n" ++
+  (indent 3) ++ s!"decreases *\n" ++
+  (indent 2) ++ s!"\{\n{sjoin m.body 3}" ++
+  (indent 2) ++"}\n\n"
 
 end Lean.ToDafny

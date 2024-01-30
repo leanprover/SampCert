@@ -11,14 +11,13 @@ def writeLn (ln : String) : IO Unit := do
   let h ← Handle.mk destination Mode.append
   h.putStr "\n"
   h.putStr ln
-  h.putStr "\n\n"
+  h.putStr "\n"
 
 elab "#print_dafny_exports" : command => do
   writeFile destination ""
   writeLn "module NewVMC {"
-  writeLn "  import opened Rationals"
   writeLn "  import opened UniformPowerOfTwo"
-  writeLn "  class DRandomFoundational extends  UniformPowerOfTwo.Implementation.TraitExtern {"
+  writeLn "  class DRandomFoundational extends  UniformPowerOfTwo.Implementation.TraitExtern {\n"
   let { decls, .. } := extension.getState (← getEnv)
   for decl in decls.reverse do
     IO.println decl

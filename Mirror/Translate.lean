@@ -74,6 +74,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
   | .const ``true .. => return .tr
   | .const ``false .. => return .fa
   | .const ``Coin .. => return .name "Coin"
+  | .const ``PUnit.unit .. => throwError "WF: all conditions are if then else, including the ones to throw errors"
   | .const .. => throwError "toDafnyExpr: not supported -- constant {e}"
   | .app .. => (e.withApp fun fn args => do
       if let .const name .. := fn then
@@ -113,7 +114,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``Prod.snd => return .proj (← toDafnyExpr dname env args[2]!) 2
       | ``Prod.mk => return .pair (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``Neg.neg => return .unop .minus (← toDafnyExpr dname env args[2]!)
-      | ``abs => return .app "abs" [(← toDafnyExpr dname env args[2]!)]
+      | ``abs => return .unop .abs (← toDafnyExpr dname env args[2]!)
       | ``OfScientific.ofScientific => toDafnyExpr dname env args[4]!
       | _ =>
         if IsWFMonadic info.type

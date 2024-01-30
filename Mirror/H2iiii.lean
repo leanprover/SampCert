@@ -139,32 +139,36 @@ noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
     return (B ∧ R)
 
 noncomputable def BernoulliExpNegSample (num den : Int) : RandomM Bool := do
+  if num < 0 then throwThe String "BernoulliExpNegSample: num < 0" else
+  if den ≤ 0 then throwThe String "BernoulliExpNegSample: den ≤ 0" else
   if num ≤ den
   then let X ← BernoulliExpNegSampleUnit num den
        return X
   else
-    let B ← BernoulliExpNegSampleGenLoop (floor (num / den))
+    let gamf := floor (num / den)
+    let B ← BernoulliExpNegSampleGenLoop (gamf)
     if B
-    then let gamma : Rat := num / den
-         let arg := gamma - floor gamma
-         let X ← BernoulliExpNegSampleUnit arg.num arg.den
+    then
+         let num := num - gamf * den
+         let X ← BernoulliExpNegSampleUnit num den
          return X
     else return false
 
-noncomputable def laplace_loop1 (t : Int) : RandomM (Int × Bool) := do
+noncomputable def DiscreteLaplaceSampleLoopIn1 (t : Int) : RandomM (Int × Bool) := do
   let U ← UniformSample t
   let D ← BernoulliExpNegSample U t
   return (U,D)
 
-noncomputable def laplace_loop2 (K : Bool × Int) : RandomM (Bool × Int) := do
-  let A ← BernoulliExpNegSampleUnit 1 1
+noncomputable def DiscreteLaplaceSampleLoopIn2 (num den : Int) (K : Bool × Int) : RandomM (Bool × Int) := do
+  let A ← BernoulliExpNegSampleUnit num den
   return (A, K.2 + 1)
 
-noncomputable def laplace_body (num den : Int) : RandomM (Bool × Int × Int) := do
-  let r ← prob_until (laplace_loop1 num) (λ x : Int × Bool => x.2)
-  let U := r.1
-  let r ← prob_while (λ K : Bool × Int => K.1) laplace_loop2 (true,1)
-  let V := r.2
+noncomputable def DiscreteLaplaceSampleLoop (num den : Int) : RandomM (Bool × Int × Int) := do
+  if den ≤ 0 then throwThe String "DiscreteLaplaceSampleLoop: den ≤ 0" else
+  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1 num) (λ x : Int × Bool => x.2)
+  let U := r1.1
+  let r2 ← prob_while (λ K : Bool × Int => K.1) (DiscreteLaplaceSampleLoopIn2 1 1) (true,1)
+  let V := r2.2
   let X := U + num * V
   let Y := floor (X / den)
   let B ← BernoulliSample 1 2
@@ -175,19 +179,20 @@ noncomputable def laplace_body (num den : Int) : RandomM (Bool × Int × Int) :=
 noncomputable def DiscreteLaplaceSample (num den : Int) : RandomM Int := do
   if num < 1 then throwThe String "DiscreteLaplaceSample: t < 1" else
   if den < 1 then throwThe String "DiscreteLaplaceSample: s < 1" else
-  let r ← prob_until (laplace_body num den) (λ x : Bool × Int × Int => ¬ x.1 ∨ x.2.1 ≠ 0)
+  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Int × Int => ¬ x.1 ∨ x.2.1 ≠ 0)
   return r.2.2
 
-noncomputable def gaussian_loop (num den : Int) (t : Int) : RandomM (Int × Bool) := do
+noncomputable def DiscreteGaussianSampleLoop (num den : Int) (t : Int) : RandomM (Int × Bool) := do
+  if den ≤ 0 then throwThe String "DiscreteGaussianSample: den ≤ 0" else
   let Y ← DiscreteLaplaceSample t 1
-  let C ← BernoulliExpNegSample ((abs Y - num / den)^2)  (2 * num)
+  let C ← BernoulliExpNegSample ((abs Y - num / (den * t))^2)  (2 * num / den)
   return (Y,C)
 
 noncomputable def DiscreteGaussianSample (num den : Int) : RandomM Int := do
-  --if sigma ≤ 0 then throwThe String "DiscreteGaussianSample: sigma ≤ 0" else
-  -- let t : Nat := floor sigma + 1
-  let t := 1
-  let r ← prob_until (gaussian_loop (num^2) (den^2) t) (λ x : Int × Bool => x.2)
+  if num < 0 then throwThe String "DiscreteGaussianSample: num < 0" else
+  if den ≤ 0 then throwThe String "DiscreteGaussianSample: den ≤ 0" else
+  let t : Nat := floor (num / den) + 1
+  let r ← prob_until (DiscreteGaussianSampleLoop (num^2) (den^2) t) (λ x : Int × Bool => x.2)
   return r.1
 
 -- Trying out reasoning

@@ -15,6 +15,7 @@ inductive UnOp where
   | floor
   | numerator
   | denominator
+  | abs
 
 inductive BinOp where
   | equality
@@ -84,6 +85,7 @@ def UnOp.print (o : UnOp) : String :=
   | floor => "floor"
   | numerator => "numerator"
   | denominator => "denominator"
+  | abs => "abs"
 
 def BinOp.print (o : BinOp) : String :=
   match o with
@@ -113,7 +115,7 @@ partial def Expression.print (e : Expression) : String :=
   | str s => s!"\"{s}\""
   | app f args => s!"{f}({join (args.map (·.print))})"
   | letb v rhs body => s!"let {v} := {rhs.print} in {body.print}"
-  | ite cond left right => s!"if {cond.print} \n then {left.print} \n else {right.print}"
+  | ite cond left right => s!"if {cond.print} then {left.print} else {right.print}"
   | bind v body => s!"bind [{v.print}] ← [{body.print}]"
   | lam v body => s!"fun {v} => {body.print}"
   | pure e => s!"return {e.print}"
@@ -121,9 +123,10 @@ partial def Expression.print (e : Expression) : String :=
   | prob_until body cond => s!"prob_until {body.print} {cond.print}"
   | prob_while cond body init => s!"prob_while ({cond.print}) ({body.print}) ({init.print})"
   | name n => n
-  | unop .floor rhs => s!"{rhs.print}.floor"
-  | unop .numerator rhs => s!"{rhs.print}.floor"
-  | unop .denominator rhs => s!"{rhs.print}.floor"
+  | unop .abs e => s!"(if {e.print} < 0 then -{e.print} else {e.print})"
+  | unop .floor (.binop .division a b) => s!"{a.print} / {b.print}"
+  | unop .numerator rhs => s!"{rhs.print}.numerator"
+  | unop .denominator rhs => s!"{rhs.print}.denominator"
   | unop op rhs => s!"{op.print} {rhs.print}"
   | binop .pow lhs (.num 2) => s!"{lhs.print} * {lhs.print}"
   | binop op lhs rhs => s!"{lhs.print} {op.print} {rhs.print}"
