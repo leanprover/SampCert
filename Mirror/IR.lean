@@ -33,6 +33,7 @@ inductive BinOp where
   | division
   | log
   | pow
+  | mod
 
 inductive Expression where
   | tr
@@ -102,6 +103,7 @@ def BinOp.print (o : BinOp) : String :=
   | division => "/"
   | log => "log"
   | pow => "pow"
+  | mod => "%"
 
 partial def Expression.print (e : Expression) : String :=
   match e with
@@ -110,9 +112,9 @@ partial def Expression.print (e : Expression) : String :=
   | num val => toString val
   | str s => s!"\"{s}\""
   | app f args => s!"{f}({join (args.map (·.print))})"
-  | letb v rhs body => s!"let {v} := {rhs.print} \n {body.print}"
+  | letb v rhs body => s!"let {v} := {rhs.print} in {body.print}"
   | ite cond left right => s!"if {cond.print} \n then {left.print} \n else {right.print}"
-  | bind v body => s!"let {v.print} ← {body.print}"
+  | bind v body => s!"bind [{v.print}] ← [{body.print}]"
   | lam v body => s!"fun {v} => {body.print}"
   | pure e => s!"return {e.print}"
   | throw e => s!"throw {e.print}"
@@ -123,7 +125,7 @@ partial def Expression.print (e : Expression) : String :=
   | unop .numerator rhs => s!"{rhs.print}.floor"
   | unop .denominator rhs => s!"{rhs.print}.floor"
   | unop op rhs => s!"{op.print} {rhs.print}"
-  | binop .multiplication lhs (.num 2) => s!"{lhs.print} * {lhs.print}"
+  | binop .pow lhs (.num 2) => s!"{lhs.print} * {lhs.print}"
   | binop op lhs rhs => s!"{lhs.print} {op.print} {rhs.print}"
   | proj id idx => s!"{id.print}.{idx-1}"
   | pair left right => s!"({left.print},{right.print})"

@@ -5,12 +5,23 @@ import Mirror.Extension
 
 namespace Lean.ToDafny
 
--- The return needs to be transformed
--- pure exp
--- into
--- o := exp ; return
+def compileReturn (e : Expression) : MetaM Expression := do
+  match e with
+  | .pure e => return .letb "o" e (.pure (.name "o"))
+  | _ => return e
 
-def subst (fro to : String) (e : Expression): MetaM Expression := do
+def compileBind (e : Expression) : MetaM Expression := do
+  match e with
+  | .bind rhs (.lam v body) => return .letb v rhs body
+  | .bind .. => throwError "WF violation: second argument of a bind must be a lambda"
+  | e => return e
+
+def compileProbUntil (e : Expression) : MetaM Expression := do
+  match e with
+  | .prob_until body cond => return .prob_while cond body body
+  | e => return e
+
+def subst (fro to : String) (e : Expression) : MetaM Expression := do
   match e with
   | .name n => if n = fro then return .name to else return e
   | .letb n rhs body => if n = fro then return .letb to rhs body else return e
@@ -18,14 +29,14 @@ def subst (fro to : String) (e : Expression): MetaM Expression := do
 
 def inline (e : Expression) : MetaM Expression := do
   match e with
-  | .bind (.prob_while cond (.monadic callee args) init) (.lam binder body) =>
+  | .letb binder (.prob_while (.lam state cond) (.monadic callee args) init) body =>
     let st : State := extension.getState (← getEnv)
     if callee ∈ st.inlines
     then
       if let some defn := st.glob.find? callee
       then
-        let body' ← defn.body.map (subst "o" binder)
-        return .bind (.prob_while cond body' init) (.lam binder body)
+        let body' ← defn.body.map (subst "o" state)
+        return .letb binder (.prob_while (.lam state cond) body' init) body
       else throwError "Definition is in list of inlines but not exported"
     else return e
   | _ => return e
@@ -37,37 +48,26 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   | num val => throwError "toStatements: unexpected expression num {e}"
   | str s => throwError "toStatements: unexpected expression str {e}"
   | app f args => throwError "toStatements: unexpected expression app {e}"
+  | letb v (.prob_while (.lam state cond) rcomp init) body =>
+    let s_tmp : Expression := (.prob_while (.lam state cond) rcomp init)
+    let s1 : List Statement ← s_tmp.toStatements
+    let s2 : Statement := .assignment v (.name state)
+    let s3 : List Statement ← body.toStatements
+    return s1 ++ [s2] ++ s3
   | letb v rhs body => return ((.assignment v rhs) :: (← body.toStatements))
   | ite cond (.throw msg) right =>
     let s1 : Statement := .expect cond msg
     return s1 :: (← right.toStatements)
   | ite cond left right => return [.conditional cond (← left.toStatements) (← right.toStatements)]
-  | bind (.prob_while (.lam binder1 cond) body init) (.lam binderk bodyk) =>
-    let s_tmp : Expression := (.prob_while (.lam binder1 cond) body init)
-    let s1 : List Statement ← s_tmp.toStatements
-    let s2 : Statement := .assignment binderk (.name binder1)
-    let s3 : List Statement ← bodyk.toStatements
-    return s1 ++ [s2] ++ s3
-  | bind (.prob_until body1 (.lam binder1 bodyin)) (.lam binder2 body2) =>
-    let s_tmp : Expression := (.prob_until body1 (.lam binder1 bodyin))
-    let s1 : List Statement ← s_tmp.toStatements
-    let s2 : Statement := .assignment binder2 (.name binder1)
-    let s3 : List Statement ← body2.toStatements
-    return s1 ++ [s2] ++ s3
-  | bind v (.lam binder body) =>
-    let s1 : Statement := .assignment binder v -- v could be prob_while or prob_until expression
-    return s1 :: (← body.toStatements)
   | bind v body => throwError "toStatements: to do {e}"
   | lam v body => throwError "toStatements: unexpected expression lam {e}"
-  | pure e => return [.ret e]
-  | throw e => throwError "toStatements: unexpected expression throw {e}"
-  | prob_until body (.lam binder cond) =>
-    let s1 : Statement := .assignment binder body
-    let s2 : List Statement ← body.toStatements
-    -- condition needs to be substituted
-    let s3 : Statement := .loop cond s2
+  | pure e => return [.assignment "o" e]
+  | throw e => throwError "WF: throw must appear immediately as the left side of a conditional"
+  | prob_until .. => throwError "invariant violation: prob_until should have been compiled away"
+  | prob_while (.lam state cond) (.monadic callee args) init =>
+    let s1 : Statement := .assignment state init
+    let s3 : Statement := .loop cond ([.assignment state (.monadic callee args)])
     return [s1] ++ [s3]
-  | prob_until body cond => throwError "toStatements: to do {e}"
   | prob_while (.lam state cond) body init =>
     let s1 : Statement := .assignment state init
     let s2 : List Statement ← body.toStatements
@@ -80,19 +80,30 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   | binop op lhs rhs => throwError "toStatements: unexpected expression binop {e}"
   | proj id idx => throwError "toStatements: unexpected expression proj {e}"
   | pair left right => throwError "toStatements: unexpected expression pair {e}"
-  | monadic n e => throwError "toStatements: unexpected expression monadic {e}"
+  | monadic n args => throwError "toStatements: unexpected expression monadic {e}"
 
-def Expression.pipeline (body : Expression) : MetaM (List Statement) := do
-  let body1 ← body.map inline
-  body1.toStatements
+def Expression.pipeline (body : Expression) : MetaM Expression := do
+  IO.println body.print
+  let body1 ← body.map compileBind
+  IO.println body1.print
+  let body2 ← body1.map compileReturn
+  IO.println body2.print
+  let body3 ← body2.map compileProbUntil
+  IO.println body3.print
+  let body4 ← body3.map inline
+  IO.println body4.print
+  return body4
 
 def CodeGen (pi : RandomMDef) : MetaM Method := do
+  let body' ← pi.body.pipeline
+  --IO.println body'.print
+  modifyEnv fun env => extension.addEntry env (.addFunc pi.name { pi with body := body' })
   return {
     name := pi.name,
     inParamType := pi.inParamType,
     outParamType := pi.outParamType,
     inParam := pi.inParam,
-    body := ← pi.body.pipeline
+    body := ← body'.toStatements
   }
 
 end Lean.ToDafny

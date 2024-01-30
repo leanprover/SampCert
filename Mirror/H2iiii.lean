@@ -101,7 +101,7 @@ def UniformPowerOfTwoSample' (k : Nat) : RandomM Nat := do
     then return v + 2 ^ (k - 1)
     else return v + 0
 
-def UniformPowerOfTwoSample (k : Nat) : RandomM Nat := sorry
+def UniformPowerOfTwoSample (k : Int) : RandomM Int := sorry
 
 -- Extraction starts here
 
@@ -110,60 +110,60 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T 
   prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
 
 -- Sample from [0..n)
-noncomputable def UniformSample (n : Nat) : RandomM Nat := do
+noncomputable def UniformSample (n : Int) : RandomM Int := do
   if n < 1 then throwThe String "UniformSample: n < 1" else
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
+  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Int => x < n)
   return r
 
-noncomputable def BernoulliSample (num den : Nat) : RandomM Bool := do
+noncomputable def BernoulliSample (num den : Int) : RandomM Bool := do
+  if num < 0 then throwThe String "BernoulliSample: num < 0" else
   if num > den then throwThe String "BernoulliSample: num > den" else
   let d ← UniformSample den
   return d < num
 
-noncomputable def bernoulli_exp_neg_loop1 (num den : Nat) (K : (Bool × Nat)) : RandomM (Bool × Nat) := do
-  let A ← BernoulliSample num (K.2 * den)
-  return (A, K.2 + 1)
+noncomputable def BernoulliExpNegSampleUnitLoop (num den : Int) (state : (Bool × Int)) : RandomM (Bool × Int) := do
+  let A ← BernoulliSample num (state.2 * den)
+  return (A, state.2 + 1)
 
-noncomputable def bernoulli_exp_neg_le1 (num den : Nat) : RandomM Bool := do
-  let r ← prob_while (λ K : Bool × Nat => K.1) (bernoulli_exp_neg_loop1 num den) (true,1)
-  return r.1
+noncomputable def BernoulliExpNegSampleUnit (num den : Int) : RandomM Bool := do
+  if num < 0 then throwThe String "BernoulliExpNegSampleUnit: num < 0" else
+  let r ← prob_while (λ state : Bool × Int => state.1) (BernoulliExpNegSampleUnitLoop num den) (true,1)
+  let K := r.2
+  if K % 2 = 0 then return false else return true
 
--- noncomputable def bernoulli_exp_neg_le1 (num den : Nat) : RandomM Bool := do
---   let r ← prob_while (λ K : Bool × Nat => K.1) (λ K : Bool × Nat => bernoulli_exp_neg_loop1 num den K) (true,1)
---   return r.1
-
-noncomputable def bernoulli_exp_neg_loop2 (iter : Nat) : RandomM Bool := do
+noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
   else
-    let B ← bernoulli_exp_neg_le1 1 1
-    let R ← bernoulli_exp_neg_loop2 (iter - 1)
+    let B ← BernoulliExpNegSampleUnit 1 1
+    let R ← BernoulliExpNegSampleGenLoop (iter - 1)
     return (B ∧ R)
 
-noncomputable def BernoulliExpNegSample (num den : Nat) : RandomM Bool := do
-  --if gamma < 0 then throwThe String "BernoulliExpNegSample: gamma < 0" else
+noncomputable def BernoulliExpNegSample (num den : Int) : RandomM Bool := do
   if num ≤ den
-  then let X ← bernoulli_exp_neg_le1 num den
+  then let X ← BernoulliExpNegSampleUnit num den
        return X
   else
-    let B ← bernoulli_exp_neg_loop2 (floor (num / den))
+    let B ← BernoulliExpNegSampleGenLoop (floor (num / den))
     if B
-    then -- let X ← bernoulli_exp_neg_le1 (gamma - floor gamma)
-         return true -- X
+    then let gamma : Rat := num / den
+         let arg := gamma - floor gamma
+         let X ← BernoulliExpNegSampleUnit arg.num arg.den
+         return X
     else return false
 
-noncomputable def laplace_loop1 (t : Nat) : RandomM (Nat × Bool) := do
+noncomputable def laplace_loop1 (t : Int) : RandomM (Int × Bool) := do
   let U ← UniformSample t
   let D ← BernoulliExpNegSample U t
   return (U,D)
 
-noncomputable def laplace_loop2 (K : Bool × Nat) : RandomM (Bool × Nat) := do
-  let A ← bernoulli_exp_neg_le1 1 1
+noncomputable def laplace_loop2 (K : Bool × Int) : RandomM (Bool × Int) := do
+  let A ← BernoulliExpNegSampleUnit 1 1
   return (A, K.2 + 1)
 
-noncomputable def laplace_body (num den : Nat) : RandomM (Bool × Nat × Int) := do
-  let r ← prob_until (laplace_loop1 num) (λ x : Nat × Bool => x.2)
+noncomputable def laplace_body (num den : Int) : RandomM (Bool × Int × Int) := do
+  let r ← prob_until (laplace_loop1 num) (λ x : Int × Bool => x.2)
   let U := r.1
-  let r ← prob_while (λ K : Bool × Nat => K.1) (λ K => laplace_loop2 K) (true,1)
+  let r ← prob_while (λ K : Bool × Int => K.1) laplace_loop2 (true,1)
   let V := r.2
   let X := U + num * V
   let Y := floor (X / den)
@@ -172,69 +172,69 @@ noncomputable def laplace_body (num den : Nat) : RandomM (Bool × Nat × Int) :=
   let Z := (1 - 2 * B') * Y
   return (B,Y,Z)
 
-noncomputable def DiscreteLaplaceSample (num den : Nat) : RandomM Int := do
+noncomputable def DiscreteLaplaceSample (num den : Int) : RandomM Int := do
   if num < 1 then throwThe String "DiscreteLaplaceSample: t < 1" else
   if den < 1 then throwThe String "DiscreteLaplaceSample: s < 1" else
-  let r ← prob_until (laplace_body num den) (λ x : Bool × Nat × Int => ¬ x.1 ∨ x.2.1 ≠ 0)
+  let r ← prob_until (laplace_body num den) (λ x : Bool × Int × Int => ¬ x.1 ∨ x.2.1 ≠ 0)
   return r.2.2
 
--- noncomputable def gaussian_loop (num den : Nat) (t : Nat) : RandomM (Int × Bool) := do
---   let Y ← DiscreteLaplaceSample t 1
---   let C ← BernoulliExpNegSample ((abs Y - num / den)^2)  (2 * num)
---   return (Y,C)
+noncomputable def gaussian_loop (num den : Int) (t : Int) : RandomM (Int × Bool) := do
+  let Y ← DiscreteLaplaceSample t 1
+  let C ← BernoulliExpNegSample ((abs Y - num / den)^2)  (2 * num)
+  return (Y,C)
 
--- noncomputable def DiscreteGaussianSample (num den : Nat) : RandomM Int := do
---   --if sigma ≤ 0 then throwThe String "DiscreteGaussianSample: sigma ≤ 0" else
---   -- let t : Nat := floor sigma + 1
---   let t := 1
---   let r ← prob_until (gaussian_loop (num^2) (den^2) t) (λ x : Int × Bool => x.2)
---   return r.1
+noncomputable def DiscreteGaussianSample (num den : Int) : RandomM Int := do
+  --if sigma ≤ 0 then throwThe String "DiscreteGaussianSample: sigma ≤ 0" else
+  -- let t : Nat := floor sigma + 1
+  let t := 1
+  let r ← prob_until (gaussian_loop (num^2) (den^2) t) (λ x : Int × Bool => x.2)
+  return r.1
 
 -- Trying out reasoning
 
 attribute [simp] Measure.ofAddContent_eq
 
-theorem uniformP2_correct (k : Nat) (n : Nat) (_ : 0 ≤ n ∧ n < 2 ^ k) :
-  Prob.volume { s : BitStream | exists s' : BitStream, (UniformPowerOfTwoSample k) s = Except.ok (some (n,s')) } = 1 / 2 ^ k := by
-    revert n
-    induction k
-    . intro n H
-      simp at H
-      subst H
-      simp
-      unfold μ
-      rw [Measure.ofAddContent_eq]
-      unfold UniformPowerOfTwoSample
-      simp
-      sorry
-      sorry -- MeasurableSet
-    . rename_i k iH
-      intro n DOM
-      have HCase : n < 2 ^ k ∨ exists m : Nat, m < 2 ^ k ∧ n = 2 ^ k + m := sorry
-      cases HCase
-      . rename_i CONS
-        have RES := iH n
-        simp at RES
-        have RES2 := RES CONS
-        sorry -- probability to be in lower range is 1/2
-        -- Coin must be independent from the lower bits
-      . rename_i CONS
-        cases CONS
-        rename_i m CONS2
-        cases CONS2
-        rename_i left right
-        have RES := iH m
-        simp at RES
-        have RES2 := RES left
-        sorry
+-- theorem uniformP2_correct (k : Nat) (n : Nat) (_ : 0 ≤ n ∧ n < 2 ^ k) :
+--   Prob.volume { s : BitStream | exists s' : BitStream, (UniformPowerOfTwoSample k) s = Except.ok (some (n,s')) } = 1 / 2 ^ k := by
+--     revert n
+--     induction k
+--     . intro n H
+--       simp at H
+--       subst H
+--       simp
+--       unfold μ
+--       rw [Measure.ofAddContent_eq]
+--       unfold UniformPowerOfTwoSample
+--       simp
+--       sorry
+--       sorry -- MeasurableSet
+--     . rename_i k iH
+--       intro n DOM
+--       have HCase : n < 2 ^ k ∨ exists m : Nat, m < 2 ^ k ∧ n = 2 ^ k + m := sorry
+--       cases HCase
+--       . rename_i CONS
+--         have RES := iH n
+--         simp at RES
+--         have RES2 := RES CONS
+--         sorry -- probability to be in lower range is 1/2
+--         -- Coin must be independent from the lower bits
+--       . rename_i CONS
+--         cases CONS
+--         rename_i m CONS2
+--         cases CONS2
+--         rename_i left right
+--         have RES := iH m
+--         simp at RES
+--         have RES2 := RES left
+--         sorry
 
-theorem uniform_correct (n : Nat) (m : Nat) :
-  Prob.volume { s : BitStream | exists s' : BitStream, (UniformSample n) s = Except.ok (some (m,s')) } = 1 / n := by
-  simp ; unfold μ ; rw [Measure.ofAddContent_eq] ; simp
-  unfold AddContent.toFun ; unfold cont ; simp
-  unfold UniformSample
-  sorry
-  sorry
+-- theorem uniform_correct (n : Nat) (m : Nat) :
+--   Prob.volume { s : BitStream | exists s' : BitStream, (UniformSample n) s = Except.ok (some (m,s')) } = 1 / n := by
+--   simp ; unfold μ ; rw [Measure.ofAddContent_eq] ; simp
+--   unfold AddContent.toFun ; unfold cont ; simp
+--   unfold UniformSample
+--   sorry
+--   sorry
 
 
 end Hurd
