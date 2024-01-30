@@ -1,0 +1,63 @@
+
+import Mirror.IR
+
+namespace Lean.ToDafny
+
+inductive Statement where
+  | assignment (lhs : String) (rhs : Expression)
+  | loop (cond : Expression) (body: List Statement)
+  | conditional (cond : Expression) (ifso ifnot : List Statement)
+  | expect (cond : Expression) (msg : Expression)
+  | ret (e : Expression)
+
+structure Method where
+  name : String
+  inParamType : List Typ
+  outParamType : Typ
+  inParam : List String
+  body : List Statement
+
+#check String
+
+def indent (depth : Nat) : String :=
+  match depth with
+  | 0 => ""
+  | Nat.succ n => "  " ++ indent n
+
+mutual
+
+def Statement.print (s : Statement) (depth: Nat) : String :=
+  match s with
+  | .assignment lhs rhs =>
+    indent depth ++ s!"var {lhs} := {rhs};\n"
+  | .loop cond body =>
+    indent depth ++ s!"while {cond}\n" ++
+    (indent (depth + 1)) ++ s!"decreases *\n" ++
+    indent depth ++ s!"\{\n" ++
+    s!"{sjoin body (depth + 1)}" ++
+    indent depth ++ s!"}\n"
+  | .conditional cond ifso ifnot =>
+    (indent depth) ++ s!"if {cond} \{\n{sjoin ifso (depth + 1)}" ++
+    (indent depth) ++ s!"} else \{\n{sjoin ifnot (depth + 1)}" ++
+    (indent depth) ++ "}\n"
+  | .expect e msg =>
+    indent depth ++ s!"expect !({e}), {msg};\n"
+  | .ret e =>
+    indent depth ++ s!"o := {e};\n"
+
+def sjoin (s : List Statement) (depth: Nat) : String :=
+  match s with
+  | [] => ""
+  | [a] => a.print depth
+  | a::as => a.print depth ++ sjoin as depth
+
+end
+
+def Method.print (m : Method) : String :=
+  s!"method {m.name} ({printArgs m.inParam m.inParamType})\n" ++
+  (indent 1) ++ s!"returns (o: {m.outParamType.print})\n" ++
+  (indent 1) ++ s!"modifies this\n" ++
+  (indent 1) ++ s!"decreases *\n" ++
+  s!"\{\n{sjoin m.body 1}}\n "
+
+end Lean.ToDafny
