@@ -5,7 +5,7 @@ open System IO.FS
 
 namespace Lean.ToDafny
 
-def destination : String := "/Users/trjohnb/Code/Dafny-VMC/src/NewVMC.dfy"
+def destination : String := "/Users/trjohnb/Code/Dafny-VMC/src/New-VMC.dfy"
 
 def writeLn (ln : String) : IO Unit := do
   let h ← Handle.mk destination Mode.append
@@ -17,7 +17,8 @@ elab "#print_dafny_exports" : command => do
   writeFile destination ""
   writeLn "module NewVMC {"
   writeLn "  import opened UniformPowerOfTwo"
-  writeLn "  class DRandomFoundational extends  UniformPowerOfTwo.Implementation.TraitExtern {\n"
+  writeLn "  class DRandomExternUniformPowerOfTwo extends  UniformPowerOfTwo.Implementation.TraitExtern {\n"
+  writeLn "    constructor {:extern} ()"
   let { decls, .. } := extension.getState (← getEnv)
   for decl in decls.reverse do
     IO.println decl

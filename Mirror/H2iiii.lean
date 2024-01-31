@@ -112,7 +112,7 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T 
 -- Sample from [0..n)
 noncomputable def UniformSample (n : Int) : RandomM Int := do
   if n < 1 then throwThe String "UniformSample: n < 1" else
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Int => x < n)
+  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Int => x ≥ n)
   return r
 
 noncomputable def BernoulliSample (num den : Int) : RandomM Bool := do
@@ -129,10 +129,11 @@ noncomputable def BernoulliExpNegSampleUnit (num den : Int) : RandomM Bool := do
   if num < 0 then throwThe String "BernoulliExpNegSampleUnit: num < 0" else
   let r ← prob_while (λ state : Bool × Int => state.1) (BernoulliExpNegSampleUnitLoop num den) (true,1)
   let K := r.2
-  if K % 2 = 0 then return false else return true
+  if K % 2 = 0 then return true else return false
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
+  else if iter = 1 then return true
   else
     let B ← BernoulliExpNegSampleUnit 1 1
     let R ← BernoulliExpNegSampleGenLoop (iter - 1)
@@ -179,7 +180,7 @@ noncomputable def DiscreteLaplaceSampleLoop (num den : Int) : RandomM (Bool × I
 noncomputable def DiscreteLaplaceSample (num den : Int) : RandomM Int := do
   if num < 1 then throwThe String "DiscreteLaplaceSample: t < 1" else
   if den < 1 then throwThe String "DiscreteLaplaceSample: s < 1" else
-  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Int × Int => ¬ x.1 ∨ x.2.1 ≠ 0)
+  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Int × Int => x.1 ∧ x.2.1 = 0)
   return r.2.2
 
 noncomputable def DiscreteGaussianSampleLoop (num den : Int) (t : Int) : RandomM (Int × Bool) := do
@@ -192,7 +193,9 @@ noncomputable def DiscreteGaussianSample (num den : Int) : RandomM Int := do
   if num < 0 then throwThe String "DiscreteGaussianSample: num < 0" else
   if den ≤ 0 then throwThe String "DiscreteGaussianSample: den ≤ 0" else
   let t : Nat := floor (num / den) + 1
-  let r ← prob_until (DiscreteGaussianSampleLoop (num^2) (den^2) t) (λ x : Int × Bool => x.2)
+  let num := num^2
+  let den := den^2
+  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
   return r.1
 
 -- Trying out reasoning

@@ -93,7 +93,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``HMul.hMul => return .binop .multiplication (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
       | ``HDiv.hDiv => return .binop .division (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
       | ``HPow.hPow => return .binop .pow (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
-      | ``HMod.hMod => return .binop .pow (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
+      | ``HMod.hMod => return .binop .mod (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
       | ``Eq => return .binop .equality (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
       | ``Ne => return .binop .inequality (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
       | ``And => return .binop .conjunction (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
