@@ -21,10 +21,15 @@ def compileProbUntil (e : Expression) : MetaM Expression := do
   | .prob_until body cond => return .prob_while cond body body
   | e => return e
 
-def subst (fro to : String) (e : Expression) : MetaM Expression := do
+def subst (param : String) (arg : Expression) (e : Expression) : MetaM Expression := do
   match e with
-  | .name n => if n = fro then return .name to else return e
-  | .letb n rhs body => if n = fro then return .letb to rhs body else return e
+  | .name n => if n = param then return arg else return e
+  | .letb n rhs body =>
+    if n = param ∧ n = "o"
+    then if let .name st := arg
+         then return .letb st rhs body
+         else throwError ""
+    else return e
   | _=> return e
 
 def inline (e : Expression) : MetaM Expression := do
@@ -35,8 +40,10 @@ def inline (e : Expression) : MetaM Expression := do
     then
       if let some defn := st.glob.find? callee
       then
-        let body' ← defn.body.map (subst "o" state)
-        return .letb binder (.prob_while (.lam state cond) body' init) body
+        let body' ← defn.body.map (subst "o" (.name state))
+        let pas := List.zip defn.inParam args
+        let body'' ← pas.foldlM (λ bo => λ (param,arg) => bo.map (subst param arg)) body'
+        return .letb binder (.prob_while (.lam state cond) body'' init) body
       else throwError "Definition is in list of inlines but not exported"
     else return e
   | _ => return e
