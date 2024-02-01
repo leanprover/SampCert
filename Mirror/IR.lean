@@ -7,6 +7,7 @@ inductive Typ where
   | int
   | nat
   | prod (left right : Typ)
+  deriving DecidableEq
 
 inductive UnOp where
   | negation
@@ -15,6 +16,7 @@ inductive UnOp where
   | numerator
   | denominator
   | abs
+  deriving DecidableEq
 
 inductive BinOp where
   | equality
@@ -34,13 +36,13 @@ inductive BinOp where
   | log
   | pow
   | mod
-#check Expr
+  deriving DecidableEq
+
 inductive Expression where
   | tr
   | fa
   | num (val : Nat)
   | str (s : String)
-  | app (f : String) (args : List Expression)
   | letb (v : String) (rhs : Expression) (body : Expression)
   | ite (cond left right : Expression)
   | bind (rhs : Expression) (rhs : Expression)
@@ -55,6 +57,7 @@ inductive Expression where
   | proj (name : Expression) (idx : Nat)
   | pair (left right : Expression)
   | monadic (name : String) (arg : List Expression)
+
 
 structure RandomMDef where
   name : String
@@ -111,7 +114,6 @@ partial def Expression.print (e : Expression) : String :=
   | fa => "false"
   | num val => toString val
   | str s => s!"\"{s}\""
-  | app f args => s!"{f}({join (args.map (·.print))})"
   | letb v rhs body => s!"let {v} := {rhs.print} in {body.print}"
   | ite cond left right => s!"if {cond.print} then {left.print} else {right.print}"
   | bind v body => s!"bind [{v.print}] ← [{body.print}]"
@@ -157,9 +159,6 @@ partial def Expression.map (transform : Expression → MetaM Expression) (e : Ex
     transform $ .num val
   | str s =>
     transform $ .str s
-  | app f args =>
-    let args' ← args.mapM (map transform)
-    transform (.app f args')
   | letb v rhs body =>
     let rhs' ← rhs.map transform
     let body' ← body.map transform

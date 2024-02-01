@@ -54,7 +54,6 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   | fa => throwError "toStatements: unexpected expression fa {e}"
   | num val => throwError "toStatements: unexpected expression num {e}"
   | str s => throwError "toStatements: unexpected expression str {e}"
-  | app f args => throwError "toStatements: unexpected expression app {e}"
   | letb binder rhs (pure (name _)) => return [.assignment binder rhs]
   | pure .. => throwError "invariant violation: pure should appear in simple bind"
   | letb v (.prob_while (.lam state cond) rcomp init) body =>
