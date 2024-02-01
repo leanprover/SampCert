@@ -186,8 +186,6 @@ noncomputable def DiscreteGaussianSampleLoop (num den : Int) (t : Int) : RandomM
   if den ≤ 0 then throwThe String "DiscreteGaussianSample: den ≤ 0" else
   let Y ← DiscreteLaplaceSample t 1
   let y := abs Y
-      --var n := (yAbs * t * den - num) * (yAbs * t * den - num);
-      --var d := t * den * t * 2 * num;
   let n := (y * t * den - num)^2
   let d := 2 * num * t^2 * den
   let C ← BernoulliExpNegSample n d

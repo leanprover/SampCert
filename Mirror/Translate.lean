@@ -32,7 +32,6 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   | .const ``Nat .. => return .nat
   | .const ``Bool .. => return .bool
   | .const ``Int .. => return .int
-  | .const ``_root_.Rat .. => return .rat
   | .const .. => throwError "toDafnyTyp: not supported -- constant {e}"
   | .app .. => (e.withApp fun fn args => do
       if let .const name .. := fn then

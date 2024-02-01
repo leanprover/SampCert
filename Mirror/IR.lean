@@ -5,7 +5,6 @@ namespace Lean.ToDafny
 inductive Typ where
   | bool
   | int
-  | rat
   | nat
   | prod (left right : Typ)
 
@@ -35,7 +34,7 @@ inductive BinOp where
   | log
   | pow
   | mod
-
+#check Expr
 inductive Expression where
   | tr
   | fa
@@ -75,7 +74,6 @@ def Typ.print (t : Typ): String :=
   | bool => "bool"
   | int => "int"
   | nat => "nat"
-  | rat => "real"
   | prod t1 t2 => s!"({t1.print},{t2.print})"
 
 def UnOp.print (o : UnOp) : String :=
