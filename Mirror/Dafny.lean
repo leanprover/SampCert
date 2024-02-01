@@ -18,8 +18,6 @@ structure Method where
   inParam : List String
   body : List Statement
 
-#check String
-
 def indent (depth : Nat) : String :=
   match depth with
   | 0 => ""

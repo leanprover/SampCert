@@ -58,7 +58,6 @@ inductive Expression where
   | pair (left right : Expression)
   | monadic (name : String) (arg : List Expression)
 
-
 structure RandomMDef where
   name : String
   inParamType : List Typ
