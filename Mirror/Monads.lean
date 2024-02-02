@@ -31,4 +31,5 @@ abbrev M4 T := StateT Nat (OptionT Pmf) T
 
 abbrev M5 T := ReaderT Nat (OptionT Pmf) T
 
-lemma test :
+-- Hurd requires a state monad because we must ensure that bits are not reused
+-- Hurd is good for simulations, except that coupling overcomes this for pmf monad

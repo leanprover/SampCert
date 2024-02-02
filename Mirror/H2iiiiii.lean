@@ -91,7 +91,7 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T 
   prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
 
 -- Sample from [0..n)
-noncomputable def UniformSample (n : Int) (_ : n ≥ 1) : RandomM Int := do
+noncomputable def UniformSample (n : Nat) (_ : n ≥ 1) : RandomM Int := do
   let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Int => x ≥ n)
   return r
 
@@ -99,8 +99,12 @@ noncomputable def BernoulliSample (num den : Int) (h1 : num ≥ 0) (h2 : den > 0
   let d ← UniformSample den h2
   return d < num
 
+theorem intExtra1 (n : Int) (h : n > 0) : 2 * n > 0 := by
+  simp only [← gt_iff_lt, zero_lt_mul_left, imp_self]
+  trivial
+
 noncomputable def BernoulliExpNegSampleUnitLoop (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) (state : (Bool × Int)) : RandomM (Bool × Int) := do
-  let A ← BernoulliSample num (state.2 * den) h1 sorry sorry
+  let A ← BernoulliSample num (state.2 * den) h1 (intExtra1 den h2) sorry
   return (A, state.2 + 1)
 
 noncomputable def BernoulliExpNegSampleUnit (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Bool := do
