@@ -30,6 +30,7 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   | .mvar .. => throwError "toDafnyTyp: not supported -- meta variable {e}"
   | .sort .. => throwError "toDafnyTyp: not supported -- sort {e}"
   | .const ``Nat .. => return .nat
+  | .const ``PNat .. => return .nat
   | .const ``Bool .. => return .bool
   | .const ``Int .. => return .int
   | .const .. => throwError "toDafnyTyp: not supported -- constant {e}"
@@ -114,7 +115,10 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``Prod.mk => return .pair (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``Neg.neg => return .unop .minus (← toDafnyExpr dname env args[2]!)
       | ``abs => return .unop .abs (← toDafnyExpr dname env args[2]!)
+      | ``Int.natAbs => return .unop .abs (← toDafnyExpr dname env args[0]!)
       | ``OfScientific.ofScientific => toDafnyExpr dname env args[4]!
+      | ``PNat.val => toDafnyExpr dname env args[0]!
+      | ``Subtype.mk => toDafnyExpr dname env args[2]!
       | _ =>
         if IsWFMonadic info.type
         then

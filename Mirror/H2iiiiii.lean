@@ -8,7 +8,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Probability.ProbabilityMassFunction.Uniform
 
 open Classical Set Function ProbabilityTheory Nat MeasureTheory MeasurableSpace
-open Pmf
+open Pmf PNat
 
 section Hurd
 
@@ -78,11 +78,8 @@ noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init 
         prob_while cond body v n
       else return init
 
--- noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T := sorry
-
---noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (a : T) : RandomM T := sorry
-
-noncomputable def UniformPowerOfTwoSample (k : Int) : RandomM Int := sorry
+noncomputable def UniformPowerOfTwoSample (k : PNat) : RandomM Nat :=
+  uniformOfFintype (Fin (2 ^ k))
 
 -- Extraction starts here
 
@@ -91,38 +88,37 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T 
   prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
 
 -- Sample from [0..n)
-noncomputable def UniformSample (n : Nat) (_ : n ≥ 1) : RandomM Int := do
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Int => x ≥ n)
+noncomputable def UniformSample (n : PNat) : RandomM Nat := do
+  let r ← prob_until (UniformPowerOfTwoSample (n + n)) (λ x : Nat => x ≥ n)
   return r
 
-noncomputable def BernoulliSample (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Bool := do
-  let d ← UniformSample den h2
+noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
+  let d ← UniformSample den
   return d < num
 
 theorem intExtra1 (n : Int) (h : n > 0) : 2 * n > 0 := by
   simp only [← gt_iff_lt, zero_lt_mul_left, imp_self]
   trivial
 
-noncomputable def BernoulliExpNegSampleUnitLoop (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) (state : (Bool × Int)) : RandomM (Bool × Int) := do
-  let A ← BernoulliSample num (state.2 * den) h1 (intExtra1 den h2) sorry
+noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (state : (Bool × PNat)) : RandomM (Bool × PNat) := do
+  let A ← BernoulliSample num (state.2 * den)
   return (A, state.2 + 1)
 
-noncomputable def BernoulliExpNegSampleUnit (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Bool := do
-  let r ← prob_while (λ state : Bool × Int => state.1) (BernoulliExpNegSampleUnitLoop num den h1 h2 h3) (true,1)
-  let K := r.2
+noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) : RandomM Bool := do
+  let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den) (true,1)
+  let K : Nat := r.2
   if K % 2 = 0 then return true else return false
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
-  --else if iter = 1 then return true
   else
-    let B ← BernoulliExpNegSampleUnit 1 1 sorry sorry sorry
+    let B ← BernoulliExpNegSampleUnit 1 1
     let R ← BernoulliExpNegSampleGenLoop (iter - 1)
     return (B ∧ R)
 
-noncomputable def BernoulliExpNegSample (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Bool := do
+noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
   if num ≤ den
-  then let X ← BernoulliExpNegSampleUnit num den h1 h2 h3
+  then let X ← BernoulliExpNegSampleUnit num den
        return X
   else
     let gamf := floor (num / den)
@@ -130,47 +126,51 @@ noncomputable def BernoulliExpNegSample (num den : Int) (h1 : num ≥ 0) (h2 : d
     if B
     then
          let num := num - gamf * den
-         let X ← BernoulliExpNegSampleUnit num den sorry h2 sorry
+         let X ← BernoulliExpNegSampleUnit num den
          return X
     else return false
 
-noncomputable def DiscreteLaplaceSampleLoopIn1 (t : Int) : RandomM (Int × Bool) := do
-  let U ← UniformSample t sorry
-  let D ← BernoulliExpNegSample U t sorry sorry sorry
+noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM (Nat × Bool) := do
+  let U ← UniformSample t
+  let D ← BernoulliExpNegSample U t
   return (U,D)
 
-noncomputable def DiscreteLaplaceSampleLoopIn2 (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) (K : Bool × Int) : RandomM (Bool × Int) := do
-  let A ← BernoulliExpNegSampleUnit num den h1 h2 h3
+noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) (K : Bool × PNat) : RandomM (Bool × PNat) := do
+  let A ← BernoulliExpNegSampleUnit num den
   return (A, K.2 + 1)
 
-noncomputable def DiscreteLaplaceSampleLoop (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM (Bool × Int) := do
-  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1 num) (λ x : Int × Bool => ¬ x.2)
+noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
+  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1 num) (λ x : Nat × Bool => ¬ x.2)
   let U := r1.1
-  let r2 ← prob_while (λ K : Bool × Int => K.1) (DiscreteLaplaceSampleLoopIn2 1 1 sorry sorry sorry) (true,1)
+  let r2 ← prob_while (λ K : Bool × PNat => K.1) (DiscreteLaplaceSampleLoopIn2 1 1) (true,1)
   let V := r2.2 - 2
   let X := U + num * V
   let Y := floor (X / den)
-  let B ← BernoulliSample 1 2 sorry sorry sorry
+  let B ← BernoulliSample 1 2
   return (B,Y)
 
-noncomputable def DiscreteLaplaceSample (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Int := do
-  let r ← prob_until (DiscreteLaplaceSampleLoop num den h1 h2 h3) (λ x : Bool × Int => x.1 ∧ x.2 = 0)
-  let Z := if r.1 then - r.2 else r.2
+noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM Int := do
+  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => x.1 ∧ x.2 = 0)
+  let Z : Int := if r.1 then - r.2 else r.2
   return Z
 
-noncomputable def DiscreteGaussianSampleLoop (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) (t : Int) : RandomM (Int × Bool) := do
-  let Y ← DiscreteLaplaceSample t 1 sorry sorry sorry
-  let y := abs Y
-  let n := (y * t * den - num)^2
-  let d := 2 * num * t^2 * den
-  let C ← BernoulliExpNegSample n d sorry sorry sorry
+noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int × Bool) := do
+  let Y : Int ← DiscreteLaplaceSample t 1
+  let y : Nat := Int.natAbs Y
+  let n : Nat := (y * t * den - num)^2
+  let d : PNat := 2 * num * t^2 * den
+  let C ← BernoulliExpNegSample n d
   return (Y,C)
 
-noncomputable def DiscreteGaussianSample (num den : Int) (h1 : num ≥ 0) (h2 : den > 0) (h3 : num ≤ den) : RandomM Int := do
-  let t : Nat := floor (num / den) + 1
+theorem Add1 (n : Nat) : 0 < n + 1 := by
+  simp only [add_pos_iff, or_true]
+
+noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM Int := do
+  let ti : Nat := floor (num.val / den)
+  let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
   let num := num^2
   let den := den^2
-  let r ← prob_until (DiscreteGaussianSampleLoop num den sorry sorry sorry t) (λ x : Int × Bool => ¬ x.2)
+  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => ¬ x.2)
   return r.1
 
 -- Trying out reasoning
