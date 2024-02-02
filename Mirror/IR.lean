@@ -6,6 +6,7 @@ inductive Typ where
   | bool
   | int
   | nat
+  | pos
   | prod (left right : Typ)
   deriving DecidableEq
 
@@ -76,6 +77,7 @@ def Typ.print (t : Typ): String :=
   | bool => "bool"
   | int => "int"
   | nat => "nat"
+  | pos => "pos"
   | prod t1 t2 => s!"({t1.print},{t2.print})"
 
 def UnOp.print (o : UnOp) : String :=

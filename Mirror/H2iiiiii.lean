@@ -55,7 +55,8 @@ theorem test5 : forall n: Nat, (coin1 n).run none = 0 := by
   unfold Monad.toApplicative
   unfold instMonadPmf
   simp
-
+#check tsum
+#check Finset.sum
 theorem test6 : forall n: Nat, (coin1 n).run none = 0 → coin1 = coin2 := by
   intros; ext; simp
 

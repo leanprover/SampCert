@@ -17,6 +17,7 @@ elab "#print_dafny_exports" : command => do
   writeFile destination ""
   writeLn "module NewVMC {"
   writeLn "  import opened UniformPowerOfTwo"
+  writeLn "  type pos = x : nat | x > 0 witness 1"
   writeLn "  class DRandomExternUniformPowerOfTwo extends  UniformPowerOfTwo.Implementation.TraitExtern {\n"
   writeLn "    constructor {:extern} ()"
   let { decls, .. } := extension.getState (← getEnv)
