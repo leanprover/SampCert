@@ -69,11 +69,10 @@ noncomputable def coin4 : Pmf Bool := do
   let flip ← binomial zpf base 1
   return if flip.val = 0 then false else true
 
+attribute [simp] instMonadPmf
+
 theorem coin4Prop : coin4 true = zpf := by
   unfold coin4
-  unfold Bind.bind
-  unfold Monad.toBind
-  unfold instMonadPmf
   simp
   rw [tsum_fintype]
   conv =>
