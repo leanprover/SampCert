@@ -7,124 +7,57 @@ import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Mathlib.Probability.ProbabilityMassFunction.Binomial
 import Mathlib.Probability.ProbabilityMassFunction.Uniform
 import Init.Control.Lawful
+import Mathlib.Algebra.BigOperators.Basic
+import Mathlib.Algebra.BigOperators.Finprod
+import Mathlib.Topology.Basic
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 open Classical Set Function ProbabilityTheory Nat MeasureTheory MeasurableSpace
-open Pmf PNat
+open Pmf PNat Finset
 
 section Hurd
 
 variable {T U : Type} [Inhabited T]
 
-@[simp]
-abbrev RandomM (T : Type) := ReaderT Nat (OptionT Pmf) T
+abbrev RandomM (T : Type) := OptionT Pmf T
 
-
-
-
--- State monad with decreasing fuel?
-
-@[simp]
-noncomputable def Coin : RandomM Bool := do
-  let flip ← binomial (1/2) sorry 1
-  if flip.val = 0 then return false else return true
-
-noncomputable def test1 := (Coin 4)
-noncomputable def test2 := (Coin 4).run
-theorem test3 : forall n: Nat, (Coin n).run none = 0 := sorry
-theorem test4 : forall n: Nat, (Coin n).run (some true) = 1 / 2 := sorry
-
-@[simp]
-noncomputable def coin1 : RandomM (Fin 2) := binomial (1/2) sorry 1
-@[simp]
-noncomputable def coin2 : Pmf (Fin 2) := binomial (1/2) sorry 1
-
--- attribute [simp] OptionT.run
--- attribute [simp] liftM
--- attribute [simp] monadLift
--- attribute [simp] instMonadLiftT
--- attribute [simp] MonadLift.monadLift
--- attribute [simp] ReaderT.instMonadLiftReaderT
--- attribute [simp] OptionT.instMonadLiftOptionT
--- attribute [simp] OptionT.lift
--- attribute [simp] OptionT.mk
--- attribute [simp] Pure.pure
--- attribute [simp] Applicative.toPure
--- attribute [simp] Monad.toApplicative
--- attribute [simp] instMonadPmf
--- attribute [simp] Lean.Internal.coeM
--- attribute [simp] CoeT.coe
--- attribute [simp] instCoeT
--- attribute [simp] CoeHTCT.coe
--- attribute [simp] instCoeHTCT_1
--- attribute [simp] CoeHTC.coe
--- attribute [simp] instCoeHTC_1
--- attribute [simp] CoeOTC.coe
--- attribute [simp] instCoeOTC_1
--- attribute [simp] CoeTC.coe
--- attribute [simp] instCoeTC_1
--- attribute [simp] Coe.coe
--- attribute [simp] optionCoe
--- attribute [simp] Bind.bind
--- attribute [simp] Monad.toBind
--- attribute [simp] ReaderT.instMonadReaderT
--- attribute [simp] ReaderT.bind
--- attribute [simp] ReaderT.pure
--- attribute [simp] OptionT.pure
--- attribute [simp] OptionT.bind
--- attribute [simp] OptionT.mk
-
-
--- how to get pmf out of RandomM where prob of none is 0?
--- map none to whatever value
--- map some x to x
-
-
-def mymap (x : Option T) : T :=
-  match x with
-  | some x => x
-  | none => default
-
-@[simp]
-noncomputable def interesting (p : Pmf (Option T)) : Pmf T := map mymap p
-
-theorem interestingCorrectWhenNoneZero (p : Pmf (Option T)) :
-  p none = 0 → p = interesting p := by
-  intro H
-  ext x
-  simp
-  sorry
-
-
-theorem notNone (f : RandomM T) (fuel : Nat) :
-  (f fuel).run none = 0 → exists p : Pmf T, (f fuel).run = p := by
-  simp
-  sorry
-
-
-
-theorem test5 : forall n: Nat, (coin1 n).run none = 0 := by simp
-
-theorem test6 : forall n: Nat, (coin1 n).run none = 0 → coin1 = coin2 := by
-  intros; ext; simp
-
-theorem conclusion : coin1 = coin2 := by
-  apply test6
-  apply test5
-  constructor
-
+attribute [simp] OptionT.run
+attribute [simp] liftM
+attribute [simp] monadLift
+attribute [simp] instMonadLiftT
+attribute [simp] MonadLift.monadLift
+attribute [simp] ReaderT.instMonadLiftReaderT
+attribute [simp] OptionT.instMonadLiftOptionT
+attribute [simp] OptionT.lift
+attribute [simp] OptionT.mk
+attribute [simp] Pure.pure
+attribute [simp] Applicative.toPure
+attribute [simp] Monad.toApplicative
+attribute [simp] instMonadPmf
+attribute [simp] Lean.Internal.coeM
+attribute [simp] CoeT.coe
+attribute [simp] instCoeT
+attribute [simp] CoeHTCT.coe
+attribute [simp] instCoeHTCT_1
+attribute [simp] CoeHTC.coe
+attribute [simp] instCoeHTC_1
+attribute [simp] CoeOTC.coe
+attribute [simp] instCoeOTC_1
+attribute [simp] CoeTC.coe
+attribute [simp] instCoeTC_1
+attribute [simp] Coe.coe
+attribute [simp] optionCoe
+attribute [simp] Bind.bind
+attribute [simp] Monad.toBind
+attribute [simp] ReaderT.instMonadReaderT
+attribute [simp] ReaderT.bind
+attribute [simp] ReaderT.pure
+attribute [simp] OptionT.pure
+attribute [simp] OptionT.bind
+attribute [simp] OptionT.mk
 
 -- Proof that the fuel is large enough?
-noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
-  λ n : Nat =>
-    match n with
-    | zero => pure none
-    | succ n =>
-      if cond init
-      then
-        do
-        let v ← ((body init).run n).run
-        prob_while cond body v n
-      else return init
+noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T := sorry
 
 noncomputable def UniformPowerOfTwoSample (k : PNat) : RandomM Nat :=
   uniformOfFintype (Fin (2 ^ k))
@@ -140,40 +73,37 @@ noncomputable def UniformSample (n : PNat) : RandomM Nat := do
   let r ← prob_until (UniformPowerOfTwoSample (n + n)) (λ x : Nat => x ≥ n)
   return r
 
--- theorem UniformSampleCorrect (n : PNat) :
---   forall p : Pmf Nat,
---   (exists m : Nat, (UniformSample n m).run = p) →
---   p = uniformOfFintype (Fin n) := by sorry
-
--- theorem UniformSampleCorrect' (n : PNat) :
---   (exists m : Nat, (UniformSample n m).run none = 0) →
---   p = uniformOfFintype (Fin n) := by sorry
-
-theorem UniformSampleCorrect (n : PNat) (fuel : Nat) :
-  (UniformSample n fuel).run none = 0 →
-  (UniformSample n fuel).run = uniformOfFintype (Fin n) := by sorry
+theorem UniformSampleCorrect1 (n : PNat) :
+  (UniformSample n).run none = 0 →
+  (UniformSample n).run = uniformOfFintype (Fin n) := by sorry
 
 theorem UniformSampleCorrect2 (n : PNat) :
-  exists fuel : Nat, (UniformSample n fuel).run none = 0 := by sorry
+  (UniformSample n).run none = 0 := by sorry
+
+theorem UniformSampleCorrect (n : PNat) :
+  (UniformSample n).run = uniformOfFintype (Fin n) := by sorry
 
 noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
   let d ← UniformSample den
   return d < num
 
-theorem BernoulliSampleCorrect (num : Nat) (den : PNat) (fuel : Nat) :
-  (BernoulliSample num den fuel).run none = 0 →
-  (BernoulliSample num den fuel).run (some true) = num / den := by
+theorem BernoulliSampleCorrect (num : Nat) (den : PNat) :
+  (BernoulliSample num den).run none = 0 →
+  (BernoulliSample num den).run (some true) = num / den := by
   simp
   intro H
   unfold BernoulliSample
-  simp only [OptionT.run]
+  -- rw UniformSampleCorrect
+  have H2 := UniformSampleCorrect den
+  simp at H2
+  rw [H2]
+  simp
+  rw [tsum_fintype]
+  rw [sum_ite]
+  simp
+
+
   sorry
-
-
-
-
-
-
 
 theorem intExtra1 (n : Int) (h : n > 0) : 2 * n > 0 := by
   simp only [← gt_iff_lt, zero_lt_mul_left, imp_self]

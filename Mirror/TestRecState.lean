@@ -84,3 +84,16 @@ theorem coin4Prop : coin4 true = zpf := by
   rw [Fin.sum_univ_two]
   simp only [Fin.val_zero, pow_zero, ge_iff_le, tsub_zero, pow_one, one_mul, Nat.choose_succ_self_right, zero_add,
     Nat.cast_one, mul_one, ite_false, mul_zero, Fin.val_one, le_refl, tsub_eq_zero_of_le, Nat.choose_self, ite_true]
+
+noncomputable def BernoulliSample (num : Nat) (den : PNat) : Pmf Bool := do
+  let d ← uniformOfFintype (Fin den)
+  return d < num
+
+theorem BernoulliSampleCorrect (num : Nat) (den : PNat) (h : num < den) :
+  BernoulliSample num den true = num / den := by
+  unfold BernoulliSample
+  simp
+  rw [tsum_fintype]
+  rw [sum_ite]
+  simp
+  #check Finset.filter

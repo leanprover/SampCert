@@ -1,7 +1,7 @@
 import Lean
 import Mirror.IR
 import Mirror.Extension
-import Mirror.H2iiiiii
+import Mirror.H2iiiiiii
 
 /-
 
@@ -73,7 +73,6 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
   | .sort .. => throwError "toDafnyExpr: not supported -- sort {e}"
   | .const ``true .. => return .tr
   | .const ``false .. => return .fa
-  | .const ``Coin .. => return .name "Coin"
   | .const ``PUnit.unit .. => throwError "WF: all conditions are if then else, including the ones to throw errors"
   | .const .. => throwError "toDafnyExpr: not supported -- constant {e}"
   | .app .. => (e.withApp fun fn args => do
