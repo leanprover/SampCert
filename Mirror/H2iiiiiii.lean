@@ -11,9 +11,10 @@ import Mathlib.Algebra.BigOperators.Basic
 import Mathlib.Algebra.BigOperators.Finprod
 import Mathlib.Topology.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
+import Mathlib.Order.LiminfLimsup
 
 open Classical Set Function ProbabilityTheory Nat MeasureTheory MeasurableSpace
-open Pmf PNat Finset
+open Pmf PNat Finset TopologicalSpace Filter
 
 section Hurd
 
@@ -56,8 +57,49 @@ attribute [simp] OptionT.pure
 attribute [simp] OptionT.bind
 attribute [simp] OptionT.mk
 
--- Proof that the fuel is large enough?
-noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T := sorry
+noncomputable def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (init : T) (n : Nat) : RandomM T :=
+  match n with
+  | zero => pure none
+  | succ n =>
+    if cond init
+    then
+      do
+      let v ← body init
+      prob_while_cut cond body v n
+    else return init
+
+theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :
+  Monotone (fun n : Nat => (prob_while_cut cond body init n).run (some x)) := sorry
+
+theorem prob_while_cut_antitonic (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  Antitone (fun n : Nat => (prob_while_cut cond body init n).run none) := sorry
+
+def plop1 (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :=
+  tendsto_atTop_iSup (prob_while_cut_monotonic cond body init x)
+
+def plop2 (cond : T → Bool) (body : T → RandomM T) (init : T) :=
+  tendsto_atBot_iSup (prob_while_cut_antitonic cond body init)
+
+noncomputable def prob_while' (cond : T → Bool) (body : T → RandomM T) (init : T) : Option T → ENNReal :=
+  fun x => if x = none then ⨅ (i : ℕ), ((prob_while_cut cond body init i).run x) else ⨆ (i : ℕ), ((prob_while_cut cond body init i).run x)
+
+theorem sum1 (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  HasSum (prob_while' cond body init) 1 := sorry
+
+noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
+  ⟨ prob_while' cond body init , sum1 cond body init ⟩
+
+-- If cond has probability non-zero, then prob_While cond body init none = 0
+--
+
+noncomputable def unfold_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T := do
+  if cond init
+  then let v ← body init
+       prob_while cond body v
+  else return init
+
+theorem prob_while_prop_1 (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  prob_while cond body init = unfold_while cond body init := sorry
 
 noncomputable def UniformPowerOfTwoSample (k : PNat) : RandomM Nat :=
   uniformOfFintype (Fin (2 ^ k))
@@ -70,7 +112,7 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T 
 
 -- Sample from [0..n)
 noncomputable def UniformSample (n : PNat) : RandomM Nat := do
-  let r ← prob_until (UniformPowerOfTwoSample (n + n)) (λ x : Nat => x ≥ n)
+  let r ← prob_until (UniformPowerOfTwoSample (n + n)) (λ x : Nat => x < n)
   return r
 
 theorem UniformSampleCorrect1 (n : PNat) :
@@ -149,7 +191,7 @@ noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) (K : Boo
   return (A, K.2 + 1)
 
 noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
-  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1 num) (λ x : Nat × Bool => ¬ x.2)
+  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1 num) (λ x : Nat × Bool => x.2)
   let U := r1.1
   let r2 ← prob_while (λ K : Bool × PNat => K.1) (DiscreteLaplaceSampleLoopIn2 1 1) (true,1)
   let V := r2.2 - 2
@@ -159,7 +201,7 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   return (B,Y)
 
 noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM Int := do
-  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => x.1 ∧ x.2 = 0)
+  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
   let Z : Int := if r.1 then - r.2 else r.2
   return Z
 
@@ -179,7 +221,7 @@ noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM Int
   let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
   let num := num^2
   let den := den^2
-  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => ¬ x.2)
+  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
   return r.1
 
 -- Trying out reasoning

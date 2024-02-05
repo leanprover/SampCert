@@ -18,7 +18,7 @@ def compileBind (e : Expression) : MetaM Expression := do
 
 def compileProbUntil (e : Expression) : MetaM Expression := do
   match e with
-  | .prob_until body cond => return .prob_while cond body body
+  | .prob_until body (.lam n cond) => return .prob_while (.lam n (.unop .negation cond)) body body
   | e => return e
 
 def subst (param : String) (arg : Expression) (e : Expression) : MetaM Expression := do
