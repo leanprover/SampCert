@@ -1,4 +1,4 @@
-import SampCert.Foundations.Distributions
+import SampCert.Foundations.Basic
 
 open Pmf
 
