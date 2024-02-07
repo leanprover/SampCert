@@ -1,7 +1,7 @@
 import Mirror.Export
 import Mirror.Align
 import Mirror.Print
-import Mirror.H2iiiiiii
+import Mirror.Distributions
 import Mirror.Inline
 
 attribute [export_dafny] UniformSample

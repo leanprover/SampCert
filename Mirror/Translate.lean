@@ -1,7 +1,7 @@
 import Lean
 import Mirror.IR
 import Mirror.Extension
-import Mirror.H2iiiiiii
+import Mirror.Distributions
 
 /-
 
@@ -84,7 +84,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``ite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[3]!) (← toDafnyExpr dname env args[4]!)
       | ``dite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[3]!)) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[4]!))
       | ``throwThe => return .throw (← toDafnyExpr dname env args[4]!)
-      | ``prob_while => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
+      | ``prob_while => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[4]!)
       | ``prob_until => return .prob_until (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
       | ``OfNat.ofNat => toDafnyExpr dname env args[1]!
       | ``HAdd.hAdd => return .binop .addition (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
