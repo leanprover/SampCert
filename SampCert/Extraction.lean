@@ -2,7 +2,11 @@ import SampCert.Extractor.Export
 import SampCert.Extractor.Align
 import SampCert.Extractor.Print
 import SampCert.Extractor.Inline
-import SampCert.Foundations.Distributions
+import SampCert.Samplers.Uniform
+import SampCert.Samplers.Bernoulli
+import SampCert.Samplers.BernoulliNegativeExponential
+import SampCert.Samplers.Laplace
+import SampCert.Samplers.Gaussian
 
 attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample
