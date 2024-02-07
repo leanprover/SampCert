@@ -16,9 +16,9 @@ noncomputable def UniformPowerOfTwoSample (n : PNat) : RandomM Nat :=
 
 @[simp]
 theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) :
-  x ∈ (UniformPowerOfTwoSample n).support →
+  --x ∈ (UniformPowerOfTwoSample n).support →
   (UniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
-  intro SUPPORT
+  --intro SUPPORT
   simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, bind_apply, uniformOfFintype_apply,
     Fintype.card_fin, cast_pow, cast_ofNat, pure_apply, one_div]
   simp only [CoeT.coe, CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe]
@@ -29,7 +29,7 @@ theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) :
   -- rw [tsum_fintype]
   sorry
 
-@[simp]
-theorem UniformPowerOfTwoSample_double_apply (n : PNat) (x : Nat) :
-  --x ∈ (UniformPowerOfTwoSample (2 * n)).support →
-  (UniformPowerOfTwoSample (2 * n)) x = 1 / n := sorry
+-- @[simp]
+-- theorem UniformPowerOfTwoSample_double_apply (n : PNat) (x : Nat) :
+--   --x ∈ (UniformPowerOfTwoSample (2 * n)).support →
+--   (UniformPowerOfTwoSample (2 * n)) x = 1 / n := sorry

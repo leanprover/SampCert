@@ -14,12 +14,13 @@ noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
   return d < num
 
 -- #check Finset.filter_gt_eq_Iio
-theorem BernoulliSampleCorrect (num : Nat) (den : PNat) :
+theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
   BernoulliSample num den true = num / den := by
   unfold BernoulliSample
-  rw [UniformSampleCorrect]
   simp
-  rw [tsum_fintype]
-  --rw [sum_ite]
-  --simp
-  sorry
+  conv =>
+    left
+    right
+    intro a
+    rw [UniformSample_apply _ _ sorry]
+  sorry -- looks good
