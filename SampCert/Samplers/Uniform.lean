@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Foundations.Basic
 
-open Pmf
+open PMF
 
 noncomputable def UniformSample (n : PNat) : RandomM Nat := do
   let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n) sorry

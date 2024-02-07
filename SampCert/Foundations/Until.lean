@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Foundations.While
 
-open Pmf
+open PMF
 
 variable {T : Type} [MeasurableSpace T]
 

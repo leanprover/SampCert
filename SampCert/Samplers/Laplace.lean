@@ -9,7 +9,7 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 
-open Pmf Nat
+open PMF Nat
 
 noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM (Nat × Bool) := do
   let U ← UniformSample t

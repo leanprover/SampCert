@@ -8,7 +8,7 @@ import SampCert.Foundations.Random
 import Mathlib.Probability.ProbabilityMassFunction.Uniform
 import Mathlib.Data.Nat.Log
 
-open Pmf Nat
+open PMF Nat
 
 -- Assumption: the Dafny version indeed has this spec
 noncomputable def UniformPowerOfTwoSample (n : PNat) : RandomM Nat :=

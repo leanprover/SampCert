@@ -27,4 +27,4 @@ attribute [simp] CoeOut.coe
 
 variable {T : Type} [MeasurableSpace T]
 
-abbrev RandomM (T : Type) := Pmf T
+abbrev RandomM (T : Type) := PMF T

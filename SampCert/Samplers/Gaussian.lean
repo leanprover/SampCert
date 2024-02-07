@@ -10,7 +10,7 @@ import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
 
-open Pmf Nat
+open PMF Nat
 
 noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int × Bool) := do
   let Y : Int ← DiscreteLaplaceSample t 1
@@ -21,7 +21,7 @@ noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int �
   return (Y,C)
 
 theorem Add1 (n : Nat) : 0 < n + 1 := by
-  simp only [add_pos_iff, or_true]
+  simp only [add_pos_iff, zero_lt_one, or_true]
 
 noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM Int := do
   let ti : Nat := floor (num.val / den)

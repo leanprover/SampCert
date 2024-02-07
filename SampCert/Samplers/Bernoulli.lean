@@ -7,7 +7,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 
-open Pmf
+open PMF
 
 noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
   let d ← UniformSample den
@@ -16,7 +16,6 @@ noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
 -- #check Finset.filter_gt_eq_Iio
 theorem BernoulliSampleCorrect (num : Nat) (den : PNat) :
   BernoulliSample num den true = num / den := by
-  simp
   unfold BernoulliSample
   rw [UniformSampleCorrect]
   simp

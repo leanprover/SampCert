@@ -8,7 +8,7 @@ import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 
-open Pmf Nat
+open PMF Nat
 
 noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (state : (Bool × PNat)) : RandomM (Bool × PNat) := do
   let A ← BernoulliSample num (state.2 * den)
