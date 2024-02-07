@@ -18,7 +18,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   unfold UniformSample
   simp
   split
-  . sorry -- looks good, need to learn how to work with summation
+  . sorry
   . contradiction
 
 

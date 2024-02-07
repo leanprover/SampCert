@@ -7,13 +7,12 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 
-open PMF
+open PMF Finset
 
 noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
   let d ← UniformSample den
   return d < num
 
--- #check Finset.filter_gt_eq_Iio
 theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
   BernoulliSample num den true = num / den := by
   unfold BernoulliSample
@@ -23,4 +22,7 @@ theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
     right
     intro a
     rw [UniformSample_apply _ _ sorry]
-  sorry -- looks good
+  have H := sum_simple num (1 / ↑↑den)
+  have H2 : 1 / (den : ENNReal) * (num : ENNReal) = num / den := sorry
+  rw [H2] at H
+  rw [← H]
