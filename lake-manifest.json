@@ -10,14 +10,6 @@
     "inputRev?": "1bda3b46774ca7d204e632781b92c31e32828e89",
     "inherited": false}},
   {"git":
-   {"url": "https://github.com/RemyDegenne/kolmogorov_extension4.git",
-    "subDir?": null,
-    "rev": "183d5b2dfa9ab01c5b22d7ebf69112aa73df2727",
-    "opts": {},
-    "name": "kolmogorov_extension4",
-    "inputRev?": "183d5b2dfa9ab01c5b22d7ebf69112aa73df2727",
-    "inherited": false}},
-  {"git":
    {"url": "https://github.com/mhuisi/lean4-cli.git",
     "subDir?": null,
     "rev": "21dac2e9cc7e3cf7da5800814787b833e680b2fd",
