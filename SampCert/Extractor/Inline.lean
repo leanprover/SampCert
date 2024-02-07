@@ -1,5 +1,5 @@
 import Lean
-import SampCert.Extension
+import SampCert.Extractor.Extension
 
 namespace Lean.ToDafny
 

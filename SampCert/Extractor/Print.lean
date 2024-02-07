@@ -1,5 +1,5 @@
 import Lean
-import SampCert.Extension
+import SampCert.Extractor.Extension
 
 open System IO.FS
 

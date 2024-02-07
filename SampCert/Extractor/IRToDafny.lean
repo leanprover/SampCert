@@ -1,7 +1,7 @@
 import Lean
-import SampCert.IR
-import SampCert.Dafny
-import SampCert.Extension
+import SampCert.Extractor.IR
+import SampCert.Extractor.Dafny
+import SampCert.Extractor.Extension
 
 namespace Lean.ToDafny
 

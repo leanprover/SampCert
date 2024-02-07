@@ -1,8 +1,8 @@
-import SampCert.Export
-import SampCert.Align
-import SampCert.Print
-import SampCert.Distributions
-import SampCert.Inline
+import SampCert.Extractor.Export
+import SampCert.Extractor.Align
+import SampCert.Extractor.Print
+import SampCert.Extractor.Inline
+import SampCert.Foundations.Distributions
 
 attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample

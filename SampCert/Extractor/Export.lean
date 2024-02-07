@@ -1,6 +1,6 @@
 import Lean
-import SampCert.Translate
-import SampCert.IRToDafny
+import SampCert.Extractor.Translate
+import SampCert.Extractor.IRToDafny
 
 namespace Lean.ToDafny
 

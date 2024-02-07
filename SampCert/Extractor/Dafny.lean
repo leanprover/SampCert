@@ -1,5 +1,5 @@
 
-import SampCert.IR
+import SampCert.Extractor.IR
 
 namespace Lean.ToDafny
 

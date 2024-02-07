@@ -1,7 +1,7 @@
 import Lean
-import SampCert.IR
-import SampCert.Extension
-import SampCert.Distributions
+import SampCert.Extractor.IR
+import SampCert.Extractor.Extension
+import SampCert.Foundations.Distributions
 
 /-
 
