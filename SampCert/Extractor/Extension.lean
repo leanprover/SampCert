@@ -1,28 +1,21 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jean-Baptiste Tristan
+-/
+
 import Lean
 import SampCert.Extractor.IR
 
 namespace Lean.ToDafny
 
 structure State where
-  /--
-  Mapping from Lean declaration name to Dafny declaration name.
-  In the future, we may want to extend it with additional information
-  (e.g., whether it is an infix operator or not, precedence, etc)
-  -/
   map : SMap Name String := {}
-  /--
-  Dafny exported declarations as an array of strings.
-  -/
   decls : List String := []
   inlines : List String := []
   glob : SMap Name RandomMDef := {}
   deriving Inhabited
 
-/--
-Apply `switch` to the `map` field.
-We use `switch` after we finalize the `import` process to instruct the value
-that it will not be used "linearly" anymore. This is just an optimization.
--/
 def State.switch (s : State) : State :=
   { s with map := s.map.switch }
 
@@ -40,11 +33,6 @@ def addEntry (s : State) (e : Entry) : State :=
   | .addInline name => { s with inlines := name.toString :: s.inlines }
   | .addFunc key val => { s with glob := s.glob.insert key val}
 
-/--
-Declare an environment extension to store the mapping from Lean declaration names to
-Dafny declaration names.
-Remark: the `initialize` commands are executed when the module is imported.
--/
 initialize extension : SimplePersistentEnvExtension Entry State ←
   registerSimplePersistentEnvExtension {
     addEntryFn    := addEntry

@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jean-Baptiste Tristan
+-/
+
 import Lean
 import SampCert.Extractor.IR
 import SampCert.Extractor.Extension
@@ -36,7 +42,6 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   | .const .. => throwError "toDafnyTyp: not supported -- constant {e}"
   | .app .. => (e.withApp fun fn args => do
       if let .const name .. := fn then
-      let info ← getConstInfo name
       match name with
       | ``Prod => return .prod (← toDafnyTyp args[0]!) (← toDafnyTyp args[1]!)
       | ``RandomM => return (← toDafnyTyp args[0]!)
@@ -45,7 +50,7 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
     )
   --toDafnyTyp arg
   | .lam .. => throwError "toDafnyTyp: not supported -- lambda abstraction {e}"
-  | .forallE _ domain range _ => throwError "toDafnyTyp: not supported -- pi {e}"
+  | .forallE .. => throwError "toDafnyTyp: not supported -- pi {e}"
   | .letE .. => throwError "toDafnyTyp: not supported -- let expressions {e}"
   | .lit .. => throwError "toDafnyTyp: not supported -- literals {e}"
   | .mdata .. => throwError "toDafnyTyp: not supported -- metadata {e}"

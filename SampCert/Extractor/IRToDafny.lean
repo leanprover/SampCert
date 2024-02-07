@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jean-Baptiste Tristan
+-/
+
 import Lean
 import SampCert.Extractor.IR
 import SampCert.Extractor.Dafny
@@ -52,8 +58,8 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   match e with
   | tr => throwError "toStatements: unexpected expression tr {e}"
   | fa => throwError "toStatements: unexpected expression fa {e}"
-  | num val => throwError "toStatements: unexpected expression num {e}"
-  | str s => throwError "toStatements: unexpected expression str {e}"
+  | num .. => throwError "toStatements: unexpected expression num {e}"
+  | str .. => throwError "toStatements: unexpected expression str {e}"
   | letb binder rhs (pure (name _)) => return [.assignment binder rhs]
   | pure .. => throwError "invariant violation: pure should appear in simple bind"
   | letb v (.prob_while (.lam state cond) rcomp init) body =>
@@ -88,13 +94,13 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
     -- condition needs to be substituted
     let s3 : Statement := .loop cond s2
     return [s1] ++ [s3]
-  | prob_while cond body init => throwError "toStatements: to do {e}"
-  | name n => throwError "toStatements: unexpected expression name {e}"
-  | unop op rhs => throwError "toStatements: unexpected expression unop {e}"
-  | binop op lhs rhs => throwError "toStatements: unexpected expression binop {e}"
-  | proj id idx => throwError "toStatements: unexpected expression proj {e}"
-  | pair left right => throwError "toStatements: unexpected expression pair {e}"
-  | monadic n args => throwError "toStatements: unexpected expression monadic {e}"
+  | prob_while .. => throwError "toStatements: to do {e}"
+  | name .. => throwError "toStatements: unexpected expression name {e}"
+  | unop .. => throwError "toStatements: unexpected expression unop {e}"
+  | binop .. => throwError "toStatements: unexpected expression binop {e}"
+  | proj .. => throwError "toStatements: unexpected expression proj {e}"
+  | pair .. => throwError "toStatements: unexpected expression pair {e}"
+  | monadic .. => throwError "toStatements: unexpected expression monadic {e}"
 
 def Expression.pipeline (body : Expression) : MetaM Expression := do
   IO.println body.print
@@ -110,7 +116,6 @@ def Expression.pipeline (body : Expression) : MetaM Expression := do
 
 def CodeGen (pi : RandomMDef) : MetaM Method := do
   let body' ← pi.body.pipeline
-  --IO.println body'.print
   modifyEnv fun env => extension.addEntry env (.addFunc pi.name { pi with body := body' })
   return {
     name := pi.name,
