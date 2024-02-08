@@ -18,6 +18,7 @@ attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample
 --attribute [inline_RandomM] BernoulliExpNegSampleUnitLoop
 attribute [export_dafny] BernoulliExpNegSampleUnitLoop
+attribute [export_dafny] BernoulliExpNegSampleUnitAux
 attribute [export_dafny] BernoulliExpNegSampleUnit
 attribute [export_dafny] BernoulliExpNegSampleGenLoop
 attribute [export_dafny] BernoulliExpNegSample

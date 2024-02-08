@@ -7,6 +7,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
+import Mathlib.Data.Complex.Exponential
 
 open PMF Nat
 
@@ -14,10 +15,21 @@ noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (state 
   let A ← BernoulliSample num (state.2 * den)
   return (A, state.2 + 1)
 
-noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) : RandomM Bool := do
+noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) : RandomM Nat := do
   let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den) sorry (true,1)
-  let K : Nat := r.2
+  return r.2
+
+-- Should be constrained
+theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (n : Nat) (_ : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSampleUnitAux num den) n =
+  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := sorry
+
+noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) : RandomM Bool := do
+  let K ← BernoulliExpNegSampleUnitAux num den
   if K % 2 = 0 then return true else return false
+
+theorem BernoulliExpNegSampleUnit_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSampleUnit num den) true = ENNReal.ofReal (Real.exp (-γ)) := sorry
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
@@ -39,3 +51,6 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
          let X ← BernoulliExpNegSampleUnit num den
          return X
     else return false
+
+theorem BernoulliExpNegSample_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (-γ)) := sorry

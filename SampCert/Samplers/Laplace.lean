@@ -9,7 +9,7 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 
-open PMF Nat
+open PMF Nat Real
 
 noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM (Nat × Bool) := do
   let U ← UniformSample t
@@ -30,7 +30,10 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let B ← BernoulliSample 1 2
   return (B,Y)
 
-noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM Int := do
+noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0)) sorry
   let Z : Int := if r.1 then - r.2 else r.2
   return Z
+
+theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (_ : t = (num : ℝ) / (den : ℝ)) :
+  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := sorry
