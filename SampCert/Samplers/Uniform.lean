@@ -5,12 +5,21 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
+import Mathlib.Data.ENNReal.Basic
 
-open PMF Classical Finset
+open PMF Classical Finset Nat ENNReal
 
 noncomputable def UniformSample (n : PNat) : RandomM Nat := do
   let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n) sorry
   return r
+
+theorem rw1 (n : PNat) :
+   (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
+   = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
+  simp
+
+theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) := by
+  simp
 
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
@@ -18,7 +27,12 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   unfold UniformSample
   simp
   split
-  . sorry
+  . rw [rw1 n]
+    rw [rw2 n]
+    have H := div_mul_eq_div_mul_one_div (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹) : NNReal) (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹) : NNReal) (n : NNReal)
+    congr
+    rw [H]
+    simp
   . contradiction
 
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
@@ -28,25 +42,3 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   rw [UniformSample_apply]
   exact Nat.lt_of_lt_of_le i2 i1
   trivial
-
--- theorem UniformSampleCorrect (n : PNat) :
---   UniformSample n = uniformOfFintype (Fin n) := by
---   ext x
---   unfold UniformSample
---   simp
---   -- rw [prob_until_apply (UniformPowerOfTwoSample (2 * n)) (fun x => decide (x < PNat.val (2 * n))) sorry]
---   -- simp
---   -- unfold UniformPowerOfTwoSample
---   -- unfold UniformPowerOfTwoSample'
---   -- simp
---   -- rw [tsum_fintype]
---   -- rw [tsum_fintype]
---   -- rw [tsum_fintype]
---   -- -- conv =>
---   -- --   left
---   -- --   left
---   -- --   right
---   -- --   intro b
---   -- --   simp
---   -- --   rw [uniformOfFintype_apply]
---   sorry
