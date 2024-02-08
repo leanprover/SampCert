@@ -22,6 +22,21 @@ theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) 
   simp
 
 @[simp]
+theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
+  x < 2 ^ (log 2 ↑(2 * n)) := sorry
+
+@[simp]
+theorem rw_ite (n : PNat) (x : Nat) :
+  (if x < n then (UniformPowerOfTwoSample (2 * n)) x else 0)
+  = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
+  split
+  rw [UniformPowerOfTwoSample_apply]
+  simp
+  apply double_large_enough
+  trivial
+  trivial
+
+@[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
   unfold UniformSample
