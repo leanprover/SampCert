@@ -21,6 +21,13 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   . sorry
   . contradiction
 
+theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
+  (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by
+  split
+  rename_i i2
+  rw [UniformSample_apply]
+  exact Nat.lt_of_lt_of_le i2 i1
+  trivial
 
 -- theorem UniformSampleCorrect (n : PNat) :
 --   UniformSample n = uniformOfFintype (Fin n) := by
