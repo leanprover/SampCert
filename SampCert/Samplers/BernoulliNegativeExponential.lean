@@ -19,7 +19,7 @@ noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) : Random
   let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den) sorry (true,1)
   return r.2
 
--- Should be constrained
+@[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (n : Nat) (_ : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnitAux num den) n =
   ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := sorry
@@ -28,6 +28,7 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) : RandomM B
   let K ← BernoulliExpNegSampleUnitAux num den
   if K % 2 = 0 then return true else return false
 
+@[simp]
 theorem BernoulliExpNegSampleUnit_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnit num den) true = ENNReal.ofReal (Real.exp (-γ)) := sorry
 
@@ -52,5 +53,6 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
          return X
     else return false
 
+@[simp]
 theorem BernoulliExpNegSample_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (-γ)) := sorry

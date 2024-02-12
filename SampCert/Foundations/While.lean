@@ -7,7 +7,9 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Foundations.Random
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
-open PMF Nat Classical
+open PMF Nat Classical ENNReal
+
+variable {T}
 
 noncomputable def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T) : T → ENNReal :=
   match n with
@@ -33,14 +35,37 @@ theorem termination_01_simple (cond : T → Bool) (body : T → RandomM T) :
   (forall init : T, cond init → PMF.map cond (body init) false > 0) →
   terminates cond body := sorry
 
-noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T)(h : terminates cond body) (a : T) : RandomM T :=
+noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) : RandomM T :=
   ⟨ prob_while' cond body a , h a ⟩
 
-theorem prob_while_reduction (P : (T → ENNReal) → Prop) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
-  (∀ n : ℕ, forall t : T, t ∈ (prob_while_cut cond body n a).support → ¬ cond t → P (prob_while_cut cond body n a)) →
-  P (prob_while' cond body a) := sorry
+noncomputable def whileC (cond : T → Bool) (body : T → RandomM T) : T → RandomM T := sorry
 
-theorem prob_while_rule (P : RandomM T -> Prop) (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) :
-  (¬ cond a → P (PMF.pure a)) →
-  (forall whil : RandomM T, P whil → forall t : T, t ∈ whil.support → ¬ cond t → P (body t)) →
-  P (prob_while cond body h a) := sorry
+-- theorem prob_while_reduction (P : (T → ENNReal) → Prop) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
+--   (∀ n : ℕ, forall t : T, t ∈ (prob_while_cut cond body n a).support → ¬ cond t → P (prob_while_cut cond body n a)) →
+--   P (prob_while' cond body a) := sorry
+
+-- theorem prob_while_reduction' (P : T → Prop) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
+--   (∀ n : ℕ, ∀ t ∈ (prob_while_cut cond body n a).support, ¬ cond t → P t) →
+--   ∀ t ∈ (prob_while cond body h a).support, P t := sorry
+
+-- theorem prob_while_reduction_quant (P : T → Prop) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) (t : T) :
+--   (∀ n : ℕ, t ∈ (prob_while_cut cond body n a).support → ¬ cond t → P t) →
+--   t ∈ (prob_while cond body h a).support → P t := sorry
+
+-- theorem prob_while_reduction'' (pmf : PMF T) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
+--   (∀ n : ℕ, ∀ t : T, ¬ cond t → (prob_while_cut cond body n a) t = pmf t) →
+--   ∀ t : T, (prob_while cond body h a) t = pmf t := sorry
+
+-- theorem prob_while_reduction''' (pmf : PMF T) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
+--   (∀ n : ℕ, ∀ t : T, ¬ cond t → f = prob_while_cut cond body n a -> (hf0 : tsum f ≠ 0) → (hf : tsum f ≠ ∞) → normalize f hf0 hf t = pmf t) →
+--   ∀ t : T, (prob_while cond body h a) t = pmf t := sorry
+
+-- theorem prob_while_rule (P : RandomM T -> Prop) (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) :
+--   (¬ cond a → P (PMF.pure a)) →
+--   (forall whil : RandomM T, P whil → forall t : T, t ∈ whil.support → ¬ cond t → P (body t)) →
+--   P (prob_while cond body h a) := sorry
+
+-- theorem prob_while_rule' (f : T -> ENNReal) (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) (x : T) :
+--   (¬ cond a → (PMF.pure a)) →
+--   (forall whil : RandomM T, P whil → forall t : T, t ∈ whil.support → ¬ cond t → P (body t)) →
+--   (prob_while cond body h a) x = f x := sorry

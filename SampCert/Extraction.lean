@@ -23,8 +23,10 @@ attribute [export_dafny] BernoulliExpNegSampleUnit
 attribute [export_dafny] BernoulliExpNegSampleGenLoop
 attribute [export_dafny] BernoulliExpNegSample
 --attribute [inline_RandomM] DiscreteLaplaceSampleLoopIn1
+attribute [export_dafny] DiscreteLaplaceSampleLoopIn1Aux
 attribute [export_dafny] DiscreteLaplaceSampleLoopIn1
 --attribute [inline_RandomM] DiscreteLaplaceSampleLoopIn2
+attribute [export_dafny] DiscreteLaplaceSampleLoopIn2Aux
 attribute [export_dafny] DiscreteLaplaceSampleLoopIn2
 --attribute [inline_RandomM] DiscreteLaplaceSampleLoop
 attribute [export_dafny] DiscreteLaplaceSampleLoop

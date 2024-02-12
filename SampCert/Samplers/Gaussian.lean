@@ -31,6 +31,7 @@ noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ
   let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2) sorry
   return r.1
 
+@[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) (_ : σ = (num : ℝ) / (den : ℝ)) :
   (DiscreteGaussianSample num den) x =
   ENNReal.ofReal ((exp (- x^2 / (2 * σ^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * σ^2)))) := sorry
