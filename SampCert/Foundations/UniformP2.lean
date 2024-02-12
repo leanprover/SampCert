@@ -8,14 +8,15 @@ import SampCert.Foundations.Random
 import Mathlib.Probability.ProbabilityMassFunction.Uniform
 import Mathlib.Data.Nat.Log
 import SampCert.Foundations.Util
+import SampCert.Foundations.SubPMF
 
 
 
-open Nat PMF Classical
+open Nat Classical SubPMF PMF
 -- Assumption: the Dafny version indeed has this spec
 
 noncomputable def UniformPowerOfTwoSample (n : PNat) : RandomM Nat :=
-  uniformOfFintype (Fin (2 ^ (log 2 n)))
+  toSubPMF (uniformOfFintype (Fin (2 ^ (log 2 n))))
 
 @[simp]
 theorem test1 (b x : ℕ) :

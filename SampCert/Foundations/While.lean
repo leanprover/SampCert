@@ -5,40 +5,106 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Random
+import SampCert.Foundations.SubPMF
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
-open PMF Nat Classical ENNReal
+noncomputable section
+
+open SubPMF Nat Classical ENNReal OrderHom PMF
+
+instance wcpo : OmegaCompletePartialOrder (T → SubPMF T) := sorry
 
 variable {T}
 
-noncomputable def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T) : T → ENNReal :=
+def WhileFunctional (cond : T → Bool) (body : T → RandomM T) (wh : T → RandomM T) : T → RandomM T :=
+  λ a : T =>
+  if cond a
+    then do
+      let v ← body a
+      wh v
+    else return a
+
+def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T) : RandomM T :=
   match n with
-  | zero => λ x : T => 0
-  | succ n =>
-    if cond a
-    then λ x : T => ∑' c, (body a c) * (prob_while_cut cond body n c) x
-    else λ x : T => if x = a then 1 else 0
+  | Nat.zero => zero
+  | succ n => WhileFunctional cond body (prob_while_cut cond body n) a
+
+def WhileFunctional2 (cond : T → Bool) (body : T → RandomM T) (wh : RandomM T) : RandomM T := do
+  let v ← wh
+  if cond v then body v else return v
+
+def prob_while_cut2 (cond : T → Bool) (body : T → RandomM T)  (n : Nat) (a : T)  : RandomM T :=
+  match n with
+  | Nat.zero => zero
+  | succ n => WhileFunctional2 cond body (prob_while_cut2 cond body n a)
 
 theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :
   Monotone (fun n : Nat => prob_while_cut cond body n init x) := sorry
 
+theorem prob_while_cut_monotonic2 (cond : T → Bool) (body : T → RandomM T) :
+  Monotone (WhileFunctional2 cond body) := sorry
+
+theorem prob_while_cut_monotonic2' (cond : T → Bool) (body : T → RandomM T) :
+  Monotone (fun n : Nat => prob_while_cut2 cond body n) := sorry
+
+instance myf (cond : T → Bool) (body : T → RandomM T) : OrderHom ℕ (T → SubPMF T) where
+  toFun := prob_while_cut2 cond body
+  monotone' := prob_while_cut_monotonic2' cond body
+
+def myf2 (cond : T → Bool) (body : T → RandomM T) : @OmegaCompletePartialOrder.Chain (T → SubPMF T) (@PartialOrder.toPreorder (T → SubPMF T) (@OmegaCompletePartialOrder.toPartialOrder (T → SubPMF T) wcpo))  := sorry
+
 def plop1 (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :=
   tendsto_atTop_iSup (prob_while_cut_monotonic cond body init x)
 
-noncomputable def prob_while' (cond : T → Bool) (body : T → RandomM T) (init : T) : T → ENNReal :=
+def prob_while' (cond : T → Bool) (body : T → RandomM T) (init : T) : T → ENNReal :=
   fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x)
+
+def prob_while2' (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
+  ⟨fun x => ⨆ (i : ℕ), (prob_while_cut2 cond body i init x), sorry⟩
 
 def terminates (cond : T → Bool) (body : T → RandomM T) : Prop :=
   forall init : T, HasSum (prob_while' cond body init) 1
 
-theorem termination_01_simple (cond : T → Bool) (body : T → RandomM T) :
-  (forall init : T, cond init → PMF.map cond (body init) false > 0) →
-  terminates cond body := sorry
+-- theorem termination_01_simple (cond : T → Bool) (body : T → RandomM T) :
+--   (forall init : T, cond init → PMF.map cond (body init) false > 0) →
+--   terminates cond body := sorry
 
-noncomputable def prob_while (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) : RandomM T :=
-  ⟨ prob_while' cond body a , h a ⟩
+def prob_while_experiment (cond : T → Bool) (body : T → RandomM T) : T → RandomM T :=
+  wcpo.ωSup (myf2 cond body)
 
-noncomputable def whileC (cond : T → Bool) (body : T → RandomM T) : T → RandomM T := sorry
+def prob_while (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) : RandomM T :=
+  ⟨ prob_while' cond body a , sorry ⟩
+
+theorem whileC (Φ : RandomM T → Prop) (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  Φ SubPMF.zero →
+  (∀ wh : (RandomM T), Φ wh → Φ (WhileFunctional2 cond body wh)) →
+  Φ (prob_while2' cond body init) := sorry
+
+theorem test_pre : (1 : ENNReal) / 2 ≤ 1 := sorry
+def test_cond (b : Bool) : Bool := ¬ b
+def test_body (_ : Bool) : RandomM Bool := bernoulli (1/2) test_pre
+
+def test_prop (p : SubPMF Bool) : Prop := p true = 1
+
+theorem test_apply :
+  test_prop (prob_while2' test_cond test_body false) := by
+  apply whileC test_prop test_cond test_body
+  . sorry -- bogus, shoudl talk about what is actually in the supprt
+  . intro wh
+    unfold test_prop
+    intro H
+    unfold WhileFunctional2
+    simp
+    rw [tsum_fintype]
+    simp
+    rw [H]
+    have H2 : wh false = 0 := sorry
+    rw [H2]
+    simp
+    unfold test_cond
+    simp
+
+
 
 -- theorem prob_while_reduction (P : (T → ENNReal) → Prop) (cond : T → Bool) (body : T → PMF T) (h : terminates cond body) (a : T) :
 --   (∀ n : ℕ, forall t : T, t ∈ (prob_while_cut cond body n a).support → ¬ cond t → P (prob_while_cut cond body n a)) →

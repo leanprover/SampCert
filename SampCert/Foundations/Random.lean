@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import Mathlib.Probability.ProbabilityMassFunction.Basic
+import SampCert.Foundations.SubPMF
 
 open MeasurableSpace
 
@@ -27,4 +27,4 @@ attribute [simp] CoeOut.coe
 
 variable {T : Type} [MeasurableSpace T]
 
-abbrev RandomM (T : Type) := PMF T
+abbrev RandomM (T : Type) := SubPMF T
