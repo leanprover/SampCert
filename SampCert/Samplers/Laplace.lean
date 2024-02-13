@@ -20,12 +20,12 @@ noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM Nat := do
   let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1Aux t) (λ x : Nat × Bool => x.2) sorry
   return r1.1
 
-noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat) (K : Bool × PNat) : RandomM (Bool × PNat) := do
-  let A ← BernoulliExpNegSampleUnit num den
+noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat) (wf : num ≤ den) (K : Bool × PNat) : RandomM (Bool × PNat) := do
+  let A ← BernoulliExpNegSampleUnit num den wf
   return (A, K.2 + 1)
 
 noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : RandomM PNat := do
-  let r2 ← prob_while (λ K : Bool × PNat => K.1) (DiscreteLaplaceSampleLoopIn2Aux 1 1) sorry (true,1)
+  let r2 ← prob_while (λ K : Bool × PNat => K.1) (DiscreteLaplaceSampleLoopIn2Aux 1 1 (le_refl 1)) sorry (true,1)
   return r2.2
 
 noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
@@ -34,7 +34,7 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let V := v - 2
   let X := U + num * V
   let Y := floor (X / den)
-  let B ← BernoulliSample 1 2
+  let B ← BernoulliSample 1 2 sorry
   return (B,Y)
 
 noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do

@@ -9,12 +9,12 @@ import SampCert.Samplers.Uniform
 
 open PMF
 
-noncomputable def BernoulliSample (num : Nat) (den : PNat) : RandomM Bool := do
+noncomputable def BernoulliSample (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let d ← UniformSample den
   return d < num
 
 theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
-  BernoulliSample num den true = num / den := by
+  BernoulliSample num den wf true = num / den := by
   unfold BernoulliSample
   simp
   conv =>

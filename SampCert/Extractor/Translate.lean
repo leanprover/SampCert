@@ -23,11 +23,12 @@ import SampCert.Foundations.Basic
 
 namespace Lean.ToDafny
 
-def IsWFMonadic (e: Expr) : Bool :=
+def IsWFMonadic (e: Expr) : MetaM Bool :=
   match e with
-  | .app (.const ``RandomM ..) _ => true
+  | .app (.const ``RandomM ..) _ => return true
+  | .app .. => return true -- Need to work out details of this one, related to translation of dependent types
   | .forallE _ _ range _ => IsWFMonadic range
-  | _ => false
+  | _ => throwError "IsWFMonadic {e}"
 
 partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   match e with
@@ -45,10 +46,10 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
       match name with
       | ``Prod => return .prod (← toDafnyTyp args[0]!) (← toDafnyTyp args[1]!)
       | ``RandomM => return (← toDafnyTyp args[0]!)
+      | ``LE.le => return .dle
       | _ => throwError "Type conversion failure {fn} --- {args}"
       else throwError "toDafnyExpr: OOL {fn} {args}"
     )
-  --toDafnyTyp arg
   | .lam .. => throwError "toDafnyTyp: not supported -- lambda abstraction {e}"
   | .forallE .. => throwError "toDafnyTyp: not supported -- pi {e}"
   | .letE .. => throwError "toDafnyTyp: not supported -- let expressions {e}"
@@ -124,11 +125,21 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``PNat.val => toDafnyExpr dname env args[0]!
       | ``Subtype.mk => toDafnyExpr dname env args[2]!
       | _ =>
-        if IsWFMonadic info.type
+        if ← IsWFMonadic info.type
         then
-          let args' ← args.mapM (toDafnyExpr dname env)
-          return .monadic name.toString args'.toList
-        else throwError "toDafnyExpr: not supported -- application of {fn} to {args}"
+          let st : State := extension.getState (← getEnv)
+          if let some defn := st.glob.find? name.toString
+          then
+            -- Translate only arguments that correspond to non-dependent types
+            let args1 := defn.inParamType.zip args.toList
+            let args2 := args1.filter (λ (x,_) => x ≠ .dle)
+            let args3 := args2.map (λ (_,y) => y)
+            let args' ← args3.mapM (toDafnyExpr dname env)
+            return .monadic name.toString args'
+          else
+            let args' ← args.mapM (toDafnyExpr dname env)
+            return .monadic name.toString args'.toList
+        else throwError "toDafnyExpr: not supported -- application of {fn} to {args}, info.type {info.type}"
       else if let .bvar i := fn
           -- Coin...
            then return .monadic dname [(← toDafnyExpr dname env args[0]!)]
@@ -177,7 +188,7 @@ def toDafnyRandomMDefIn (declName: Name) : MetaM RandomMDef := do
   let info ← getConstInfo declName
   match info with
     | ConstantInfo.defnInfo _ =>
-      if IsWFMonadic info.type then
+      if ← IsWFMonadic info.type then
         let (inParamTyp, outParamTyp) ← toDafnyTypTop info.type
         let (inParam, body) ←  toDafnyExprTop declName.toString (List.length inParamTyp) [] info.value!
         let defn := RandomMDef.mk (declName.toString) inParamTyp outParamTyp inParam body

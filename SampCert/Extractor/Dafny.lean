@@ -60,8 +60,13 @@ def sjoin (s : List Statement) (depth: Nat) : String :=
 end
 
 def Method.print (m : Method) : String :=
-  (indent 2) ++ s!"method \{:verify false} {m.name} ({printArgs m.inParam m.inParamType})\n" ++
+  let method_args := m.inParam.zip m.inParamType
+  let method_args := method_args.filter (λ (_,y) => y ≠ .dle)
+  let method_args := method_args.unzip
+  let method_requires := m.inParamType.filter (λ x => x = .dle)
+  (indent 2) ++ s!"method \{:verify false} {m.name} ({printArgs method_args.1 method_args.2})\n" ++
   (indent 3) ++ s!"returns (o: {m.outParamType.print})\n" ++
+  printRequires method_requires (indent 3) ++
   (indent 3) ++ s!"modifies this\n" ++
   (indent 3) ++ s!"decreases *\n" ++
   (indent 2) ++ s!"\{\n{sjoin m.body 3}" ++

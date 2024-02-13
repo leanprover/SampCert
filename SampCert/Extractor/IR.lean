@@ -14,6 +14,7 @@ inductive Typ where
   | nat
   | pos
   | prod (left right : Typ)
+  | dle
   deriving DecidableEq
 
 inductive UnOp where
@@ -85,6 +86,7 @@ def Typ.print (t : Typ): String :=
   | nat => "nat"
   | pos => "pos"
   | prod t1 t2 => s!"({t1.print},{t2.print})"
+  | dle => "num <= den"
 
 def UnOp.print (o : UnOp) : String :=
   match o with
@@ -151,7 +153,15 @@ def printArgs (names : List String) (types : List Typ) : String :=
   | name :: names, typ :: types =>
     let res : String := printArgs names types
     s!"{name}: {typ.print}, " ++ res
-  | _, _ => "wouwouwouw"
+  | _, _ => "printArgs: list of names and types mismatch"
+
+def printRequires (types : List Typ) (indent : String) : String :=
+  match types with
+  | [] => ""
+  | typ :: [] => indent ++ s!"requires num <= den \n"
+  | typ :: types =>
+    indent ++ s!"requires num <= den \n" ++
+    printRequires types indent
 
 def RandomMDef.print (m : RandomMDef) : String :=
   s!"method {m.name}({printArgs m.inParam m.inParamType}) : returns ({m.outParamType.print}) \n {m.body.print} \n "
