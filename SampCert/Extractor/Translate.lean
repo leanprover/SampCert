@@ -53,8 +53,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
       match name with
       | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
       | ``RandomM => return (← toDafnyTyp env args[0]!)
-      | ``LE.le => return .dependent .tr
-      | _ => throwError "Type conversion failure {fn} --- {args}"
+      | _ => return .dependent (← toDafnyExpr "dummycalledfromtoDafnyTyp" env e)
       else throwError "toDafnyExpr: OOL {fn} {args}"
     )
   | .lam .. => throwError "toDafnyTyp: not supported -- lambda abstraction {e}"
@@ -148,13 +147,14 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
 
 end
 
-def toDafnyTypTop (e: Expr) : MetaM ((List Typ) × Typ) := do
+def toDafnyTypTop (env : List String) (e: Expr) : MetaM ((List Typ) × Typ) := do
   match e with
   | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
   | (.app (.const ``RandomM ..) arg) => return ([],← toDafnyTyp [] arg)
-  | .forallE _ domain range _ =>
-    let r ← toDafnyTypTop range
-    return ((← toDafnyTyp [] domain) :: r.1 , r.2)
+  | .forallE binder domain range _ =>
+    let nenv := binder.toString :: env
+    let r ← toDafnyTypTop nenv range
+    return ((← toDafnyTyp env domain) :: r.1 , r.2)
   | _ => throwError "toDafnyTypTop: error"
 
 partial def toDafnyExprTop (dname : String) (num_args : Nat) (names : List String) (e : Expr) : MetaM (List String × Expression) := do
@@ -193,7 +193,7 @@ def toDafnyRandomMDefIn (declName: Name) : MetaM RandomMDef := do
   match info with
     | ConstantInfo.defnInfo _ =>
       if ← IsWFMonadic info.type then
-        let (inParamTyp, outParamTyp) ← toDafnyTypTop info.type
+        let (inParamTyp, outParamTyp) ← toDafnyTypTop [] info.type
         let (inParam, body) ←  toDafnyExprTop declName.toString (List.length inParamTyp) [] info.value!
         let defn := RandomMDef.mk (declName.toString) inParamTyp outParamTyp inParam body
         return defn
