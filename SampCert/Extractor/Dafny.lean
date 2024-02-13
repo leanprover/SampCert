@@ -60,7 +60,7 @@ def sjoin (s : List Statement) (depth: Nat) : String :=
 end
 
 def Method.print (m : Method) : String :=
-  (indent 2) ++ s!"method {m.name} ({printArgs m.inParam m.inParamType})\n" ++
+  (indent 2) ++ s!"method \{:verify false} {m.name} ({printArgs m.inParam m.inParamType})\n" ++
   (indent 3) ++ s!"returns (o: {m.outParamType.print})\n" ++
   (indent 3) ++ s!"modifies this\n" ++
   (indent 3) ++ s!"decreases *\n" ++
