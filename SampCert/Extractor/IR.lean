@@ -45,7 +45,7 @@ inductive Typ where
   | nat
   | pos
   | prod (left right : Typ)
-  | dle
+  | dependent (e : Expression)
 
 inductive Expression where
   | tr
@@ -89,7 +89,7 @@ def Typ.print (t : Typ): String :=
   | nat => "nat"
   | pos => "pos"
   | prod t1 t2 => s!"({t1.print},{t2.print})"
-  | dle => "num <= den"
+  | dependent _ => "dependent"
 
 def UnOp.print (o : UnOp) : String :=
   match o with
@@ -161,10 +161,10 @@ def printArgs (names : List String) (types : List Typ) : String :=
 def printRequires (types : List Typ) (indent : String) : String :=
   match types with
   | [] => ""
-  | typ :: [] => indent ++ s!"requires num <= den \n"
-  | typ :: types =>
-    indent ++ s!"requires num <= den \n" ++
+  | .dependent e :: types =>
+    indent ++ s!"requires {e} \n" ++
     printRequires types indent
+  | _ => "printRequires: list of requires contains a non-dependent type"
 
 def RandomMDef.print (m : RandomMDef) : String :=
   s!"method {m.name}({printArgs m.inParam m.inParamType}) : returns ({m.outParamType.print}) \n {m.body.print} \n "

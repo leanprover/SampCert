@@ -61,9 +61,9 @@ end
 
 def Method.print (m : Method) : String :=
   let method_args := m.inParam.zip m.inParamType
-  let method_args := method_args.filter (λ (_,y) => match y with | .dle => false | _ => true)
+  let method_args := method_args.filter (λ (_,y) => match y with | .dependent _ => false | _ => true)
   let method_args := method_args.unzip
-  let method_requires := m.inParamType.filter (λ x => match x with | .dle => true | _ => false)
+  let method_requires := m.inParamType.filter (λ x => match x with | .dependent _ => true | _ => false)
   (indent 2) ++ s!"method \{:verify false} {m.name} ({printArgs method_args.1 method_args.2})\n" ++
   (indent 3) ++ s!"returns (o: {m.outParamType.print})\n" ++
   printRequires method_requires (indent 3) ++

@@ -53,7 +53,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
       match name with
       | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
       | ``RandomM => return (← toDafnyTyp env args[0]!)
-      | ``LE.le => return .dle
+      | ``LE.le => return .dependent .tr
       | _ => throwError "Type conversion failure {fn} --- {args}"
       else throwError "toDafnyExpr: OOL {fn} {args}"
     )
@@ -125,7 +125,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
           then
             -- Translate only arguments that correspond to non-dependent types
             let args1 := defn.inParamType.zip args.toList
-            let args2 := args1.filter (λ (x,_) => match x with | .dle => false | _ => true)
+            let args2 := args1.filter (λ (x,_) => match x with | .dependent _ => false | _ => true)
             let args3 := args2.map (λ (_,y) => y)
             let args' ← args3.mapM (toDafnyExpr dname env)
             return .monadic name.toString args'
