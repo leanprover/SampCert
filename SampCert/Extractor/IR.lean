@@ -8,15 +8,6 @@ import Lean
 
 namespace Lean.ToDafny
 
-inductive Typ where
-  | bool
-  | int
-  | nat
-  | pos
-  | prod (left right : Typ)
-  | dle
-  deriving DecidableEq
-
 inductive UnOp where
   | negation
   | minus
@@ -46,6 +37,16 @@ inductive BinOp where
   | mod
   deriving DecidableEq
 
+mutual
+
+inductive Typ where
+  | bool
+  | int
+  | nat
+  | pos
+  | prod (left right : Typ)
+  | dle
+
 inductive Expression where
   | tr
   | fa
@@ -65,6 +66,8 @@ inductive Expression where
   | proj (name : Expression) (idx : Nat)
   | pair (left right : Expression)
   | monadic (name : String) (arg : List Expression)
+
+end
 
 structure RandomMDef where
   name : String

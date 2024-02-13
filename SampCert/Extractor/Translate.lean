@@ -30,7 +30,14 @@ def IsWFMonadic (e: Expr) : MetaM Bool :=
   | .forallE _ _ range _ => IsWFMonadic range
   | _ => throwError "IsWFMonadic {e}"
 
-partial def toDafnyTyp (e : Expr) : MetaM Typ := do
+def chopLambda (e : Expr) : Expr :=
+  match e with
+  | .lam _ _ body _ => body
+  | _ => e
+
+mutual
+
+partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
   match e with
   | .bvar .. => throwError "toDafnyTyp: not supported -- bound variable {e}"
   | .fvar .. => throwError "toDafnyTyp: not supported -- free variable {e}"
@@ -44,8 +51,8 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   | .app .. => (e.withApp fun fn args => do
       if let .const name .. := fn then
       match name with
-      | ``Prod => return .prod (← toDafnyTyp args[0]!) (← toDafnyTyp args[1]!)
-      | ``RandomM => return (← toDafnyTyp args[0]!)
+      | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
+      | ``RandomM => return (← toDafnyTyp env args[0]!)
       | ``LE.le => return .dle
       | _ => throwError "Type conversion failure {fn} --- {args}"
       else throwError "toDafnyExpr: OOL {fn} {args}"
@@ -56,20 +63,6 @@ partial def toDafnyTyp (e : Expr) : MetaM Typ := do
   | .lit .. => throwError "toDafnyTyp: not supported -- literals {e}"
   | .mdata .. => throwError "toDafnyTyp: not supported -- metadata {e}"
   | .proj .. => throwError "toDafnyTyp: not supported -- projection {e}"
-
-def toDafnyTypTop (e: Expr) : MetaM ((List Typ) × Typ) := do
-  match e with
-  | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
-  | (.app (.const ``RandomM ..) arg) => return ([],← toDafnyTyp arg)
-  | .forallE _ domain range _ =>
-    let r ← toDafnyTypTop range
-    return ((← toDafnyTyp domain) :: r.1 , r.2)
-  | _ => throwError "toDafnyTypTop: error"
-
-def chopLambda (e : Expr) : Expr :=
-  match e with
-  | .lam _ _ body _ => body
-  | _ => e
 
 partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM Expression := do
   match e with
@@ -132,7 +125,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
           then
             -- Translate only arguments that correspond to non-dependent types
             let args1 := defn.inParamType.zip args.toList
-            let args2 := args1.filter (λ (x,_) => x ≠ .dle)
+            let args2 := args1.filter (λ (x,_) => match x with | .dle => false | _ => true)
             let args3 := args2.map (λ (_,y) => y)
             let args' ← args3.mapM (toDafnyExpr dname env)
             return .monadic name.toString args'
@@ -152,6 +145,17 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
   | .lit (.strVal s) => return .str s
   | .mdata .. => throwError "toDafnyExpr: not supported -- meta {e}"
   | .proj .. => throwError "toDafnyExpr: not supported -- projection {e}"
+
+end
+
+def toDafnyTypTop (e: Expr) : MetaM ((List Typ) × Typ) := do
+  match e with
+  | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
+  | (.app (.const ``RandomM ..) arg) => return ([],← toDafnyTyp [] arg)
+  | .forallE _ domain range _ =>
+    let r ← toDafnyTypTop range
+    return ((← toDafnyTyp [] domain) :: r.1 , r.2)
+  | _ => throwError "toDafnyTypTop: error"
 
 partial def toDafnyExprTop (dname : String) (num_args : Nat) (names : List String) (e : Expr) : MetaM (List String × Expression) := do
   match e with
