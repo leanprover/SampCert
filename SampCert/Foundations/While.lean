@@ -33,10 +33,19 @@ def WhileFunctional2 (cond : T → Bool) (body : T → RandomM T) (wh : RandomM 
   let v ← wh
   if cond v then body v else return v
 
-def prob_while_cut2 (cond : T → Bool) (body : T → RandomM T)  (n : Nat) (a : T)  : RandomM T :=
+def WhileFunctionalPMF (cond : T → Bool) (body : T → PMF T) (wh : PMF T) : PMF T := do
+  let v ← wh
+  if cond v then body v else return v
+
+def prob_while_cut2 (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T)  : RandomM T :=
   match n with
-  | Nat.zero => zero
+  | Nat.zero => SubPMF.pure a -- zero
   | succ n => WhileFunctional2 cond body (prob_while_cut2 cond body n a)
+
+def prob_while_cut_PMF (cond : T → Bool) (body : T → PMF T) (n : Nat) (a : T)  : PMF T :=
+  match n with
+  | Nat.zero => PMF.pure a -- zero
+  | succ n => WhileFunctionalPMF cond body (prob_while_cut_PMF cond body n a)
 
 theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :
   Monotone (fun n : Nat => prob_while_cut cond body n init x) := sorry
@@ -56,8 +65,8 @@ def myf2 (cond : T → Bool) (body : T → RandomM T) : @OmegaCompletePartialOrd
 def plop1 (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :=
   tendsto_atTop_iSup (prob_while_cut_monotonic cond body init x)
 
-def prob_while' (cond : T → Bool) (body : T → RandomM T) (init : T) : T → ENNReal :=
-  fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x)
+def prob_while' (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
+  ⟨fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x), sorry⟩
 
 def prob_while2' (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
   ⟨fun x => ⨆ (i : ℕ), (prob_while_cut2 cond body i init x), sorry⟩
@@ -75,34 +84,51 @@ def prob_while_experiment (cond : T → Bool) (body : T → RandomM T) : T → R
 def prob_while (cond : T → Bool) (body : T → RandomM T) (h : terminates cond body) (a : T) : RandomM T :=
   ⟨ prob_while' cond body a , sorry ⟩
 
-theorem whileC (Φ : RandomM T → Prop) (cond : T → Bool) (body : T → RandomM T) (init : T) :
-  Φ SubPMF.zero →
-  (∀ wh : (RandomM T), Φ wh → Φ (WhileFunctional2 cond body wh)) →
-  Φ (prob_while2' cond body init) := sorry
-
 theorem test_pre : (1 : ENNReal) / 2 ≤ 1 := sorry
 def test_cond (b : Bool) : Bool := ¬ b
 def test_body (_ : Bool) : RandomM Bool := bernoulli (1/2) test_pre
 
+theorem whileC1 (Φ : ( T → RandomM T) → Prop) (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  Φ (λ _ => SubPMF.zero) →
+  (∀ wh : (T → RandomM T), Φ wh → Φ (WhileFunctional cond body wh)) →
+  Φ (prob_while' cond body) := sorry
+
+def loop : RandomM Bool := prob_while' test_cond test_body false
+
 def test_prop (p : SubPMF Bool) : Prop := p true = 1
 
-theorem test_apply :
-  test_prop (prob_while2' test_cond test_body false) := by
-  apply whileC test_prop test_cond test_body
-  . sorry -- bogus, shoudl talk about what is actually in the supprt
+theorem whileC2 (Φ : RandomM T → Prop) (cond : T → Bool) (body : T → RandomM T) (init : T) :
+  Φ SubPMF.zero →
+  (∀ wh : (RandomM T), Φ wh → Φ (WhileFunctional2 cond body wh)) →
+  Φ (prob_while2' cond body init) := sorry
+
+def loop2 : RandomM Bool := prob_while2' test_cond test_body false
+
+def test_prop2 (p : SubPMF Bool) : Prop := p true > 0 → p true = 1
+
+theorem test_apply_alt (n : ℕ) :
+  prob_while_cut2 test_cond test_body n false true = 1 - (1/2)^n := sorry
+
+-- limit is 1
+
+theorem test_apply2 (term : loop2 true > 0) : test_prop2 loop2 := by
+  apply whileC2 test_prop2 test_cond test_body
+  . unfold test_prop2
+    simp
   . intro wh
-    unfold test_prop
-    intro H
+    unfold test_prop2
+    intro IH
     unfold WhileFunctional2
     simp
     rw [tsum_fintype]
     simp
-    rw [H]
+    rw [IH]
     have H2 : wh false = 0 := sorry
     rw [H2]
     simp
     unfold test_cond
     simp
+    sorry
 
 
 

@@ -37,6 +37,9 @@ def toPMF (p : SubPMF α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 def zero : SubPMF α :=
   ⟨λ _ : α => 0 , ⟨0, And.intro (zero_le 1) (hasSum_zero)⟩⟩
 
+@[simp]
+theorem zero_apply (x : α) : zero x = 0 := sorry
+
 end SubPMF
 
 namespace PMF

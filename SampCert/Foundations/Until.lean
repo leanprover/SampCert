@@ -41,7 +41,7 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) (h : termina
 @[simp]
 theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (h : terminates cond (λ _ => body)) (x : T) :
   prob_until (body : RandomM T) (cond : T → Bool) h x =
-  (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) :=
+  (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := sorry
   -- by
   -- rw [prob_until_apply]
   -- simp
