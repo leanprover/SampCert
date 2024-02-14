@@ -12,42 +12,33 @@ noncomputable section
 
 open Classical NNReal ENNReal PMF
 
-def SubPMF.{u} (α : Type u) : Type u :=
-  { f : α → ℝ≥0∞ // ∃ x : ℝ≥0∞, x ≤ 1 ∧ HasSum f x }
+def SubPMF.{u} (α : Type u) : Type u := α → ℝ≥0∞
 
 namespace SubPMF
 
 variable {α β γ : Type*}
 
-instance instFunLike : FunLike (SubPMF α) α ℝ≥0∞ where
-  coe p a := p.1 a
-  coe_injective' _ _ h := Subtype.eq h
-
-@[ext]
-protected theorem ext {p q : PMF α} (h : ∀ x, p x = q x) : p = q :=
-  DFunLike.ext p q h
-
-theorem ext_iff {p q : PMF α} : p = q ↔ ∀ x, p x = q x :=
-  DFunLike.ext_iff
-
-instance : OmegaCompletePartialOrder (SubPMF α) := sorry
-
 def toPMF (p : SubPMF α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 
-def zero : SubPMF α :=
-  ⟨λ _ : α => 0 , ⟨0, And.intro (zero_le 1) (hasSum_zero)⟩⟩
+def zero : SubPMF α := λ _ : α => 0
 
 @[simp]
-theorem zero_apply (x : α) : zero x = 0 := sorry
+theorem zero_apply (x : α) : zero x = 0 := by
+  unfold zero
+  simp
 
 end SubPMF
 
 namespace PMF
 
-def toSubPMF (p : PMF α) : SubPMF α := ⟨p , ⟨ 1, And.intro (le_refl 1) p.2 ⟩⟩
+def toSubPMF (p : PMF α) : SubPMF α := p.1
 
 @[simp]
-theorem toSubPMF_apply (p : PMF α) (x : α) : (toSubPMF p x) = p x := sorry
+theorem toSubPMF_apply (p : PMF α) (x : α) : (toSubPMF p x) = p x := by
+  unfold toSubPMF
+  unfold DFunLike.coe
+  unfold instFunLike
+  simp
 
 instance : Coe (PMF α) (SubPMF α) where
   coe a := toSubPMF a
@@ -56,11 +47,10 @@ end PMF
 
 namespace SubPMF
 
-def pure (a : α) : SubPMF α :=
-  ⟨fun a' => if a' = a then 1 else 0, sorry⟩
+def pure (a : α) : SubPMF α := fun a' => if a' = a then 1 else 0
 
 def bind (p : SubPMF α) (f : α → SubPMF β) : SubPMF β :=
-  ⟨fun b => ∑' a, p a * f a b, sorry⟩
+  fun b => ∑' a, p a * f a b
 
 instance : Monad SubPMF where
   pure a := pure a

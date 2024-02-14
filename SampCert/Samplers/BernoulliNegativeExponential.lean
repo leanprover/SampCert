@@ -16,7 +16,7 @@ noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : n
   return (A, state.2 + 1)
 
 noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Nat := do
-  let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den wf) sorry (true,1)
+  let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (true,1)
   return r.2
 
 @[simp]

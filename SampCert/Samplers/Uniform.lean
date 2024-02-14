@@ -10,7 +10,7 @@ import Mathlib.Data.ENNReal.Basic
 open PMF Classical Finset Nat ENNReal
 
 noncomputable def UniformSample (n : PNat) : RandomM Nat := do
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n) sorry
+  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
 
 theorem rw1 (n : PNat) :
@@ -40,7 +40,8 @@ theorem rw_ite (n : PNat) (x : Nat) :
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
   unfold UniformSample
-  simp
+  simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
+    one_div, sum_simple]
   split
   . rw [rw1 n]
     rw [rw2 n]

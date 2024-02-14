@@ -11,9 +11,9 @@ open SubPMF ProbabilityTheory
 
 variable {T : Type} [MeasurableSpace T]
 
-noncomputable def prob_until (body : RandomM T) (cond : T → Bool) (h : terminates cond (λ _ => body))  : RandomM T := do
+noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T := do
   let v ← body
-  prob_while (λ v : T => ¬ cond v) (λ _ : T => body) sorry v
+  prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
 
 -- def MyP (cond : T → Bool) (body : RandomM T) (x : T) (comp : RandomM T) : Prop :=
 --   comp x = (body x) / (body.toMeasure {x : T | cond x})
@@ -39,8 +39,8 @@ noncomputable def prob_until (body : RandomM T) (cond : T → Bool) (h : termina
 -- attribute [simp] cond_apply toMeasure_apply
 
 @[simp]
-theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (h : terminates cond (λ _ => body)) (x : T) :
-  prob_until (body : RandomM T) (cond : T → Bool) h x =
+theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (x : T) :
+  prob_until (body : RandomM T) (cond : T → Bool) x =
   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := sorry
   -- by
   -- rw [prob_until_apply]

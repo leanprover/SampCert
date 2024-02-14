@@ -28,7 +28,7 @@ noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ
   let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
   let num := num^2
   let den := den^2
-  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2) sorry
+  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
   return r.1
 
 @[simp]
