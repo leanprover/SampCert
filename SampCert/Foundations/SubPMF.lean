@@ -12,7 +12,7 @@ noncomputable section
 
 open Classical NNReal ENNReal PMF
 
-def SubPMF.{u} (α : Type u) : Type u := α → ℝ≥0∞
+abbrev SubPMF.{u} (α : Type u) : Type u := α → ℝ≥0∞
 
 namespace SubPMF
 
@@ -61,16 +61,27 @@ variable (a a' : α)
 @[simp]
 theorem pure_apply : pure a a' = if a' = a then 1 else 0 := rfl
 
+theorem pure_apply_of_ne (h : a' ≠ a) : pure a a' = 0 :=
+  if_neg h
+
 variable (p : SubPMF α) (f : α → SubPMF β) (g : β → SubPMF γ)
 
 @[simp]
 theorem bind_apply (b : β) : p.bind f b = ∑' a, p a * f a b := rfl
 
 @[simp]
-theorem pure_bind (a : α) (f : α → SubPMF β) : (pure a).bind f = f a := sorry
+theorem pure_bind (a : α) (f : α → SubPMF β) : (pure a).bind f = f a := by
+  have : ∀ b a', ite (a' = a) (f a' b) 0 = ite (a' = a) (f a b) 0 := fun b a' => by
+    split_ifs with h <;> simp [h]
+  ext b
+  simp [this]
 
 @[simp]
-theorem bind_pure : p.bind pure = p := sorry
+theorem bind_pure : p.bind pure = p := by
+  ext x
+  simp
+  #check tsum_eq_single
+  sorry -- doable
 
 @[simp]
 theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g := sorry

@@ -23,7 +23,7 @@ def f (n : ℕ) := ((1 : ℝ) / (2 : ℝ))^n
 theorem f_apply_0 : 1 + f 0 = 2 := by
   unfold f
   simp
-  sorry -- 1 + 1 = 2
+  exact one_add_one_eq_two
 
 def bbb (n : ℕ) := ∑ m in range n, f (m + 1)
 
