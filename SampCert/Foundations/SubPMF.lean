@@ -20,6 +20,11 @@ variable {α β γ : Type*}
 
 def toPMF (p : SubPMF α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 
+@[ext]
+protected theorem ext {p q : SubPMF α} (h : ∀ x, p x = q x) : p = q := by
+  ext x
+  simp [h]
+
 def zero : SubPMF α := λ _ : α => 0
 
 @[simp]
@@ -61,6 +66,9 @@ variable (a a' : α)
 @[simp]
 theorem pure_apply : pure a a' = if a' = a then 1 else 0 := rfl
 
+theorem pure_apply_self : pure a a = 1 :=
+  if_pos rfl
+
 theorem pure_apply_of_ne (h : a' ≠ a) : pure a a' = 0 :=
   if_neg h
 
@@ -77,13 +85,16 @@ theorem pure_bind (a : α) (f : α → SubPMF β) : (pure a).bind f = f a := by
   simp [this]
 
 @[simp]
-theorem bind_pure : p.bind pure = p := by
-  ext x
-  simp
-  #check tsum_eq_single
-  sorry -- doable
+theorem bind_pure : p.bind pure = p :=
+  SubPMF.ext fun x => (bind_apply _ _ _).trans (_root_.trans
+    (tsum_eq_single x fun y hy => by rw [pure_apply_of_ne _ _ hy.symm, mul_zero]) <|
+    by rw [pure_apply_self, mul_one])
 
 @[simp]
-theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g := sorry
+theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g :=
+  SubPMF.ext fun b => by
+      simpa only [ENNReal.coe_inj.symm, bind_apply, ENNReal.tsum_mul_left.symm,
+        ENNReal.tsum_mul_right.symm, mul_assoc, mul_left_comm, mul_comm] using ENNReal.tsum_comm
+
 
 end SubPMF
