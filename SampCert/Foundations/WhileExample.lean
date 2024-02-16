@@ -43,7 +43,22 @@ def ddd (n : ℕ) := ∑ m in range n, h (m + 1)
 theorem ddd_succ (n : ℕ) : ddd (succ n) = ddd n + half^(n+1) := by
   simp [ddd,h,half,sum_range_succ]
 
+theorem ddd_no_top (n : ℕ) : ddd n ≠ ⊤ := by
+  induction n
+  . simp [ddd]
+  . rename_i n IH
+    simp [ddd] at *
+    rw [@sum_range_succ]
+    simp
+    intro a
+    cases a
+    . contradiction
+    . rename_i hh
+      simp [h] at hh
+
+
 #check hasSum_geometric_two.tsum_eq
+
 
 theorem ddd_proof :
   Filter.Tendsto ddd Filter.atTop (nhds 1) := sorry
