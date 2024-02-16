@@ -34,8 +34,19 @@ theorem bbb_proof :
   simp
   apply hasSum_geometric_two
 
-def h (n : ℕ) := ((1 : ENNReal) / (2 : ENNReal))^n
+@[simp]
+def half := (1 : ENNReal) / (2 : ENNReal)
+
+def h (n : ℕ) := half^n
 def ddd (n : ℕ) := ∑ m in range n, h (m + 1)
+
+theorem ddd_succ (n : ℕ) : ddd (succ n) = ddd n + half^(n+1) := by
+  simp [ddd,h,half,sum_range_succ]
+
+#check hasSum_geometric_two.tsum_eq
+
+theorem ddd_proof :
+  Filter.Tendsto ddd Filter.atTop (nhds 1) := sorry
 
 theorem the_eq (n : ℕ) :
   prob_while_cut loop_cond loop_body (n + 1) false true = ddd n := by
@@ -51,25 +62,33 @@ theorem the_eq (n : ℕ) :
     simp [sum_range_succ]
     rw [← ddd]
     simp [h]
-    sorry
+    induction n -- I would rather not prove this inlined but I can't hoist this goal and get its coercion right
+    . simp [ddd]
+    . rename_i n IH
+      simp [ddd_succ]
+      rw [_root_.pow_succ]
+      rw [@mul_add]
+      rw [@add_right_comm]
+      rw [IH]
+      clear IH
+      rw [_root_.pow_succ]
+      rw [_root_.pow_succ]
+      rw [_root_.pow_succ]
 
-#check tsum_eq_add_tsum_ite
+theorem int1 :
+  Filter.Tendsto (λ n => prob_while_cut loop_cond loop_body (n + 1) false true) Filter.atTop (nhds 1)
+  ↔ Filter.Tendsto ddd Filter.atTop (nhds 1) := by
+  apply Filter.tendsto_congr
+  simp [the_eq]
 
--- For a limit, should be allowed to ignore any finite prefix of the sequence
-
-#check iSup_eq_of_forall_le_of_forall_lt_exists_gt
-#check IsLUB.iSup_eq
-#check iSup_eq_of_tendsto
+theorem int2 :
+  Filter.Tendsto (λ n => prob_while_cut loop_cond loop_body n false true) Filter.atTop (nhds 1)
+  ↔ Filter.Tendsto (λ n => prob_while_cut loop_cond loop_body (n + 1) false true) Filter.atTop (nhds 1) := by
+  apply Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)
 
 theorem loop_apply_true : loop true = 1 := by
   unfold loop
   unfold prob_while
   apply iSup_eq_of_tendsto
-  . sorry -- could be proved once and for all
-  . refine ENNReal.tendsto_nhds_of_Icc ?_
-    intro ε COND
-    refine Filter.eventually_atTop.mpr ?_
-    sorry
-
--- In general, if the pwc eventually behaves like a series that converges to x,
--- then the pmf is x
+  . apply prob_while_cut_monotonic
+  . simp [int1, int2, ddd_proof]

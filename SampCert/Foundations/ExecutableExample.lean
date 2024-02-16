@@ -25,34 +25,15 @@ def WhileFunctional (cond : Bool → Bool) (body : Bool → PMF) (wh : Bool → 
   then bind (body a) (λ v => wh v)
   else pure a
 
-def prob_while_cut_1 (cond : Bool → Bool) (body : Bool → PMF) (n : Nat) (a : Bool) : PMF :=
+def prob_while_cut (cond : Bool → Bool) (body : Bool → PMF) (n : Nat) (a : Bool) : PMF :=
   match n with
   | Nat.zero => bottom
-  | succ n => WhileFunctional cond body (prob_while_cut_1 cond body n) a
-
-def prob_while_cut_2 (cond : Bool → Bool) (body : Bool → PMF) (n : Nat) (a : Bool) : PMF :=
-  match n with
-  | Nat.zero => pure a
-  | succ n => WhileFunctional cond body (prob_while_cut_2 cond body n) a
-
-def WhileFunctional2 (cond : Bool → Bool) (body : Bool → PMF) (wh : PMF) : PMF :=
-  bind wh (λ v => if cond v then body v else pure v)
-
-def prob_while_cut_2_1 (cond : Bool → Bool) (body : Bool → PMF) (a : Bool) (n : Nat) : PMF :=
-  match n with
-  | Nat.zero => pure a
-  | succ n => WhileFunctional2 cond body (prob_while_cut_2_1 cond body a n)
+  | succ n => WhileFunctional cond body (prob_while_cut cond body n) a
 
 def test_cond (b : Bool) : Bool := ¬ b
 def test_body (_ : Bool) : PMF := λ b => if b = true then 0.5 else 0.5
 
-def loop1 (n : Nat) : PMF := prob_while_cut_1 test_cond test_body n false
-
-def loop2 (n : Nat) : PMF := prob_while_cut_2 test_cond test_body n false
-
-def loop3 : Nat → PMF := prob_while_cut_2_1 test_cond test_body false
-
-def loop := loop1
+def loop (n : Nat) : PMF := prob_while_cut test_cond test_body n false
 
 #eval loop 0
 #eval loop 1
