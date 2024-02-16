@@ -15,6 +15,16 @@ def s₁ (n : ℕ) := ∑ m in range n, u₁ m
 @[simp]
 def s₂ (n : ℕ) := ∑ m in range n, u₂ m
 
+theorem no_top (n : ℕ) : s₂ n ≠ ⊤ := by
+  induction n
+  . simp
+  . rename_i n IH
+    simp at *
+    rw [@sum_range_succ]
+    simp
+    intro h
+    contradiction
+
 theorem s_eq : ⨆ n, s₁ n =  ENNReal.toReal (⨆ n, s₂ n) := by
   rw [ENNReal.toReal_iSup]
   . apply iSup_congr
@@ -33,6 +43,8 @@ theorem s_eq : ⨆ n, s₁ n =  ENNReal.toReal (⨆ n, s₂ n) := by
         simp
         rw [sum_range_succ_comm]
         sorry -- looks good
-      . sorry -- looks good
+      . rw [(mul_sum (range n) (fun i => 2⁻¹ ^ i) 2⁻¹).symm]
+        sorry -- looks good
       . simp
-  . sorry -- looks good
+  . intro i
+    apply no_top
