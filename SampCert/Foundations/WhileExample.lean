@@ -11,76 +11,113 @@ noncomputable section
 
 open PMF Nat Finset BigOperators
 
-theorem half_in_unit : (1 : ENNReal) / 2 ≤ 1 := sorry
+theorem half_in_unit : (1 : ENNReal) / 2 ≤ 1 := by
+  exact ENNReal.half_le_self
 def loop_cond (b : Bool) : Bool := ¬ b
 def loop_body (_ : Bool) : RandomM Bool := bernoulli (1/2) half_in_unit
 
 def loop : RandomM Bool := prob_while loop_cond loop_body false
 
-def f (n : ℕ) := ((1 : ℝ) / (2 : ℝ))^n
+def u₁ (n : ℕ) : ℝ := (1/2)^n
 
 @[simp]
-theorem f_apply_0 : 1 + f 0 = 2 := by
-  unfold f
+theorem u₁_simple : 1 + u₁ 0 = 2 := by
+  unfold u₁
   simp
   exact one_add_one_eq_two
 
-def bbb (n : ℕ) := ∑ m in range n, f (m + 1)
+def s₁ (n : ℕ) := ∑ m in range n, u₁ (m + 1)
 
-theorem bbb_proof :
-  Filter.Tendsto bbb Filter.atTop (nhds 1) := by
+theorem s₁_convergence :
+  Filter.Tendsto s₁ Filter.atTop (nhds 1) := by
   refine HasSum.tendsto_sum_nat ?h
   rw [hasSum_nat_add_iff 1]
-  simp
+  simp only [range_one, sum_singleton, u₁_simple]
   apply hasSum_geometric_two
 
-@[simp]
-def half := (1 : ENNReal) / (2 : ENNReal)
 
-def h (n : ℕ) := half^n
-def ddd (n : ℕ) := ∑ m in range n, h (m + 1)
+def u₂ (n : ℕ) : ENNReal := (1/2)^n
 
-theorem ddd_succ (n : ℕ) : ddd (succ n) = ddd n + half^(n+1) := by
-  simp [ddd,h,half,sum_range_succ]
+theorem u₂_no_top (n : ℕ) : u₂ n ≠ ⊤ := by
+  simp [u₂]
 
-theorem ddd_no_top (n : ℕ) : ddd n ≠ ⊤ := by
+def s₂ (n : ℕ) := ∑ m in range n, u₂ (m + 1)
+
+theorem no_top (n : ℕ) : s₂ n ≠ ⊤ := by
   induction n
-  . simp [ddd]
+  . simp [s₂]
   . rename_i n IH
-    simp [ddd] at *
+    simp [s₂] at *
     rw [@sum_range_succ]
     simp
     intro a
     cases a
     . contradiction
     . rename_i hh
-      simp [h] at hh
+      simp [u₂] at hh
 
+theorem s₂_succ (n : ℕ) : s₂ (succ n) = s₂ n + (1/2)^(n+1) := by
+  simp [s₂,u₂,sum_range_succ]
 
-#check hasSum_geometric_two.tsum_eq
+theorem seed_eq :
+  ENNReal.toReal 2⁻¹ = 2⁻¹ := by
+  rw [ENNReal.toReal_inv]
+  exact rfl
 
+theorem u_eq :
+  ENNReal.toReal (u₂ n) = u₁ n := by
+  induction n
+  . simp [u₂, u₁]
+  . rename_i n IH
+    simp [u₂, u₁]
+    simp [_root_.pow_succ]
+    simp [u₂, u₁] at IH
+    rw [← IH]
+    rw [mul_comm]
+    simp [seed_eq]
 
-theorem ddd_proof :
-  Filter.Tendsto ddd Filter.atTop (nhds 1) := sorry
+theorem s_eq_2 :
+  (fun n => ENNReal.toReal (s₂ n)) = s₁ := by
+  ext n
+  induction n
+  . simp [s₂,s₁]
+  . rename_i n IH
+    simp [s₂, s₁]
+    simp [sum_range_succ]
+    rw [← s₂, ← s₁]
+    rw [← IH]
+    rw [ENNReal.toReal_add, u_eq]
+    . apply no_top n
+    . apply u₂_no_top
+
+theorem s₂_convergence:
+  Filter.Tendsto s₂ Filter.atTop (nhds 1) := by
+  refine (ENNReal.tendsto_toReal_iff ?hf ?hx).mp ?_
+  . intro i
+    apply no_top i
+  . simp
+  . rw [s_eq_2]
+    apply s₁_convergence
+
 
 theorem the_eq (n : ℕ) :
-  prob_while_cut loop_cond loop_body (n + 1) false true = ddd n := by
+  prob_while_cut loop_cond loop_body (n + 1) false true = s₂ n := by
   induction n
-  . simp [prob_while_cut, WhileFunctional, loop_body, loop_cond, tsum_bool, ddd]
+  . simp [prob_while_cut, WhileFunctional, loop_body, loop_cond, tsum_bool, s₂]
   . rename_i n IH
     revert IH
     simp [prob_while_cut, WhileFunctional, loop_body, loop_cond, tsum_bool]
     intro IH
     simp [IH]
     clear IH
-    simp [ddd]
+    simp [s₂]
     simp [sum_range_succ]
-    rw [← ddd]
-    simp [h]
+    rw [← s₂]
+    simp [u₂]
     induction n -- I would rather not prove this inlined but I can't hoist this goal and get its coercion right
-    . simp [ddd]
+    . simp [s₂]
     . rename_i n IH
-      simp [ddd_succ]
+      simp [s₂_succ]
       rw [_root_.pow_succ]
       rw [@mul_add]
       rw [@add_right_comm]
@@ -92,7 +129,7 @@ theorem the_eq (n : ℕ) :
 
 theorem int1 :
   Filter.Tendsto (λ n => prob_while_cut loop_cond loop_body (n + 1) false true) Filter.atTop (nhds 1)
-  ↔ Filter.Tendsto ddd Filter.atTop (nhds 1) := by
+  ↔ Filter.Tendsto s₂ Filter.atTop (nhds 1) := by
   apply Filter.tendsto_congr
   simp [the_eq]
 
@@ -106,4 +143,4 @@ theorem loop_apply_true : loop true = 1 := by
   unfold prob_while
   apply iSup_eq_of_tendsto
   . apply prob_while_cut_monotonic
-  . simp [int1, int2, ddd_proof]
+  . simp [int1, int2, s₂_convergence]
