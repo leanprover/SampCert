@@ -119,8 +119,8 @@ theorem the_eq (n : ℕ) :
     . rename_i n IH
       simp [s₂_succ]
       rw [_root_.pow_succ]
-      rw [@mul_add]
-      rw [@add_right_comm]
+      rw [mul_add]
+      rw [add_right_comm]
       rw [IH]
       clear IH
       rw [_root_.pow_succ]
@@ -143,7 +143,32 @@ theorem loop_apply_true : loop true = 1 := by
   apply while_apply
   simp [int1, int2, s₂_convergence]
 
-theorem loop_apply_false : loop false = 0 := sorry
+theorem loop_false_zero (b : Bool) (n : ℕ) :
+  prob_while_cut loop_cond loop_body n b false = 0 := by
+  revert b
+  induction n
+  . simp [prob_while_cut]
+  . rename_i n IH
+    intro b
+    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body]
+    split
+    . simp [IH]
+    . rename_i cond
+      simp [cond]
+
+theorem loop_false_tendsto (b : Bool) :
+  Filter.Tendsto (fun i => prob_while_cut loop_cond loop_body i b false) Filter.atTop (nhds 0) := by
+  rw [ENNReal.tendsto_atTop_zero]
+  intro ε _
+  existsi 0
+  intro n H
+  rw [loop_false_zero] -- roundabout to use that lemma but I am having difficulty reasoning about inequalities of ENNReals
+  simp
+
+theorem loop_apply_false : loop false = 0 := by
+  unfold loop
+  apply while_apply
+  apply loop_false_tendsto
 
 @[simp]
 theorem loop_normalizes : ∑ b : Bool, loop b = 1 := by
