@@ -19,58 +19,6 @@ noncomputable def UniformPowerOfTwoSample (n : PNat) : RandomM Nat :=
   toSubPMF (uniformOfFintype (Fin (2 ^ (log 2 n))))
 
 @[simp]
-theorem test1 (b x : ℕ) :
-  ((if (x = ↑b : Prop) then 1 else 0): ENNReal)
-  = if ↑b = x then 1 else 0 := by
-  split
-  . rename_i h
-    subst h
-    simp
-  . rename_i h
-    split
-    . rename_i h2
-      rw [h2] at h
-      contradiction
-    . trivial
-
-@[simp]
-theorem test (b x : ℕ) :
-  (∑' (b : Fin b), if x = ↑b then 1 else 0)
-  = ∑' (b : Fin b), if ↑b = x then 1 else 0 := by
-  congr
-  ext y
-  split
-  . rename_i h
-    subst h
-    simp
-  . rename_i h
-    split
-    . rename_i h2
-      rw [h2] at h
-      contradiction
-    . trivial
-
--- theorem list_finrange (x n : ℕ) (cond : x < n) :
---   List.sum (List.map (fun i => if x = i then 1 else 0) (List.finRange n)) = 1 := by
---   revert x
---   induction n
---   . intro x H
---     contradiction
---   . rename_i n IH
---     intro x H
---     have OR : x < n ∨ x = n := by exact Nat.lt_succ_iff_lt_or_eq.mp H
---     cases OR
---     . rename_i H'
---       have IH' := IH x H'
---       sorry -- fine
---     . rename_i H'
---       subst H'
---       simp
---       rw?
-
---set_option pp.all true
-
-@[simp]
 theorem sum_indicator_finrange_gen (n : Nat) (x : Nat) :
   (x < n → (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (1 : ENNReal))
   ∧ (x >= n → (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (0 : ENNReal)) := by
@@ -121,24 +69,13 @@ theorem sum_indicator_finrange_gen (n : Nat) (x : Nat) :
         simp [neq]
 
 
-
-
-@[simp]
 theorem sum_indicator_finrange (n : Nat) (x : Nat) (h : x < n) :
   (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (1 : ENNReal) := by
-  revert x
-  induction n
-  . intro x cond
-    contradiction
-  . rename_i n IH
-    intro x cond
-    have OR : x = n ∨ x < n := by exact Order.lt_succ_iff_eq_or_lt.mp cond
-    cases OR
-    . rename_i cond'
-      -- In this case, the induction hypothesis is not useful
-      clear cond IH
-      sorry
-    . sorry
+  have H := sum_indicator_finrange_gen n x
+  cases H
+  rename_i left right
+  apply left
+  trivial
 
 @[simp]
 theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
