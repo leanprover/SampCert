@@ -96,7 +96,7 @@ theorem s₂_convergence:
   . intro i
     apply no_top i
   . simp
-  . rw [s_eq_2]
+  . rw [s_eq_2] -- simplify here
     apply s₁_convergence
 
 
@@ -140,10 +140,8 @@ theorem int2 :
 
 theorem loop_apply_true : loop true = 1 := by
   unfold loop
-  unfold prob_while
-  apply iSup_eq_of_tendsto
-  . apply prob_while_cut_monotonic
-  . simp [int1, int2, s₂_convergence]
+  apply while_apply
+  simp [int1, int2, s₂_convergence]
 
 theorem loop_apply_false : loop false = 0 := sorry
 
