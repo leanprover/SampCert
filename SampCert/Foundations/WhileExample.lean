@@ -144,3 +144,12 @@ theorem loop_apply_true : loop true = 1 := by
   apply iSup_eq_of_tendsto
   . apply prob_while_cut_monotonic
   . simp [int1, int2, s₂_convergence]
+
+theorem loop_apply_false : loop false = 0 := sorry
+
+@[simp]
+theorem loop_normalizes : ∑ b : Bool, loop b = 1 := by
+  rw [Fintype.sum_bool]
+  simp [loop_apply_true,loop_apply_false]
+
+def loopPMF : PMF Bool := PMF.ofFintype loop loop_normalizes
