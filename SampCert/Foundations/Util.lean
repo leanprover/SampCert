@@ -14,9 +14,6 @@ theorem in_subset_satisfies (P : ℕ → Prop) (x : { x // P x }) : P x := by
   simp
   trivial
 
-theorem bound_finset (bound k : ℕ) :
-  {x | (fun a => if a < bound then k else 0) x ≠ 0}  := sorry
-
 @[simp]
 theorem sum_simple (bound : ℕ) (k : ENNReal) :
  (∑' (a : ℕ), if a < bound then k else 0) = k * bound := by

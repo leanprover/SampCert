@@ -9,7 +9,7 @@ import SampCert.Samplers.Uniform
 
 open PMF
 
-noncomputable def BernoulliSample (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
+noncomputable def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : RandomM Bool := do
   let d ← UniformSample den
   return d < num
 
