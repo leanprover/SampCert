@@ -29,26 +29,25 @@ def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T
 
 theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :
   Monotone (fun n : Nat => prob_while_cut cond body n init x) := by
-  refine monotone_nat_of_le_succ ?hf
+  apply monotone_nat_of_le_succ
   intro n
-  simp [prob_while_cut, WhileFunctional]
-  unfold SubPMF.bind
-  unfold SubPMF.pure
-  simp
-  unfold prob_while_cut
-  split
-  . rename_i n
-    simp [SubPMF.zero]
-  . rename_i n1 n2
-    simp [WhileFunctional]
+  revert init
+  induction n
+  . intro init
+    simp [prob_while_cut]
+  . rename_i n IH
+    intro init
+    simp [prob_while_cut,WhileFunctional]
     split
-    . unfold SubPMF.pure
+    . rename_i COND
       unfold SubPMF.bind
+      unfold SubPMF.pure
       simp
-      sorry
-    . simp [SubPMF.pure]
-
-
+      apply ENNReal.tsum_le_tsum
+      intro a
+      apply mul_le_mul_left'
+      exact IH a
+    . simp
 
 def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
   fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x)
