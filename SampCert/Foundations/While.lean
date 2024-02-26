@@ -52,6 +52,7 @@ theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (i
 def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
   fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x)
 
+@[simp]
 theorem while_apply (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) (v : ENNReal) :
   Filter.Tendsto (fun i => prob_while_cut cond body i init x) Filter.atTop (nhds v) →
   prob_while cond body init x = v := by

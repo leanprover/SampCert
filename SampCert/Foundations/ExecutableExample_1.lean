@@ -41,9 +41,13 @@ def loop (n : Nat) : PMF := prob_while_cut test_cond test_body n false
 #eval loop 3
 #eval loop 4
 #eval loop 5
-#eval loop 6
-#eval loop 7
-#eval loop 8
-#eval loop 9
-#eval loop 10
-#eval loop 11
+
+def loop2 (n : Nat) : PMF :=
+  bind (test_body false) (prob_while_cut test_cond test_body n)
+
+#eval loop2 0
+#eval loop2 1
+#eval loop2 2
+#eval loop2 3
+#eval loop2 4
+#eval loop2 5
