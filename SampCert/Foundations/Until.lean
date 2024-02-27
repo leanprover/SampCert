@@ -64,15 +64,17 @@ def s₁ (cond : T → Bool) (body : RandomM T) (x : T) (n : ℕ) := ∑ m in ra
 
 theorem s₁_convergence (cond : T → Bool) (body : RandomM T) (x : T) :
   Filter.Tendsto (s₁ cond body x) Filter.atTop (nhds ((body x).toReal / (∑' (x : T), if cond x then body x else 0).toReal)) := by
+  unfold s₁
+  unfold u₁
   refine HasSum.tendsto_sum_nat ?h
-  rw [hasSum_nat_add_iff 1]
-  simp only [range_one, sum_singleton, u₁, _root_.pow_zero, mul_one]
+  sorry
 
 
 
 theorem foobar (cond : T → Bool) (body : RandomM T) (x : T) :
   Filter.Tendsto (λ n => prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) n init x) Filter.atTop (nhds ((if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0))) := by
   apply Filter.Tendsto.apply
+  sorry
 
 
 theorem the_eq (cond : T → Bool) (body : RandomM T) (x : T) (n : ℕ) (scond : n > 0) (init : T) (h : ¬ cond init) :

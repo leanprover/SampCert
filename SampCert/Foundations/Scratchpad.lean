@@ -55,6 +55,9 @@ theorem testy1 (u : ℕ → ENNReal) (v : ENNReal) (k : ENNReal) (_ : k ≠ ⊤)
   right
   trivial
 
+
+
+
 -- theorem test5 (x : ENNReal) :
 --   ∑' a : ℕ, x * ⨆ i, v a i = ⨆ i, ∑' a : ℕ, x * v a i := by
 --   sorry

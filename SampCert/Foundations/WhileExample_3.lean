@@ -9,7 +9,7 @@ import SampCert.Foundations.Basic
 
 noncomputable section
 
-namespace WhileExample
+namespace WhileExample_3
 
 open PMF Nat Finset BigOperators
 
@@ -18,7 +18,9 @@ theorem half_in_unit : (1 : ENNReal) / 2 ≤ 1 := by
 def loop_cond (b : Bool) : Bool := ¬ b
 def loop_body (_ : Bool) : RandomM Bool := bernoulli (1/2) half_in_unit
 
-def loop : RandomM Bool := prob_while loop_cond loop_body false
+def loop : RandomM Bool := do
+  let start ← loop_body true
+  prob_while loop_cond loop_body start
 
 def u₁ (n : ℕ) : ℝ := (1/2)^n
 
@@ -140,10 +142,40 @@ theorem int2 :
   ↔ Filter.Tendsto (λ n => prob_while_cut loop_cond loop_body (n + 1) false true) Filter.atTop (nhds 1) := by
   apply Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)
 
-theorem loop_apply_true : loop true = 1 := by
-  unfold loop
+theorem early_exit_true_gen (i : ℕ) :
+  prob_while_cut loop_cond loop_body (i + 1) true true = 1 := by
+  induction i
+  . simp
+    simp [prob_while_cut, WhileFunctional]
+    split
+    . rename_i h
+      simp
+      simp [loop_cond] at h
+    . rename_i h
+      simp
+  . rename_i n IH
+    simp [prob_while_cut, WhileFunctional]
+    split
+    . rename_i h
+      simp [loop_cond] at h
+    . rename_i h
+      simp
+
+theorem early_exit_true :
+  prob_while loop_cond loop_body true true = 1 := by
+  apply while_apply
+  rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)]
+  rw [Filter.tendsto_congr early_exit_true_gen]
+  exact tendsto_const_nhds
+
+theorem no_early_exit_true :
+  prob_while loop_cond loop_body false true = 1 := by
   apply while_apply
   simp [int1, int2, s₂_convergence]
+
+theorem loop_apply_true : loop true = 1 := by
+  simp [loop, tsum_bool, loop_body, early_exit_true, no_early_exit_true]
+  rw [ENNReal.inv_two_add_inv_two]
 
 theorem loop_false_zero (b : Bool) (n : ℕ) :
   prob_while_cut loop_cond loop_body n b false = 0 := by
@@ -163,14 +195,23 @@ theorem loop_false_tendsto (b : Bool) :
   rw [ENNReal.tendsto_atTop_zero]
   intro ε _
   existsi 0
-  intro n H
+  intro n _
   rw [loop_false_zero] -- roundabout to use that lemma but I am having difficulty reasoning about inequalities of ENNReals
   simp
 
-theorem loop_apply_false : loop false = 0 := by
-  unfold loop
+theorem early_exit_false :
+  prob_while loop_cond loop_body true false = 0 := by
   apply while_apply
   apply loop_false_tendsto
+
+theorem no_early_exit_false :
+  prob_while loop_cond loop_body false false = 0 := by
+  apply while_apply
+  apply loop_false_tendsto
+
+theorem loop_apply_false : loop false = 0 := by
+  simp [loop, loop_body]
+  simp [early_exit_false, no_early_exit_false]
 
 @[simp]
 theorem loop_normalizes : ∑ b : Bool, loop b = 1 := by
@@ -179,4 +220,4 @@ theorem loop_normalizes : ∑ b : Bool, loop b = 1 := by
 
 def loopPMF : PMF Bool := PMF.ofFintype loop loop_normalizes
 
-end WhileExample
+end WhileExample_3
