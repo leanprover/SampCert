@@ -41,7 +41,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
   unfold UniformSample
   simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
-    one_div, sum_simple]
+   one_div, sum_simple]
   split
   . rw [rw1 n]
     rw [rw2 n]

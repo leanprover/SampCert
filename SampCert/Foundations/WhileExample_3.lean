@@ -174,7 +174,9 @@ theorem no_early_exit_true :
   simp [int1, int2, s₂_convergence]
 
 theorem loop_apply_true : loop true = 1 := by
-  simp [loop, tsum_bool, loop_body, early_exit_true, no_early_exit_true]
+  simp [loop]
+  simp [tsum_bool] -- This is where the split happens
+  simp [loop_body, early_exit_true, no_early_exit_true]
   rw [ENNReal.inv_two_add_inv_two]
 
 theorem loop_false_zero (b : Bool) (n : ℕ) :
