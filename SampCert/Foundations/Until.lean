@@ -27,88 +27,6 @@ def s₁ (cond : T → Bool) (body : RandomM T) (x : T) (n : ℕ) := ∑ m in ra
 
 def s₂ (cond : T → Bool) (body : RandomM T) (x : T) (n : ℕ) := ∑ m in range n, u₂ cond body x m
 
-theorem at0 (cond : T → Bool) (body : RandomM T) (x : T) :
-  s₂ cond body x 0 = 0 := by
-  simp [s₂,u₂]
-
-theorem at0' (cond : T → Bool) (body : RandomM T) (x : T) (a : T) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 0 a x = 0 := by
-  simp [prob_while_cut]
-
-theorem at1 (cond : T → Bool) (body : RandomM T) (x : T) :
-  s₂ cond body x 1 = body x := by
-  simp [s₂,u₂]
-
-theorem at1'₁ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 1 a x = SubPMF.pure a x := by
-  simp [prob_while_cut, WhileFunctional, h]
-
-theorem at1'₂ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 1 a x = 0 := by
-  simp [prob_while_cut, WhileFunctional, h]
-
-theorem at1' (cond : T → Bool) (body : RandomM T) (x : T) (a : T) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 1 a x = (if cond a = false then 0 else if x = a then 1 else 0) := by
-  simp [prob_while_cut, WhileFunctional]
-  unfold SubPMF.bind
-  unfold SubPMF.pure
-  simp
-  rw [ite_apply]
-
-theorem at2 (cond : T → Bool) (body : RandomM T) (x : T) :
-  s₂ cond body x 2 = body x + body x * (1 - ∑' (x : T), if cond x then body x else 0) := by
-  simp [s₂,u₂]
-  rw [sum_range]
-  rw [Fin.sum_univ_two]
-  simp
-
-theorem at2'₁ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 2 a x = SubPMF.pure a x := by
-  simp [prob_while_cut, WhileFunctional, h]
-
-theorem at2'₂ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 2 a x = body x := by
-  simp [prob_while_cut, WhileFunctional]
-  simp at h
-  simp [h]
-  unfold SubPMF.bind
-  unfold SubPMF.pure
-  simp [ite_apply]
-  sorry -- Need to split sum but OK
-
-theorem at2' (cond : T → Bool) (body : RandomM T) (x : T) (a : T) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 2 a x = 0 := by
-  simp [prob_while_cut, WhileFunctional]
-  unfold SubPMF.bind
-  unfold SubPMF.pure
-  simp [ite_apply]
-  sorry
-
-
-theorem at3 (cond : T → Bool) (body : RandomM T) (x : T) :
-  s₂ cond body x 3 = body x + body x * (1 - ∑' (x : T), if cond x then body x else 0) + body x * (1 - ∑' (x : T), if cond x = true then body x else 0) ^ 2 := by
-  simp [s₂,u₂]
-  rw [sum_range]
-  rw [Fin.sum_univ_three]
-  simp
-
-theorem at3'₁ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 3 a x = SubPMF.pure a x := by
-  simp [prob_while_cut, WhileFunctional, h]
-
-theorem helper2 (cond : T → Bool) (body : RandomM T) (x : T) :
-  ∑' (a : T), body a * ite (cond a = false) (fun b => body b) (fun a' => if a' = a then 1 else 0) x =
-  body x + body x * (1 - ∑' (x : T), if cond x = true then body x else 0) := by
-  sorry
-
-theorem at3'₂ (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ cond a) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) 3 a x = body x + body x * (1 - ∑' (x : T), if cond x then body x else 0) := by
-  simp [prob_while_cut, WhileFunctional, h]
-  unfold SubPMF.bind
-  unfold SubPMF.pure
-  simp [ite_apply]
-  sorry
-
 theorem s₁_convergence (cond : T → Bool) (body : RandomM T) (x : T) :
   Filter.Tendsto (fun x_1 => s₁ cond body x (x_1 + 1)) Filter.atTop
   (nhds (ENNReal.toReal ((if cond x = true then body x else 0) / ∑' (x : T), if cond x = true then body x else 0))) := by
@@ -119,22 +37,22 @@ theorem s₂_convergence (cond : T → Bool) (body : RandomM T) (x : T) :
   (nhds ((if cond x = true then body x else 0) / ∑' (x : T), if cond x = true then body x else 0)) := by
   sorry
 
-theorem split (cond : T → Bool) (body : PMF T) (x : T) :
+theorem split (cond : T → Bool) (body : RandomM T) (x : T) :
   ∑' (a : T),
       body a *
         ite (cond a = false)
-          (fun b => ∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) n a b)
+          (fun b => ∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) n a b)
           (fun a' => if a' = a then 1 else 0) x
   =
   (∑' (a : { v : T // cond v = false}),
-    body a * ∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) n a x)
+    body a * ∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) n a x)
   +
   (∑' (a : { v : T // cond v = true}), body a * if x = a then 1 else 0) := sorry
 
-theorem ite_simp (cond : T → Bool) (body : PMF T) (x : T) :
+theorem ite_simp (cond : T → Bool) (body : RandomM T) (x : T) :
   (∑' (a : { v // cond v = true }), body ↑a * @ite ENNReal (x = ↑a) (propDecidable (x = ↑a)) 1 0) = body x := by sorry
 
-theorem the_eq (cond : T → Bool) (body : PMF T) (x : T) (a : T) (h : ¬ cond a) (n : ℕ) :
+theorem the_eq (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ cond a) (n : ℕ) :
   (prob_while_cut (fun v => decide (cond v = false)) (fun x => body) (n + 1) a x)
   =
   s₂ cond body x n := by
@@ -149,11 +67,15 @@ theorem the_eq (cond : T → Bool) (body : PMF T) (x : T) (a : T) (h : ¬ cond a
     intro IH
     rw [split]
     rw [IH]
+    clear IH
     rw [ENNReal.tsum_mul_right]
     rw [ite_simp]
+    simp [s₂]
+    rw [sum_range_succ]
+    rw [← s₂]
     sorry -- Looks reasonable
 
-theorem pwc_convergence_0 (body : PMF T) (cond : T → Bool) (x : T) (a : T) (h : ¬ cond a) :
+theorem pwc_convergence_0 (body : RandomM T) (cond : T → Bool) (x : T) (a : T) (h : ¬ cond a) :
   ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x =
   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
   apply iSup_eq_of_tendsto
@@ -162,16 +84,16 @@ theorem pwc_convergence_0 (body : PMF T) (cond : T → Bool) (x : T) (a : T) (h 
     . rw [Filter.tendsto_congr (the_eq cond body x a h)]
       simp [s₂_convergence]
 
-theorem exists_seq_same_ind (body : PMF T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (i : ℕ) :
-  (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) i a x)
+theorem exists_seq_same_ind (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (i : ℕ) :
+  (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x)
   =
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) (i + 1) b x := by
+  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) (i + 1) b x := by
   simp [prob_while_cut, WhileFunctional, h]
 
-theorem exists_seq_same_limit (body : PMF T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (l : ENNReal) :
-  Filter.Tendsto (fun i => (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) i a x)) Filter.atTop (nhds l)
+theorem exists_seq_same_limit (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (l : ENNReal) :
+  Filter.Tendsto (fun i => (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x)) Filter.atTop (nhds l)
   ↔
-  Filter.Tendsto (fun i => prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) i b x) Filter.atTop (nhds l) := by
+  Filter.Tendsto (fun i => prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i b x) Filter.atTop (nhds l) := by
   conv =>
     right
     rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)]
@@ -180,10 +102,10 @@ theorem exists_seq_same_limit (body : PMF T) (cond : T → Bool) (x : T) (b : T)
   apply exists_seq_same_ind
   trivial
 
-theorem exists_seq_same (body : PMF T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) :
-  (∑' (a : T), body a * ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) i a x)
+theorem exists_seq_same (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) :
+  (∑' (a : T), body a * ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x)
   =
-  ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => ⇑body) i b x := by
+  ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i b x := by
   refine (iSup_eq_of_tendsto ?hf ?_).symm
   . simp [prob_while_cut_monotonic]
   . rw [← exists_seq_same_limit]
@@ -191,7 +113,7 @@ theorem exists_seq_same (body : PMF T) (cond : T → Bool) (x : T) (b : T) (h : 
     . trivial
 
 @[simp]
-theorem prob_until_apply (body : PMF T) (cond : T → Bool) (x : T) (ex : ∃ b : T, ¬ cond b) :
+theorem prob_until_apply (body : RandomM T) (cond : T → Bool) (x : T) (ex : ∃ b : T, ¬ cond b) :
   prob_until (body : RandomM T) (cond : T → Bool) x =
   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
   simp [prob_until, prob_while]
