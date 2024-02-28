@@ -63,9 +63,15 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 -- def split_sum (u : ℕ → ℝ) (h : Summable u) :=
 --   tsum_subtype_add_tsum_subtype_compl h (setOf λ i : ℕ => True)
 
-theorem sumsum (p : PMF ℕ) (k : ENNReal) :
-  ∑' (a : ℕ), p a * k = k := by
-  simp [ENNReal.tsum_mul_right]
+-- theorem sumsum (p : PMF ℕ) (k : ENNReal) :
+--   ∑' (a : ℕ), p a * k = k := by
+--   simp [ENNReal.tsum_mul_right]
+
+theorem foo (cond : ℕ → Bool) (f : ℕ → ℝ) :
+  (∑' x : { x : ℕ // cond x }, f x)
+  =
+  1 := by
+  apply?
 
 -- theorem split_Sum (cond : ℕ → Bool) (u₁ u₂ : ℕ → ENNReal) :
 --   (∑' i : ℕ, if cond i then (u₁ i) else (u₂ i)) =
