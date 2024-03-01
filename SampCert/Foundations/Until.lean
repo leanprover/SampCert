@@ -73,6 +73,7 @@ theorem the_eq (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ co
     simp [s₂]
     rw [sum_range_succ]
     rw [← s₂]
+    simp [u₂]
     sorry -- Looks reasonable
 
 theorem pwc_convergence_0 (body : RandomM T) (cond : T → Bool) (x : T) (a : T) (h : ¬ cond a) :
