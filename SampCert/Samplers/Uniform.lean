@@ -23,7 +23,18 @@ theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) 
 
 @[simp]
 theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
-  x < 2 ^ (log 2 ↑(2 * n)) := sorry
+  x < 2 ^ (log 2 ↑(2 * n)) := by
+  have A : ∀ m : ℕ, m < 2 ^ (log 2 ↑(2 * m)) := by
+    intro m
+    cases m
+    . simp
+    . rename_i m
+      have H1 := @Nat.lt_pow_succ_log_self 2 le.refl (succ m)
+      have H2 := @Nat.log_mul_base 2 (succ m) le.refl (succ_ne_zero m)
+      rw [Nat.mul_comm]
+      rw [H2]
+      exact H1
+  exact Nat.lt_trans support (A ↑n)
 
 @[simp]
 theorem rw_ite (n : PNat) (x : Nat) :
@@ -42,7 +53,6 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   unfold UniformSample
   simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
    one_div, sum_simple]
-  rw [sum_simple]
   split
   . rw [rw1 n]
     rw [rw2 n]
@@ -51,7 +61,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     rw [H]
     simp
   . contradiction
-  sorry
+
 
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by

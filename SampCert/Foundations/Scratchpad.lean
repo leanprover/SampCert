@@ -67,11 +67,11 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   ∑' (a : ℕ), p a * k = k := by
 --   simp [ENNReal.tsum_mul_right]
 
-theorem foo (cond : ℕ → Bool) (f : ℕ → ℝ) :
-  (∑' x : { x : ℕ // cond x }, f x)
-  =
-  1 := by
-  apply?
+-- theorem foo (cond : ℕ → Bool) (f : ℕ → ℝ) :
+--   (∑' x : { x : ℕ // cond x }, f x)
+--   =
+--   1 := by
+--   apply?
 
 -- theorem split_Sum (cond : ℕ → Bool) (u₁ u₂ : ℕ → ENNReal) :
 --   (∑' i : ℕ, if cond i then (u₁ i) else (u₂ i)) =
@@ -89,4 +89,15 @@ theorem foo (cond : ℕ → Bool) (f : ℕ → ℝ) :
 
 theorem tests (a b k : ENNReal) (h : a + k = b + k) (cond: k ≠ ⊤)  :
   a = b := by
-  apply?
+  cases a
+  . cases b
+    . simp
+    . by_contra h'
+      simp at h
+      sorry -- doable
+  . cases b
+    . by_contra h'
+      simp [h'] at h
+      contradiction
+    . rename_i v1 v2
+      sorry
