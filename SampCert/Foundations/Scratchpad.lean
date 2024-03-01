@@ -86,3 +86,7 @@ theorem foo (cond : ℕ → Bool) (f : ℕ → ℝ) :
   -- refine (iSup_eq_of_tendsto ?hf ?_).symm
   -- .sorry -- monotone
   -- . apply?
+
+theorem tests (a b k : ENNReal) (h : a + k = b + k) (cond: k ≠ ⊤)  :
+  a = b := by
+  apply?

@@ -42,6 +42,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   unfold UniformSample
   simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
    one_div, sum_simple]
+  rw [sum_simple]
   split
   . rw [rw1 n]
     rw [rw2 n]
@@ -50,6 +51,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     rw [H]
     simp
   . contradiction
+  sorry
 
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by
