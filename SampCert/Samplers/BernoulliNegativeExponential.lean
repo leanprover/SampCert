@@ -11,8 +11,16 @@ import Mathlib.Data.Complex.Exponential
 
 open PMF Nat
 
+theorem halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
+  num ≤ ↑(st * den) := by
+  simp
+  cases st
+  rename_i v p
+  simp
+  exact le_mul_of_one_le_of_le p wf
+
 noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : num ≤ den) (state : (Bool × PNat)) : RandomM (Bool × PNat) := do
-  let A ← BernoulliSample num (state.2 * den) sorry
+  let A ← BernoulliSample num (state.2 * den) (halve_wf num den state.2 wf)
   return (A, state.2 + 1)
 
 noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Nat := do
