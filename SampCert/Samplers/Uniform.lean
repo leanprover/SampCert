@@ -97,21 +97,18 @@ theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
     rw [UniformSample_apply ↑n m h]
     rw [ENNReal.div_add_div_same]
 
+theorem UniformSample_support_Sum' (n : PNat) :
+  (Finset.sum (range n) fun i => UniformSample n i) = 1 := by
+  rw [UniformSample_support_Sum n n le.refl]
+  apply ENNReal.div_self
+  . simp
+  . simp
+
 @[simp]
 theorem UniformSample_normalizes (n : PNat) :
   ∑' a : ℕ, UniformSample n a = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ n]
-  . simp
-    rw [UniformSample_support_Sum n n le.refl]
-    cases n
-    rename_i n p
-    simp
-    apply ENNReal.div_self
-    . simp
-      by_contra h
-      subst h
-      contradiction
-    . simp
+  . simp [UniformSample_support_Sum']
   . exact ENNReal.summable
 
 theorem UniformSample_HasSum_1  (n : PNat) :
