@@ -32,13 +32,6 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num �
 theorem BernoulliExpNegSampleUnit_apply (num : Nat) (den : PNat)  (wf : num ≤ den) (_ : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnit num den wf) true = ENNReal.ofReal (Real.exp (-γ)) := sorry
 
--- noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
---   if iter = 0 then return true
---   else
---     let B ← BernoulliExpNegSampleUnit 1 1 (le_refl 1)
---     let R ← BernoulliExpNegSampleGenLoop (iter - 1)
---     return (B ∧ R)
-
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
   else

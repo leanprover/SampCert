@@ -45,7 +45,7 @@ theorem rw_ite (n : PNat) (x : Nat) :
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
   rw [UniformPowerOfTwoSample_apply]
-  simp
+  simp only [PNat.mul_coe, one_div]
   apply double_large_enough
   trivial
   trivial
@@ -65,11 +65,63 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     simp
   . contradiction
 
+@[simp]
+theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
+  UniformSample n x = 0 := by
+  simp only [UniformSample, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_until_apply_2,
+    decide_eq_true_eq, rw_ite, one_div, sum_simple, SubPMF.pure_apply, ENNReal.tsum_eq_zero,
+    _root_.mul_eq_zero, ENNReal.div_eq_zero_iff, ite_eq_right_iff, ENNReal.inv_eq_zero,
+    pow_eq_top_iff, two_ne_top, ne_eq, log_eq_zero_iff, reduceLE, or_false, not_lt, false_and,
+    imp_false]
+  intro i
+  have OR : ↑n ≤ i ∨ ↑n > i := by exact le_or_lt (↑n) i
+  cases OR
+  . rename_i h
+    simp [h]
+  . rename_i h
+    have A : x > i := by exact Nat.lt_of_lt_of_le h support
+    have B : x ≠ i := by exact Nat.ne_of_gt A
+    simp [B]
+
+theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
+  (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
+  induction m
+  . simp
+  . rename_i m IH
+    simp at *
+    have A : m ≤ ↑n := by exact lt_succ.mp (le.step h)
+    have IH' := IH A
+    clear IH
+    rw [sum_range_succ]
+    simp [IH']
+    rw [UniformSample_apply ↑n m h]
+    rw [ENNReal.div_add_div_same]
+
+@[simp]
+theorem UniformSample_normalizes (n : PNat) :
+  ∑' a : ℕ, UniformSample n a = 1 := by
+  rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ n]
+  . simp
+    rw [UniformSample_support_Sum n n le.refl]
+    cases n
+    rename_i n p
+    simp
+    sorry -- n / n = 1
+  . exact ENNReal.summable
+
+theorem UniformSample_HasSum_1  (n : PNat) :
+  HasSum (UniformSample n) 1 := by
+  have A : Summable (UniformSample n) := by exact ENNReal.summable
+  have B := Summable.hasSum A
+  rw [UniformSample_normalizes n] at B
+  trivial
+
+noncomputable def UniformSample_PMF (n : PNat) : PMF ℕ := ⟨ UniformSample n , UniformSample_HasSum_1 n⟩
 
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by
   split
   rename_i i2
   rw [UniformSample_apply]
-  exact Nat.lt_of_lt_of_le i2 i1
-  trivial
+  . exact Nat.lt_of_lt_of_le i2 i1
+  . trivial
