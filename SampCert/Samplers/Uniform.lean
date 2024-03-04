@@ -106,7 +106,12 @@ theorem UniformSample_normalizes (n : PNat) :
     cases n
     rename_i n p
     simp
-    sorry -- n / n = 1
+    apply ENNReal.div_self
+    . simp
+      by_contra h
+      subst h
+      contradiction
+    . simp
   . exact ENNReal.summable
 
 theorem UniformSample_HasSum_1  (n : PNat) :

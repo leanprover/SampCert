@@ -110,7 +110,7 @@ theorem exists_seq_same (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (
   refine (iSup_eq_of_tendsto ?hf ?_).symm
   . simp [prob_while_cut_monotonic]
   . rw [← exists_seq_same_limit]
-    . apply?
+    . sorry
     . trivial
 
 @[simp]
