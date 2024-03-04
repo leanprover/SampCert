@@ -73,9 +73,9 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
     let s1 : Statement := .expect cond msg
     return s1 :: (← right.toStatements)
   | ite cond left right => return [.conditional cond (← left.toStatements) (← right.toStatements)]
-  | bind v body => throwError "toStatements: to do {e}"
-  | lam v body => throwError "toStatements: unexpected expression lam {e}"
-  | throw e => throwError "WF: throw must appear immediately as the left side of a conditional"
+  | bind .. => throwError "toStatements: to do {e}"
+  | lam .. => throwError "toStatements: unexpected expression lam {e}"
+  | throw .. => throwError "WF: throw must appear immediately as the left side of a conditional"
   | prob_until .. => throwError "invariant violation: prob_until should have been compiled away"
   -- Brittle: it turns out that it is important to know if we're dealing
   -- with a while or an until to determine if we need to pass the state
@@ -103,15 +103,15 @@ partial def Expression.toStatements (e : Expression) : MetaM (List Statement) :=
   | monadic .. => throwError "toStatements: unexpected expression monadic {e}"
 
 def Expression.pipeline (body : Expression) : MetaM Expression := do
-  IO.println body.print
+  --IO.println body.print
   let body1 ← body.map compileBind
-  IO.println body1.print
+  --IO.println body1.print
   let body2 ← body1.map compileReturn
-  IO.println body2.print
+  --IO.println body2.print
   let body3 ← body2.map compileProbUntil
-  IO.println body3.print
+  --IO.println body3.print
   let body4 ← body3.map inline
-  IO.println body4.print
+  --IO.println body4.print
   return body4
 
 def CodeGen (pi : RandomMDef) : MetaM Method := do

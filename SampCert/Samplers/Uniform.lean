@@ -16,10 +16,13 @@ noncomputable def UniformSample (n : PNat) : RandomM Nat := do
 theorem rw1 (n : PNat) :
    (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
    = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
-  simp
+  simp only [ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
+    log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, cast_eq_zero, PNat.ne_zero, or_self,
+    not_false_eq_true, ENNReal.coe_div, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat,
+    ENNReal.coe_mul, coe_nat]
 
 theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) := by
-  simp
+  simp only [ne_eq, cast_eq_zero, PNat.ne_zero, not_false_eq_true, ENNReal.coe_inv, coe_nat]
 
 @[simp]
 theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :

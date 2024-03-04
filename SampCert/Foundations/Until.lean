@@ -77,7 +77,7 @@ theorem the_eq (cond : T → Bool) (body : RandomM T) (x : T) (a : T) (h : ¬ co
     sorry -- Looks reasonable
 
 theorem pwc_convergence_0 (body : RandomM T) (cond : T → Bool) (x : T) (a : T) (h : ¬ cond a) :
-  ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x =
+  ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x =
   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
   apply iSup_eq_of_tendsto
   . simp [prob_while_cut_monotonic]
@@ -86,13 +86,13 @@ theorem pwc_convergence_0 (body : RandomM T) (cond : T → Bool) (x : T) (a : T)
       simp [s₂_convergence]
 
 theorem exists_seq_same_ind (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (i : ℕ) :
-  (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x)
+  (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x)
   =
-  prob_while_cut (fun v => decide (cond v = false)) (fun x => body) (i + 1) b x := by
+  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) (i + 1) b x := by
   simp [prob_while_cut, WhileFunctional, h]
 
 theorem exists_seq_same_limit (body : RandomM T) (cond : T → Bool) (x : T) (b : T) (h : ¬ cond b) (l : ENNReal) :
-  Filter.Tendsto (fun i => (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x)) Filter.atTop (nhds l)
+  Filter.Tendsto (fun i => (∑' (a : T), body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x)) Filter.atTop (nhds l)
   ↔
   Filter.Tendsto (fun i => prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i b x) Filter.atTop (nhds l) := by
   conv =>
