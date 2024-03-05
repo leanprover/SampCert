@@ -26,7 +26,7 @@ elab "#print_dafny_exports" : command => do
   writeLn "  import FisherYates"
   writeLn "  import opened Pos"
 
-  writeLn "  trait {:termination false} RandomTrait extends  UniformPowerOfTwo.Implementation.Trait, FisherYates.Implementation.Trait {\n"
+  writeLn "  trait {:termination false} RandomTrait extends  UniformPowerOfTwo.Interface.Trait, FisherYates.Implementation.Trait {\n"
 
   let { decls, .. } := extension.getState (← getEnv)
   for decl in decls.reverse do
