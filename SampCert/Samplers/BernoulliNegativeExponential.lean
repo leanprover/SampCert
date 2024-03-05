@@ -28,17 +28,42 @@ noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : nu
   return r.2
 
 @[simp]
-theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (_ : γ = (num : ℝ) / (den : ℝ)) :
+theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnitAux num den wf) n =
-  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := sorry
+  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
+  simp [BernoulliExpNegSampleUnitAux, prob_while]
+  unfold BernoulliExpNegSampleUnitLoop
+  simp
+  unfold SubPMF.bind
+  unfold SubPMF.pure
+  simp
+  sorry
 
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
   if K % 2 = 0 then return true else return false
 
 @[simp]
-theorem BernoulliExpNegSampleUnit_apply (num : Nat) (den : PNat)  (wf : num ≤ den) (_ : γ = (num : ℝ) / (den : ℝ)) :
-  (BernoulliExpNegSampleUnit num den wf) true = ENNReal.ofReal (Real.exp (-γ)) := sorry
+theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSampleUnit num den wf) false = ENNReal.ofReal (Real.exp (- γ)) := by
+  have B : Real.exp (-γ) ≥ 0 := by exact Real.exp_nonneg (-γ)
+  simp [BernoulliExpNegSampleUnit]
+  unfold SubPMF.pure
+  simp [ite_apply]
+  conv =>
+    left
+    right
+    intro a
+    rw [BernoulliExpNegSampleUnitAux_apply num den wf a gam]
+  have C : (∑' (a : ℕ), if a % 2 = 0 then 0 else ENNReal.ofReal (γ ^ (a - 1) / ↑(a - 1)! - γ ^ a / ↑a !))
+    = (∑' (a : ℕ), ENNReal.ofReal ((-γ)^a / (a - 1)!)) := by sorry
+  rw [C]
+  sorry -- need to connect to definition of exp
+
+@[simp]
+theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSampleUnit num den wf) true = 1 - ENNReal.ofReal (Real.exp (- γ)) := by
+  sorry
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true

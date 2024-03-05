@@ -47,11 +47,11 @@ def prob_while_cut (cond : State → Bool) (body : State → PMF) (n : Nat) (a :
   | succ n => WhileFunctional cond body (prob_while_cut cond body n) a
 
 def test_cond (n : Bool × Nat) : Bool := n.1
-def test_body (st : Bool × Nat) : PMF := λ b => if b.1 = true && b.2 = st.2 + 1 then 0.5 else if b.1 = false && b.2 = st.2 then 0.5 else 0
+def test_body (st : Bool × Nat) : PMF := λ b => if b.1 = true && b.2 = st.2 + 1 then 0.5 else if b.1 = false && b.2 = st.2 + 1 then 0.5 else 0
 
-def loop (n : Nat) : PMF := prob_while_cut test_cond test_body n (true,1)
+def loop (n : Nat) : PMF := prob_while_cut test_cond test_body n (true,0)
 
-#eval loop 0
+#eval loop 0 -- off by one because of fuel
 #eval loop 1
 #eval loop 2
 #eval loop 3

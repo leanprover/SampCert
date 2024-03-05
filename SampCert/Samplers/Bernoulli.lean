@@ -69,4 +69,12 @@ theorem BernoulliSample_apply_false (num : Nat) (den : PNat) (wf : num ≤ den) 
     exact lt_top_iff_ne_top.mp B
   . trivial
 
+@[simp]
+theorem BernoulliSample_apply (num : Nat) (den : PNat) (wf : num ≤ den) (b : Bool) :
+  BernoulliSample num den wf b = if b then ((num : ENNReal) / (den : ENNReal)) else ((1 : ENNReal) - ((num : ENNReal) / (den : ENNReal))) := by
+  cases b
+  . simp
+  . simp
+
+
 noncomputable def BernoulliSamplePMF (num : Nat) (den : PNat) (wf : num ≤ den) : PMF Bool := PMF.ofFintype (BernoulliSample num den wf) (BernoulliSample_normalizes' num den wf)
