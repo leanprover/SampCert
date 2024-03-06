@@ -66,17 +66,62 @@ theorem test_prop_4 (b : Bool) (K : ℕ) :
   loop_body (b,K) (false,K+4) = 0 := by
   simp [tsum_bool,loop_body]
 
--- ¬ st.1 → st.2 > 0
-theorem invariant (fuel : ℕ) :
-  prob_while_cut loop_cond loop_body fuel (true, 0) (false, 0) = 0 := by
+@[simp]
+theorem loop_body_init_apply_true (K : ℕ) :
+  loop_body (true, 0) (true, K) = if K = 1 then 2⁻¹ else 0 := by
+  simp [tsum_bool,loop_body]
+
+@[simp]
+theorem loop_body_init_apply_false (K : ℕ) :
+  loop_body (true, 0) (false, K) = if K = 1 then 2⁻¹ else 0 := by
+  simp [tsum_bool,loop_body]
+
+@[simp]
+theorem loop_body_init_apply_false' (st : Bool × ℕ) :
+  loop_body st (false, 0) = 0 := by
+  simp [tsum_bool,loop_body]
+  intro
+  contradiction
+
+theorem zero_case_gen (fuel : ℕ) (st : Bool × ℕ) (h : st ≠ (false,0)):
+  prob_while_cut loop_cond loop_body fuel st (false, 0) = 0 := by
+  revert st
+  induction fuel
+  . simp [prob_while_cut]
+  . rename_i fuel IH
+    intro st h
+    simp [prob_while_cut, WhileFunctional]
+    unfold SubPMF.bind
+    unfold SubPMF.pure
+    simp [ite_apply]
+    split
+    . simp
+      constructor
+      . intro b
+        cases b
+        . left
+          simp
+        . right
+          apply IH
+          simp
+      . intro b
+        right
+        apply IH
+        simp
+    . rename_i h'
+      simp at h
+      split
+      . rename_i h''
+        rw [h''] at h
+        contradiction
+      . simp
+
+theorem fffff (b : Bool) (fuel n K : ℕ) (h : n > 0) :
+  prob_while_cut loop_cond loop_body fuel (b, K) (false, n) = ⊤ := by
   sorry
 
-theorem zero_case (fuel : ℕ) :
-  prob_while_cut loop_cond loop_body fuel (true, 0) (false, 0) = 0 := by
-  sorry -- actually interesting to prove because it needs to show that K
-  -- always increases
 
-theorem core (n : ℕ) :
+theorem geometric_pwc_sup (n : ℕ) :
   ⨆ i, prob_while_cut loop_cond loop_body i (true, 0) (false, n) = if n = 0 then 0 else (1/2)^n := by
   refine iSup_eq_of_tendsto ?hf ?_
   . apply prob_while_cut_monotonic
@@ -89,7 +134,7 @@ theorem core (n : ℕ) :
       intro ε _
       existsi 0
       intro n H
-      simp [zero_case]
+      simp [zero_case_gen]
     . rename_i h
       sorry
 
@@ -147,7 +192,7 @@ theorem final (n : ℕ) :
     right
     simp
   simp only [add_zero]
-  simp [core]
+  simp [geometric_pwc_sup]
   split
   . simp
   . simp
