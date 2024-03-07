@@ -211,6 +211,25 @@ theorem isa_try (fuel K₁ n : ℕ) (b : Bool) :
       -- Right execution stopped
       . simp
 
+theorem isa_try' (fuel K₁ K₂ n : ℕ) (b : Bool) :
+  prob_while_cut loop_cond loop_body fuel (b, K₁) (false, n)
+  =
+  prob_while_cut loop_cond loop_body fuel (b, K₁ + K₂) (false, n + K₂) := by
+  revert K₁ n
+  induction K₂
+  . simp
+  . rename_i K₂ IH
+    intro K₁ n
+    have IH' := IH (K₁ + 1) (n + 1)
+    clear IH
+    have A := isa_try fuel K₁ n b
+    rw [A, IH']
+    clear A IH'
+    have B : K₁ + 1 + K₂ = K₁ + succ K₂ := succ_add_eq_add_succ K₁ K₂
+    have C : n + 1 + K₂ = n + succ K₂ := succ_add_eq_add_succ n K₂
+    simp [B,C]
+
+
 
 theorem blob (ppsf : Bool × ℕ → RandomM (Bool × ℕ)) :
   ppsf (false,n) = 0 →
