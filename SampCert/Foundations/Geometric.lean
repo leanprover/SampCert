@@ -224,8 +224,16 @@ theorem false_to_false (fuel n K : ℕ) :
   cases fuel
   . simp [prob_while_cut]
   . simp [prob_while_cut, WhileFunctional, loop_cond]
+    conv =>
+      right
+      right
+      rw [← add_zero n]
     intro h
-    sorry
+    rw [add_assoc] at h
+    rw [Nat.add_left_cancel_iff] at h
+    cases K
+    . simp at h
+    . simp at h
 
 theorem pwc_progress (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1) = (1/2)^(fuel + 1) := by
@@ -289,76 +297,6 @@ theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
   rw [A] at prog
   have B : n - 1 + 2 = n + 1 := by exact succ_inj.mpr A
   rw [B] at prog
-  trivial
-
--- new version more general
-theorem pwc_advance (fuel n : ℕ) :
-  prob_while_cut loop_cond loop_body (1 + fuel + 2) (true,n) (false,n + fuel + 1)
-  =
-  prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1) := by
-  revert n
-  induction fuel
-  . intro n
-    simp [prob_while_cut, WhileFunctional, loop_cond, ENNReal.tsum_prod',tsum_bool]
-    sorry -- seems OK!
-  . rename_i fuel IH
-    intro n
-    unfold prob_while_cut
-    unfold WhileFunctional
-    split
-    . rename_i h
-      clear h
-      simp
-      have IH' := IH (n + 1)
-      clear IH
-      simp [ENNReal.tsum_prod',tsum_bool]
-      conv =>
-        congr
-        . congr
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-        . congr
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-      simp
-      have A : succ fuel + 1 = fuel + 2 := by exact rfl
-      rw [A]
-      have B: 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
-      rw [B]
-      have C : n + succ fuel + 1 = n + 1 + fuel + 1 := by exact Nat.add_right_comm n (succ fuel) 1
-      rw [C]
-      rw [IH']
-      exact rfl
-    . simp
-
--- new version more general
-theorem pwc_advance' (n : ℕ) (h : ¬ n = 0) :
-  prob_while_cut loop_cond loop_body (n + 2) (true,0) (false,n)
-  =
-  prob_while_cut loop_cond loop_body (n + 1) (true,0) (false,n) := by
-  have prog := pwc_advance (n - 1) 0
-  have A : 1 + (n - 1) + 2 = n + 2 := by sorry
-  rw [A] at prog
-  have B : 0 + (n - 1) + 1 = n := by sorry
-  rw [B] at prog
-  have C : n - 1 + 2 = n + 1 := by sorry
-  rw [C] at prog
   trivial
 
 theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
@@ -451,45 +389,35 @@ theorem pwc_advance_gen' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   =
   prob_while_cut loop_cond loop_body (n + 1) (true,0) (false,m) := by
   have prog := pwc_advance_gen (n - 1) (m - 1) 0
-  have A : 1 + (n - 1) + 2 = n + 2 := by sorry
+  have P : ¬ n = 0 := by
+      by_contra
+      rename_i h
+      subst h
+      simp at h2
+      subst h2
+      contradiction
+  have A : 1 + (n - 1) + 2 = n + 2 := by
+    conv =>
+      left
+      left
+      rw [add_comm]
+    rw [Nat.add_right_cancel_iff]
+    exact succ_pred P
   rw [A] at prog
-  have B : 0 + (m - 1) + 1 = m := by sorry
+  have B : 0 + (m - 1) + 1 = m := by
+    rw [add_assoc]
+    rw [Nat.zero_add]
+    exact succ_pred h1
   rw [B] at prog
-  have C : n - 1 + 2 = n + 1 := by sorry
+  have C : n - 1 + 2 = n + 1 := by
+    have C' : 2 = 1 + 1 := by rfl
+    rw [C']
+    rw [← add_assoc]
+    rw [Nat.add_right_cancel_iff]
+    exact succ_pred P
   rw [C] at prog
   apply prog
   exact Nat.sub_le_sub_right h2 1
-
-
--- theorem pwc_progress'' (n E : ℕ) (h : ¬ n = 0) :
---   prob_while_cut loop_cond loop_body (E + (n + 1)) (true, 0) (false, n) = 2⁻¹ ^ n := by
---   induction E
---   . have A : zero + (n + 1) = n + 1 := by exact Nat.zero_add (n + 1)
---     rw [A]
---     apply pwc_progress'
---   . rename_i E IH
---     rw [← IH]
---     clear IH
---     simp [prob_while_cut, WhileFunctional, loop_cond, ENNReal.tsum_prod',tsum_bool]
---     congr
---     . ext x
---       split
---       . rename_i h
---         subst h
---         cases n
---         . contradiction
---         . rename_i n
---           simp [prob_while_cut, WhileFunctional, loop_cond]
---       . simp
---     . ext x
---       split
---       . rename_i h
---         subst h
---         cases n
---         .  contradiction
---         . rename_i n
---           sorry
---       . simp
 
 theorem pwc_characterization (n extra : ℕ) (h : ¬ n = 0) :
   prob_while_cut loop_cond loop_body (extra + (n + 1)) (true,0) (false,n) = 2⁻¹ ^ n := by

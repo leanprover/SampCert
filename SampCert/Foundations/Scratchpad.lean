@@ -87,11 +87,15 @@ open Classical Nat Finset BigOperators Real Set ENNReal
   -- .sorry -- monotone
   -- . apply?
 
-#check Summable.hasSum
+-- #check Summable.hasSum
 
-theorem fffff (f : ℕ → ENNReal) (h : (∑' a : ℕ, f a) = 1) :
-  HasSum f 1 := by
-  have A : Summable f := by exact ENNReal.summable
-  have B := Summable.hasSum A
-  rw [h] at B
-  trivial
+-- theorem fffff (f : ℕ → ENNReal) (h : (∑' a : ℕ, f a) = 1) :
+--   HasSum f 1 := by
+--   have A : Summable f := by exact ENNReal.summable
+--   have B := Summable.hasSum A
+--   rw [h] at B
+--   trivial
+
+theorem nat_sub_nez (n : ℕ) (h : ¬ n = 0) :
+  (n - 1) + 1 = n := by
+  exact succ_pred h
