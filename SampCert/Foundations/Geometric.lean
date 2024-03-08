@@ -103,12 +103,6 @@ theorem zero_case_gen (fuel : ℕ) (st : Bool × ℕ) (h : st ≠ (false,0)) :
         contradiction
       . simp
 
--- In the inductive case, the execution of the loop body and bind
--- will sum over all the states of the inner pwc
--- So we need the IH to be stated in terms of a general state
--- And the states that do not apply should simplify to something useful
--- for the left argument of the bind
-
 theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
   split
@@ -233,12 +227,6 @@ theorem false_to_false (fuel n K : ℕ) :
     intro h
     sorry
 
--- property should count the number of flips
--- and distinguish with starting counter?
--- or maybe I could consider the fuel being consumed?
-
--- prob_while_cut loop_cond loop_body (succ fuel) st (false, n)
--- = k * prob_while_cut loop_cond loop_body fuel ?? ...
 
 theorem pwc_progress (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1)
@@ -295,22 +283,40 @@ theorem pwc_progress (fuel n : ℕ) :
     simp
     rw [← _root_.pow_succ]
 
+theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
+  prob_while_cut loop_cond loop_body (n + 1) (true, 0) (false, n) = 2⁻¹ ^ n := by
+  have prog := pwc_progress (n - 1) 0
+  simp at prog
+  have A : n - 1 + 1 = n := by exact succ_pred h
+  rw [A] at prog
+  have B : n - 1 + 2 = n + 1 := by exact succ_inj.mpr A
+  rw [B] at prog
+  trivial
+
+theorem pwc_progress'' (n E : ℕ) (h : ¬ n = 0) :
+  prob_while_cut loop_cond loop_body (E + (n + 1)) (true, 0) (false, n) = 2⁻¹ ^ n := by
+  sorry
+
 theorem geometric_pwc_sup (n : ℕ) :
   ⨆ i, prob_while_cut loop_cond loop_body i (true, 0) (false, n) = if n = 0 then 0 else (1/2)^n := by
   refine iSup_eq_of_tendsto ?hf ?_
   . apply prob_while_cut_monotonic
-  . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat (n + 2))]
+  . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat (n + 1))]
     split
     . rename_i h
       subst h
-      simp
       rw [ENNReal.tendsto_atTop_zero]
       intro ε _
       existsi 0
       intro n H
       simp [zero_case_gen]
     . rename_i h
-      sorry
+      conv =>
+        congr
+        intro E
+        rw [pwc_progress'' _ _ h]
+      rw [tendsto_const_nhds_iff]
+      simp
 
 @[simp]
 theorem sum_range_low (n : ℕ) :
