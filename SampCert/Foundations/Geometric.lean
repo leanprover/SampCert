@@ -47,20 +47,6 @@ theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
   loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
   simp [loop_body]
 
--- Exploration
-theorem WF_one (ppmf : (Bool × ℕ) → RandomM (Bool × ℕ)) (b : Bool) (K : ℕ) :
-  WhileFunctional loop_cond loop_body ppmf (b,K) (false,K) = ppmf (b,K + 1) (false,K+1) := by
-  simp [WhileFunctional, loop_cond]
-  unfold SubPMF.pure
-  unfold SubPMF.bind
-  simp [ite_apply]
-  split
-  . rename_i h
-    subst h
-    simp [ENNReal.tsum_prod', tsum_bool]
-    sorry
-  . sorry
-
 -- Not clear that this is a very elegant way to prove it,
 -- it may be possible and informative to prove a weaker version
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
@@ -129,6 +115,16 @@ theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   . simp
   . simp
 
+theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
+  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (a = x) (instDecidableEqNat a x) v 0)) = 0 := by
+  split
+  . simp
+  . simp
+    intro
+    rename_i h
+    subst h
+    contradiction
+
 theorem pwc_false_to_false (fuel K n : ℕ) :
   prob_while_cut loop_cond loop_body fuel (false, K) (false, n) =
   prob_while_cut loop_cond loop_body fuel (false, K + 1) (false, n + 1) := by
@@ -136,7 +132,7 @@ theorem pwc_false_to_false (fuel K n : ℕ) :
   . simp [prob_while_cut]
   . simp [prob_while_cut, WhileFunctional, loop_cond]
 
-theorem isa_try (fuel K₁ n : ℕ) (b : Bool) :
+theorem pwc_shift' (fuel K₁ n : ℕ) (b : Bool) :
   prob_while_cut loop_cond loop_body fuel (b, K₁) (false, n)
   =
   prob_while_cut loop_cond loop_body fuel (b, K₁ + 1) (false, n + 1) := by
@@ -211,7 +207,7 @@ theorem isa_try (fuel K₁ n : ℕ) (b : Bool) :
       -- Right execution stopped
       . simp
 
-theorem isa_try' (fuel K₁ K₂ n : ℕ) (b : Bool) :
+theorem pwc_shift (fuel K₁ K₂ n : ℕ) (b : Bool) :
   prob_while_cut loop_cond loop_body fuel (b, K₁) (false, n)
   =
   prob_while_cut loop_cond loop_body fuel (b, K₁ + K₂) (false, n + K₂) := by
@@ -222,159 +218,82 @@ theorem isa_try' (fuel K₁ K₂ n : ℕ) (b : Bool) :
     intro K₁ n
     have IH' := IH (K₁ + 1) (n + 1)
     clear IH
-    have A := isa_try fuel K₁ n b
+    have A := pwc_shift' fuel K₁ n b
     rw [A, IH']
     clear A IH'
     have B : K₁ + 1 + K₂ = K₁ + succ K₂ := succ_add_eq_add_succ K₁ K₂
     have C : n + 1 + K₂ = n + succ K₂ := succ_add_eq_add_succ n K₂
     simp [B,C]
 
-
-
-theorem blob (ppsf : Bool × ℕ → RandomM (Bool × ℕ)) :
-  ppsf (false,n) = 0 →
-  WhileFunctional loop_cond loop_body ppsf (false,n) = 0 := by sorry
-
-theorem explore (st : Bool × ℕ) :
-  (∑' (a : Bool × ℕ), loop_body st a * prob_while_cut loop_cond loop_body fuel a (false, n))
-  =
-  (∑' (a : Bool × ℕ), loop_body st a * if n ≤ st.2 then 0 else if n ≥ fuel + st.2 then 0 else (1 / 2) ^ (n - st.2)) := by sorry
-
-theorem aaaaa (fuel n : ℕ) (st : Bool × ℕ) (h1 : st.1 ≠ false) (h2 : n ≤ st.2) :
-  prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
-  revert st n
-  induction fuel
+theorem false_to_false (fuel n K : ℕ) :
+  prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
+  cases fuel
   . simp [prob_while_cut]
-  . intro n st h1 h2
-    rename_i fuel IH
-    simp [prob_while_cut, WhileFunctional]
-    unfold SubPMF.bind
-    unfold SubPMF.pure
-    simp [ite_apply]
-    split
-    . simp
-      constructor
-      . intro b
-        right
-        sorry
-      . intro b
-        right
-        rw [IH]
-        . simp
-        . simp
-          sorry -- seems false, b is not constrained enough
-    . rename_i h3
-      split
-      . rename_i h4
-        cases h4
-        simp at h1
-      . simp
+  . simp [prob_while_cut, WhileFunctional, loop_cond]
+    intro h
+    sorry
 
-theorem bbbbb (fuel n : ℕ) (st : Bool × ℕ) (h1 : st.1 ≠ false) (h2: st.2 ≠ 0) (h3 : n ≥ fuel + st.2) :
-  prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
-  revert st
+-- property should count the number of flips
+-- and distinguish with starting counter?
+-- or maybe I could consider the fuel being consumed?
+
+-- prob_while_cut loop_cond loop_body (succ fuel) st (false, n)
+-- = k * prob_while_cut loop_cond loop_body fuel ?? ...
+
+theorem pwc_progress (fuel n : ℕ) :
+  prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1)
+  = (1/2)^(fuel + 1) := by
+  revert n
   induction fuel
-  . simp [prob_while_cut]
+  . intro n
+    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body]
+    simp [ENNReal.tsum_prod',tsum_bool]
+    rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+    simp
+    conv =>
+      left
+      right
+      right
+      intro x
+      rw [ite_simpl']
+    simp
   . rename_i fuel IH
-    intro st h1 h2 h3
-    simp [prob_while_cut, WhileFunctional]
-    unfold SubPMF.bind
+    intro n
+    unfold prob_while_cut
+    unfold WhileFunctional
+    simp
     unfold SubPMF.pure
-    simp [ite_apply]
-    split
-    . simp
-      constructor
-      . intro b
-        sorry
-      . sorry
-    . rename_i h4
-      split
-      . rename_i h5
-        cases h5
-        simp at h1
-      . simp
-
-
-
--- theorem cccccc (fuel n : ℕ) (st : Bool × ℕ) (h : st ≠ (false,0)) (h3 : n ≥ fuel + st.2) :
---   prob_while_cut loop_cond loop_body fuel st (false, n)
---   = if fuel ≤ n then 0 else (1/2)^n := by
---   revert st
---   induction fuel
---   . simp [prob_while_cut]
---   . rename_i fuel IH
---     intro st h1 h2 h3
---     simp [prob_while_cut, WhileFunctional]
---     unfold SubPMF.bind
---     unfold SubPMF.pure
---     simp [ite_apply]
---     split
---     . sorry
---     . split
---       . rename_i h4
---         cases h4
---         simp at h1
---       . split
---         . simp
---         . simp at *
---           sorry -- OK: contradiction
-
-
-
-theorem fffff (fuel n : ℕ) (st : Bool × ℕ) (h1 : st.1 ≠ false) (h2: st.2 ≠ 0) :
-  prob_while_cut loop_cond loop_body fuel st (false, n)
-  =
-  if n ≤ st.2 then 0
-  else if n ≥ fuel + st.2 then 0
-  else (1/2)^(n - st.2)
-  := by
-  revert st
-  induction fuel
-  . intro st h1 h2
-    simp [prob_while_cut]
-    split
-    . simp
-    . rename_i h3
-      split
-      . simp
-      . rename_i h4
-        simp at *
-        sorry -- OK: obvious contradiction
-  . rename_i fuel IH
-    intro st h1 h2
-    simp [prob_while_cut, WhileFunctional]
     unfold SubPMF.bind
-    unfold SubPMF.pure
-    simp [ite_apply]
-    split
-    . rw [explore] -- Danger: loose exploration
-      split
-      . simp
-      . split
-        . split
-          . simp
-          . simp at *
-            sorry -- OK: obvious contradiction
-        . split
-          . simp at *
-            sorry -- OK: obvious contradiction
-          . simp at *
-
-            sorry
-    . split
-      . rename_i h3
-        subst h3
-        contradiction
-      . rename_i h3
-        split
-        . simp
-        . rename_i h4
-          split
-          . simp
-          . rename_i h5
-            simp at *
-            sorry -- OK : bovious contradiction
-
+    simp only [loop_cond, loop_body]
+    simp [ENNReal.tsum_prod',tsum_bool]
+    have A : succ fuel + 1 = fuel + 2 := by exact rfl
+    simp [A]
+    conv =>
+      left
+      right
+      rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+      right
+      right
+      intro x
+      rw [ite_simpl]
+    simp
+    have B : n + succ fuel + 1 = (n + 1) + fuel + 1 := by exact Nat.add_right_comm n (succ fuel) 1
+    simp [B]
+    simp [IH (n + 1)]
+    conv =>
+      left
+      left
+      rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+      right
+      right
+      intro x
+      rw [ite_simpl]
+    simp
+    have C : n + 1 + fuel + 1 = n + 1 + 1 + fuel := by exact Nat.add_right_comm (n + 1) fuel 1
+    rw [C]
+    rw [false_to_false]
+    simp
+    rw [← _root_.pow_succ]
 
 theorem geometric_pwc_sup (n : ℕ) :
   ⨆ i, prob_while_cut loop_cond loop_body i (true, 0) (false, n) = if n = 0 then 0 else (1/2)^n := by
