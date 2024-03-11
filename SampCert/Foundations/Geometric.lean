@@ -20,6 +20,37 @@ def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
   let x ← bernoulli (1/2) half_in_unit
   return (x,st.2 + 1)
 
+def geometric' (fuel : ℕ) (st : Bool × ℕ) : RandomM (Bool × ℕ) :=
+  prob_while_cut loop_cond loop_body fuel st
+
+theorem ite_simpl (x a : ℕ) (v : ENNReal) :
+  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
+  split
+  . simp
+  . simp
+
+theorem geometric'_advance (fuel n : ℕ) (st : Bool × ℕ) :
+  geometric' (succ fuel) (true,n) st =
+  2⁻¹ * geometric' fuel (false, n + 1) st +
+    2⁻¹ * geometric' fuel (true, n + 1) st := by
+  cases st
+  rename_i b m
+  simp [geometric', prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  conv =>
+    left
+    . congr
+      . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+        right
+        right
+        intro x
+        rw [ite_simpl]
+      . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+        right
+        right
+        intro x
+        rw [ite_simpl]
+  simp
+
 def geometric : RandomM ℕ := do
   let st ← prob_while loop_cond loop_body (true,0)
   return st.2
@@ -108,12 +139,6 @@ theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (fa
       have h3 := h1 h
       simp [h, h3]
       exact Ne.symm (h1 h)
-
-theorem ite_simpl (x a : ℕ) (v : ENNReal) :
-  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
-  split
-  . simp
-  . simp
 
 theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (a = x) (instDecidableEqNat a x) v 0)) = 0 := by
@@ -399,41 +424,17 @@ theorem sum_range_low (n : ℕ) :
       simp at H
     simp [A]
 
-theorem ite_sum_singleout (n : ℕ) :
-  (∑' (b : ℕ), (@ite ENNReal (b = 0) (instDecidableEqNat b 0) 0 (2⁻¹ ^ b * @ite ENNReal (n = ↑b) (propDecidable (n = ↑b)) 1 0)) ) =  (@ite ENNReal (n = 0) (propDecidable (n = 0)) 0 (2⁻¹ ^ n)):= by
-  rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (n + 1)]
-  . have A : ∀ i : ℕ, (n = i + (n + 1)) ↔ false := by
-      intro i
-      conv =>
-        left
-        left
-        rw [← add_zero n]
-      conv =>
-        left
-        right
-        rw [add_comm]
-        rw [add_assoc]
-      simp only [iff_false]
-      intro h
-      rw [Nat.add_left_cancel_iff] at h
-      cases i
-      . simp at h
-      . rename_i i
-        have h' : 1 + succ i = 0 := by exact id h.symm
-        simp at h'
-    conv =>
-      left
-      right
-      right
-      intro i
-      simp [A]
-    simp
-    clear A
-    simp [sum_range_succ]
-    split
-    . simp [sum_range_low]
-    . simp [sum_range_low]
-  . exact ENNReal.summable
+theorem if_simpl (x n : ℕ) :
+  (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (2⁻¹ ^ x * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
+  split
+  . simp
+  . split
+    . simp
+    . split
+      . rename_i h
+        subst h
+        contradiction
+      . simp
 
 theorem geometric_apply (n : ℕ) :
   geometric n = if n = 0 then 0 else (1/2)^n := by
@@ -456,12 +457,15 @@ theorem geometric_apply (n : ℕ) :
     simp
   simp only [add_zero]
   simp [geometric_pwc_sup]
-  split
-  . simp [ite_sum_singleout]
-    rename_i h
-    simp [h]
-  . simp [ite_sum_singleout]
-    rename_i h
-    simp [h]
+  rw [ENNReal.tsum_eq_add_tsum_ite n]
+  simp
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [if_simpl]
+  simp
+
 
 end Geometric
