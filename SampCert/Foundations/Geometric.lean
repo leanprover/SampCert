@@ -70,38 +70,46 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
       subst h
       simp [IH]
 
-theorem zero_case_gen (fuel : ℕ) (st : Bool × ℕ) (h : st ≠ (false,0)) :
-  prob_while_cut loop_cond loop_body fuel st (false, 0) = 0 := by
+theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
+  prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
   revert st
   induction fuel
   . simp [prob_while_cut]
   . rename_i fuel IH
-    intro st h
-    simp [prob_while_cut, WhileFunctional]
-    unfold SubPMF.bind
-    unfold SubPMF.pure
-    simp [ite_apply]
+    intro st h1 h2
+    cases st
+    rename_i stb stn
+    simp at h1
+    simp at h2
+    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply]
     split
-    . simp
-      constructor
-      . intro b
-        cases b
-        . left
-          simp
-        . right
-          apply IH
-          simp
-      . intro b
-        right
-        apply IH
+    . rename_i h
+      subst h
+      simp only [tsum_bool]
+      simp
+      have A : (false, stn + 1) ≠ (false, n) := by
         simp
-    . rename_i h'
-      simp at h
-      split
-      . rename_i h''
-        rw [h''] at h
-        contradiction
+        have OR : n = stn ∨ n < stn := by exact Nat.eq_or_lt_of_le h2
+        cases OR
+        . rename_i h
+          subst h
+          exact Nat.ne_of_gt le.refl
+        . rename_i h
+          exact Nat.ne_of_gt (le.step h)
+      have B : (true, stn + 1) ≠ (false, n) := by exact
+        (bne_iff_ne (true, stn + 1) (false, n)).mp rfl
+      rw [IH _ A]
+      rw [IH _ B]
       . simp
+      . simp
+        exact le.step h2
+      . simp
+        exact le.step h2
+    . rename_i h
+      simp at h
+      have h3 := h1 h
+      simp [h, h3]
+      exact Ne.symm (h1 h)
 
 theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
@@ -118,106 +126,6 @@ theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
     rename_i h
     subst h
     contradiction
-
-theorem pwc_false_to_false (fuel K n : ℕ) :
-  prob_while_cut loop_cond loop_body fuel (false, K) (false, n) =
-  prob_while_cut loop_cond loop_body fuel (false, K + 1) (false, n + 1) := by
-  cases fuel
-  . simp [prob_while_cut]
-  . simp [prob_while_cut, WhileFunctional, loop_cond]
-
-theorem pwc_shift' (fuel K₁ n : ℕ) (b : Bool) :
-  prob_while_cut loop_cond loop_body fuel (b, K₁) (false, n)
-  =
-  prob_while_cut loop_cond loop_body fuel (b, K₁ + 1) (false, n + 1) := by
-  revert K₁ n
-  induction fuel
-  . simp [prob_while_cut]
-  . rename_i fuel IH
-    intro K₁ n
-    unfold prob_while_cut
-    unfold WhileFunctional
-    split
-    -- Left execution continued
-    . split
-      -- right execution continues -> induction
-      . rename_i h1 h2
-        simp [loop_cond] at *
-        subst h1
-        clear h2
-        -- loop_body constrains the state (a) bound in the sums
-        simp [ENNReal.tsum_prod', tsum_bool]
-        conv =>
-          congr
-          . congr
-            . rw [ENNReal.tsum_eq_add_tsum_ite (K₁ + 1)]
-              right
-              right
-              intro x
-              rw [ite_simpl]
-            . rw [ENNReal.tsum_eq_add_tsum_ite (K₁ + 1)]
-              right
-              right
-              intro x
-              rw [ite_simpl]
-          . congr
-            . rw [ENNReal.tsum_eq_add_tsum_ite (K₁ + 1 + 1)]
-              right
-              right
-              intro x
-              rw [ite_simpl]
-            . rw [ENNReal.tsum_eq_add_tsum_ite (K₁ + 1 + 1)]
-              right
-              right
-              intro x
-              rw [ite_simpl]
-        simp
-        have IH' := IH (K₁ + 1) n
-        clear IH
-        rw [← IH']
-        clear IH'
-        refine
-          (Mathlib.Tactic.LinearCombination.pf_add_c ?succ.inl.inl.p
-              (2⁻¹ * prob_while_cut loop_cond loop_body fuel (true, K₁ + 1) (false, n))).symm
-        refine (Mathlib.Tactic.LinearCombination.c_mul_pf ?succ.inl.inl.p.p 2⁻¹).symm
-
-        -- We now need to deal with the case where the starting state is false
-        apply pwc_false_to_false
-
-      -- Right execution stopped -> contradiction
-      . simp
-        rename_i h1 h2
-        simp [loop_cond] at *
-        subst h1
-        contradiction
-    -- Left execution stopped
-    . split
-      -- Right execution continued -> contradiction
-      . simp
-        rename_i h1 h2
-        simp [loop_cond] at *
-        subst h1
-        contradiction
-      -- Right execution stopped
-      . simp
-
-theorem pwc_shift (fuel K₁ K₂ n : ℕ) (b : Bool) :
-  prob_while_cut loop_cond loop_body fuel (b, K₁) (false, n)
-  =
-  prob_while_cut loop_cond loop_body fuel (b, K₁ + K₂) (false, n + K₂) := by
-  revert K₁ n
-  induction K₂
-  . simp
-  . rename_i K₂ IH
-    intro K₁ n
-    have IH' := IH (K₁ + 1) (n + 1)
-    clear IH
-    have A := pwc_shift' fuel K₁ n b
-    rw [A, IH']
-    clear A IH'
-    have B : K₁ + 1 + K₂ = K₁ + succ K₂ := succ_add_eq_add_succ K₁ K₂
-    have C : n + 1 + K₂ = n + succ K₂ := succ_add_eq_add_succ n K₂
-    simp [B,C]
 
 theorem false_to_false (fuel n K : ℕ) :
   prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
@@ -298,48 +206,6 @@ theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
   have B : n - 1 + 2 = n + 1 := by exact succ_inj.mpr A
   rw [B] at prog
   trivial
-
-theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
-  prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
-  revert st
-  induction fuel
-  . simp [prob_while_cut]
-  . rename_i fuel IH
-    intro st h1 h2
-    cases st
-    rename_i stb stn
-    simp at h1
-    simp at h2
-    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply]
-    split
-    . rename_i h
-      subst h
-      simp only [tsum_bool]
-      simp
-      have A : (false, stn + 1) ≠ (false, n) := by
-        simp
-        have OR : n = stn ∨ n < stn := by exact Nat.eq_or_lt_of_le h2
-        cases OR
-        . rename_i h
-          subst h
-          exact Nat.ne_of_gt le.refl
-        . rename_i h
-          exact Nat.ne_of_gt (le.step h)
-      have B : (true, stn + 1) ≠ (false, n) := by exact
-        (bne_iff_ne (true, stn + 1) (false, n)).mp rfl
-      rw [IH _ A]
-      rw [IH _ B]
-      . simp
-      . simp
-        exact le.step h2
-      . simp
-        exact le.step h2
-    . rename_i h
-      simp at h
-      have h3 := h1 h
-      simp [h, h3]
-      exact Ne.symm (h1 h)
-
 
 theorem pwc_crux (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true, n) (false, n) =
@@ -516,7 +382,6 @@ theorem pwc_characterization (n extra : ℕ) (h : ¬ n = 0) :
     . trivial
     . exact Nat.le_add_left n extra
 
-
 theorem geometric_pwc_sup (n : ℕ) :
   ⨆ i, prob_while_cut loop_cond loop_body i (true, 0) (false, n) = if n = 0 then 0 else (1/2)^n := by
   refine iSup_eq_of_tendsto ?hf ?_
@@ -529,7 +394,7 @@ theorem geometric_pwc_sup (n : ℕ) :
       intro ε _
       existsi 0
       intro n _
-      simp [zero_case_gen]
+      simp [pwc_does_not_stagnate]
     . rename_i h
       conv =>
         congr
