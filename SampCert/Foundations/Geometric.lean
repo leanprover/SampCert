@@ -47,8 +47,6 @@ theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
   loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
   simp [loop_body]
 
--- Not clear that this is a very elegant way to prove it,
--- it may be possible and informative to prove a weaker version
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
   prob_while_cut loop_cond loop_body fuel (b, k) (true,n) = 0 := by
   revert n b k
@@ -207,16 +205,6 @@ theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
   rw [B] at prog
   trivial
 
-theorem pwc_crux (fuel n : ℕ) :
-  prob_while_cut loop_cond loop_body (fuel + 2) (true, n) (false, n) =
-  prob_while_cut loop_cond loop_body (fuel + 1) (true, n) (false, n) := by
-  rw [pwc_does_not_stagnate]
-  rw [pwc_does_not_stagnate]
-  . simp
-  . simp
-  . simp
-  . simp
-
 theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   prob_while_cut loop_cond loop_body (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
   =
@@ -304,18 +292,12 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
           clear IH A B h1 Pre IH' P1
           rename_i h
           clear h
-          have FOO := pwc_crux (fuel + 1) (n + 1)
-          have X1 : fuel + 1 + 2 = 1 + fuel + 2 := by
-            conv =>
-              left
-              left
-              rw [add_comm]
-          have X2 : 1 + fuel + 1 = fuel + 2 := by exact succ_inj.mp (id X1.symm)
-          rw [← X1]
-          rw [← X2]
-          rw [FOO]
-          have X3 : fuel + 1 + 1 = 1 + fuel + 1 := by exact id X2.symm
-          rw [X3]
+          rw [pwc_does_not_stagnate]
+          rw [pwc_does_not_stagnate]
+          . simp
+          . simp
+          . simp
+          . simp
         rw [P2]
       . rename_i fuel'
         have C : succ fuel' - 1 = fuel' := by exact rfl
@@ -455,7 +437,7 @@ theorem ite_sum_singleout (n : ℕ) :
     . simp
   . exact ENNReal.summable
 
-theorem final (n : ℕ) :
+theorem geometric_apply (n : ℕ) :
   geometric n = if n = 0 then 0 else (1/2)^n := by
   simp [geometric]
   rw [ENNReal.tsum_prod']
