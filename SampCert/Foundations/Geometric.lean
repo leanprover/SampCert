@@ -299,6 +299,58 @@ theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
   rw [B] at prog
   trivial
 
+theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
+  prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
+  revert st
+  induction fuel
+  . simp [prob_while_cut]
+  . rename_i fuel IH
+    intro st h1 h2
+    cases st
+    rename_i stb stn
+    simp at h1
+    simp at h2
+    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply]
+    split
+    . rename_i h
+      subst h
+      simp only [tsum_bool]
+      simp
+      have A : (false, stn + 1) ≠ (false, n) := by
+        simp
+        have OR : n = stn ∨ n < stn := by exact Nat.eq_or_lt_of_le h2
+        cases OR
+        . rename_i h
+          subst h
+          exact Nat.ne_of_gt le.refl
+        . rename_i h
+          exact Nat.ne_of_gt (le.step h)
+      have B : (true, stn + 1) ≠ (false, n) := by exact
+        (bne_iff_ne (true, stn + 1) (false, n)).mp rfl
+      rw [IH _ A]
+      rw [IH _ B]
+      . simp
+      . simp
+        exact le.step h2
+      . simp
+        exact le.step h2
+    . rename_i h
+      simp at h
+      have h3 := h1 h
+      simp [h, h3]
+      exact Ne.symm (h1 h)
+
+
+theorem pwc_crux (fuel n : ℕ) :
+  prob_while_cut loop_cond loop_body (fuel + 2) (true, n) (false, n) =
+  prob_while_cut loop_cond loop_body (fuel + 1) (true, n) (false, n) := by
+  rw [pwc_does_not_stagnate]
+  rw [pwc_does_not_stagnate]
+  . simp
+  . simp
+  . simp
+  . simp
+
 theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   prob_while_cut loop_cond loop_body (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
   =
@@ -372,16 +424,41 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
             intro x
             rw [ite_simpl]
       simp
-      have IH' := IH (fuel' - 1) (n + 1)
       have A : succ fuel + 1 = fuel + 2 := by exact rfl
       rw [A]
       have B : 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
       rw [B]
-      have C : n + 1 + (fuel' - 1) + 1 = n + fuel' + 1 := by sorry
-      rw [C] at IH'
-      rw [IH']
-      . exact rfl
-      . exact sub_le_of_le_add h1
+      have Pre : fuel ≥ fuel' - 1 := by exact sub_le_of_le_add h1
+      have IH' := IH (fuel' - 1) (n + 1) Pre
+      cases fuel'
+      . simp at *
+        have P1 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (false, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (false, n + 1) (false, n + 1) := by rfl
+        rw [P1]
+        have P2 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (true, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (true, n + 1) (false, n + 1) := by
+          clear IH A B h1 Pre IH' P1
+          rename_i h
+          clear h
+          have FOO := pwc_crux (fuel + 1) (n + 1)
+          have X1 : fuel + 1 + 2 = 1 + fuel + 2 := by
+            conv =>
+              left
+              left
+              rw [add_comm]
+          have X2 : 1 + fuel + 1 = fuel + 2 := by exact succ_inj.mp (id X1.symm)
+          rw [← X1]
+          rw [← X2]
+          rw [FOO]
+          have X3 : fuel + 1 + 1 = 1 + fuel + 1 := by exact id X2.symm
+          rw [X3]
+        rw [P2]
+      . rename_i fuel'
+        have C : succ fuel' - 1 = fuel' := by exact rfl
+        rw [C] at IH'
+        have D : n + 1 + fuel' + 1 = n + succ fuel' + 1 := by exact
+          (Nat.add_right_comm n (succ fuel') 1).symm
+        rw [D] at IH'
+        rw [IH']
+        exact rfl
     . simp
 
 theorem pwc_advance_gen' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
