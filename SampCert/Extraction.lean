@@ -14,6 +14,8 @@ import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
 import SampCert.Samplers.Gaussian
 
+import SampCert.Foundations.Geometric
+
 attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample
 --attribute [inline_RandomM] BernoulliExpNegSampleUnitLoop

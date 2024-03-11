@@ -233,7 +233,7 @@ theorem false_to_false (fuel n K : ℕ) :
     rw [Nat.add_left_cancel_iff] at h
     cases K
     . simp at h
-    . simp at h
+    . simp only [add_eq_zero, one_ne_zero, succ_ne_zero, and_self] at h
 
 theorem pwc_progress (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1) = (1/2)^(fuel + 1) := by
@@ -528,7 +528,7 @@ theorem geometric_pwc_sup (n : ℕ) :
       rw [ENNReal.tendsto_atTop_zero]
       intro ε _
       existsi 0
-      intro n H
+      intro n _
       simp [zero_case_gen]
     . rename_i h
       conv =>
@@ -543,7 +543,7 @@ theorem sum_range_low (n : ℕ) :
   (∑ i in range n, (@ite ENNReal (i = 0) (instDecidableEqNat i 0) 0 (2⁻¹ ^ i * @ite ENNReal (n = ↑i) (propDecidable (n = ↑i)) 1 0))) = 0 := by
   induction n
   . simp
-  . rename_i n IH
+  . rename_i n _
     simp
     intro x H
     have A : succ n = x ↔ false := by
@@ -557,7 +557,25 @@ theorem sum_range_low (n : ℕ) :
 theorem ite_sum_singleout (n : ℕ) :
   (∑' (b : ℕ), (@ite ENNReal (b = 0) (instDecidableEqNat b 0) 0 (2⁻¹ ^ b * @ite ENNReal (n = ↑b) (propDecidable (n = ↑b)) 1 0)) ) =  (@ite ENNReal (n = 0) (propDecidable (n = 0)) 0 (2⁻¹ ^ n)):= by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (n + 1)]
-  . have A : ∀ i : ℕ, (n = i + (n + 1)) ↔ false := by sorry
+  . have A : ∀ i : ℕ, (n = i + (n + 1)) ↔ false := by
+      intro i
+      conv =>
+        left
+        left
+        rw [← add_zero n]
+      conv =>
+        left
+        right
+        rw [add_comm]
+        rw [add_assoc]
+      simp only [iff_false]
+      intro h
+      rw [Nat.add_left_cancel_iff] at h
+      cases i
+      . simp at h
+      . rename_i i
+        have h' : 1 + succ i = 0 := by exact id h.symm
+        simp at h'
     conv =>
       left
       right
