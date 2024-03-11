@@ -410,20 +410,6 @@ theorem geometric_pwc_sup (n : ℕ) :
       rw [tendsto_const_nhds_iff]
       simp
 
-theorem sum_range_low (n : ℕ) :
-  (∑ i in range n, (@ite ENNReal (i = 0) (instDecidableEqNat i 0) 0 (2⁻¹ ^ i * @ite ENNReal (n = ↑i) (propDecidable (n = ↑i)) 1 0))) = 0 := by
-  induction n
-  . simp
-  . rename_i n _
-    simp
-    intro x H
-    have A : succ n = x ↔ false := by
-      by_contra h
-      simp at h
-      subst h
-      simp at H
-    simp [A]
-
 theorem if_simpl (x n : ℕ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (2⁻¹ ^ x * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
   split

@@ -10,7 +10,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 noncomputable section
 
-open SubPMF Nat Classical ENNReal OrderHom PMF
+open Classical SubPMF Nat ENNReal OrderHom PMF
 
 variable {T} [Preorder T]
 
