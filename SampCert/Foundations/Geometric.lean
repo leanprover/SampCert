@@ -385,7 +385,6 @@ theorem geometric_pwc_sup (n : ℕ) :
       rw [tendsto_const_nhds_iff]
       simp
 
-@[simp]
 theorem sum_range_low (n : ℕ) :
   (∑ i in range n, (@ite ENNReal (i = 0) (instDecidableEqNat i 0) 0 (2⁻¹ ^ i * @ite ENNReal (n = ↑i) (propDecidable (n = ↑i)) 1 0))) = 0 := by
   induction n
@@ -400,7 +399,6 @@ theorem sum_range_low (n : ℕ) :
       simp at H
     simp [A]
 
-@[simp]
 theorem ite_sum_singleout (n : ℕ) :
   (∑' (b : ℕ), (@ite ENNReal (b = 0) (instDecidableEqNat b 0) 0 (2⁻¹ ^ b * @ite ENNReal (n = ↑b) (propDecidable (n = ↑b)) 1 0)) ) =  (@ite ENNReal (n = 0) (propDecidable (n = 0)) 0 (2⁻¹ ^ n)):= by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (n + 1)]
@@ -433,8 +431,8 @@ theorem ite_sum_singleout (n : ℕ) :
     clear A
     simp [sum_range_succ]
     split
-    . simp
-    . simp
+    . simp [sum_range_low]
+    . simp [sum_range_low]
   . exact ENNReal.summable
 
 theorem geometric_apply (n : ℕ) :
@@ -459,7 +457,11 @@ theorem geometric_apply (n : ℕ) :
   simp only [add_zero]
   simp [geometric_pwc_sup]
   split
-  . simp
-  . simp
+  . simp [ite_sum_singleout]
+    rename_i h
+    simp [h]
+  . simp [ite_sum_singleout]
+    rename_i h
+    simp [h]
 
 end Geometric
