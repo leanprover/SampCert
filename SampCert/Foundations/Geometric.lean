@@ -4,20 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import SampCert.Foundations.Basic
 
 noncomputable section
 
 namespace Geometric
 
-open Classical PMF Nat Finset BigOperators
+open Classical Nat
 
 theorem half_in_unit : (1 : ENNReal) / 2 ≤ 1 := by
   exact ENNReal.half_le_self
 def loop_cond (st : (Bool × ℕ)) : Bool := st.1
 def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
-  let x ← bernoulli (1/2) half_in_unit
+  let x ← PMF.bernoulli (1/2) half_in_unit
   return (x,st.2 + 1)
 
 def geometric : RandomM ℕ := do
