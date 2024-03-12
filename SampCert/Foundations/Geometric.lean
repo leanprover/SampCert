@@ -107,17 +107,8 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
       simp [h, h3]
       exact Ne.symm (h1 h)
 
-theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
-  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (a = x) (instDecidableEqNat a x) v 0)) = 0 := by
-  split
-  . simp
-  . simp
-    intro
-    rename_i h
-    subst h
-    contradiction
-
-theorem pwc_progress (fuel n : ℕ) :
+@[simp]
+theorem geometric_progress (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1) = (1/2)^(fuel + 1) := by
   revert n
   induction fuel
@@ -133,9 +124,9 @@ theorem pwc_progress (fuel n : ℕ) :
     simp [IH (n + 1)]
     rw [← _root_.pow_succ]
 
-theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
+theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
   prob_while_cut loop_cond loop_body (n + 1) (true, 0) (false, n) = 2⁻¹ ^ n := by
-  have prog := pwc_progress (n - 1) 0
+  have prog := geometric_progress (n - 1) 0
   simp at prog
   have A : n - 1 + 1 = n := by exact succ_pred h
   rw [A] at prog
@@ -143,7 +134,7 @@ theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
   rw [B] at prog
   trivial
 
-theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
+theorem geometric_preservation (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   prob_while_cut loop_cond loop_body (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
   =
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel' + 1) := by
@@ -176,11 +167,11 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
       rw [IH']
       exact rfl
 
-theorem pwc_advance_gen' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
+theorem geometric_preservation' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   prob_while_cut loop_cond loop_body (n + 2) (true,0) (false,m)
   =
   prob_while_cut loop_cond loop_body (n + 1) (true,0) (false,m) := by
-  have prog := pwc_advance_gen (n - 1) (m - 1) 0
+  have prog := geometric_preservation (n - 1) (m - 1) 0
   have P : ¬ n = 0 := by
       by_contra
       rename_i h
@@ -211,20 +202,20 @@ theorem pwc_advance_gen' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   apply prog
   exact Nat.sub_le_sub_right h2 1
 
-theorem pwc_characterization (n extra : ℕ) (h : ¬ n = 0) :
+theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
   prob_while_cut loop_cond loop_body (extra + (n + 1)) (true,0) (false,n) = 2⁻¹ ^ n := by
   revert n
   induction extra
   . simp
     intro n h
-    apply pwc_progress' _ h
+    apply geometric_progress' _ h
   . rename_i extra IH
     intro n h
     have IH' := IH n h
     clear IH
     have A : extra + (n + 1) = (extra + n) + 1 := by exact rfl
     rw [A] at IH'
-    rw [← pwc_advance_gen'] at IH'
+    rw [← geometric_preservation'] at IH'
     . have B : succ extra + (n + 1) = extra + n + 2 := by exact succ_add_eq_add_succ extra (n + 1)
       rw [B]
       trivial
@@ -248,21 +239,9 @@ theorem geometric_pwc_sup (n : ℕ) :
       conv =>
         congr
         intro E
-        rw [pwc_characterization _ _ h]
+        rw [geometric_characterization _ _ h]
       rw [tendsto_const_nhds_iff]
       simp
-
-theorem if_simpl (x n : ℕ) :
-  (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (2⁻¹ ^ x * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
-  split
-  . simp
-  . split
-    . simp
-    . split
-      . rename_i h
-        subst h
-        contradiction
-      . simp
 
 @[simp]
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
@@ -285,6 +264,18 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
       simp at h
       subst h
       simp [IH]
+
+theorem if_simpl (x n : ℕ) :
+  (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (2⁻¹ ^ x * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
+  split
+  . simp
+  . split
+    . simp
+    . split
+      . rename_i h
+        subst h
+        contradiction
+      . simp
 
 theorem geometric_apply (n : ℕ) :
   geometric n = if n = 0 then 0 else (1/2)^n := by
