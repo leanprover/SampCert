@@ -20,22 +20,23 @@ def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
   let x ← bernoulli (1/2) half_in_unit
   return (x,st.2 + 1)
 
-def geometric' (fuel : ℕ) (st : Bool × ℕ) : RandomM (Bool × ℕ) :=
-  prob_while_cut loop_cond loop_body fuel st
-
 theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
   split
   . simp
   . simp
 
-theorem geometric'_advance (fuel n : ℕ) (st : Bool × ℕ) :
-  geometric' (succ fuel) (true,n) st =
-  2⁻¹ * geometric' fuel (false, n + 1) st +
-    2⁻¹ * geometric' fuel (true, n + 1) st := by
+theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
+  prob_while_cut loop_cond loop_body 0 st₁ st₂ = 0 := by
+  simp [prob_while_cut]
+
+theorem geometric_succ (fuel n : ℕ) (st : Bool × ℕ) :
+  prob_while_cut loop_cond loop_body (succ fuel) (true,n) st =
+  2⁻¹ * prob_while_cut loop_cond loop_body fuel (false, n + 1) st +
+    2⁻¹ * prob_while_cut loop_cond loop_body fuel (true, n + 1) st := by
   cases st
   rename_i b m
-  simp [geometric', prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
   conv =>
     left
     . congr
@@ -50,6 +51,12 @@ theorem geometric'_advance (fuel n : ℕ) (st : Bool × ℕ) :
         intro x
         rw [ite_simpl]
   simp
+
+theorem geometric_done (fuel n : ℕ) (h : fuel ≠ 0) :
+  prob_while_cut loop_cond loop_body fuel (false, n) (false, n) = 1 := by
+  cases fuel
+  . contradiction
+  . simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
 def geometric : RandomM ℕ := do
   let st ← prob_while loop_cond loop_body (true,0)
@@ -77,27 +84,6 @@ theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
   loop_body (b₁, K₁) (b₂, K₁ + 1) =
   loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
   simp [loop_body]
-
-theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
-  prob_while_cut loop_cond loop_body fuel (b, k) (true,n) = 0 := by
-  revert n b k
-  induction fuel
-  . intro n
-    simp [prob_while_cut]
-  . rename_i fuel IH
-    intro n k b
-    simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
-    unfold SubPMF.bind
-    unfold SubPMF.pure
-    simp [ite_apply]
-    split
-    . rename_i h
-      subst h
-      simp [IH]
-    . rename_i h
-      simp at h
-      subst h
-      simp [IH]
 
 theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
   prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
@@ -150,7 +136,7 @@ theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
     subst h
     contradiction
 
-theorem false_to_false (fuel n K : ℕ) :
+theorem geometric_false_stuck (fuel n K : ℕ) :
   prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
   cases fuel
   . simp [prob_while_cut]
@@ -171,53 +157,18 @@ theorem pwc_progress (fuel n : ℕ) :
   revert n
   induction fuel
   . intro n
-    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body]
-    simp [ENNReal.tsum_prod',tsum_bool]
-    rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-    simp
-    conv =>
-      left
-      right
-      right
-      intro x
-      rw [ite_simpl']
-    simp
+    simp [geometric_succ, geometric_zero, geometric_done]
   . rename_i fuel IH
     intro n
-    unfold prob_while_cut
-    unfold WhileFunctional
-    simp
-    unfold SubPMF.pure
-    unfold SubPMF.bind
-    simp only [loop_cond, loop_body]
-    simp [ENNReal.tsum_prod',tsum_bool]
+    rw [geometric_succ]
     have A : succ fuel + 1 = fuel + 2 := by exact rfl
     simp [A]
-    conv =>
-      left
-      right
-      rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-      right
-      right
-      intro x
-      rw [ite_simpl]
-    simp
     have B : n + succ fuel + 1 = (n + 1) + fuel + 1 := by exact Nat.add_right_comm n (succ fuel) 1
     simp [B]
     simp [IH (n + 1)]
-    conv =>
-      left
-      left
-      rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-      right
-      right
-      intro x
-      rw [ite_simpl]
-    simp
     have C : n + 1 + fuel + 1 = n + 1 + 1 + fuel := by exact Nat.add_right_comm (n + 1) fuel 1
     rw [C]
-    rw [false_to_false]
-    simp
+    simp [geometric_false_stuck]
     rw [← _root_.pow_succ]
 
 theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
@@ -422,6 +373,27 @@ theorem if_simpl (x n : ℕ) :
         contradiction
       . simp
 
+theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
+  prob_while_cut loop_cond loop_body fuel (b, k) (true,n) = 0 := by
+  revert n b k
+  induction fuel
+  . intro n
+    simp [prob_while_cut]
+  . rename_i fuel IH
+    intro n k b
+    simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
+    unfold SubPMF.bind
+    unfold SubPMF.pure
+    simp [ite_apply]
+    split
+    . rename_i h
+      subst h
+      simp [IH]
+    . rename_i h
+      simp at h
+      subst h
+      simp [IH]
+
 theorem geometric_apply (n : ℕ) :
   geometric n = if n = 0 then 0 else (1/2)^n := by
   simp [geometric]
@@ -453,5 +425,10 @@ theorem geometric_apply (n : ℕ) :
     rw [if_simpl]
   simp
 
+
+-- Some ideas for simplification/generalization
+-- These loops never exit with (true, _) so could be simplified to sup for (false, _)
+-- indeed geometric_returns_false is completely generic?
+-- the not stagnate may be very generic as well
 
 end Geometric
