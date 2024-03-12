@@ -85,7 +85,7 @@ theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
   loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
   simp [loop_body]
 
-theorem pwc_does_not_stagnate (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
+theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
   prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
   revert st
   induction fuel
@@ -188,102 +188,42 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   revert fuel' n
   induction fuel
   . intro fuel' n h1
-    simp [prob_while_cut, WhileFunctional, loop_cond, ENNReal.tsum_prod',tsum_bool]
     have A : fuel' = 0 := by exact le_zero.mp h1
     subst A
-    simp
-    have X : ∀ b, (if b = n + 1 then (2 : ENNReal)⁻¹ * ∑' (b_1 : ℕ), if n + 1 = b_1 then if b_1 = b + 1 then 2⁻¹ else 0 else 0 else 0) = 0 := by
-      intro b
-      split
-      . rename_i h
-        subst h
-        have Y : ∀ b_1, (if n + 1 = b_1 then if b_1 = n + 1 + 1 then (2 : ENNReal)⁻¹ else 0 else 0) = 0 := by
-          intro b_1
-          split
-          . rename_i h
-            subst h
-            split
-            . rename_i h
-              simp at h
-            . simp
-          . simp
-        conv =>
-          left
-          right
-          right
-          intro b_1
-          rw [Y]
-        simp
-      . simp
-    conv =>
-      left
-      right
-      right
-      intro b
-      rw [X]
-    simp
+    simp [geometric_succ, geometric_zero, geometric_done, geometric_monotone_counter]
   . rename_i fuel IH
     intro fuel' n h1
-    unfold prob_while_cut
-    unfold WhileFunctional
-    split
-    . simp
-      simp [ENNReal.tsum_prod',tsum_bool]
-      conv =>
-        congr
-        . congr
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-        . congr
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-          . rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
-            right
-            right
-            intro x
-            rw [ite_simpl]
-      simp
-      have A : succ fuel + 1 = fuel + 2 := by exact rfl
-      rw [A]
-      have B : 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
-      rw [B]
-      have Pre : fuel ≥ fuel' - 1 := by exact sub_le_of_le_add h1
-      have IH' := IH (fuel' - 1) (n + 1) Pre
-      cases fuel'
-      . simp at *
-        have P1 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (false, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (false, n + 1) (false, n + 1) := by rfl
-        rw [P1]
-        have P2 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (true, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (true, n + 1) (false, n + 1) := by
-          clear IH A B h1 Pre IH' P1
-          rename_i h
-          clear h
-          rw [pwc_does_not_stagnate]
-          rw [pwc_does_not_stagnate]
-          . simp
-          . simp
-          . simp
-          . simp
-        rw [P2]
-      . rename_i fuel'
-        have C : succ fuel' - 1 = fuel' := by exact rfl
-        rw [C] at IH'
-        have D : n + 1 + fuel' + 1 = n + succ fuel' + 1 := by exact
-          (Nat.add_right_comm n (succ fuel') 1).symm
-        rw [D] at IH'
-        rw [IH']
-        exact rfl
-    . simp
+    conv =>
+      congr
+      . rw [geometric_succ]
+      . rw [geometric_succ]
+    have A : succ fuel + 1 = fuel + 2 := by exact rfl
+    rw [A]
+    have B : 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
+    rw [B]
+    have Pre : fuel ≥ fuel' - 1 := by exact sub_le_of_le_add h1
+    have IH' := IH (fuel' - 1) (n + 1) Pre
+    cases fuel'
+    . simp at *
+      have P1 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (false, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (false, n + 1) (false, n + 1) := by rfl
+      rw [P1]
+      have P2 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (true, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (true, n + 1) (false, n + 1) := by
+        clear IH A B h1 Pre IH' P1
+        rw [geometric_monotone_counter]
+        rw [geometric_monotone_counter]
+        . simp
+        . simp
+        . simp
+        . simp
+      rw [P2]
+    . rename_i fuel'
+      have C : succ fuel' - 1 = fuel' := by exact rfl
+      rw [C] at IH'
+      have D : n + 1 + fuel' + 1 = n + succ fuel' + 1 := by exact
+        (Nat.add_right_comm n (succ fuel') 1).symm
+      rw [D] at IH'
+      rw [IH']
+      exact rfl
 
 theorem pwc_advance_gen' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   prob_while_cut loop_cond loop_body (n + 2) (true,0) (false,m)
@@ -352,7 +292,7 @@ theorem geometric_pwc_sup (n : ℕ) :
       intro ε _
       existsi 0
       intro n _
-      simp [pwc_does_not_stagnate]
+      simp [geometric_monotone_counter]
     . rename_i h
       conv =>
         congr
