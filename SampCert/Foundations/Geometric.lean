@@ -20,16 +20,20 @@ def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
   let x ← bernoulli (1/2) half_in_unit
   return (x,st.2 + 1)
 
-theorem ite_simpl (x a : ℕ) (v : ENNReal) :
-  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
-  split
-  . simp
-  . simp
+def geometric : RandomM ℕ := do
+  let st ← prob_while loop_cond loop_body (true,0)
+  return st.2
 
 @[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
   prob_while_cut loop_cond loop_body 0 st₁ st₂ = 0 := by
   simp [prob_while_cut]
+
+theorem ite_simpl (x a : ℕ) (v : ENNReal) :
+  (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
+  split
+  . simp
+  . simp
 
 theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
   prob_while_cut loop_cond loop_body (succ fuel) (true,n) st =
@@ -60,33 +64,6 @@ theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
   cases st
   rename_i b m
   simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
-
-def geometric : RandomM ℕ := do
-  let st ← prob_while loop_cond loop_body (true,0)
-  return st.2
-
-@[simp]
-theorem loop_body_apply_true_true (K₁ K₂ : ℕ) :
-  loop_body (true, K₁) (true, K₂) = if K₂ = K₁ + 1 then 2⁻¹ else 0 := by
-  simp [tsum_bool,loop_body]
-
-@[simp]
-theorem loop_body_apply_true_false (K₁ K₂ : ℕ) :
-  loop_body (true, K₁) (false, K₂) = if K₂ = K₁ + 1 then 2⁻¹ else 0 := by
-  simp [tsum_bool,loop_body]
-
-@[simp]
-theorem loop_body_init_apply_false' (st : Bool × ℕ) :
-  loop_body st (false, 0) = 0 := by
-  simp [tsum_bool,loop_body]
-  intro
-  contradiction
-
-@[simp]
-theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
-  loop_body (b₁, K₁) (b₂, K₁ + 1) =
-  loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
-  simp [loop_body]
 
 @[simp]
 theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
