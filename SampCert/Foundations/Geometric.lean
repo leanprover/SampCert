@@ -31,7 +31,7 @@ theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
   prob_while_cut loop_cond loop_body 0 st₁ st₂ = 0 := by
   simp [prob_while_cut]
 
-theorem geometric_succ (fuel n : ℕ) (st : Bool × ℕ) :
+theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
   prob_while_cut loop_cond loop_body (succ fuel) (true,n) st =
   2⁻¹ * prob_while_cut loop_cond loop_body fuel (false, n + 1) st +
     2⁻¹ * prob_while_cut loop_cond loop_body fuel (true, n + 1) st := by
@@ -54,11 +54,12 @@ theorem geometric_succ (fuel n : ℕ) (st : Bool × ℕ) :
   simp
 
 @[simp]
-theorem geometric_done (fuel n : ℕ) (h : fuel ≠ 0) :
-  prob_while_cut loop_cond loop_body fuel (false, n) (false, n) = 1 := by
-  cases fuel
-  . contradiction
-  . simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
+  prob_while_cut loop_cond loop_body (succ fuel) (false,n) st =
+  if st = (false,n) then 1 else 0 := by
+  cases st
+  rename_i b m
+  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
 def geometric : RandomM ℕ := do
   let st ← prob_while loop_cond loop_body (true,0)
@@ -139,40 +140,20 @@ theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
     subst h
     contradiction
 
-@[simp]
-theorem geometric_false_stuck (fuel n K : ℕ) :
-  prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
-  cases fuel
-  . simp
-  . simp [prob_while_cut, WhileFunctional, loop_cond]
-    conv =>
-      right
-      right
-      rw [← add_zero n]
-    intro h
-    rw [add_assoc] at h
-    rw [Nat.add_left_cancel_iff] at h
-    cases K
-    . simp at h
-    . simp only [add_eq_zero, one_ne_zero, succ_ne_zero, and_self] at h
-
 theorem pwc_progress (fuel n : ℕ) :
   prob_while_cut loop_cond loop_body (fuel + 2) (true,n) (false,n + fuel + 1) = (1/2)^(fuel + 1) := by
   revert n
   induction fuel
   . intro n
-    simp [geometric_succ]
+    simp [geometric_succ_true]
   . rename_i fuel IH
     intro n
-    rw [geometric_succ]
+    rw [geometric_succ_true]
     have A : succ fuel + 1 = fuel + 2 := by exact rfl
     simp [A]
     have B : n + succ fuel + 1 = (n + 1) + fuel + 1 := by exact Nat.add_right_comm n (succ fuel) 1
     simp [B]
     simp [IH (n + 1)]
-    have C : n + 1 + fuel + 1 = n + 1 + 1 + fuel := by exact Nat.add_right_comm (n + 1) fuel 1
-    rw [C]
-    simp [geometric_false_stuck]
     rw [← _root_.pow_succ]
 
 theorem pwc_progress' (n : ℕ) (h : ¬ n = 0) :
@@ -194,13 +175,13 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   . intro fuel' n h1
     have A : fuel' = 0 := by exact le_zero.mp h1
     subst A
-    simp [geometric_succ]
+    simp [geometric_succ_true]
   . rename_i fuel IH
     intro fuel' n h1
     conv =>
       congr
-      . rw [geometric_succ]
-      . rw [geometric_succ]
+      . rw [geometric_succ_true]
+      . rw [geometric_succ_true]
     have A : succ fuel + 1 = fuel + 2 := by exact rfl
     rw [A]
     have B : 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
