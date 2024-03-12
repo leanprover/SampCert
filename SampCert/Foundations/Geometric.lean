@@ -26,6 +26,7 @@ theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   . simp
   . simp
 
+@[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
   prob_while_cut loop_cond loop_body 0 st₁ st₂ = 0 := by
   simp [prob_while_cut]
@@ -89,7 +90,7 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
   prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
   revert st
   induction fuel
-  . simp [prob_while_cut]
+  . simp
   . rename_i fuel IH
     intro st h1 h2
     cases st
@@ -139,7 +140,7 @@ theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
 theorem geometric_false_stuck (fuel n K : ℕ) :
   prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
   cases fuel
-  . simp [prob_while_cut]
+  . simp
   . simp [prob_while_cut, WhileFunctional, loop_cond]
     conv =>
       right
@@ -313,12 +314,13 @@ theorem if_simpl (x n : ℕ) :
         contradiction
       . simp
 
+@[simp]
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
   prob_while_cut loop_cond loop_body fuel (b, k) (true,n) = 0 := by
   revert n b k
   induction fuel
   . intro n
-    simp [prob_while_cut]
+    simp
   . rename_i fuel IH
     intro n k b
     simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
@@ -340,20 +342,6 @@ theorem geometric_apply (n : ℕ) :
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
   simp [prob_while]
-  conv =>
-    left
-    right
-    right
-    intro b
-    left
-    right
-    intro i
-    rw [geometric_returns_false]
-  conv =>
-    left
-    right
-    simp
-  simp only [add_zero]
   simp [geometric_pwc_sup]
   rw [ENNReal.tsum_eq_add_tsum_ite n]
   simp
@@ -364,11 +352,5 @@ theorem geometric_apply (n : ℕ) :
     intro x
     rw [if_simpl]
   simp
-
-
--- Some ideas for simplification/generalization
--- These loops never exit with (true, _) so could be simplified to sup for (false, _)
--- indeed geometric_returns_false is completely generic?
--- the not stagnate may be very generic as well
 
 end Geometric
