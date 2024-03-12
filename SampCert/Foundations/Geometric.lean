@@ -61,7 +61,6 @@ theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
   prob_while_cut loop_cond loop_body (succ fuel) (false,n) st =
   if st = (false,n) then 1 else 0 := by
   cases st
-  rename_i b m
   simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
 @[simp]
@@ -76,12 +75,10 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
     rename_i stb stn
     simp at h1
     simp at h2
-    simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply]
-    split
-    . rename_i h
-      subst h
-      simp only [tsum_bool]
-      simp
+    cases stb
+    . simp
+      exact Ne.symm (h1 rfl)
+    . simp [geometric_succ_true]
       have A : (false, stn + 1) ≠ (false, n) := by
         simp
         have OR : n = stn ∨ n < stn := by exact Nat.eq_or_lt_of_le h2
@@ -100,11 +97,6 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
         exact le.step h2
       . simp
         exact le.step h2
-    . rename_i h
-      simp at h
-      have h3 := h1 h
-      simp [h, h3]
-      exact Ne.symm (h1 h)
 
 @[simp]
 theorem geometric_progress (fuel n : ℕ) :
