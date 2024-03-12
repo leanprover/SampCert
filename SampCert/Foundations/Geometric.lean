@@ -53,6 +53,7 @@ theorem geometric_succ (fuel n : ℕ) (st : Bool × ℕ) :
         rw [ite_simpl]
   simp
 
+@[simp]
 theorem geometric_done (fuel n : ℕ) (h : fuel ≠ 0) :
   prob_while_cut loop_cond loop_body fuel (false, n) (false, n) = 1 := by
   cases fuel
@@ -86,6 +87,7 @@ theorem loop_body_shift (K₁ K₂ : ℕ ) (b₁ b₂ : Bool) :
   loop_body (b₁, K₁ + K₂) (b₂, K₁ + K₂ + 1) := by
   simp [loop_body]
 
+@[simp]
 theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
   prob_while_cut loop_cond loop_body fuel st (false, n) = 0 := by
   revert st
@@ -137,6 +139,7 @@ theorem ite_simpl' (x a : ℕ) (v : ENNReal) :
     subst h
     contradiction
 
+@[simp]
 theorem geometric_false_stuck (fuel n K : ℕ) :
   prob_while_cut loop_cond loop_body fuel (false, n) (false, n + 1 + K) = 0 := by
   cases fuel
@@ -158,7 +161,7 @@ theorem pwc_progress (fuel n : ℕ) :
   revert n
   induction fuel
   . intro n
-    simp [geometric_succ, geometric_zero, geometric_done]
+    simp [geometric_succ]
   . rename_i fuel IH
     intro n
     rw [geometric_succ]
@@ -191,7 +194,7 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
   . intro fuel' n h1
     have A : fuel' = 0 := by exact le_zero.mp h1
     subst A
-    simp [geometric_succ, geometric_zero, geometric_done, geometric_monotone_counter]
+    simp [geometric_succ]
   . rename_i fuel IH
     intro fuel' n h1
     conv =>
@@ -206,17 +209,6 @@ theorem pwc_advance_gen (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
     have IH' := IH (fuel' - 1) (n + 1) Pre
     cases fuel'
     . simp at *
-      have P1 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (false, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (false, n + 1) (false, n + 1) := by rfl
-      rw [P1]
-      have P2 : prob_while_cut loop_cond loop_body (1 + fuel + 2) (true, n + 1) (false, n + 1) = prob_while_cut loop_cond loop_body (fuel + 2) (true, n + 1) (false, n + 1) := by
-        clear IH A B h1 Pre IH' P1
-        rw [geometric_monotone_counter]
-        rw [geometric_monotone_counter]
-        . simp
-        . simp
-        . simp
-        . simp
-      rw [P2]
     . rename_i fuel'
       have C : succ fuel' - 1 = fuel' := by exact rfl
       rw [C] at IH'
