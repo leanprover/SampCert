@@ -96,6 +96,77 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   rw [h] at B
 --   trivial
 
-theorem nat_sub_nez (n : ℕ) (h : ¬ n = 0) :
-  (n - 1) + 1 = n := by
-  exact succ_pred h
+-- theorem nat_sub_nez (n : ℕ) (h : ¬ n = 0) :
+--   (n - 1) + 1 = n := by
+--   exact succ_pred h
+
+#check tsum_setElem_eq_tsum_setElem_diff
+
+theorem plop1 (P : ℕ → Prop) (h : x ∈ { i : ℕ | P i}) : P x := by
+  exact h
+
+theorem plop2 (P : ℕ → Prop) (x : { i : ℕ | P i}) : P x := by
+  sorry
+
+theorem simpl1 (cond : ℕ → Bool) (f g : ℕ → ℝ) :
+  (∑' (x : { i : ℕ | cond i}), if cond x then f x else g x)
+    = (∑' (x : { i : ℕ | cond i}), f x) := by
+  apply tsum_congr
+  sorry
+
+
+theorem simpl2 (cond : ℕ → Bool) (f g : ℕ → ℝ) :
+  (∑' (x : { i : ℕ | ¬ cond i}), if cond x then f x else g x)
+    = ((∑' (x : { i : ℕ | ¬ cond i}), g x)) := by
+  sorry
+
+theorem split (cond : ℕ → Bool) (f g : ℕ → ℝ) :
+  (∑' (i : ℕ), if cond i then f i else g i)
+    = (∑' (i : { i : ℕ | cond i}), f i) + (∑' (i : { i : ℕ | ¬ cond i}), g i) := by
+  have A : Summable (fun i => if cond i then f i else g i) := by sorry
+  have B := @tsum_subtype_add_tsum_subtype_compl ℝ ℕ _ _ _ _ _ (fun i => if cond i then f i else g i) A { i : ℕ | cond i}
+  rw [← B]
+  clear B
+  rw [simpl1]
+  have C : { i : ℕ | ¬ cond i} = { i : ℕ | cond i}ᶜ := by exact rfl
+  rw [← C]
+  rw [simpl2]
+
+theorem simpl1' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
+  (∑' (x : { i : ℕ | cond i}), if cond x then f x else g x)
+    = (∑' (x : { i : ℕ | cond i}), f x) := by
+  apply tsum_congr
+  intro b
+  split
+  . simp
+  . rename_i h
+    cases b
+    rename_i b P
+    simp at *
+    have A : cond b = true := by exact P
+    simp [A] at h
+
+theorem simpl2' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
+  (∑' (x : { i : ℕ | ¬ cond i}), if cond x then f x else g x)
+    = ((∑' (x : { i : ℕ | ¬ cond i}), g x)) := by
+  apply tsum_congr
+  intro b
+  split
+  . rename_i h
+    cases b
+    rename_i b P
+    simp at *
+    have A : ¬ cond b = true := by exact P
+    simp [A] at h
+  . simp
+
+theorem split' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
+  (∑' (i : ℕ), if cond i then f i else g i)
+    = (∑' (i : { i : ℕ | cond i}), f i) + (∑' (i : { i : ℕ | ¬ cond i}), g i) := by
+  have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if cond i then f i else g i) _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
+  rw [← B]
+  clear B
+  rw [simpl1']
+  have C : { i : ℕ | ¬ cond i} = { i : ℕ | cond i}ᶜ := by exact rfl
+  rw [← C]
+  rw [simpl2']
