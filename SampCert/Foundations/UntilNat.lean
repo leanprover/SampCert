@@ -265,7 +265,57 @@ example (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : cond x) :
     pow_one]
   rw [add_assoc]
 
-theorem repeat_closed_form (body : RandomM ℕ) (cond : ℕ → Bool) (fuel x : ℕ) (h1 : cond x) (h2 : fuel ≠ 0) :
+theorem repeat_closed_form (body : RandomM ℕ) (cond : ℕ → Bool) (fuel x : ℕ) (h1 : cond x) :
+  ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
+    = ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i := by
+  induction fuel
+  . simp
+  . rename_i fuel IH
+    unfold prob_while_cut
+    unfold WhileFunctional
+    conv =>
+      left
+      simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply,
+        mul_ite, succ_sub_succ_eq_sub, tsub_zero, sum_const,
+        card_range, nsmul_eq_mul, cast_succ, cast_add, cast_one]
+    rw [tsum_split_ite']
+    rw [ENNReal.tsum_mul_right]
+    have B := tsum_split_coe_right cond (fun i => body ↑i * @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) 1 0)
+    rw [B]
+    clear B
+    conv =>
+      left
+      right
+      rw [ENNReal.tsum_eq_add_tsum_ite x]
+      right
+      right
+      intro y
+      rw [if_simpl]
+    simp only [h1, reduceIte, mul_one, tsum_zero, add_zero]
+    rw [IH]
+    clear IH
+    conv =>
+      right
+      rw [Finset.sum_range_succ']
+    simp only [_root_.pow_zero, mul_one]
+    conv =>
+      right
+      left
+      right
+      intro k
+      rw [_root_.pow_succ]
+    rw [← mul_sum]
+    rw [← mul_sum]
+    rw [← mul_sum]
+    conv =>
+      left
+      left
+      rw [← mul_assoc]
+      left
+      rw [mul_comm]
+    rw [mul_assoc]
+
+theorem repeat_closed_form_old (body : RandomM ℕ) (cond : ℕ → Bool) (fuel x : ℕ) (h1 : cond x) (h2 : fuel ≠ 0) :
   ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i := by
   induction fuel
@@ -328,17 +378,32 @@ theorem convergence (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) :
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_geometric]
 
-
 -- Split on initial cond?
-example (f : ℕ → ENNReal) :
-  ⨆ fuel, f fuel = 1 := by
+theorem ex1 (f : ℕ → ENNReal) (l : ENNReal) (h1 : Monotone fun fuel => f fuel) (h2 : Filter.Tendsto (fun fuel => f fuel) Filter.atTop (nhds l)) :
+ ⨆ fuel, f fuel = l := by
   apply iSup_eq_of_tendsto
+  . trivial
+  . trivial
 
-theorem test (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h1 : cond x) (lim : ENNReal) :
-  ⨆ fuel, ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) (succ fuel) i x = lim
-    ↔ ⨆ fuel, ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = lim := by
-  sorry
+theorem ex2 (f : ℕ → ENNReal) (l : ENNReal) (h1 : Monotone fun fuel => f fuel) (h2 : Filter.Tendsto (fun fuel => f fuel) Filter.atTop (nhds l)) :
+  ⨆ fuel, f fuel = l
+    ↔ ⨆ fuel, f (fuel + 1) = l := by
+  have A := @Filter.tendsto_add_atTop_iff_nat ENNReal (fun fuel => f fuel) (nhds l) 1
+  rw [ex1 _ _ h1 h2]
+  rw [← A] at h2
+  have h3 : Monotone fun fuel => f (fuel + 1) := by
+    exact monotone_nat_of_le_succ fun n => h1 (le.step le.refl)
+  rw [ex1 _ _ h3 h2]
 
+example (a : ENNReal) (f : ℕ → ENNReal) :
+  a * ⨆ i, f i = ⨆ i, a * f i := by
+  exact mul_iSup
+
+example (f g : ℕ → ENNReal) (h1 : Monotone f) (h2 : Monotone g) :
+  ⨆ i, f i + g i = (⨆ i, f i) + ⨆ i, g i := by
+  exact (iSup_add_iSup_of_monotone h1 h2).symm
+
+#check ENNReal.finset_sum_iSup_nat
 
 theorem repeat_sup (body : RandomM ℕ) (cond : ℕ → Bool) (x a : ℕ) (h : cond x) :
   ⨆ i, prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x
@@ -348,19 +413,74 @@ theorem repeat_sup (body : RandomM ℕ) (cond : ℕ → Bool) (x a : ℕ) (h : c
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)]
     sorry
 
+theorem repeat_monotone (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : cond x) :
+  ∀ (a : ℕ) ,Monotone fun i => body a * prob_while_cut (fun v => decide (cond v = false)) (fun x => body) i a x := by
+  intro a
+  have A := @prob_while_cut_monotonic ℕ (fun v => decide (cond v = false)) (fun _ => body) a x
+  exact Monotone.const_mul' A (body a)
+
 @[simp]
-theorem prob_until_apply_sat (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : cond x) (s : ∑' (a : ℕ), body a = 1) :
-  prob_until (body : RandomM ℕ) (cond : ℕ → Bool) x = body x / (∑' (x : ℕ), if cond x then body x else 0) := by
+theorem prob_until_apply_sat (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : cond x) :
+  prob_until (body : RandomM ℕ) (cond : ℕ → Bool) x
+    = body x * (1 - ∑' (i : ↑{i | cond i = false}), body ↑i)⁻¹ := by
   simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+  rw [← convergence]
   conv =>
-    left
+    right
+    right
+    intro fuel
+    rw [← repeat_closed_form _ _ _ _ h]
+  rw [eq_comm]
+  rw [ENNReal.tsum_eq_iSup_sum]
+  conv =>
+    right
+    right
+    intro s
     right
     intro a
+    rw [mul_iSup]
+  conv =>
     right
-    simp [repeat_sup, h]
-  simp [ENNReal.tsum_mul_right, s]
+    right
+    intro s
+    rw [finset_sum_iSup_nat (repeat_monotone body cond x h)]
+  rw [iSup_comm]
+  conv =>
+    right
+    right
+    intro j
+    rw [← ENNReal.tsum_eq_iSup_sum]
 
 
+  -- apply iSup_eq_of_tendsto
+  -- . sorry -- annoying but doable, monotonicity
+  -- . rw [ENNReal.tsum_eq_iSup_sum]
+  --   conv =>
+  --     right
+  --     right
+  --     right
+  --     intro s
+  --     right
+  --     intro a
+  --     rw [mul_iSup]
+  --   conv =>
+  --     right
+  --     right
+  --     right
+  --     intro s
+  --     rw [finset_sum_iSup_nat sorry]
+
+
+  -- conv =>
+  --   left
+  --   right
+  --   intro a
+  --   right
+  --   simp [repeat_sup, h]
+  -- simp [ENNReal.tsum_mul_right, s]
+
+  -- Move the sup?
+  -- rw with sum to 1?
 
 
 
