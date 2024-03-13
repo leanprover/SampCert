@@ -40,6 +40,16 @@ theorem repeat_apply_unsat (body : RandomM ℕ) (cond : ℕ → Bool) (fuel i x 
         simp [h'] at h
       . simp
 
+@[simp]
+theorem prob_until_apply_unsat (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : ¬ cond x) :
+  prob_until (body : RandomM ℕ) (cond : ℕ → Bool) x = 0 := by
+  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+  simp only [ENNReal.tsum_eq_zero]
+  simp only [_root_.mul_eq_zero]
+  simp only [iSup_eq_zero]
+  intro i ; right ; intro j
+  simp [repeat_apply_unsat, h]
+
 theorem if_simpl (body : RandomM ℕ) (cond : ℕ → Bool) (x_1 x : ℕ) :
   @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ℝ≥0∞ (cond x_1 = true) (instDecidableEqBool (cond x_1) true) (body x_1 * @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0) 0) = 0 := by
   split
