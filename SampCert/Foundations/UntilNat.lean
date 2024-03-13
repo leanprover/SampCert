@@ -69,16 +69,6 @@ example (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : cond x) (s : �
     = 0 := by
   simp
 
-theorem tsum_split_coe_left (cond : ℕ → Bool) (f : ℕ → ENNReal) :
-  (∑' (i : { i : ℕ | cond i = false}), f i)
-    = (∑' (i : ℕ), if cond i = false then 0 else f i) := by
-  sorry
-
-theorem tsum_split_coe_right (cond : ℕ → Bool) (f : ℕ → ENNReal) :
-  (∑' (i : { i : ℕ | cond i = true}), f i)
-    = (∑' (i : ℕ), if cond i = true then f i else 0) := by
-  sorry
-
 theorem if_simpl (body : RandomM ℕ) (cond : ℕ → Bool) (x_1 x : ℕ) :
   @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ℝ≥0∞ (cond x_1 = true) (instDecidableEqBool (cond x_1) true) (body x_1 * @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0) 0) = 0 := by
   split

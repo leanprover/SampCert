@@ -114,3 +114,15 @@ theorem tsum_split_ite' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
   clear B
   rw [tsum_simpl_ite_left']
   rw [tsum_simpl_ite_right']
+
+theorem tsum_split_coe_right (cond : ℕ → Bool) (f : ℕ → ENNReal) :
+  (∑' (i : { i : ℕ | cond i = true}), f i)
+    = (∑' (i : ℕ), if cond i = true then f i else 0) := by
+  rw [tsum_split_ite]
+  simp
+
+theorem tsum_split_coe_left (cond : ℕ → Bool) (f : ℕ → ENNReal) :
+  (∑' (i : { i : ℕ | cond i = false}), f i)
+    = (∑' (i : ℕ), if cond i = false then f i else 0) := by
+  rw [tsum_split_ite']
+  simp
