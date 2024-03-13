@@ -187,9 +187,3 @@ theorem prob_until_apply (body : RandomM T) (cond : T → Bool) (x : T) :
     simp [h, prob_until_apply_sat]
   . rename_i h
     simp [h, prob_until_apply_unsat]
-
-@[simp]
-theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (x : T) :
-  prob_until (body : RandomM T) (cond : T → Bool) x =
-  (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
-  sorry

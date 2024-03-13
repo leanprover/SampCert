@@ -100,73 +100,15 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   (n - 1) + 1 = n := by
 --   exact succ_pred h
 
-#check tsum_setElem_eq_tsum_setElem_diff
+example (a b : NNReal) (h : a + b = 1) :
+  1 - a = b := by
+  exact tsub_eq_of_eq_add_rev (id h.symm)
 
-theorem plop1 (P : ℕ → Prop) (h : x ∈ { i : ℕ | P i}) : P x := by
-  exact h
+example (a b : ENNReal) (h1 : a + b = 1) (h2 : a ≠ ⊤) (h3 : b ≠ ⊤) :
+  1 - a = b := by
+  exact ENNReal.sub_eq_of_eq_add_rev h2 (id h1.symm)
 
-theorem plop2 (P : ℕ → Prop) (x : { i : ℕ | P i}) : P x := by
-  sorry
-
-theorem simpl1 (cond : ℕ → Bool) (f g : ℕ → ℝ) :
-  (∑' (x : { i : ℕ | cond i}), if cond x then f x else g x)
-    = (∑' (x : { i : ℕ | cond i}), f x) := by
-  apply tsum_congr
-  sorry
-
-
-theorem simpl2 (cond : ℕ → Bool) (f g : ℕ → ℝ) :
-  (∑' (x : { i : ℕ | ¬ cond i}), if cond x then f x else g x)
-    = ((∑' (x : { i : ℕ | ¬ cond i}), g x)) := by
-  sorry
-
-theorem split (cond : ℕ → Bool) (f g : ℕ → ℝ) :
-  (∑' (i : ℕ), if cond i then f i else g i)
-    = (∑' (i : { i : ℕ | cond i}), f i) + (∑' (i : { i : ℕ | ¬ cond i}), g i) := by
-  have A : Summable (fun i => if cond i then f i else g i) := by sorry
-  have B := @tsum_subtype_add_tsum_subtype_compl ℝ ℕ _ _ _ _ _ (fun i => if cond i then f i else g i) A { i : ℕ | cond i}
-  rw [← B]
-  clear B
-  rw [simpl1]
-  have C : { i : ℕ | ¬ cond i} = { i : ℕ | cond i}ᶜ := by exact rfl
-  rw [← C]
-  rw [simpl2]
-
-theorem simpl1' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | cond i}), if cond x then f x else g x)
-    = (∑' (x : { i : ℕ | cond i}), f x) := by
-  apply tsum_congr
-  intro b
-  split
-  . simp
-  . rename_i h
-    cases b
-    rename_i b P
-    simp at *
-    have A : cond b = true := by exact P
-    simp [A] at h
-
-theorem simpl2' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | ¬ cond i}), if cond x then f x else g x)
-    = ((∑' (x : { i : ℕ | ¬ cond i}), g x)) := by
-  apply tsum_congr
-  intro b
-  split
-  . rename_i h
-    cases b
-    rename_i b P
-    simp at *
-    have A : ¬ cond b = true := by exact P
-    simp [A] at h
-  . simp
-
-theorem split' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (i : ℕ), if cond i then f i else g i)
-    = (∑' (i : { i : ℕ | cond i}), f i) + (∑' (i : { i : ℕ | ¬ cond i}), g i) := by
-  have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if cond i then f i else g i) _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
-  rw [← B]
-  clear B
-  rw [simpl1']
-  have C : { i : ℕ | ¬ cond i} = { i : ℕ | cond i}ᶜ := by exact rfl
-  rw [← C]
-  rw [simpl2']
+example (f : ℕ → ENNReal) :
+  (∑' (x : ↑{i | decide (↑n ≤ i) = true}ᶜ), f x)
+    = ∑' (x : ↑{i | decide (↑n ≤ i) = false}), f x := by
+  exact?

@@ -13,9 +13,17 @@ noncomputable def UniformSample (n : PNat) : RandomM Nat := do
   let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
 
-theorem rw1 (n : PNat) :
+theorem rw1_old (n : PNat) :
    (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
    = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
+  simp only [ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
+    log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, cast_eq_zero, PNat.ne_zero, or_self,
+    not_false_eq_true, ENNReal.coe_div, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat,
+    ENNReal.coe_mul, coe_nat]
+
+theorem rw1 (n : PNat) :
+   ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : ENNReal)
+   = ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : NNReal) := by
   simp only [ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
     log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, cast_eq_zero, PNat.ne_zero, or_self,
     not_false_eq_true, ENNReal.coe_div, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat,
@@ -50,38 +58,68 @@ theorem rw_ite (n : PNat) (x : Nat) :
   trivial
   trivial
 
+-- theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (x : T) :
+--   prob_until (body : RandomM T) (cond : T → Bool) x =
+--   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
+--   sorry
+
+
+
+theorem foobar (n : PNat) :
+  (1 - ∑' (i : ℕ), if ↑n ≤ i then UniformPowerOfTwoSample (2 * n) i else 0)
+    = ∑' (i : ℕ), if i < ↑n then UniformPowerOfTwoSample (2 * n) i else 0 := by
+  have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then UniformPowerOfTwoSample (2 * n) i else 0) +
+    (∑' (i : ℕ), if decide (↑n ≤ i) = false then UniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
+    have A : ∑' (i : ℕ), UniformPowerOfTwoSample (2 * n) i = 1 := by sorry
+    have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => UniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
+    rw [A] at B
+    clear A
+    have C := @tsum_split_coe_right _ (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
+    rw [C] at B
+    clear C
+    have D := @tsum_split_coe_left _ (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
+    sorry
+  apply ENNReal.sub_eq_of_eq_add_rev
+  . sorry
+  . simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
+    rw [X]
+
+
+
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
   unfold UniformSample
-  simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
-   one_div, sum_simple]
+  --simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
+  -- one_div, sum_simple]
+  simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply, decide_eq_true_eq, rw_ite,
+    one_div, ite_mul, zero_mul, SubPMF.pure_apply]
+  rw [tsum_split_coe_left]
+  simp
+  rw [foobar]
   split
-  . rw [rw1 n]
+  . conv =>
+      left
+      right
+      right
+      right
+      intro i
+      rw [rw_ite]
+    simp
+    rw [rw1 n]
     rw [rw2 n]
-    have H := div_mul_eq_div_mul_one_div (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹) : NNReal) (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹) : NNReal) (n : NNReal)
-    congr
-    rw [H]
+    rw [mul_inv]
     simp
   . contradiction
 
 @[simp]
 theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
   UniformSample n x = 0 := by
-  simp only [UniformSample, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_until_apply_2,
-    decide_eq_true_eq, rw_ite, one_div, sum_simple, SubPMF.pure_apply, ENNReal.tsum_eq_zero,
-    _root_.mul_eq_zero, ENNReal.div_eq_zero_iff, ite_eq_right_iff, ENNReal.inv_eq_zero,
-    pow_eq_top_iff, two_ne_top, ne_eq, log_eq_zero_iff, reduceLE, or_false, not_lt, false_and,
-    imp_false]
-  intro i
-  have OR : ↑n ≤ i ∨ ↑n > i := by exact le_or_lt (↑n) i
-  cases OR
-  . rename_i h
-    simp [h]
-  . rename_i h
-    have A : x > i := by exact Nat.lt_of_lt_of_le h support
-    have B : x ≠ i := by exact Nat.ne_of_gt A
-    simp [B]
+  simp [UniformSample]
+  intro i h
+  have A : x > i := by exact Nat.lt_of_lt_of_le h support
+  have B : x ≠ i := by exact Nat.ne_of_gt A
+  simp [B]
 
 theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
   (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
