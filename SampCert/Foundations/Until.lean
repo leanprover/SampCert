@@ -6,6 +6,7 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Foundations.While
 import Mathlib.Probability.ConditionalProbability
+import SampCert.Foundations.Util
 
 noncomputable section
 
@@ -16,6 +17,157 @@ variable {T : Type} [MeasurableSpace T]
 noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T := do
   let v ← body
   prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
+
+@[simp]
+theorem until_zero (st : T) (body : RandomM T) (cond : T → Bool) (x : T) :
+  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
+  simp [prob_while_cut]
+
+@[simp]
+theorem repeat_apply_unsat (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
+  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
+  revert i
+  induction fuel
+  . simp
+  . rename_i fuel IH
+    intro j
+    simp [prob_while_cut, WhileFunctional, ite_apply]
+    split
+    . simp [IH]
+    . rename_i h'
+      split
+      . rename_i h'
+        subst h'
+        simp at h'
+        simp [h'] at h
+      . simp
+
+theorem if_simpl (body : RandomM T) (cond : T → Bool) (x_1 x : T) :
+  (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
+  split
+  . simp
+  . split
+    . split
+      . rename_i h1 h2 h3
+        subst h3
+        contradiction
+      . simp
+    . simp
+
+theorem repeat_1 (body : RandomM T) (cond : T → Bool) (x : T) (h : cond x) :
+  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
+    = body x := by
+  simp [prob_while_cut, WhileFunctional, ite_apply]
+  rw [tsum_split_ite']
+  simp only [tsum_zero, zero_add]
+  have FOO := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
+  rw [FOO]
+  clear FOO
+  conv =>
+    left
+    rw [ENNReal.tsum_eq_add_tsum_ite x]
+  simp only [h, zero_apply, mul_zero, tsum_zero, ↓reduceIte, mul_one,
+    zero_add]
+  conv =>
+    left
+    right
+    right
+    intro y
+    rw [if_simpl]
+  simp
+
+theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
+  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
+    = ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i := by
+  induction fuel
+  . simp
+  . rename_i fuel IH
+    unfold prob_while_cut
+    unfold WhileFunctional
+    simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply, mul_ite,
+      mul_one, mul_zero]
+    rw [tsum_split_ite']
+    rw [ENNReal.tsum_mul_right]
+    have B := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
+    rw [B]
+    clear B
+    conv =>
+      left
+      right
+      rw [ENNReal.tsum_eq_add_tsum_ite x]
+      right
+      right
+      intro y
+      rw [if_simpl]
+    simp only [h1, reduceIte, mul_one, tsum_zero, add_zero]
+    rw [IH]
+    clear IH
+    conv =>
+      right
+      rw [Finset.sum_range_succ']
+    simp only [_root_.pow_zero, mul_one]
+    conv =>
+      right
+      left
+      right
+      intro k
+      rw [_root_.pow_succ]
+    rw [← mul_sum]
+    rw [← mul_sum]
+    rw [← mul_sum]
+    conv =>
+      left
+      left
+      rw [← mul_assoc]
+      left
+      rw [mul_comm]
+    rw [mul_assoc]
+
+theorem convergence (body : RandomM T) (cond : T → Bool) (x : T) :
+  ⨆ fuel, ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i
+    = body x * (1 - ∑' (i : ↑{i | cond i = false}), body ↑i)⁻¹ := by
+  rw [← ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.tsum_mul_left]
+  rw [ENNReal.tsum_geometric]
+
+theorem repeat_monotone (body : RandomM T) (cond : T → Bool) (x : T) :
+  ∀ (a : T), Monotone fun i => body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
+  intro a
+  have A := @prob_while_cut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
+  exact Monotone.const_mul' A (body a)
+
+@[simp]
+theorem prob_until_apply_sat (body : RandomM T) (cond : T → Bool) (x : T) (h : cond x) :
+  prob_until (body : RandomM T) (cond : T → Bool) x
+    = body x * (1 - ∑' (i : ↑{i | cond i = false}), body ↑i)⁻¹ := by
+  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+  rw [← convergence]
+  conv =>
+    right
+    right
+    intro fuel
+    rw [← repeat_closed_form _ _ _ _ h]
+  rw [eq_comm]
+  rw [ENNReal.tsum_eq_iSup_sum]
+  conv =>
+    right
+    right
+    intro s
+    right
+    intro a
+    rw [mul_iSup]
+  conv =>
+    right
+    right
+    intro s
+    rw [finset_sum_iSup_nat (repeat_monotone body cond x)]
+  rw [iSup_comm]
+  conv =>
+    right
+    right
+    intro j
+    rw [← ENNReal.tsum_eq_iSup_sum]
+
 
 def u₁ (cond : T → Bool) (body : RandomM T) (x : T) (n : ℕ) : ℝ :=
   (body x).toReal * (1 - ∑' (x : T), if cond x then body x else 0).toReal^n

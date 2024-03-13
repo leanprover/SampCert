@@ -40,35 +40,6 @@ theorem repeat_apply_unsat (body : RandomM ℕ) (cond : ℕ → Bool) (fuel i x 
         simp [h'] at h
       . simp
 
-@[simp]
-theorem prob_until_apply_unsat (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) (h : ¬ cond x) :
-  prob_until (body : RandomM ℕ) (cond : ℕ → Bool) x = 0 := by
-  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
-  simp only [ENNReal.tsum_eq_zero]
-  simp only [_root_.mul_eq_zero]
-  simp only [iSup_eq_zero]
-  intro i ; right ; intro j
-  simp [repeat_apply_unsat, h]
-
-def u₂ (cond : ℕ → Bool) (body : RandomM ℕ) (n : ℕ) (x : ℕ) : ENNReal :=
-  body x * (1 - ∑' (x : ℕ), if cond x then body x else 0)^n
-
-def s₂ (cond : ℕ → Bool) (body : RandomM ℕ) (n : ℕ) (x : ℕ)  := ∑ m in range n, u₂ cond body m x
-
-@[simp]
-theorem s₂_zero (cond : ℕ → Bool) (body : RandomM ℕ) (x : ℕ) :
-  s₂ cond body 0 x = 0 := by
-  simp [s₂]
-
-theorem s₂_succ (cond : ℕ → Bool) (body : RandomM ℕ) (n : ℕ) (x : ℕ) :
-  s₂ cond body (succ fuel) x = s₂ cond body fuel x + u₂ cond body fuel x := by
-  simp [s₂, sum_range_succ]
-
-example (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) :
-  ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 0 i x
-    = 0 := by
-  simp
-
 theorem if_simpl (body : RandomM ℕ) (cond : ℕ → Bool) (x_1 x : ℕ) :
   @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ℝ≥0∞ (cond x_1 = true) (instDecidableEqBool (cond x_1) true) (body x_1 * @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0) 0) = 0 := by
   split
@@ -154,62 +125,6 @@ theorem repeat_closed_form (body : RandomM ℕ) (cond : ℕ → Bool) (fuel x : 
       left
       rw [mul_comm]
     rw [mul_assoc]
-
-theorem repeat_closed_form_old (body : RandomM ℕ) (cond : ℕ → Bool) (fuel x : ℕ) (h1 : cond x) (h2 : fuel ≠ 0) :
-  ∑' (i : ℕ), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
-    = ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i := by
-  induction fuel
-  . simp
-  . rename_i fuel IH
-    cases fuel
-    . simp [h1, repeat_1]
-    . rename_i fuel
-      have A : succ fuel ≠ 0 := by exact succ_ne_zero fuel
-      have IH' := IH A
-      clear IH A h2
-      unfold prob_while_cut
-      unfold WhileFunctional
-      conv =>
-        left
-        simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply,
-          mul_ite, succ_sub_succ_eq_sub, tsub_zero, sum_const,
-          card_range, nsmul_eq_mul, cast_succ, cast_add, cast_one]
-      rw [tsum_split_ite']
-      rw [ENNReal.tsum_mul_right]
-      have B := tsum_split_coe_right cond (fun i => body ↑i * @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) 1 0)
-      rw [B]
-      clear B
-      conv =>
-        left
-        right
-        rw [ENNReal.tsum_eq_add_tsum_ite x]
-        right
-        right
-        intro y
-        rw [if_simpl]
-      simp only [h1, reduceIte, mul_one, tsum_zero, add_zero]
-      rw [IH']
-      clear IH'
-      conv =>
-        right
-        rw [Finset.sum_range_succ']
-      simp only [_root_.pow_zero, mul_one]
-      conv =>
-        right
-        left
-        right
-        intro k
-        rw [_root_.pow_succ]
-      rw [← mul_sum]
-      rw [← mul_sum]
-      rw [← mul_sum]
-      conv =>
-        left
-        left
-        rw [← mul_assoc]
-        left
-        rw [mul_comm]
-      rw [mul_assoc]
 
 theorem convergence (body : RandomM ℕ) (cond : ℕ → Bool) (x : ℕ) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' (i : {i | cond i = false}), body i)^i

@@ -37,9 +37,9 @@ theorem sum_simple (bound : ℕ) (k : ENNReal) :
   simp [D]
   exact cast_comm bound k
 
-theorem tsum_simpl_ite_left (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | cond i}), if cond x then f x else g x)
-    = (∑' (x : { i : ℕ | cond i}), f x) := by
+theorem tsum_simpl_ite_left (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (x : { i : T | cond i}), if cond x then f x else g x)
+    = (∑' (x : { i : T | cond i}), f x) := by
   apply tsum_congr
   intro b
   split
@@ -51,9 +51,9 @@ theorem tsum_simpl_ite_left (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
     have A : cond b = true := by exact P
     simp [A] at h
 
-theorem tsum_simpl_ite_right (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | ¬ cond i}), if cond x then f x else g x)
-    = ((∑' (x : { i : ℕ | ¬ cond i}), g x)) := by
+theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (x : { i : T | ¬ cond i}), if cond x then f x else g x)
+    = ((∑' (x : { i : T | ¬ cond i}), g x)) := by
   apply tsum_congr
   intro b
   split
@@ -65,20 +65,20 @@ theorem tsum_simpl_ite_right (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
     simp [A] at h
   . simp
 
-theorem tsum_split_ite (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (i : ℕ), if cond i then f i else g i)
-    = (∑' (i : { i : ℕ | cond i}), f i) + (∑' (i : { i : ℕ | ¬ cond i}), g i) := by
-  have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if cond i then f i else g i) _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
+theorem tsum_split_ite (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (i : T), if cond i then f i else g i)
+    = (∑' (i : { i : T | cond i}), f i) + (∑' (i : { i : T | ¬ cond i}), g i) := by
+  have B := @tsum_add_tsum_compl ENNReal T _ _ (fun i => if cond i then f i else g i) _ _ { i : T | cond i} ENNReal.summable ENNReal.summable
   rw [← B]
   clear B
   rw [tsum_simpl_ite_left]
-  have C : { i : ℕ | ¬ cond i} = { i : ℕ | cond i}ᶜ := by exact rfl
+  have C : { i : T | ¬ cond i} = { i : T | cond i}ᶜ := by exact rfl
   rw [← C]
   rw [tsum_simpl_ite_right]
 
-theorem tsum_simpl_ite_left' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | cond i}), if cond x = false then f x else g x)
-    = (∑' (x : { i : ℕ | cond i}), g x) := by
+theorem tsum_simpl_ite_left' (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (x : { i : T | cond i}), if cond x = false then f x else g x)
+    = (∑' (x : { i : T | cond i}), g x) := by
   apply tsum_congr
   intro b
   split
@@ -90,9 +90,9 @@ theorem tsum_simpl_ite_left' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
     simp [A] at h
   . simp
 
-theorem tsum_simpl_ite_right' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (x : { i : ℕ | cond i = false}), if cond x = false then f x else g x)
-    = ((∑' (x : { i : ℕ | cond i = false}), f x)) := by
+theorem tsum_simpl_ite_right' (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (x : { i : T | cond i = false}), if cond x = false then f x else g x)
+    = ((∑' (x : { i : T | cond i = false}), f x)) := by
   apply tsum_congr
   intro b
   split
@@ -104,25 +104,25 @@ theorem tsum_simpl_ite_right' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
     have A : cond b = false := by exact P
     simp [A] at h
 
-theorem tsum_split_ite' (cond : ℕ → Bool) (f g : ℕ → ENNReal) :
-  (∑' (i : ℕ), if cond i = false then f i else g i)
-    = (∑' (i : { i : ℕ | cond i = false}), f i) + (∑' (i : { i : ℕ | cond i = true}), g i) := by
-  have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if cond i = false then f i else g i) _ _ { i : ℕ | cond i = false} ENNReal.summable ENNReal.summable
-  have A : { i : ℕ | cond i = false}ᶜ = { i : ℕ | cond i = true } := by sorry
+theorem tsum_split_ite' (cond : T → Bool) (f g : T → ENNReal) :
+  (∑' (i : T), if cond i = false then f i else g i)
+    = (∑' (i : { i : T | cond i = false}), f i) + (∑' (i : { i : T | cond i = true}), g i) := by
+  have B := @tsum_add_tsum_compl ENNReal T _ _ (fun i => if cond i = false then f i else g i) _ _ { i : T | cond i = false} ENNReal.summable ENNReal.summable
+  have A : { i : T | cond i = false}ᶜ = { i : T | cond i = true } := by sorry
   rw [A] at B
   rw [← B]
   clear B
   rw [tsum_simpl_ite_left']
   rw [tsum_simpl_ite_right']
 
-theorem tsum_split_coe_right (cond : ℕ → Bool) (f : ℕ → ENNReal) :
-  (∑' (i : { i : ℕ | cond i = true}), f i)
-    = (∑' (i : ℕ), if cond i = true then f i else 0) := by
+theorem tsum_split_coe_right (cond : T → Bool) (f : T → ENNReal) :
+  (∑' (i : { i : T | cond i = true}), f i)
+    = (∑' (i : T), if cond i = true then f i else 0) := by
   rw [tsum_split_ite]
   simp
 
-theorem tsum_split_coe_left (cond : ℕ → Bool) (f : ℕ → ENNReal) :
-  (∑' (i : { i : ℕ | cond i = false}), f i)
-    = (∑' (i : ℕ), if cond i = false then f i else 0) := by
+theorem tsum_split_coe_left (cond : T → Bool) (f : T → ENNReal) :
+  (∑' (i : { i : T | cond i = false}), f i)
+    = (∑' (i : T), if cond i = false then f i else 0) := by
   rw [tsum_split_ite']
   simp
