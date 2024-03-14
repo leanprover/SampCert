@@ -28,6 +28,73 @@ noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : nu
   return r.2
 
 @[simp]
+theorem BernoulliExpNegSampleUnitAux_zero (num : ℕ) (den : ℕ+) (st st' : Bool × ℕ+) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) 0 st st' = 0 := by
+  simp [prob_while_cut]
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_returns_false (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (true, r) = 0 := by
+  revert st r
+  induction fuel
+  . simp [prob_while_cut]
+  . rename_i fuel IH
+    intro st r
+    simp [prob_while_cut, WhileFunctional]
+    unfold SubPMF.bind
+    unfold SubPMF.pure
+    simp [ite_apply]
+    split
+    . rename_i h
+      cases st
+      rename_i b n
+      simp at h
+      subst h
+      conv =>
+        left
+        right
+        intro a
+        rw [IH a r]
+      simp
+    . rename_i h
+      cases st
+      rename_i b n
+      simp at h
+      subst h
+      simp
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_ite_simpl (x r : ℕ+) (k : ENNReal) :
+  @ite ENNReal (x = r + 1) (Classical.propDecidable (x = r + 1)) 0
+  (@ite ENNReal (x = r + 1) (instPNatDecidableEq x (r + 1)) k 0) = 0 := by
+  split
+  . simp
+  . simp
+
+theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (true, r) st =
+    (num / (r * den)) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st
+    + (1 - (num / (r * den))) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st := by
+  cases st
+  rename_i b' r'
+  simp [prob_while_cut, WhileFunctional, ite_apply, ENNReal.tsum_prod', tsum_bool, BernoulliExpNegSampleUnitLoop]
+  conv =>
+    left
+    congr
+    . rw [ENNReal.tsum_eq_add_tsum_ite (r + 1)]
+      right
+      right
+      intro x
+      rw [BernoulliExpNegSampleUnitAux_ite_simpl]
+    . rw [ENNReal.tsum_eq_add_tsum_ite (r + 1)]
+      right
+      right
+      intro x
+      rw [BernoulliExpNegSampleUnitAux_ite_simpl]
+
+
+
+@[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnitAux num den wf) n =
   ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
