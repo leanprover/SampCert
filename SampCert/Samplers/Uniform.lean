@@ -63,14 +63,21 @@ theorem rw_ite (n : PNat) (x : Nat) :
 --   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
 --   sorry
 
+theorem tsum_comp (n : PNat) :
+  (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => UniformPowerOfTwoSample (2 * n) i) ↑x)
+    = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), UniformPowerOfTwoSample (2 * n) ↑i := by
+  apply tsum_congr_set_coe
+  simp
+  ext x
+  simp
 
-
-theorem foobar (n : PNat) :
+-- This should be proved more generally
+theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
   (1 - ∑' (i : ℕ), if ↑n ≤ i then UniformPowerOfTwoSample (2 * n) i else 0)
     = ∑' (i : ℕ), if i < ↑n then UniformPowerOfTwoSample (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then UniformPowerOfTwoSample (2 * n) i else 0) +
     (∑' (i : ℕ), if decide (↑n ≤ i) = false then UniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
-    have A : ∑' (i : ℕ), UniformPowerOfTwoSample (2 * n) i = 1 := by sorry
+    have A := UniformPowerOfTwoSample_normalizes (2 * n)
     have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => UniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
@@ -78,13 +85,21 @@ theorem foobar (n : PNat) :
     rw [C] at B
     clear C
     have D := @tsum_split_coe_left _ (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
-    sorry
+    rw [tsum_comp n] at B
+    rw [D] at B
+    clear D
+    trivial
   apply ENNReal.sub_eq_of_eq_add_rev
-  . sorry
+  . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
+    rw [UniformPowerOfTwoSample_normalizes (2 * n)] at Y
+    simp at Y
+    clear X
+    by_contra
+    rename_i h
+    rw [h] at Y
+    contradiction
   . simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
     rw [X]
-
-
 
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
@@ -96,7 +111,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     one_div, ite_mul, zero_mul, SubPMF.pure_apply]
   rw [tsum_split_coe_left]
   simp
-  rw [foobar]
+  rw [UniformPowerOfTwoSample_autopilot]
   split
   . conv =>
       left

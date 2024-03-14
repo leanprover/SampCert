@@ -85,3 +85,59 @@ theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n
   rw [sum_indicator_finrange (2 ^ (log 2 n)) x]
   . simp
   . trivial
+
+@[simp]
+theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
+  UniformPowerOfTwoSample n x = 0 := by
+  simp [UniformPowerOfTwoSample]
+  intro i
+  cases i
+  rename_i i P
+  simp
+  split
+  . rename_i h'
+    subst h'
+    have A : x < 2 ^ log 2 ↑n ↔ ¬ x ≥ 2 ^ log 2 ↑n := by exact lt_iff_not_le
+    rw [A] at P
+    contradiction
+  . simp
+
+theorem if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
+  (@ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ENNReal ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1)) (propDecidable ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1))) 1 0)) = 0 := by
+  split
+  . simp
+  . split
+    . rename_i h1 h2
+      cases x
+      rename_i x p
+      cases x_1
+      rename_i y q
+      simp at *
+      subst h2
+      contradiction
+    . simp
+
+theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
+  ∑' i : ℕ, UniformPowerOfTwoSample n i = 1 := by
+  rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
+  . simp
+    simp [UniformPowerOfTwoSample]
+    rw [Finset.sum_range]
+    conv =>
+      left
+      right
+      intro x
+      rw [ENNReal.tsum_mul_left]
+      rw [ENNReal.tsum_eq_add_tsum_ite x]
+      right
+      right
+      right
+      intro x_1
+      rw [if_simpl_up2]
+    simp
+    rw [ENNReal.inv_pow]
+    rw [← mul_pow]
+    rw [two_mul]
+    rw [ENNReal.inv_two_add_inv_two]
+    rw [one_pow]
+  . exact ENNReal.summable

@@ -126,3 +126,10 @@ theorem tsum_split_coe_left (cond : T → Bool) (f : T → ENNReal) :
     = (∑' (i : T), if cond i = false then f i else 0) := by
   rw [tsum_split_ite']
   simp
+
+theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
+  (∑' i : ℕ, if cond i then f i else 0) ≤ ∑' i : ℕ, f i := by
+  have A := @tsum_add_tsum_compl ENNReal ℕ _ _ f _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
+  rw [← A]
+  rw [tsum_split_coe_right]
+  simp

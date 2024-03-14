@@ -109,6 +109,12 @@ example (a b : ENNReal) (h1 : a + b = 1) (h2 : a ≠ ⊤) (h3 : b ≠ ⊤) :
   exact ENNReal.sub_eq_of_eq_add_rev h2 (id h1.symm)
 
 example (f : ℕ → ENNReal) :
-  (∑' (x : ↑{i | decide (↑n ≤ i) = true}ᶜ), f x)
-    = ∑' (x : ↑{i | decide (↑n ≤ i) = false}), f x := by
+  (∑' (x : ↑{i | decide (↑n ≤ i) = true}ᶜ), f ↑x)
+    = ∑' (x : ↑{i | decide (↑n ≤ i) = false}), f ↑x := by
   exact?
+
+example (a b : ENNReal) (h1 : a > b) (h2 : a ≤ b) :
+  False := by
+  have A : a > b ↔ ¬ a ≤ b := by exact lt_iff_not_le
+  rw [A] at h1
+  contradiction
