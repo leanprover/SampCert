@@ -132,7 +132,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
             let args' ← args.mapM (toDafnyExpr dname env)
             return .monadic name.toString args'.toList
         else throwError "toDafnyExpr: not supported -- application of {fn} to {args}, info.type {info.type}"
-      else if let .bvar i := fn
+      else if let .bvar _ := fn
           -- Coin...
            then return .monadic dname [(← toDafnyExpr dname env args[0]!)]
            else throwError "toDafnyExpr: OOL {fn} {args}"

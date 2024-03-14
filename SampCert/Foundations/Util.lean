@@ -108,7 +108,9 @@ theorem tsum_split_ite' (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' (i : { i : T | cond i = false}), f i) + (∑' (i : { i : T | cond i = true}), g i) := by
   have B := @tsum_add_tsum_compl ENNReal T _ _ (fun i => if cond i = false then f i else g i) _ _ { i : T | cond i = false} ENNReal.summable ENNReal.summable
-  have A : { i : T | cond i = false}ᶜ = { i : T | cond i = true } := by sorry
+  have A : { i : T | cond i = false}ᶜ = { i : T | cond i = true } := by
+    ext x
+    simp
   rw [A] at B
   rw [← B]
   clear B

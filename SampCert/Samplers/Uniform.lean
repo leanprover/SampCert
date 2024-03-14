@@ -58,11 +58,6 @@ theorem rw_ite (n : PNat) (x : Nat) :
   trivial
   trivial
 
--- theorem prob_until_apply_2 (body : RandomM T) (cond : T → Bool) (x : T) :
---   prob_until (body : RandomM T) (cond : T → Bool) x =
---   (if cond x then body x else 0) / (∑' (x : T), if cond x then body x else 0) := by
---   sorry
-
 theorem tsum_comp (n : PNat) :
   (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => UniformPowerOfTwoSample (2 * n) i) ↑x)
     = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), UniformPowerOfTwoSample (2 * n) ↑i := by
@@ -105,8 +100,6 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
   unfold UniformSample
-  --simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply_2, decide_eq_true_eq, rw_ite,
-  -- one_div, sum_simple]
   simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply, decide_eq_true_eq, rw_ite,
     one_div, ite_mul, zero_mul, SubPMF.pure_apply]
   rw [tsum_split_coe_left]
