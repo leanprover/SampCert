@@ -9,7 +9,7 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import Mathlib.Data.Complex.Exponential
 
-open PMF Nat
+open PMF Nat BigOperators Finset
 
 theorem halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
   num ≤ ↑(st * den) := by
@@ -71,9 +71,10 @@ theorem BernoulliExpNegSampleUnitAux_ite_simpl (x r : ℕ+) (k : ENNReal) :
   . simp
   . simp
 
+@[simp]
 theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
   prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (true, r) st =
-    (num / (r * den)) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st
+    (num / (r * den)) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (true, r + 1) st
     + (1 - (num / (r * den))) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st := by
   cases st
   rename_i b' r'
@@ -91,8 +92,105 @@ theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : 
       right
       intro x
       rw [BernoulliExpNegSampleUnitAux_ite_simpl]
+  simp
+  rw [add_comm]
 
 
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_succ_false (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (false, r) st =
+  if st = (false,r) then 1 else 0 := by
+  cases st
+  simp [prob_while_cut, WhileFunctional]
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_monotone_counter (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (false, n) = 0 := by
+  revert st
+  induction fuel
+  . simp
+  . rename_i fuel IH
+    intro st h1 h2
+    cases st
+    rename_i stb stn
+    simp at h1
+    simp at h2
+    cases stb
+    . simp
+      exact Ne.symm (h1 rfl)
+    . simp [BernoulliExpNegSampleUnitAux_succ_true]
+      have A : (false, stn + 1) ≠ (false, n) := by
+        simp
+        have OR : n = stn ∨ n < stn := by exact eq_or_lt_of_le h2
+        cases OR
+        . rename_i h
+          subst h
+          exact _root_.ne_of_gt le.refl
+        . rename_i h
+          exact _root_.ne_of_gt (le.step h)
+      have B : (true, stn + 1) ≠ (false, n) := by exact
+        (bne_iff_ne (true, stn + 1) (false, n)).mp rfl
+      rw [IH _ A]
+      rw [IH _ B]
+      simp
+      exact le.step h2
+      exact le.step h2
+
+-- Used to explore
+example (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf)
+    2 (true, 1) (false,⟨ 3, sorry ⟩) = 1 := by
+  simp [prob_while_cut, WhileFunctional, BernoulliExpNegSampleUnitLoop, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  sorry
+
+example :
+  (2 : ℕ+) + (1 : ℕ) = (3 : ℕ+) := by
+  exact rfl
+
+def plus_one (k : ℕ) : ℕ+ := ⟨ k + 1 , Nat.add_pos_right k le.refl ⟩
+
+theorem plus_one_prop (k : ℕ) :
+  plus_one k = k + 1 := by
+  simp [plus_one]
+
+def plus_two (k fuel : ℕ) : ℕ+ := ⟨ fuel + k + 2 , Nat.add_pos_right (fuel + k) (le.step le.refl) ⟩
+
+theorem plus_two_zero_prop (k : ℕ) :
+  plus_two k 0 = k + 2 := by
+  simp [plus_two]
+
+-- Warning! BernoulliExpNegSampleUnitAux has a transition phase
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_monotone_progress (num : ℕ) (den : ℕ+) (fuel k : ℕ) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range (min (fuel + 2) (fuel + k + 1) - 2), num / (den * (k + i))) * (1 - (num / ((fuel + k + 1) * den))) := by
+  revert k
+  induction fuel
+  . intro k
+    simp
+    split
+    . rename_i h
+      rw [plus_one_prop]
+      simp
+    . rename_i h
+      have A : ¬ k + 2 = k + 2 := by
+        conv =>
+          right
+          congr
+          . rw [← plus_two_zero_prop]
+          . change k + (1 + 1)
+            rw [← add_assoc]
+            rw [← plus_one_prop]
+        refine (Function.Injective.ne_iff ?hf).mpr h
+        exact PNat.coe_injective
+      contradiction
+  . rename_i fuel IH
+    intro k
+    rw [BernoulliExpNegSampleUnitAux_succ_true]
+    rw [BernoulliExpNegSampleUnitAux_succ_false]
+    -- Second term is 0
+    have IH' := IH (k + 1)
+    clear IH
+    sorry
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :

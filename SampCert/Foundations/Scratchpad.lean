@@ -118,3 +118,23 @@ example (a b : ENNReal) (h1 : a > b) (h2 : a ≤ b) :
   have A : a > b ↔ ¬ a ≤ b := by exact lt_iff_not_le
   rw [A] at h1
   contradiction
+
+example :
+  ∏ i in range 0, (i + 1) = 1 := by
+  simp
+
+example :
+  ∏ i in range 1, (i + 1) = 1 := by
+  simp
+
+example :
+  ∏ i in range 2, (i + 1) = 2 := by
+  simp
+
+example :
+  ∏ i in range 3, (i + 1) = 3! := by
+  simp
+
+example (n : ℕ) :
+  ∏ i in range n, (i + 1) = n ! := by
+  simp
