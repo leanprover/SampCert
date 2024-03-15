@@ -139,9 +139,16 @@ theorem BernoulliExpNegSampleUnitAux_monotone_counter (num : ℕ) (den : ℕ+) (
 -- Used to explore
 example (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  :
   prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf)
-    2 (true, 1) (false,⟨ 3, sorry ⟩) = 1 := by
+    4 (true, 1) (false,⟨ 4, sorry ⟩) = 1 := by
   simp [prob_while_cut, WhileFunctional, BernoulliExpNegSampleUnitLoop, ite_apply, ENNReal.tsum_prod', tsum_bool]
   sorry
+
+-- mass 0 for returning 0 or 1
+
+-- (2,1,2) : 1 - ↑num / ↑↑den else 0 else 0)
+-- (3,1,3) : ↑num / ↑↑den * (1 - ↑num / (↑↑b * ↑↑den))
+-- (4,1,4) : ↑num / ↑↑den * ↑num / (↑↑b * ↑↑den) * (1 - ↑num / ((↑↑b + 1) * ↑↑den))
+
 
 example :
   (2 : ℕ+) + (1 : ℕ) = (3 : ℕ+) := by
@@ -296,9 +303,24 @@ theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n + 1, by exact Nat.add_pos_right n le.refl ⟩)
-    =  (∏ i in range n, (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n + 1) * den))) := by
-  sorry
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n, by exact zero_lt_of_lt h ⟩)
+    =  (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
+  revert n
+  induction extra
+  . simp
+    intro n h
+    apply BernoulliExpNegSampleUnitAux_progress' num den n wf h
+  . rename_i extra IH
+    intro n h
+    have IH' := IH n h
+    clear IH
+
+    rw [← BernoulliExpNegSampleUnitAux_preservation'] at IH'
+    . have B : extra + n + 1 = succ extra + n := sorry
+      rw [← B]
+      trivial
+    . trivial
+    . exact Nat.le_add_left n extra
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
