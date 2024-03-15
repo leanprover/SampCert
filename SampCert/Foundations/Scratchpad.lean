@@ -139,7 +139,7 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   ∏ i in range n, (i + 1) = n ! := by
 --   simp
 
-example (a x y b : ENNReal) (h : x = y) :
-  a * x * b = a * y * b := by
-  apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
-  exact h
+-- example (a x y b : ENNReal) (h : x = y) :
+--   a * x * b = a * y * b := by
+--   apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
+--   exact h

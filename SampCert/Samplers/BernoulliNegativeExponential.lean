@@ -302,7 +302,7 @@ theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m
   trivial
 
 @[simp]
-theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
+theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (n extra : ℕ) (wf : num ≤ den) (h : n > 1) :
   prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n, by exact zero_lt_of_lt h ⟩)
     =  (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   revert n
@@ -314,7 +314,6 @@ theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (
     intro n h
     have IH' := IH n h
     clear IH
-
     rw [← BernoulliExpNegSampleUnitAux_preservation'] at IH'
     . have B : extra + n + 1 = succ extra + n := sorry
       rw [← B]
@@ -322,17 +321,74 @@ theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (
     . trivial
     . exact Nat.le_add_left n extra
 
-@[simp]
-theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
+theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf : num ≤ den) :
+  ⨆ i, prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) i (true, 1) (false, n)
+    = if n = 1 then 0 else (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
+  apply iSup_eq_of_tendsto
+  . apply prob_while_cut_monotonic
+  . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat n)]
+    split
+    . rename_i h
+      subst h
+      rw [ENNReal.tendsto_atTop_zero]
+      intro ε _
+      existsi 0
+      intro n _
+      simp [BernoulliExpNegSampleUnitAux_monotone_counter]
+    . rename_i h
+      have h' : n > 1 := sorry -- make sure it is not 0 either!!!!
+      have FOO (n_1 : ℕ) := @BernoulliExpNegSampleUnitAux_characterization num den n n_1 wf h'
+      have BAR : n = (@Subtype.mk.{1} Nat (fun (n : Nat) => @LT.lt.{0} Nat instLTNat (@OfNat.ofNat.{0} Nat 0 (instOfNatNat 0)) n)
+          (PNat.val n) (@Nat.zero_lt_of_lt (@OfNat.ofNat.{0} Nat 1 (instOfNatNat 1)) (PNat.val n) h')) := rfl
+      conv =>
+        congr
+        intro n_1
+        right
+        rw [BAR]
+      conv =>
+        congr
+        intro E
+        rw [FOO E]
+      rw [tendsto_const_nhds_iff]
+
+theorem if_simpl' (num : ℕ) (den : ℕ+) (x n : ℕ+) :
+  @ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
+  (@ite ENNReal (n = x) (instPNatDecidableEq n x)
+  (@ite ENNReal (x = 1) (instPNatDecidableEq x 1) 0
+  ((∏ i in range (↑x - 2), ↑num / (((1 : ENNReal) + ↑i) * ↑↑den)) * (1 - ↑num / ((↑↑x - 1) * ↑↑den)))) 0) = 0 := by
+  split
+  . simp
+  . split
+    . split
+      . simp
+      . rename_i h1 h2 h3
+        subst h2
+        contradiction
+    . simp
+
+theorem BernoulliExpNegSampleUnitAux_apply (num : ℕ) (den : ℕ+) (n : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) n =
-  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
-  simp [BernoulliExpNegSampleUnitAux, prob_while]
-  unfold BernoulliExpNegSampleUnitLoop
+    if n = 1 then 0 else (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
+  simp [BernoulliExpNegSampleUnitAux]
+  rw [ENNReal.tsum_prod']
+  rw [tsum_bool]
+  simp [prob_while]
+  simp [BernoulliExpNegSampleUnitAux_sup]
+  rw [ENNReal.tsum_eq_add_tsum_ite n]
   simp
-  unfold SubPMF.bind
-  unfold SubPMF.pure
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [if_simpl']
   simp
 
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_apply' (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
+  (BernoulliExpNegSampleUnitAux num den wf) n =
+  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
   sorry
 
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
@@ -350,7 +406,7 @@ theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : nu
     left
     right
     intro a
-    rw [BernoulliExpNegSampleUnitAux_apply num den wf a gam]
+    rw [BernoulliExpNegSampleUnitAux_apply' num den wf a gam]
   have C : (∑' (a : ℕ), if a % 2 = 0 then 0 else ENNReal.ofReal (γ ^ (a - 1) / ↑(a - 1)! - γ ^ a / ↑a !))
     = (∑' (a : ℕ), ENNReal.ofReal ((-γ)^a / (a - 1)!)) := by sorry
   rw [C]
