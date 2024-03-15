@@ -162,7 +162,7 @@ theorem plus_two_zero_prop (k : ℕ) :
 -- Warning! BernoulliExpNegSampleUnitAux has a transition phase
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_monotone_progress (num : ℕ) (den : ℕ+) (fuel k : ℕ) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range (min (fuel + 2) (fuel + k + 1) - 2), num / (den * (k + i))) * (1 - (num / ((fuel + k + 1) * den))) := by
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range (min (fuel + 2) (fuel + k + 1) - 2), num / ((k + 1 + i) * den)) * (1 - (num / ((fuel + k + 1) * den))) := by
   revert k
   induction fuel
   . intro k
@@ -190,7 +190,28 @@ theorem BernoulliExpNegSampleUnitAux_monotone_progress (num : ℕ) (den : ℕ+) 
     -- Second term is 0
     have IH' := IH (k + 1)
     clear IH
+    have A : plus_one (k + 1) = plus_one k + 1 := rfl
+    have B : plus_two (k + 1) fuel = plus_two k (succ fuel) := sorry
+    rw [← A]
+    rw [← B]
+    rw [IH']
+    have C : ¬ plus_two (k + 1) fuel = plus_one (k + 1) := by sorry
+    simp [C]
+    have D :↑fuel + (↑k + 1) + 1 = succ fuel + k + 1 := by sorry
+    rw [D]
+    have E : fuel + (k + (1 : ENNReal)) + (1 : ENNReal) = ↑fuel + 1 + ↑k + 1 := by sorry
+    rw [E]
+    clear IH' A B C D E
+    have F : min (succ fuel + 2) (succ fuel + k + 1) - 2 = succ (min (fuel + 2) (fuel + k + 1) - 2) := by sorry
+    rw [F]
+    simp [prod_range_succ']
+    rw [plus_one_prop]
+    conv =>
+      right
+      left
+      rw [mul_comm]
     sorry
+
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :

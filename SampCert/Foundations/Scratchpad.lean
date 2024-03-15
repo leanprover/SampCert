@@ -100,41 +100,45 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   (n - 1) + 1 = n := by
 --   exact succ_pred h
 
-example (a b : NNReal) (h : a + b = 1) :
-  1 - a = b := by
-  exact tsub_eq_of_eq_add_rev (id h.symm)
+-- example (a b : NNReal) (h : a + b = 1) :
+--   1 - a = b := by
+--   exact tsub_eq_of_eq_add_rev (id h.symm)
 
-example (a b : ENNReal) (h1 : a + b = 1) (h2 : a ≠ ⊤) (h3 : b ≠ ⊤) :
-  1 - a = b := by
-  exact ENNReal.sub_eq_of_eq_add_rev h2 (id h1.symm)
+-- example (a b : ENNReal) (h1 : a + b = 1) (h2 : a ≠ ⊤) (h3 : b ≠ ⊤) :
+--   1 - a = b := by
+--   exact ENNReal.sub_eq_of_eq_add_rev h2 (id h1.symm)
 
-example (f : ℕ → ENNReal) :
-  (∑' (x : ↑{i | decide (↑n ≤ i) = true}ᶜ), f ↑x)
-    = ∑' (x : ↑{i | decide (↑n ≤ i) = false}), f ↑x := by
-  exact?
+-- example (f : ℕ → ENNReal) :
+--   (∑' (x : ↑{i | decide (↑n ≤ i) = true}ᶜ), f ↑x)
+--     = ∑' (x : ↑{i | decide (↑n ≤ i) = false}), f ↑x := by
+--   exact?
 
-example (a b : ENNReal) (h1 : a > b) (h2 : a ≤ b) :
-  False := by
-  have A : a > b ↔ ¬ a ≤ b := by exact lt_iff_not_le
-  rw [A] at h1
-  contradiction
+-- example (a b : ENNReal) (h1 : a > b) (h2 : a ≤ b) :
+--   False := by
+--   have A : a > b ↔ ¬ a ≤ b := by exact lt_iff_not_le
+--   rw [A] at h1
+--   contradiction
 
-example :
-  ∏ i in range 0, (i + 1) = 1 := by
-  simp
+-- example :
+--   ∏ i in range 0, (i + 1) = 1 := by
+--   simp
 
-example :
-  ∏ i in range 1, (i + 1) = 1 := by
-  simp
+-- example :
+--   ∏ i in range 1, (i + 1) = 1 := by
+--   simp
 
-example :
-  ∏ i in range 2, (i + 1) = 2 := by
-  simp
+-- example :
+--   ∏ i in range 2, (i + 1) = 2 := by
+--   simp
 
-example :
-  ∏ i in range 3, (i + 1) = 3! := by
-  simp
+-- example :
+--   ∏ i in range 3, (i + 1) = 3! := by
+--   simp
 
-example (n : ℕ) :
-  ∏ i in range n, (i + 1) = n ! := by
-  simp
+-- example (n : ℕ) :
+--   ∏ i in range n, (i + 1) = n ! := by
+--   simp
+
+example (a x y b : ENNReal) (h : x = y) :
+  a * x * b = a * y * b := by
+  apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
