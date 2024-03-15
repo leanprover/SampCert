@@ -159,10 +159,12 @@ theorem plus_two_zero_prop (k : ℕ) :
   plus_two k 0 = k + 2 := by
   simp [plus_two]
 
+
 -- Warning! BernoulliExpNegSampleUnitAux has a transition phase
+-- This min is suspicious: (min (fuel + 2) (fuel + k + 1) - 2)
 @[simp]
-theorem BernoulliExpNegSampleUnitAux_monotone_progress (num : ℕ) (den : ℕ+) (fuel k : ℕ) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range (min (fuel + 2) (fuel + k + 1) - 2), num / ((k + 1 + i) * den)) * (1 - (num / ((fuel + k + 1) * den))) := by
+theorem BernoulliExpNegSampleUnitAux_progress (num : ℕ) (den : ℕ+) (fuel k : ℕ) (wf : num ≤ den) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range fuel, (num : ENNReal) / ((k + 1 + i) * den)) * (1 - ((num : ENNReal) / ((fuel + k + 1) * den))) := by
   revert k
   induction fuel
   . intro k
@@ -197,21 +199,106 @@ theorem BernoulliExpNegSampleUnitAux_monotone_progress (num : ℕ) (den : ℕ+) 
     rw [IH']
     have C : ¬ plus_two (k + 1) fuel = plus_one (k + 1) := by sorry
     simp [C]
-    have D :↑fuel + (↑k + 1) + 1 = succ fuel + k + 1 := by sorry
-    rw [D]
     have E : fuel + (k + (1 : ENNReal)) + (1 : ENNReal) = ↑fuel + 1 + ↑k + 1 := by sorry
     rw [E]
-    clear IH' A B C D E
-    have F : min (succ fuel + 2) (succ fuel + k + 1) - 2 = succ (min (fuel + 2) (fuel + k + 1) - 2) := by sorry
-    rw [F]
+    clear IH' A B C E
     simp [prod_range_succ']
     rw [plus_one_prop]
     conv =>
       right
       left
       rw [mul_comm]
-    sorry
+    conv =>
+      right
+      left
+      right
+      right
+      intro x
+      right
+      left
+      right
+      rw [add_comm]
+    conv =>
+      right
+      left
+      right
+      right
+      intro x
+      right
+      left
+      rw [← add_assoc]
+    simp
+    rw [mul_assoc]
 
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_progress' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1 ) (false, ⟨ n , lt_of_succ_lt h ⟩ ) = (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
+  have prog := BernoulliExpNegSampleUnitAux_progress num den (n - 2) 0 wf
+  have A : n - 2 + 2 = n := by sorry
+  rw [A] at prog
+  have B : plus_two 0 (n - 2) = ⟨ n , lt_of_succ_lt h ⟩ := by sorry
+  rw [B] at prog
+  simp [plus_one] at prog
+  have C : (n : ENNReal) - 2 + 1 = (n : ENNReal) - 1 := by sorry -- on ℕ, by exact eq_tsub_of_add_eq A, find coercion theorem
+  rw [C] at prog
+  trivial
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel fuel' k : ℕ) (wf : num ≤ den) (h1 : fuel ≥ fuel') :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (1 + fuel + 2) (true, plus_one k ) (false, plus_two k fuel')
+    = prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel') := by
+  revert fuel' k
+  induction fuel
+  . intro fuel' k h1
+    have A : fuel' = 0 := by exact le_zero.mp h1
+    subst A
+    simp [BernoulliExpNegSampleUnitAux_succ_true]
+    -- rewrites of plus_* properties do not work because the type is wrong
+    have B : ¬ plus_two k 0 = plus_one k + 1 + 1 := sorry
+    simp [B]
+  . rename_i fuel IH
+    intro fuel' k h1
+    conv =>
+      congr
+      . rw [BernoulliExpNegSampleUnitAux_succ_true]
+      . rw [BernoulliExpNegSampleUnitAux_succ_true]
+    have A : succ fuel + 1 = fuel + 2 := by exact rfl
+    rw [A]
+    have B : 1 + succ fuel + 1 = 1 + fuel + 2 := by exact rfl
+    rw [B]
+    have Pre : fuel ≥ fuel' - 1 := by exact sub_le_of_le_add h1
+    have IH' := IH (fuel' - 1) (k + 1) Pre
+    clear IH
+    cases fuel'
+    . sorry -- Expected to hold but enormous term that needs careful rewriting
+    . rename_i fuel'
+      have C : succ fuel' - 1 = fuel' := by exact rfl
+      rw [C] at IH'
+      have D : plus_two (k + 1) fuel' = plus_two k (succ fuel') := sorry
+      rw [D] at IH'
+      have E : plus_one (k + 1) = plus_one k + 1 := sorry
+      rw [E] at IH'
+      rw [IH']
+      exact rfl
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m : ℕ) (wf : num ≤ den) (h1 : m > 1) (h2 : n ≥ m) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (n + 1) (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩ )
+    = prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩) := by
+  have X : n - 2 ≥ m - 2 := by exact Nat.sub_le_sub_right h2 2
+  have prog := BernoulliExpNegSampleUnitAux_preservation num den (n - 2) (m - 2) 0 wf X
+  have A : 1 + (n - 2) + 2 = n + 1 := sorry
+  have B : n - 2 + 2 = n := sorry
+  have C : plus_one 0 = 1 := sorry
+  have D : plus_two 0 (m - 2) = ⟨ m, zero_lt_of_lt h1 ⟩ := sorry
+  rw [A, B, C, D] at prog
+  trivial
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
+  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n + 1, by exact Nat.add_pos_right n le.refl ⟩)
+    =  (∏ i in range n, (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n + 1) * den))) := by
+  sorry
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
@@ -223,6 +310,7 @@ theorem BernoulliExpNegSampleUnitAux_apply (num : Nat) (den : PNat) (wf : num �
   unfold SubPMF.bind
   unfold SubPMF.pure
   simp
+
   sorry
 
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do

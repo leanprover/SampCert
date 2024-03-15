@@ -142,3 +142,4 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 example (a x y b : ENNReal) (h : x = y) :
   a * x * b = a * y * b := by
   apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
+  exact h
