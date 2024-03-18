@@ -136,36 +136,37 @@ theorem BernoulliExpNegSampleUnitAux_monotone_counter (num : ℕ) (den : ℕ+) (
       exact le.step h2
       exact le.step h2
 
--- Used to explore
-example (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf)
-    4 (true, 1) (false,⟨ 4, sorry ⟩) = 1 := by
-  simp [prob_while_cut, WhileFunctional, BernoulliExpNegSampleUnitLoop, ite_apply, ENNReal.tsum_prod', tsum_bool]
-  sorry
+-- The following two functions are useful to keep the dependent definition of PNat under control
+-- Otherwise, the terms become large and unreadable
 
--- mass 0 for returning 0 or 1
+def plus_one (k : ℕ) : ℕ+ := ⟨ k + (1 : ℕ+) , Nat.add_pos_right k le.refl ⟩
 
--- (2,1,2) : 1 - ↑num / ↑↑den else 0 else 0)
--- (3,1,3) : ↑num / ↑↑den * (1 - ↑num / (↑↑b * ↑↑den))
--- (4,1,4) : ↑num / ↑↑den * ↑num / (↑↑b * ↑↑den) * (1 - ↑num / ((↑↑b + 1) * ↑↑den))
+def plus_two (k fuel : ℕ) : ℕ+ := ⟨ fuel + k + 2 , Nat.add_pos_right (fuel + k) (le.step le.refl) ⟩
 
-
-example :
-  (2 : ℕ+) + (1 : ℕ) = (3 : ℕ+) := by
-  exact rfl
-
-def plus_one (k : ℕ) : ℕ+ := ⟨ k + 1 , Nat.add_pos_right k le.refl ⟩
+@[simp]
+theorem plus_one_p1 (k e : ℕ) :
+  plus_one k + e = plus_one (k + e) := by
+  simp [plus_one]
+  conv =>
+    right
+    rw [add_assoc]
+    right
+    rw [add_comm]
+  conv =>
+    right
+    rw [← add_assoc]
 
 theorem plus_one_prop (k : ℕ) :
   plus_one k = k + 1 := by
   simp [plus_one]
 
-def plus_two (k fuel : ℕ) : ℕ+ := ⟨ fuel + k + 2 , Nat.add_pos_right (fuel + k) (le.step le.refl) ⟩
-
 theorem plus_two_zero_prop (k : ℕ) :
   plus_two k 0 = k + 2 := by
   simp [plus_two]
 
+theorem nm2p2 (n : ℕ) (h : n > 1) :
+  n - 2 + 2 = n := by
+  exact Nat.sub_add_cancel h
 
 -- Warning! BernoulliExpNegSampleUnitAux has a transition phase
 -- This min is suspicious: (min (fuel + 2) (fuel + k + 1) - 2)
@@ -241,7 +242,7 @@ theorem BernoulliExpNegSampleUnitAux_progress (num : ℕ) (den : ℕ+) (fuel k :
 theorem BernoulliExpNegSampleUnitAux_progress' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
   prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1 ) (false, ⟨ n , lt_of_succ_lt h ⟩ ) = (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   have prog := BernoulliExpNegSampleUnitAux_progress num den (n - 2) 0 wf
-  have A : n - 2 + 2 = n := by sorry
+  have A := nm2p2 n h
   rw [A] at prog
   have B : plus_two 0 (n - 2) = ⟨ n , lt_of_succ_lt h ⟩ := by sorry
   rw [B] at prog
@@ -277,7 +278,11 @@ theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel
     have IH' := IH (fuel' - 1) (k + 1) Pre
     clear IH
     cases fuel'
-    . sorry -- Expected to hold but enormous term that needs careful rewriting
+    . rw [BernoulliExpNegSampleUnitAux_succ_false]
+      rw [BernoulliExpNegSampleUnitAux_succ_false]
+      have C : plus_two k zero = plus_one k + 1 := sorry
+      rw [C]
+      simp
     . rename_i fuel'
       have C : succ fuel' - 1 = fuel' := by exact rfl
       rw [C] at IH'
@@ -294,10 +299,20 @@ theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m
     = prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩) := by
   have X : n - 2 ≥ m - 2 := by exact Nat.sub_le_sub_right h2 2
   have prog := BernoulliExpNegSampleUnitAux_preservation num den (n - 2) (m - 2) 0 wf X
-  have A : 1 + (n - 2) + 2 = n + 1 := sorry
-  have B : n - 2 + 2 = n := sorry
-  have C : plus_one 0 = 1 := sorry
-  have D : plus_two 0 (m - 2) = ⟨ m, zero_lt_of_lt h1 ⟩ := sorry
+  have A : 1 + (n - 2) + 2 = n + 1 := by
+    rw [add_assoc]
+    rw [add_comm]
+    rw [_root_.add_left_inj]
+    rw [nm2p2 n (Nat.lt_of_lt_of_le h1 h2)]
+  have B := nm2p2 n (Nat.lt_of_lt_of_le h1 h2)
+  have C : plus_one 0 = 1 := by
+    simp [plus_one]
+  have D : plus_two 0 (m - 2) = ⟨ m, zero_lt_of_lt h1 ⟩ := by
+    simp [plus_two]
+    conv =>
+      left
+      left
+      rw [nm2p2 m h1]
   rw [A, B, C, D] at prog
   trivial
 
@@ -315,7 +330,15 @@ theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (
     have IH' := IH n h
     clear IH
     rw [← BernoulliExpNegSampleUnitAux_preservation'] at IH'
-    . have B : extra + n + 1 = succ extra + n := sorry
+    . have B : extra + n + 1 = succ extra + n := by
+        clear IH'
+        clear IH'
+        conv =>
+          left
+          rw [add_comm]
+          rw [← add_assoc]
+        rw [add_left_inj]
+        exact one_add extra
       rw [← B]
       trivial
     . trivial
@@ -336,7 +359,12 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
       intro n _
       simp [BernoulliExpNegSampleUnitAux_monotone_counter]
     . rename_i h
-      have h' : n > 1 := sorry -- make sure it is not 0 either!!!!
+      have h' : n > 1 := by
+        by_contra
+        rename_i h'
+        simp at *
+        subst h'
+        contradiction
       have FOO (n_1 : ℕ) := @BernoulliExpNegSampleUnitAux_characterization num den n n_1 wf h'
       have BAR : n = (@Subtype.mk.{1} Nat (fun (n : Nat) => @LT.lt.{0} Nat instLTNat (@OfNat.ofNat.{0} Nat 0 (instOfNatNat 0)) n)
           (PNat.val n) (@Nat.zero_lt_of_lt (@OfNat.ofNat.{0} Nat 1 (instOfNatNat 1)) (PNat.val n) h')) := rfl
@@ -383,7 +411,6 @@ theorem BernoulliExpNegSampleUnitAux_apply (num : ℕ) (den : ℕ+) (n : ℕ+) (
     intro x
     rw [if_simpl']
   simp
-
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_apply' (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
