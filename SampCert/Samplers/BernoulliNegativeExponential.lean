@@ -538,7 +538,7 @@ theorem gamma_extract (num : Nat) (den : PNat) (n : ℕ) (h : n > 1) :
 
 theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (BernoulliExpNegSampleUnitAux num den wf) n =
-  (γ^(n - 2) * ((factorial (n - 2)) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹)) := by
+  (γ^(n - 2) * (((n - 2)!) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹)) := by
   cases n
   . contradiction
   . rename_i n
@@ -563,14 +563,6 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
           simp [gam]
         . simp
 
-
-
-@[simp]
-theorem BernoulliExpNegSampleUnitAux_apply''' (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
-  (BernoulliExpNegSampleUnitAux num den wf) n =
-  ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
-  sorry
-
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
   if K % 2 = 0 then return true else return false
@@ -592,10 +584,24 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num �
 --   rw [C]
 --   sorry -- need to connect to definition of exp
 
--- @[simp]
--- theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ℝ) / (den : ℝ)) :
---   (BernoulliExpNegSampleUnit num den wf) true = 1 - ENNReal.ofReal (Real.exp (- γ)) := by
---   sorry
+instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
+
+@[simp]
+theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSampleUnit num den wf) true = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  simp [BernoulliExpNegSampleUnit, ite_apply]
+  --have FOO := @tsum_split_ite ℕ (λ i => i % 2 = 0) (BernoulliExpNegSampleUnitAux num den wf) (λ i => 0)
+  have A := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if i % 2 = 0 then (BernoulliExpNegSampleUnitAux num den wf i) else 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
+  rw [← A]
+  clear A
+  have B : (∑' (x : ↑{i | i % 2 = 0}ᶜ), (fun i => if i % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf i else 0) ↑x) = 0 := by
+    sorry
+  rw [B]
+  clear B
+  rw [add_zero]
+  rw [ENNReal.tsum_eq_add_tsum_ite 0]
+  simp only
+  sorry
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
