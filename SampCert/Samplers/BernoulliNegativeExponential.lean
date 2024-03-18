@@ -536,8 +536,37 @@ theorem gamma_extract (num : Nat) (den : PNat) (n : ℕ) (h : n > 1) :
         . simp
         . simp
 
+theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSampleUnitAux num den wf) n =
+  (γ^(n - 2) * ((factorial (n - 2)) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹)) := by
+  cases n
+  . contradiction
+  . rename_i n
+    let m : ℕ+ := ⟨ succ n , by exact Fin.pos { val := n, isLt := le.refl } ⟩
+    have A : succ n = m := by simp
+    rw [A]
+    rw [BernoulliExpNegSampleUnitAux_apply num den m wf]
+    split
+    . rename_i h'
+      rw [h'] at A
+      rw [A] at h
+      contradiction
+    . rename_i h'
+      cases n
+      . contradiction
+      . rename_i n
+        rw [gamma_extract]
+        . simp
+          have B : (n : ENNReal) + 1 ≠ 0 := by exact cast_add_one_ne_zero n
+          have C : (n : ENNReal) + 1 ≠ ⊤ := by simp
+          rw [gamma_extract' num den (↑n + 1) B C]
+          simp [gam]
+        . simp
+
+
+
 @[simp]
-theorem BernoulliExpNegSampleUnitAux_apply' (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
+theorem BernoulliExpNegSampleUnitAux_apply''' (num : Nat) (den : PNat) (wf : num ≤ den) (n : Nat) (gam : γ = (num : ℝ) / (den : ℝ)) :
   (BernoulliExpNegSampleUnitAux num den wf) n =
   ENNReal.ofReal ((γ^(n - 1) / (factorial (n - 1))) - (γ^n / (factorial n))) := by
   sorry
