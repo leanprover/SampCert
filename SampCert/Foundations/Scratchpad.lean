@@ -144,10 +144,6 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
 --   exact h
 
-theorem nm2p2 (n : ℕ+) (h : ¬n = 1) :
-  n > 1 := by
-  by_contra
-  rename_i h'
-  simp at *
-  subst h'
-  contradiction
+theorem nm2p2 (n : ℕ+) :
+  n + 1 = n + (1 : ℕ) := by
+  exact?
