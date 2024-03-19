@@ -145,19 +145,41 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
 --   exact h
 
-noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (((n)!) : ℝ)⁻¹)
+noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 
-theorem series_step_5 (γ : ℝ) (h : Summable (mass' (- γ))) :
-  (∑' (n : ℕ), (mass' (- γ) n))
-    = Real.exp (- γ) := by
-  unfold mass' at *
-  unfold Real.exp
-  unfold Complex.exp
-  unfold Complex.exp'
-  rw [tsum_def]
-  simp [h]
-  split
-  . rename_i h' -- not finite
-    sorry
-  . rename_i h'
-    unfold CauSeq.lim
+-- theorem series_step_5 (γ : ℝ) (h : Summable (mass' (- γ))) :
+--   (∑' (n : ℕ), (mass' (- γ) n))
+--     = Real.exp (- γ) := by
+--   unfold mass' at *
+--   unfold Real.exp
+--   unfold Complex.exp
+--   unfold Complex.exp'
+--   rw [tsum_def]
+--   simp [h]
+--   split
+--   . rename_i h' -- not finite
+--     sorry
+--   . rename_i h'
+--     unfold CauSeq.lim
+--     sorry
+
+example (γ : ℝ) : ∑' (n : ℕ), γ^n / n.factorial = rexp (- γ) := sorry
+
+-- limsup of partial sums
+
+example (f : ℕ → ℝ) (k : ℝ) (h : Summable f) :
+  ∑' i : ℕ, f i = k := by
+  rw [HasSum.tsum_eq]
+  rw [propext (Summable.hasSum_iff_tendsto_nat h)]
+  sorry
+
+example (f : ℕ → ℝ) (k : ℝ) (h1 : Summable f) (h2 : IsCauSeq _root_.abs (fun n => ∑ i in Finset.range n, f i)) :
+  ∑' i : ℕ, f i = k := by
+  rw [HasSum.tsum_eq]
+  rw [propext (Summable.hasSum_iff_tendsto_nat h1)]
+  refine Uniform.tendsto_nhds_right.mpr ?_
+  apply?
+  sorry
+
+
+  --rw [ext_cauchy_iff]

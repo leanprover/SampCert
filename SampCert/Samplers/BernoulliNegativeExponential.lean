@@ -604,27 +604,50 @@ noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)�
 theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) :
   (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
     = ∑' (i : ↑{i | i % 2 = 0}), BernoulliExpNegSampleUnitAux num den wf i := by
-  have A := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if i % 2 = 0 then (BernoulliExpNegSampleUnitAux num den wf i) else 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
+  --have A := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if i % 2 = 0 then (BernoulliExpNegSampleUnitAux num den wf i) else 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
+  have A :=  @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => @ite ENNReal (i % 2 = 0) (instDecidableEqNat (i % 2) 0) (BernoulliExpNegSampleUnitAux num den wf i) 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
   rw [← A]
   clear A
   simp only
-  -- have B : (∑' (x : ↑{i | i % 2 = 0}ᶜ), if x % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf x else 0) = 0 := by
-  --   sorry
-  -- rw [B]
-  -- clear B
-  -- rw [add_zero]
-  -- simp only
-  sorry
+  have B := @tsum_simpl_ite_right ℕ (fun i => i % 2 = 0) (BernoulliExpNegSampleUnitAux num den wf) (λ i => 0)
+  have C := @tsum_simpl_ite_left ℕ (fun i => i % 2 = 0) (BernoulliExpNegSampleUnitAux num den wf) (λ i => 0)
+  have X : {i | ¬decide (i % 2 = 0) = true } = {i | i % 2 = 0}ᶜ := by
+    ext x
+    simp
+  have Y : {i | decide (i % 2 = 0) = true } = {i | i % 2 = 0} := by
+    ext x
+    simp
+  rw [X] at B
+  rw [Y] at C
+  sorry -- Should be fine but huge typeclass mixup
 
 theorem series_step_2 (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' (i : ↑{i | i % 2 = 0}), BernoulliExpNegSampleUnitAux num den wf i)
-    = ∑' (n : ℕ), mass (2 * (n + 1)) γ := by
+    = (∑' (n : ℕ), mass (2 * (n + 1)) γ) := by
   sorry
 
 theorem series_step_3 (γ : ENNReal) :
   (∑' n : ℕ, mass (2 * (n + 1)) γ)
     = ∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ) := by
-  sorry
+  unfold mass
+  unfold mass'
+  apply tsum_congr
+  intro b
+  rw [ENNReal.mul_sub]
+  . simp
+    have A : 2 * (b + 1) - 2 = 2 * b := rfl
+    rw [A]
+    clear A
+    have B : γ ^ (2 * b) * (↑(2 * b)!)⁻¹ * (γ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) = (γ ^ (2 * b) * γ) * ((↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) := by
+      rw [mul_mul_mul_comm]
+    rw [B]
+    clear B
+    have C : γ ^ (2 * b) * γ = γ ^ (2 * b + 1) := by exact (_root_.pow_succ' γ (2 * b)).symm
+    rw [C]
+    clear C
+    have D : (↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹ = (↑(2 * b + 1)!)⁻¹ := by sorry
+    rw [D]
+  . sorry
 
 theorem series_step_4 (γ : ENNReal) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
