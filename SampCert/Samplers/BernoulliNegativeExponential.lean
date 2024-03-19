@@ -437,6 +437,19 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
         rw [FOO E]
       rw [tendsto_const_nhds_iff]
 
+theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (n : ℕ+) (wf : num ≤ den) :
+  (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
+  simp [BernoulliExpNegSampleUnitAux, prob_while]
+  intro b
+  right
+  split
+  . rename_i h
+    cases b
+    rename_i b pb
+    subst h
+    contradiction
+  simp
+
 theorem if_simpl' (num : ℕ) (den : ℕ+) (x n : ℕ+) :
   @ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
   (@ite ENNReal (n = x) (instPNatDecidableEq n x)
@@ -536,9 +549,11 @@ theorem gamma_extract (num : Nat) (den : PNat) (n : ℕ) (h : n > 1) :
         . simp
         . simp
 
+noncomputable def mass (n : ℕ) (γ : ENNReal) := (γ^(n - 2) * (((n - 2)!) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹))
+
 theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
-  (BernoulliExpNegSampleUnitAux num den wf) n =
-  (γ^(n - 2) * (((n - 2)!) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹)) := by
+  (BernoulliExpNegSampleUnitAux num den wf) n = mass n γ := by
+  unfold mass
   cases n
   . contradiction
   . rename_i n
@@ -584,24 +599,48 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num �
 --   rw [C]
 --   sorry -- need to connect to definition of exp
 
-instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
+noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
-@[simp]
-theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
-  (BernoulliExpNegSampleUnit num den wf) true = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  simp [BernoulliExpNegSampleUnit, ite_apply]
-  --have FOO := @tsum_split_ite ℕ (λ i => i % 2 = 0) (BernoulliExpNegSampleUnitAux num den wf) (λ i => 0)
+theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) :
+  (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
+    = ∑' (i : ↑{i | i % 2 = 0}), BernoulliExpNegSampleUnitAux num den wf i := by
   have A := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if i % 2 = 0 then (BernoulliExpNegSampleUnitAux num den wf i) else 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
   rw [← A]
   clear A
-  have B : (∑' (x : ↑{i | i % 2 = 0}ᶜ), (fun i => if i % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf i else 0) ↑x) = 0 := by
-    sorry
-  rw [B]
-  clear B
-  rw [add_zero]
-  rw [ENNReal.tsum_eq_add_tsum_ite 0]
   simp only
+  -- have B : (∑' (x : ↑{i | i % 2 = 0}ᶜ), if x % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf x else 0) = 0 := by
+  --   sorry
+  -- rw [B]
+  -- clear B
+  -- rw [add_zero]
+  -- simp only
   sorry
+
+theorem series_step_2 (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (∑' (i : ↑{i | i % 2 = 0}), BernoulliExpNegSampleUnitAux num den wf i)
+    = ∑' (n : ℕ), mass (2 * (n + 1)) γ := by
+  sorry
+
+theorem series_step_3 (γ : ENNReal) :
+  (∑' n : ℕ, mass (2 * (n + 1)) γ)
+    = ∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ) := by
+  sorry
+
+theorem series_step_4 (γ : ENNReal) :
+  (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
+    = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  sorry
+
+instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
+
+@[simp]
+theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSampleUnit num den wf) true = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  simp [BernoulliExpNegSampleUnit, ite_apply]
+  rw [series_step_1 num den wf]
+  rw [series_step_2 num den wf γ gam]
+  rw [series_step_3 γ]
+  rw [series_step_4 γ]
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true

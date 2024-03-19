@@ -1,4 +1,5 @@
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Mathlib.Data.Complex.Exponential
 
 noncomputable section
 
@@ -144,68 +145,19 @@ open Classical Nat Finset BigOperators Real Set ENNReal
 --   apply congrFun (congrArg HMul.hMul (congrArg (HMul.hMul _) _)) _
 --   exact h
 
-theorem gamma_extract' (num : Nat) (den : PNat) (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
-  ((num : ENNReal) / (x * den)) = ((num : ENNReal) / (den : ENNReal)) * x⁻¹ := by
-  simp [division_def]
-  rw [mul_assoc]
-  congr
-  rw [mul_comm]
-  refine (ENNReal.eq_inv_of_mul_eq_one_left ?_).symm
-  rw [← mul_assoc]
-  conv =>
-    left
-    left
-    rw [mul_comm]
-    rw [← mul_assoc]
-  simp [ENNReal.mul_inv_cancel, h1, h2]
-  rw [mul_comm]
-  simp [ENNReal.mul_inv_cancel, h1, h2]
+noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (((n)!) : ℝ)⁻¹)
 
-theorem gamma_extract (num : Nat) (den : PNat) (n : ℕ) (h : n > 1) :
-  (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) =
-  (((num : ENNReal) / (den : ENNReal))^(n - 2) * ((factorial (n - 2)) : ENNReal)⁻¹) := by
-  have X : ∀ i : ℕ, (1 : ENNReal) + i ≠ 0 := by
-    intro i
-    simp
-  have Y : ∀ i : ℕ, (1 : ENNReal) + i ≠ ⊤ := by
-    intro i
-    simp
-  conv =>
-    left
-    right
-    intro i
-    rw [gamma_extract' _ _ _ (X i) (Y i)]
-  rw [prod_mul_distrib]
-  rw [← pow_eq_prod_const]
-  congr
-  rw [← prod_range_add_one_eq_factorial]
-  rw [cast_prod]
-  conv =>
-    right
-    right
-    right
-    intro i
-    rw [cast_add]
-    rw [add_comm]
-    simp
-  clear X Y
-  cases n
-  . contradiction
-  . rename_i n
-    cases n
-    . contradiction
-    . rename_i n
-      clear h
-      induction n
-      . simp
-      . rename_i n IH
-        have A : succ (succ (succ n)) - 2 = succ n := rfl
-        rw [A]
-        rw [prod_range_succ]
-        rw [prod_range_succ]
-        have B : succ (succ n) - 2 = n := rfl
-        rw [B] at IH
-        rw [IH]
-        rw [ENNReal.mul_inv]
-        . simp
-        . simp
+theorem series_step_5 (γ : ℝ) (h : Summable (mass' (- γ))) :
+  (∑' (n : ℕ), (mass' (- γ) n))
+    = Real.exp (- γ) := by
+  unfold mass' at *
+  unfold Real.exp
+  unfold Complex.exp
+  unfold Complex.exp'
+  rw [tsum_def]
+  simp [h]
+  split
+  . rename_i h' -- not finite
+    sorry
+  . rename_i h'
+    unfold CauSeq.lim
