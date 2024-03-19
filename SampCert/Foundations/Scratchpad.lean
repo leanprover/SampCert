@@ -163,23 +163,13 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --     unfold CauSeq.lim
 --     sorry
 
-example (γ : ℝ) : ∑' (n : ℕ), γ^n / n.factorial = rexp (- γ) := sorry
+example (a b c : ENNReal) :
+  a * (b + c) = a * b + a * c := by
+  exact mul_add a b c
 
--- limsup of partial sums
+example (a b c : ENNReal) :
+  a * (b - c) = a * b - a * c := by
+  rw [ENNReal.mul_sub]
+  intro h1 h2
 
-example (f : ℕ → ℝ) (k : ℝ) (h : Summable f) :
-  ∑' i : ℕ, f i = k := by
-  rw [HasSum.tsum_eq]
-  rw [propext (Summable.hasSum_iff_tendsto_nat h)]
-  sorry
-
-example (f : ℕ → ℝ) (k : ℝ) (h1 : Summable f) (h2 : IsCauSeq _root_.abs (fun n => ∑ i in Finset.range n, f i)) :
-  ∑' i : ℕ, f i = k := by
-  rw [HasSum.tsum_eq]
-  rw [propext (Summable.hasSum_iff_tendsto_nat h1)]
-  refine Uniform.tendsto_nhds_right.mpr ?_
-  apply?
-  sorry
-
-
-  --rw [ext_cauchy_iff]
+example (γ : ENNReal) (h : γ < ⊤) : γ ≠ ⊤ := by exact LT.lt.ne_top h

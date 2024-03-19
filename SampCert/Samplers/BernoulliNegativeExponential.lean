@@ -637,7 +637,6 @@ theorem series_step_3 (γ : ENNReal) :
   . simp
     have A : 2 * (b + 1) - 2 = 2 * b := rfl
     rw [A]
-    clear A
     have B : γ ^ (2 * b) * (↑(2 * b)!)⁻¹ * (γ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) = (γ ^ (2 * b) * γ) * ((↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) := by
       rw [mul_mul_mul_comm]
     rw [B]
@@ -647,7 +646,9 @@ theorem series_step_3 (γ : ENNReal) :
     clear C
     have D : (↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹ = (↑(2 * b + 1)!)⁻¹ := by sorry
     rw [D]
-  . sorry
+  . intro h1 h2
+    sorry -- should be fine
+
 
 theorem series_step_4 (γ : ENNReal) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
@@ -673,6 +674,28 @@ noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
       let R ← BernoulliExpNegSampleGenLoop (iter - 1)
       return R
 
+theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
+  (BernoulliExpNegSampleGenLoop iter) true = ENNReal.ofReal (Real.exp (- iter)) := by
+  induction iter
+  . simp [BernoulliExpNegSampleGenLoop]
+  . rename_i iter IH
+    unfold BernoulliExpNegSampleGenLoop
+    split
+    . contradiction
+    . rename_i h
+      simp [h]
+      simp [tsum_bool, IH]
+      clear IH
+      have A : (1 : ENNReal) = (1 : ℕ) / (1 : ℕ+) := by
+        simp only [cast_one, PNat.one_coe, div_one]
+      rw [BernoulliExpNegSampleUnit_apply_true 1 1 (le_refl 1) 1 A]
+      rw [Real.exp_add]
+      rw [ENNReal.ofReal_mul']
+      . exact rfl
+      . apply Real.exp_nonneg (-↑iter)
+
+
+
 noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
   if h : num ≤ den
   then let X ← BernoulliExpNegSampleUnit num den h
@@ -686,6 +709,9 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
          let X ← BernoulliExpNegSampleUnit num den sorry
          return X
     else return false
+
+-- P true = (e⁻¹)^(floor γ) * e^(- (γ - floor γ))
+--        = e^{- γ}
 
 -- @[simp]
 -- theorem BernoulliExpNegSample_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
