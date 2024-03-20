@@ -706,7 +706,8 @@ theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
 
 theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
   (num % den) ≤ den := by
-  sorry
+  have A := Nat.mod_lt num (PNat.pos den)
+  exact lt_succ.mp (le.step A)
 
 noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
   if h : num ≤ den
@@ -745,8 +746,8 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
         . clear A C
           congr
           rw [ENNReal.ofReal_coe_nat]
-          have X : (den : ENNReal) ≠ 0 := sorry
-          have Y : (den : ENNReal) ≠ ⊤ := sorry
+          have X : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
+          have Y : (den : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top ↑den
           rw [propext (ENNReal.eq_div_iff X Y)]
           rw [mul_add]
           rw [ENNReal.mul_div_cancel' X Y]
@@ -757,21 +758,6 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
         . sorry
         . exact ENNReal.ofReal_ne_top
       . apply Real.exp_nonneg
-
--- rw [ENNReal.sub_div]
---           . rw [mul_div_assoc]
---             have X : (den : ENNReal) ≠ 0 := sorry
---             have Y : (den : ENNReal) ≠ ⊤ := sorry
---             rw [ENNReal.div_self X Y]
---             clear X Y
---             simp
---             rw [tsub_add_cancel_of_le]
---             sorry
---           . intro h1 h2
---             simp
-
--- P true = (e⁻¹)^(floor γ) * e^(- (γ - floor γ))
---        = e^{- γ}
 
 -- @[simp]
 -- theorem BernoulliExpNegSample_apply (num : Nat) (den : PNat) (_ : γ = (num : ℝ) / (den : ℝ)) :
