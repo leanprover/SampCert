@@ -1,7 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
-import Mathlib.Data.Complex.Exponential
-import Mathlib.Analysis.SpecialFunctions.Exponential
-import Mathlib.Analysis.NormedSpace.Exponential
+-- import Mathlib.Data.Complex.Exponential
+-- import Mathlib.Analysis.SpecialFunctions.Exponential
+-- import Mathlib.Analysis.NormedSpace.Exponential
 
 noncomputable section
 
@@ -165,17 +165,34 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --     unfold CauSeq.lim
 --     sorry
 
-example (a b c : ENNReal) :
-  a * (b + c) = a * b + a * c := by
-  exact mul_add a b c
+-- example (a b c : ENNReal) :
+--   a * (b + c) = a * b + a * c := by
+--   exact mul_add a b c
 
-example (a b c : ENNReal) :
-  a * (b - c) = a * b - a * c := by
-  rw [ENNReal.mul_sub]
-  intro h1 h2
+-- example (a b c : ENNReal) :
+--   a * (b - c) = a * b - a * c := by
+--   rw [ENNReal.mul_sub]
+--   intro h1 h2
 
-example (γ : ENNReal) (h : γ < ⊤) : γ ≠ ⊤ := by exact LT.lt.ne_top h
+-- example (γ : ENNReal) (h : γ < ⊤) : γ ≠ ⊤ := by exact LT.lt.ne_top h
 
-#check NormedSpace.exp_eq_tsum
-#check NormedSpace.exp_eq_tsum_div
-#check Real.exp_eq_exp_ℝ
+-- #check NormedSpace.exp_eq_tsum
+-- #check NormedSpace.exp_eq_tsum_div
+-- #check Real.exp_eq_exp_ℝ
+
+-- #check tsum_eq_tsum_of_ne_zero_bij
+-- #check Function.Injective.tsum_eq
+
+-- example (f : ℕ → ENNReal) :
+--   (∑' i : ℕ, (f (2 * i) + f (2 * i + 1)))
+--     = ∑' i : ℕ, f i := by
+--   refine tsum_eq_tsum_of_ne_zero_bij ?i (fun ⦃a₁⦄ => ?_) ?hf ?hfg
+
+-- example (f : ℕ → ℝ) (h : Summable f):
+--   (∑' i : ℕ, (f (2 * i) + f (2 * i + 1)))
+--     = ∑' i : ℕ, f i := by
+--   refine (tsum_eq_tsum_of_hasSum_iff_hasSum ?h).symm
+
+example (a b : ℕ) :
+  Nat.div a b ≤ ((a : ℝ) / (b : ℝ)) := by
+  rw?

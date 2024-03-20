@@ -33,7 +33,7 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let v ← DiscreteLaplaceSampleLoopIn2 1 1
   let V := v - 2
   let X := U + num * V
-  let Y := floor (X / den)
+  let Y := X / den
   let B ← BernoulliSample 1 2 sorry
   return (B,Y)
 

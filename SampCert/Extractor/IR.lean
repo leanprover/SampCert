@@ -11,7 +11,6 @@ namespace Lean.ToDafny
 inductive UnOp where
   | negation
   | minus
-  | floor
   | numerator
   | denominator
   | abs
@@ -95,7 +94,6 @@ def UnOp.print (o : UnOp) : String :=
   match o with
   | negation => "!"
   | minus => "-"
-  | floor => "floor"
   | numerator => "numerator"
   | denominator => "denominator"
   | abs => "abs"
@@ -136,7 +134,6 @@ partial def Expression.print (e : Expression) : String :=
   | prob_while cond body init => s!"prob_while ({cond.print}) ({body.print}) ({init.print})"
   | name n => n
   | unop .abs e => s!"(if {e.print} < 0 then -{e.print} else {e.print})"
-  | unop .floor (.binop .division a b) => s!"{a.print} / {b.print}"
   | unop .numerator rhs => s!"{rhs.print}.numerator"
   | unop .denominator rhs => s!"{rhs.print}.denominator"
   | unop op rhs => s!"{op.print} ({rhs.print})"

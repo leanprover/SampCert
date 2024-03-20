@@ -101,7 +101,6 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``GT.gt => return .binop .greater (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``GE.ge => return .binop .greaterequal (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``Nat.log => return .binop .log (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
-      | ``Nat.floor => return .unop .floor (← toDafnyExpr dname env args[3]!)
       | ``decide => toDafnyExpr dname env args[0]!
       | ``_root_.Rat.den => return .unop .denominator (← toDafnyExpr dname env args[0]!)
       | ``_root_.Rat.num => return .unop .numerator (← toDafnyExpr dname env args[0]!)

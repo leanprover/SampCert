@@ -24,7 +24,7 @@ theorem Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
 
 noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ := do
-  let ti : Nat := floor (num.val / den)
+  let ti : Nat := num.val / den
   let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
   let num := num^2
   let den := den^2

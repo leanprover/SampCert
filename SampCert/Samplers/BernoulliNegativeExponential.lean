@@ -705,7 +705,7 @@ theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
       . apply Real.exp_nonneg (-↑iter)
 
 theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
-  (num - (num / den)) ≤ den := by
+  (num - (num / den) * den) ≤ den := by
   sorry
 
 noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
@@ -713,12 +713,12 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
   then let X ← BernoulliExpNegSampleUnit num den h
        return X
   else
-    --let gamf :=
-    let B ← BernoulliExpNegSampleGenLoop (num / den)
+    let gamf := num / den
+    let B ← BernoulliExpNegSampleGenLoop (gamf)
     if B
     then
          --let num := num - gamf * den
-         let X ← BernoulliExpNegSampleUnit (num - (num / den)) den (rat_less_floor_le1 num den)
+         let X ← BernoulliExpNegSampleUnit (num - gamf * den) den (rat_less_floor_le1 num den)
          return X
     else return false
 
@@ -731,15 +731,37 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
   . rename_i h
     simp [tsum_bool]
     rw [BernoulliExpNegSampleGenLoop_apply_true]
-    rw [BernoulliExpNegSampleUnit_apply_true (num - (num / den)) den _ (((num : ENNReal) - (num / den)) / (den : ENNReal)) _]
+    rw [BernoulliExpNegSampleUnit_apply_true (num - (num / den) * den) den _ (((Nat.sub num (Nat.mul (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) den)) : ENNReal) / (den : ENNReal)) _]
     . simp [gam]
       rw [← ENNReal.ofReal_mul']
       . rw [← Real.exp_add]
         congr
         rw [← @neg_add_rev]
-        sorry
-      . sorry
-    . sorry
+        congr
+        have A := (@ENNReal.toReal_ofReal_eq_iff ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) : ℝ)).2
+        have B : 0 ≤ ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) : ℝ) := sorry
+        have C := A B
+        rw [← C]
+        rw [← ENNReal.toReal_add]
+        . clear A C
+          congr
+          rw [ENNReal.ofReal_coe_nat]
+          rw [ENNReal.sub_div]
+          . rw [mul_div_assoc]
+            have X : (den : ENNReal) ≠ 0 := sorry
+            have Y : (den : ENNReal) ≠ ⊤ := sorry
+            rw [ENNReal.div_self X Y]
+            clear X Y
+            simp
+            rw [tsub_add_cancel_of_le]
+            sorry
+          . intro h1 h2
+            simp
+        . sorry -- not top
+        . exact ENNReal.ofReal_ne_top
+      . exact Real.exp_nonneg (-ENNReal.toReal ((↑num - ↑(num / ↑den) * ↑↑den) / ↑↑den))
+    . rfl
+
 
 
 -- P true = (e⁻¹)^(floor γ) * e^(- (γ - floor γ))
