@@ -8,6 +8,8 @@ import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import Mathlib.Data.Complex.Exponential
+import Mathlib.Analysis.NormedSpace.Exponential
+import Mathlib.Analysis.SpecialFunctions.Exponential
 
 open PMF Nat BigOperators Finset
 
@@ -649,13 +651,21 @@ theorem series_step_3 (γ : ENNReal) :
   . intro h1 h2
     sorry -- should be fine
 
-
 theorem series_step_4 (γ : ENNReal) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
     = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  sorry
+  rw [Real.exp_eq_exp_ℝ]
+  rw [NormedSpace.exp_eq_tsum_div]
+  simp [mass']
+  rw [ENNReal.ofReal_tsum_of_nonneg]
+  . sorry
+  . intro n
+    induction n
+    . simp
+    . sorry
+  . sorry
 
-instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
+--instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
 
 @[simp]
 theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
@@ -694,21 +704,43 @@ theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
       . exact rfl
       . apply Real.exp_nonneg (-↑iter)
 
-
+theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
+  (num - (num / den)) ≤ den := by
+  sorry
 
 noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
   if h : num ≤ den
   then let X ← BernoulliExpNegSampleUnit num den h
        return X
   else
-    let gamf := floor (num / den)
-    let B ← BernoulliExpNegSampleGenLoop (gamf)
+    --let gamf :=
+    let B ← BernoulliExpNegSampleGenLoop (num / den)
     if B
     then
-         let num := num - gamf * den
-         let X ← BernoulliExpNegSampleUnit num den sorry
+         --let num := num - gamf * den
+         let X ← BernoulliExpNegSampleUnit (num - (num / den)) den (rat_less_floor_le1 num den)
          return X
     else return false
+
+theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  simp [BernoulliExpNegSample, ite_apply]
+  split
+  . rename_i h
+    rw [BernoulliExpNegSampleUnit_apply_true num den h γ gam]
+  . rename_i h
+    simp [tsum_bool]
+    rw [BernoulliExpNegSampleGenLoop_apply_true]
+    rw [BernoulliExpNegSampleUnit_apply_true (num - (num / den)) den _ (((num : ENNReal) - (num / den)) / (den : ENNReal)) _]
+    . simp [gam]
+      rw [← ENNReal.ofReal_mul']
+      . rw [← Real.exp_add]
+        congr
+        rw [← @neg_add_rev]
+        sorry
+      . sorry
+    . sorry
+
 
 -- P true = (e⁻¹)^(floor γ) * e^(- (γ - floor γ))
 --        = e^{- γ}

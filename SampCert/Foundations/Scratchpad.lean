@@ -1,5 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Mathlib.Data.Complex.Exponential
+import Mathlib.Analysis.SpecialFunctions.Exponential
+import Mathlib.Analysis.NormedSpace.Exponential
 
 noncomputable section
 
@@ -173,3 +175,7 @@ example (a b c : ENNReal) :
   intro h1 h2
 
 example (γ : ENNReal) (h : γ < ⊤) : γ ≠ ⊤ := by exact LT.lt.ne_top h
+
+#check NormedSpace.exp_eq_tsum
+#check NormedSpace.exp_eq_tsum_div
+#check Real.exp_eq_exp_ℝ
