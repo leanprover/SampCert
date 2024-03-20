@@ -439,7 +439,7 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
         rw [FOO E]
       rw [tendsto_const_nhds_iff]
 
-theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (n : ℕ+) (wf : num ≤ den) :
+theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
   simp [BernoulliExpNegSampleUnitAux, prob_while]
   intro b
@@ -739,7 +739,7 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
         rw [← @neg_add_rev]
         congr
         have A := (@ENNReal.toReal_ofReal_eq_iff ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) : ℝ)).2
-        have B : 0 ≤ ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) : ℝ) := sorry
+        have B : 0 ≤ ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) : ℝ) := cast_nonneg (num / ↑den)
         have C := A B
         rw [← C]
         rw [← ENNReal.toReal_add]
@@ -755,7 +755,15 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
           rw [← cast_mul]
           rw [← cast_add]
           congr
-        . sorry
+        . have X : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
+          have Z : (den : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top ↑den
+          clear gam A B C h γ
+          rw [← lt_top_iff_ne_top]
+          rw [propext (ENNReal.div_lt_iff (Or.inl X) (Or.inl Z))]
+          have A := @Nat.mod_lt num den (PNat.pos den)
+          rw [ENNReal.top_mul X]
+          rw [← lt_top_iff_ne_top] at Z
+          exact (cmp_eq_gt_iff (⊤ : ENNReal) ↑(num % ↑den)).mp rfl
         . exact ENNReal.ofReal_ne_top
       . apply Real.exp_nonneg
 
