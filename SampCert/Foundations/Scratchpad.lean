@@ -217,34 +217,30 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --       rw [sum_range_succ]
 --     rw [← IH]
 
-example (f : ℕ → ENNReal) :
-  Monotone (fun i => ∑ a in Finset.range i, f a) := by
-  refine monotone_nat_of_le_succ ?hf
-  intro n
-  rw [sum_range_succ]
-  simp
-
-
---  (h : Monotone (fun i => ∑ a in Finset.range i, if a = 0 then 0 else f (a - 1)))
-theorem tsum_shift (f : ℕ → ENNReal) :
-  (∑' n : ℕ, if n = 0 then 0 else f (n-1)) =
-    ∑' n : ℕ, f n := by
-  rw [ENNReal.tsum_eq_iSup_nat]
-  rw [ENNReal.tsum_eq_iSup_nat]
-  have A : Monotone (fun i => ∑ a in Finset.range i, if a = 0 then 0 else f (a - 1)) := by
-    apply monotone_nat_of_le_succ
-    intro n
-    rw [sum_range_succ]
-    simp
-  rw [← Monotone.iSup_nat_add A 1]
-  rw [iSup_congr]
-  intro i
+@[simp]
+theorem foo (f : ℕ → ℝ) (i : ℕ) :
+  (∑ n in range (i + 1), (f n - f (n + 1))) = f 0 - f (i + 1) := by
   induction i
   . simp
-  . rename_i i IH
+  . rename_i n IH
     rw [sum_range_succ]
-    simp
-    conv =>
-      right
-      rw [sum_range_succ]
-    rw [← IH]
+    rw [IH]
+    rw [sub_add_sub_cancel]
+
+noncomputable def plop (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
+
+@[simp]
+theorem bar :
+  Filter.Tendsto plop Filter.atTop (nhds 0) := by
+  sorry
+
+theorem tsum_cancel (f : ℕ → ℝ) :
+  (∑' (n : ℕ), (f n - f (n + 1))) = f 0 := by
+  rw [HasSum.tsum_eq]
+  sorry
+
+
+-- theorem tsum_cancel' (f : ℕ → ENNReal) :
+--   (∑' (n : ℕ), (f n - f (n + 1))) = f 0 := by
+--   rw [ENNReal.tsum_eq_iSup_nat]
+--   sorry

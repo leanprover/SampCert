@@ -719,7 +719,7 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
     right
     intro n
     rw [mass_simpl _ _ (by simp)]
-  simp [mass']
+  simp
   sorry
   -- Tempting to do rw [ENNReal.tsum_sub] but not a valid path forward
   -- because one of the conditions does not hold
