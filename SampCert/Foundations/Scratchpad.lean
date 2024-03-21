@@ -217,30 +217,63 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --       rw [sum_range_succ]
 --     rw [← IH]
 
-@[simp]
-theorem foo (f : ℕ → ℝ) (i : ℕ) :
-  (∑ n in range (i + 1), (f n - f (n + 1))) = f 0 - f (i + 1) := by
-  induction i
-  . simp
-  . rename_i n IH
-    rw [sum_range_succ]
-    rw [IH]
-    rw [sub_add_sub_cancel]
+-- @[simp]
+-- theorem foo (f : ℕ → ℝ) (i : ℕ) :
+--   (∑ n in range (i + 1), (f n - f (n + 1))) = f 0 - f (i + 1) := by
+--   induction i
+--   . simp
+--   . rename_i n IH
+--     rw [sum_range_succ]
+--     rw [IH]
+--     rw [sub_add_sub_cancel]
 
-noncomputable def plop (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
-@[simp]
-theorem bar :
-  Filter.Tendsto plop Filter.atTop (nhds 0) := by
-  sorry
+-- @[simp]
+-- theorem bar :
+--   Filter.Tendsto plop Filter.atTop (nhds 0) := by
+--   sorry
 
-theorem tsum_cancel (f : ℕ → ℝ) :
-  (∑' (n : ℕ), (f n - f (n + 1))) = f 0 := by
-  rw [HasSum.tsum_eq]
-  sorry
+-- theorem tsum_cancel (f : ℕ → ℝ) :
+--   (∑' (n : ℕ), (f n - f (n + 1))) = f 0 := by
+--   rw [HasSum.tsum_eq]
+--   sorry
 
 
 -- theorem tsum_cancel' (f : ℕ → ENNReal) :
 --   (∑' (n : ℕ), (f n - f (n + 1))) = f 0 := by
 --   rw [ENNReal.tsum_eq_iSup_nat]
 --   sorry
+
+noncomputable def plop (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
+
+example (a b : ℝ) (h1 : a ≥ 0) (h2 : b ≥ 1) :
+  a ≤ a * b := by
+  exact le_mul_of_one_le_right h1 h2
+
+example (a b : ENNReal) (h1 : a ≥ 0) (h2 : b ≥ 1) :
+  a ≤ a * b := by
+  exact le_mul_of_one_le_right h1 h2
+
+example (a b : ENNReal) (h1 : a ≤ 1) (h2 : b ≤ 1) :
+  a * b ≤ 1 := by
+  exact mul_le_one' h1 h2
+
+
+example (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
+  plop n γ ≥ plop (n + 1) γ  := by
+  unfold plop
+  rw [pow_add]
+  simp [factorial]
+  rw [ENNReal.mul_inv]
+  . have A : γ ^ n * γ * (((n : ENNReal) + 1)⁻¹ * (↑n !)⁻¹) = (γ ^ n * (↑n !)⁻¹) * (γ * ((n : ENNReal) + 1)⁻¹) := by
+      sorry
+    rw [A]
+    clear A
+    have B := @mul_le_of_le_one_right ENNReal (γ ^ n * (↑n !)⁻¹) (γ * ((n : ENNReal) + 1)⁻¹) _ _ _ _
+    apply B
+    clear B
+    . simp
+    . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := sorry
+      exact mul_le_one' h2 C
+  . simp
+  . simp
