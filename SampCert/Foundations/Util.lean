@@ -7,7 +7,7 @@ Authors: Jean-Baptiste Tristan
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import SampCert.Foundations.Random
 
-open Function Nat Set
+open Function Nat Set BigOperators Finset
 
 theorem in_subset_satisfies (P : ℕ → Prop) (x : { x // P x }) : P x := by
   cases x
@@ -135,3 +135,80 @@ theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
   rw [← A]
   rw [tsum_split_coe_right]
   simp
+
+theorem tsum_shift_1 (f : ℕ → ENNReal) :
+  (∑' n : ℕ, if n = 0 then 0 else f (n-1)) =
+    ∑' n : ℕ, f n := by
+  rw [ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.tsum_eq_iSup_nat]
+  have A : Monotone (fun i => ∑ a in Finset.range i, if a = 0 then 0 else f (a - 1)) := by
+    apply monotone_nat_of_le_succ
+    intro n
+    rw [sum_range_succ]
+    simp
+  rw [← Monotone.iSup_nat_add A 1]
+  rw [iSup_congr]
+  intro i
+  induction i
+  . simp
+  . rename_i i IH
+    rw [sum_range_succ]
+    simp
+    conv =>
+      right
+      rw [sum_range_succ]
+    rw [← IH]
+
+theorem tsum_shift'_1 (f : ℕ → ENNReal) :
+  (∑' n : ℕ, if n = 0 then 0 else f n) =
+    ∑' n : ℕ, f (n + 1) := by
+  rw [ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.tsum_eq_iSup_nat]
+  have A : Monotone fun i => ∑ a in Finset.range i, if a = 0 then 0 else f a := by
+    apply monotone_nat_of_le_succ
+    intro n
+    rw [sum_range_succ]
+    simp
+  rw [← Monotone.iSup_nat_add A 1]
+  rw [iSup_congr]
+  intro i
+  induction i
+  . simp
+  . rename_i i IH
+    rw [sum_range_succ]
+    simp
+    conv =>
+      right
+      rw [sum_range_succ]
+    rw [← IH]
+
+theorem tsum_shift'_2 (f : ℕ → ENNReal) :
+  (∑' n : ℕ, if n = 0 then 0 else if n = 1 then 0 else f n) =
+    ∑' n : ℕ, f (n + 2) := by
+  rw [ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.tsum_eq_iSup_nat]
+  have A : Monotone fun i => ∑ a in Finset.range i, if a = 0 then 0 else if a = 1 then 0 else f a := by
+    apply monotone_nat_of_le_succ
+    intro n
+    rw [sum_range_succ]
+    simp
+  rw [← Monotone.iSup_nat_add A 2]
+  rw [iSup_congr]
+  intro i
+  induction i
+  . simp
+    intro x h1 h2 h3
+    cases x
+    . contradiction
+    . rename_i x
+      . cases x
+        . contradiction
+        . rename_i x
+          contradiction
+  . rename_i i IH
+    rw [sum_range_succ]
+    simp
+    conv =>
+      right
+      rw [sum_range_succ]
+    rw [← IH]

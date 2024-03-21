@@ -193,6 +193,58 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --     = ∑' i : ℕ, f i := by
 --   refine (tsum_eq_tsum_of_hasSum_iff_hasSum ?h).symm
 
-example (a b : ℕ) :
-  Nat.div a b ≤ ((a : ℝ) / (b : ℝ)) := by
-  rw?
+-- example (f g : ℕ → ENNReal) :
+--   (∑' n : ℕ, (f n + g n)) = (∑' n : ℕ, f n) + (∑' n : ℕ, g n) := by
+--   exact ENNReal.tsum_add
+
+-- #check ENNReal.tsum_add
+-- #check ENNReal.tsum_sub
+
+-- example (f g : ℕ → ENNReal) (h1 : ∀ n : ℕ, g n = f (n + 1)):
+--   (∑' n : ℕ, (f n - g n)) = (∑' n : ℕ, f n) - (∑' n : ℕ, g n) := by
+--   rw [ENNReal.tsum_sub]
+
+-- theorem foo (f : ℕ → ENNReal) (i : ℕ) :
+--   (∑ n in range (i + 1), if n = 0 then 0 else f (n-1))
+--     = (∑ n in range i, f n) := by
+--   induction i
+--   . simp
+--   . rename_i i IH
+--     rw [sum_range_succ]
+--     simp
+--     conv =>
+--       right
+--       rw [sum_range_succ]
+--     rw [← IH]
+
+example (f : ℕ → ENNReal) :
+  Monotone (fun i => ∑ a in Finset.range i, f a) := by
+  refine monotone_nat_of_le_succ ?hf
+  intro n
+  rw [sum_range_succ]
+  simp
+
+
+--  (h : Monotone (fun i => ∑ a in Finset.range i, if a = 0 then 0 else f (a - 1)))
+theorem tsum_shift (f : ℕ → ENNReal) :
+  (∑' n : ℕ, if n = 0 then 0 else f (n-1)) =
+    ∑' n : ℕ, f n := by
+  rw [ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.tsum_eq_iSup_nat]
+  have A : Monotone (fun i => ∑ a in Finset.range i, if a = 0 then 0 else f (a - 1)) := by
+    apply monotone_nat_of_le_succ
+    intro n
+    rw [sum_range_succ]
+    simp
+  rw [← Monotone.iSup_nat_add A 1]
+  rw [iSup_congr]
+  intro i
+  induction i
+  . simp
+  . rename_i i IH
+    rw [sum_range_succ]
+    simp
+    conv =>
+      right
+      rw [sum_range_succ]
+    rw [← IH]

@@ -591,7 +591,7 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
 noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
 theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
-  mass (n) γ = mass' (n - 2) γ - mass' (n - 1) γ := by
+  mass n γ = mass' (n - 2) γ - mass' (n - 1) γ := by
   unfold mass
   unfold mass'
   rw [ENNReal.mul_sub]
@@ -664,21 +664,43 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
       simp
       exact A
 
+-- theorem if_ge_2' (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+--   (@ite ENNReal (x = 0) (Classical.propDecidable (x = 0)) 0
+--   (@ite ENNReal (x = 1) (Classical.propDecidable (x = 1)) 0 (BernoulliExpNegSampleUnitAux num den wf x)))
+--     = if x = 0 then 0 else if x = 1 then 0 else mass' (x - 2) γ - mass' (x - 1) γ := by
+--   split
+--   . simp
+--   . split
+--     . simp
+--     . rw [← mass_simpl]
+--       . rw [BernoulliExpNegSampleUnitAux_apply']
+--         . rename_i h1 h2
+--           exact one_lt_iff_ne_zero_and_ne_one.mpr { left := h1, right := h2 }
+--         . trivial
+--       . rename_i h1 h2
+--         exact (two_le_iff x).mpr { left := h1, right := h2 }
+
 theorem if_ge_2 (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (@ite ENNReal (x = 0) (Classical.propDecidable (x = 0)) 0
   (@ite ENNReal (x = 1) (Classical.propDecidable (x = 1)) 0 (BernoulliExpNegSampleUnitAux num den wf x)))
-    = if x = 0 then 0 else if x = 1 then 0 else mass' (x - 2) γ - mass' (x - 1) γ := by
+    = if x = 0 then 0 else if x = 1 then 0 else mass x γ := by
   split
   . simp
   . split
     . simp
-    . rw [← mass_simpl]
-      . rw [BernoulliExpNegSampleUnitAux_apply']
-        . rename_i h1 h2
-          exact one_lt_iff_ne_zero_and_ne_one.mpr { left := h1, right := h2 }
-        . trivial
-      . rename_i h1 h2
-        exact (two_le_iff x).mpr { left := h1, right := h2 }
+    . rename_i h1 h2
+      rw [BernoulliExpNegSampleUnitAux_apply']
+      . exact one_lt_iff_ne_zero_and_ne_one.mpr { left := h1, right := h2 }
+      . exact gam
+
+theorem if_split_minus (x : ℕ) (γ : ENNReal) :
+  (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (@ite ENNReal (x = 1) (instDecidableEqNat x 1) 0 (mass' (x - 2) γ - mass' (x - 1) γ)))
+    = (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (@ite ENNReal (x = 1) (instDecidableEqNat x 1) 0 (mass' (x - 2) γ))) - (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 (@ite ENNReal (x = 1) (instDecidableEqNat x 1) 0 (mass' (x - 1) γ))) := by
+  split
+  . simp
+  . split
+    . simp
+    . simp
 
 theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   ∑' n : ℕ, (BernoulliExpNegSampleUnitAux num den wf) n = 1 := by
@@ -690,8 +712,17 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
     right
     intro x
     rw [if_ge_2 x]
-  unfold mass'
+  rw [← gam]
+  rw [tsum_shift'_2]
+  conv =>
+    left
+    right
+    intro n
+    rw [mass_simpl _ _ (by simp)]
+  simp [mass']
   sorry
+  -- Tempting to do rw [ENNReal.tsum_sub] but not a valid path forward
+  -- because one of the conditions does not hold
 
 
 
