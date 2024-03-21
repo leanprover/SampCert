@@ -439,6 +439,7 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
         rw [FOO E]
       rw [tendsto_const_nhds_iff]
 
+@[simp]
 theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
   simp [BernoulliExpNegSampleUnitAux, prob_while]
@@ -483,6 +484,13 @@ theorem BernoulliExpNegSampleUnitAux_apply (num : ℕ) (den : ℕ+) (n : ℕ+) (
     right
     intro x
     rw [if_simpl']
+  simp
+
+@[simp]
+theorem BernoulliExpNegSampleUnitAux_at_one (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
+  (BernoulliExpNegSampleUnitAux num den wf) 1 = 0 := by
+  change (BernoulliExpNegSampleUnitAux num den wf) (1 : ℕ+) = 0
+  rw [BernoulliExpNegSampleUnitAux_apply]
   simp
 
 theorem gamma_extract' (num : Nat) (den : PNat) (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
@@ -580,6 +588,113 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
           simp [gam]
         . simp
 
+noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
+
+theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
+  mass (n) γ = mass' (n - 2) γ - mass' (n - 1) γ := by
+  unfold mass
+  unfold mass'
+  rw [ENNReal.mul_sub]
+  . simp
+    rw [mul_mul_mul_comm]
+    rw [← _root_.pow_succ']
+    rw [adhoc n h]
+    congr
+    rw [← ENNReal.mul_inv]
+    . rw [inv_eq_iff_eq_inv]
+      rw [inv_inv]
+      rw [mul_comm]
+      have A := @Nat.mul_factorial_pred (n - 1) (Nat.sub_pos_of_lt h)
+      have B : n - 1 - 1 = n - 2 := rfl
+      rw [B] at A
+      clear B
+      rw [← A]
+      simp
+    . simp
+    . simp
+  . intro h1 h2
+    rw [ne_iff_lt_or_gt]
+    left
+    rw [ENNReal.mul_lt_top_iff]
+    left
+    constructor
+    . have X : γ ≠ ⊤ := by
+        by_contra
+        rename_i h
+        subst h
+        simp at *
+      clear h1 h2
+      induction n
+      . simp
+      . rename_i n IH
+        have OR : n = 1 ∨ n ≥ 2 := by
+          clear IH γ X
+          cases n
+          . simp at h
+          . rename_i n
+            cases n
+            . simp
+            . rename_i n
+              right
+              exact AtLeastTwo.prop
+        cases OR
+        . rename_i h'
+          subst h'
+          simp
+        . rename_i h'
+          have IH' := IH h'
+          clear IH
+          have A : succ n - 2 = succ (n - 2) := by
+            cases n
+            . contradiction
+            . rename_i n
+              cases n
+              . contradiction
+              . rename_i n
+                rfl
+          rw [A]
+          rw [_root_.pow_succ]
+          rw [ENNReal.mul_lt_top_iff]
+          left
+          constructor
+          . exact Ne.lt_top X
+          . exact IH'
+    . have A : (n - 2)! > 0 := by exact factorial_pos (n - 2)
+      rw [@ENNReal.inv_lt_iff_inv_lt]
+      simp
+      exact A
+
+theorem if_ge_2 (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (@ite ENNReal (x = 0) (Classical.propDecidable (x = 0)) 0
+  (@ite ENNReal (x = 1) (Classical.propDecidable (x = 1)) 0 (BernoulliExpNegSampleUnitAux num den wf x)))
+    = if x = 0 then 0 else if x = 1 then 0 else mass' (x - 2) γ - mass' (x - 1) γ := by
+  split
+  . simp
+  . split
+    . simp
+    . rw [← mass_simpl]
+      . rw [BernoulliExpNegSampleUnitAux_apply']
+        . rename_i h1 h2
+          exact one_lt_iff_ne_zero_and_ne_one.mpr { left := h1, right := h2 }
+        . trivial
+      . rename_i h1 h2
+        exact (two_le_iff x).mpr { left := h1, right := h2 }
+
+theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  ∑' n : ℕ, (BernoulliExpNegSampleUnitAux num den wf) n = 1 := by
+  rw [ENNReal.tsum_eq_add_tsum_ite 1]
+  rw [ENNReal.tsum_eq_add_tsum_ite 0]
+  simp
+  conv =>
+    left
+    right
+    intro x
+    rw [if_ge_2 x]
+  unfold mass'
+  sorry
+
+
+
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
   if K % 2 = 0 then return true else return false
@@ -600,8 +715,6 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num �
 --     = (∑' (a : ℕ), ENNReal.ofReal ((-γ)^a / (a - 1)!)) := by sorry
 --   rw [C]
 --   sorry -- need to connect to definition of exp
-
-noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
 theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) :
   (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
