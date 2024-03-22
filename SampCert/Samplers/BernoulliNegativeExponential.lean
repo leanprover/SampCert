@@ -883,7 +883,9 @@ theorem series_step_2 (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal
 theorem series_step_3 (γ : ENNReal) :
   (∑' n : ℕ, mass (2 * (n + 1)) γ)
     = ∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ) := by
-  have A : ∀ n : ℕ, 2 * (n + 1) ≥ 2 := sorry
+  have A : ∀ n : ℕ, 2 * (n + 1) ≥ 2 := by
+    intro n
+    simp
   conv =>
     left
     right

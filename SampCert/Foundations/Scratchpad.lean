@@ -244,81 +244,106 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 --   rw [ENNReal.tsum_eq_iSup_nat]
 --   sorry
 
-noncomputable def plop (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
+noncomputable def plop0 (n : ℕ) (γ : ENNReal) := (γ^(n - 2) * (((n - 2)!) : ENNReal)⁻¹) * (1 - (γ * ((n : ENNReal) - 1)⁻¹))
+noncomputable def plop1 (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
+noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 
--- theorem mass'_neq_top (n : ℕ) (γ : ENNReal) (h : γ ≠ ⊤) :
---   γ ^ n * (↑n !)⁻¹ ≠ ⊤ := by
---   rw [ne_iff_lt_or_gt]
---   left
---   rw [ENNReal.mul_lt_top_iff]
---   left
---   constructor
---   . induction n
---     . simp
---     . rename_i n IH
---       rw [_root_.pow_succ]
---       rw [ENNReal.mul_lt_top_iff]
---       left
---       constructor
---       . exact Ne.lt_top h
---       . exact IH
---   . have A : n ! > 0 := by exact factorial_pos n
---     rw [@ENNReal.inv_lt_iff_inv_lt]
---     simp
---     exact A
+example (γ : ℝ) :
+  (∑ n in range 0, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+    = (∑ n in range 0, plop2 n (- γ)) := by
+  simp
 
--- theorem mass'_series_exp (γ : ENNReal) (h : γ ≠ ⊤) :
---   (∑' (i : ℕ), plop i γ).toReal = rexp (γ.toReal) := by
---   unfold plop
---   rw [ENNReal.tsum_toReal_eq]
---   . conv =>
---       left
---       right
---       intro a
---       rw [ENNReal.toReal_mul]
---       rw [ENNReal.toReal_pow]
---       rw [ENNReal.toReal_inv]
---       simp
---       rw [← division_def]
---     conv =>
---       left
---       change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
---     rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
---     rw [← Real.exp_eq_exp_ℝ]
---   . intro a
---     apply mass'_neq_top _ _ h
+example (γ : ℝ) :
+  (∑ n in range 1, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+    = (∑ n in range (2 * 1), plop2 n (- γ)) := by
+  simp [plop2, sum_range_succ, Mathlib.Tactic.RingNF.add_neg]
 
--- theorem mass'_series_converges (γ : ENNReal) (h : γ ≠ ⊤) :
---   (∑' (i : ℕ), plop i γ) ≠ ⊤ := by
---   by_contra h'
---   have A := mass'_series_exp γ h
---   rw [h'] at A
---   simp at A
---   have B := Real.exp_pos (ENNReal.toReal γ)
---   rw [← A] at B
---   simp at B
+example (γ : ℝ) :
+  (∑ n in range 2, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+    = (∑ n in range (2 * 2), plop2 n (- γ)) := by
+  simp [plop2, sum_range_succ, Mathlib.Tactic.RingNF.add_neg]
+  sorry -- OK, heavy algebra
 
--- theorem mass'_series_exp' (γ : ENNReal) (h : γ ≠ ⊤) :
---   (∑' (i : ℕ), plop i γ) = ENNReal.ofReal (rexp (γ.toReal)) := by
---   rw [← @ofReal_toReal (∑' (i : ℕ), plop i γ)]
---   . unfold plop
---     rw [ENNReal.tsum_toReal_eq]
---     . conv =>
---         left
---         right
---         right
---         intro a
---         rw [ENNReal.toReal_mul]
---         rw [ENNReal.toReal_pow]
---         rw [ENNReal.toReal_inv]
---         simp
---         rw [← division_def]
---       conv =>
---         left
---         right
---         change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
---       rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
---       rw [← Real.exp_eq_exp_ℝ]
---     . intro a
---       apply mass'_neq_top _ _ h
---   . apply mass'_series_converges _ h
+theorem foo (i : ℕ) (γ : ℝ) :
+  (∑ n in range i, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+    = (∑ n in range (2 * i), plop2 n (- γ)) := by
+  induction i
+  . simp
+  . rename_i i IH
+    rw [sum_range_succ]
+    have A : 2 * succ i = succ (succ ( 2 * i)) := rfl
+    rw [A]
+    rw [sum_range_succ]
+    rw [sum_range_succ]
+    rw [IH]
+    rw [add_assoc]
+    congr
+    unfold plop2
+    simp
+    rw [← Mathlib.Tactic.RingNF.add_neg]
+    congr
+    rw [neg_mul_eq_neg_mul]
+    congr
+    rw [Odd.neg_pow (Exists.intro i rfl) γ]
+
+-- theorem bar (i : ℕ) (γ : ℝ) :
+--   (∑' n : ℕ, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+--     = (∑' n : ℕ, plop2 n (- γ)) := by
+--   rw?
+
+example (γ : ENNReal) :
+  (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
+    = ENNReal.ofReal (∑' n : ℕ, plop2 n (- γ.toReal)) := by
+  rw [ENNReal.tsum_eq_iSup_nat]
+  rw [ENNReal.ofReal_tsum_of_nonneg]
+  . rw [ENNReal.tsum_eq_iSup_nat]
+    -- need to double the bound of the second one
+    rw [iSup_congr]
+    sorry
+  . sorry
+  . sorry
+
+  --   rw [ENNReal.tsum_eq_iSup_nat]
+  -- rw [ENNReal.tsum_eq_iSup_nat]
+  -- have A : Monotone fun i => ∑ a in Finset.range i, if a = 0 then 0 else if a = 1 then 0 else f a := by
+  --   apply monotone_nat_of_le_succ
+  --   intro n
+  --   rw [sum_range_succ]
+  --   simp
+  -- rw [← Monotone.iSup_nat_add A 2]
+  -- rw [iSup_congr]
+
+example (γ : ENNReal) :
+  (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ)).toReal
+    = (∑' n : ℕ, plop2 n (- γ.toReal)) := by
+  unfold plop1
+  unfold plop2
+  rw [ENNReal.tsum_sub]
+  . rw [ENNReal.toReal_sub_of_le]
+    . rw [ENNReal.tsum_toReal_eq]
+      . rw [ENNReal.tsum_toReal_eq]
+        . conv =>
+            left
+            left
+            right
+            intro a
+            rw [ENNReal.toReal_mul]
+            rw [ENNReal.toReal_pow]
+            rw [ENNReal.toReal_inv]
+          conv =>
+            left
+            right
+            right
+            intro a
+            rw [ENNReal.toReal_mul]
+            rw [ENNReal.toReal_pow]
+            rw [ENNReal.toReal_inv]
+          simp
+          rw [← _root_.tsum_sub]
+          sorry
+        . sorry
+      . sorry
+    . sorry
+    . sorry
+  . sorry
+  . sorry
