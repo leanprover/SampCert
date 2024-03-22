@@ -1,7 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
--- import Mathlib.Data.Complex.Exponential
--- import Mathlib.Analysis.SpecialFunctions.Exponential
--- import Mathlib.Analysis.NormedSpace.Exponential
+import Mathlib.Data.Complex.Exponential
+import Mathlib.Analysis.SpecialFunctions.Exponential
+import Mathlib.Analysis.NormedSpace.Exponential
 
 noncomputable section
 
@@ -246,34 +246,79 @@ noncomputable def mass' (γ : ℝ) (n : ℕ) : ℝ := (γ^n * (n ! : ℝ)⁻¹)
 
 noncomputable def plop (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
-example (a b : ℝ) (h1 : a ≥ 0) (h2 : b ≥ 1) :
-  a ≤ a * b := by
-  exact le_mul_of_one_le_right h1 h2
+-- theorem mass'_neq_top (n : ℕ) (γ : ENNReal) (h : γ ≠ ⊤) :
+--   γ ^ n * (↑n !)⁻¹ ≠ ⊤ := by
+--   rw [ne_iff_lt_or_gt]
+--   left
+--   rw [ENNReal.mul_lt_top_iff]
+--   left
+--   constructor
+--   . induction n
+--     . simp
+--     . rename_i n IH
+--       rw [_root_.pow_succ]
+--       rw [ENNReal.mul_lt_top_iff]
+--       left
+--       constructor
+--       . exact Ne.lt_top h
+--       . exact IH
+--   . have A : n ! > 0 := by exact factorial_pos n
+--     rw [@ENNReal.inv_lt_iff_inv_lt]
+--     simp
+--     exact A
 
-example (a b : ENNReal) (h1 : a ≥ 0) (h2 : b ≥ 1) :
-  a ≤ a * b := by
-  exact le_mul_of_one_le_right h1 h2
+-- theorem mass'_series_exp (γ : ENNReal) (h : γ ≠ ⊤) :
+--   (∑' (i : ℕ), plop i γ).toReal = rexp (γ.toReal) := by
+--   unfold plop
+--   rw [ENNReal.tsum_toReal_eq]
+--   . conv =>
+--       left
+--       right
+--       intro a
+--       rw [ENNReal.toReal_mul]
+--       rw [ENNReal.toReal_pow]
+--       rw [ENNReal.toReal_inv]
+--       simp
+--       rw [← division_def]
+--     conv =>
+--       left
+--       change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
+--     rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
+--     rw [← Real.exp_eq_exp_ℝ]
+--   . intro a
+--     apply mass'_neq_top _ _ h
 
-example (a b : ENNReal) (h1 : a ≤ 1) (h2 : b ≤ 1) :
-  a * b ≤ 1 := by
-  exact mul_le_one' h1 h2
+-- theorem mass'_series_converges (γ : ENNReal) (h : γ ≠ ⊤) :
+--   (∑' (i : ℕ), plop i γ) ≠ ⊤ := by
+--   by_contra h'
+--   have A := mass'_series_exp γ h
+--   rw [h'] at A
+--   simp at A
+--   have B := Real.exp_pos (ENNReal.toReal γ)
+--   rw [← A] at B
+--   simp at B
 
-
-example (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
-  plop n γ ≥ plop (n + 1) γ  := by
-  unfold plop
-  rw [pow_add]
-  simp [factorial]
-  rw [ENNReal.mul_inv]
-  . have A : γ ^ n * γ * (((n : ENNReal) + 1)⁻¹ * (↑n !)⁻¹) = (γ ^ n * (↑n !)⁻¹) * (γ * ((n : ENNReal) + 1)⁻¹) := by
-      sorry
-    rw [A]
-    clear A
-    have B := @mul_le_of_le_one_right ENNReal (γ ^ n * (↑n !)⁻¹) (γ * ((n : ENNReal) + 1)⁻¹) _ _ _ _
-    apply B
-    clear B
-    . simp
-    . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := sorry
-      exact mul_le_one' h2 C
-  . simp
-  . simp
+-- theorem mass'_series_exp' (γ : ENNReal) (h : γ ≠ ⊤) :
+--   (∑' (i : ℕ), plop i γ) = ENNReal.ofReal (rexp (γ.toReal)) := by
+--   rw [← @ofReal_toReal (∑' (i : ℕ), plop i γ)]
+--   . unfold plop
+--     rw [ENNReal.tsum_toReal_eq]
+--     . conv =>
+--         left
+--         right
+--         right
+--         intro a
+--         rw [ENNReal.toReal_mul]
+--         rw [ENNReal.toReal_pow]
+--         rw [ENNReal.toReal_inv]
+--         simp
+--         rw [← division_def]
+--       conv =>
+--         left
+--         right
+--         change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
+--       rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
+--       rw [← Real.exp_eq_exp_ℝ]
+--     . intro a
+--       apply mass'_neq_top _ _ h
+--   . apply mass'_series_converges _ h

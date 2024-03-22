@@ -590,6 +590,84 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
 
 noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
+theorem mass'_neq_top (n : ℕ) (γ : ENNReal) (h : γ ≠ ⊤) :
+  mass' n γ ≠ ⊤ := by
+  unfold mass'
+  rw [ne_iff_lt_or_gt]
+  left
+  rw [ENNReal.mul_lt_top_iff]
+  left
+  constructor
+  . induction n
+    . simp
+    . rename_i n IH
+      rw [_root_.pow_succ]
+      rw [ENNReal.mul_lt_top_iff]
+      left
+      constructor
+      . exact Ne.lt_top h
+      . exact IH
+  . have A : n ! > 0 := by exact factorial_pos n
+    rw [@ENNReal.inv_lt_iff_inv_lt]
+    simp
+    exact A
+
+theorem mass'_series_exp (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' i γ).toReal = Real.exp (γ.toReal) := by
+  unfold mass'
+  rw [ENNReal.tsum_toReal_eq]
+  . conv =>
+      left
+      right
+      intro a
+      rw [ENNReal.toReal_mul]
+      rw [ENNReal.toReal_pow]
+      rw [ENNReal.toReal_inv]
+      simp
+      rw [← division_def]
+    conv =>
+      left
+      change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
+    rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
+    rw [← Real.exp_eq_exp_ℝ]
+  . intro a
+    apply mass'_neq_top _ _ h
+
+theorem mass'_series_converges (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' i γ) ≠ ⊤ := by
+  by_contra h'
+  have A := mass'_series_exp γ h
+  rw [h'] at A
+  simp at A
+  have B := Real.exp_pos (ENNReal.toReal γ)
+  rw [← A] at B
+  simp at B
+
+theorem mass'_series_exp' (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' i γ) = ENNReal.ofReal (Real.exp (γ.toReal)) := by
+  rw [← @ENNReal.ofReal_toReal (∑' (i : ℕ), mass' i γ)]
+  . unfold mass'
+    rw [ENNReal.tsum_toReal_eq]
+    . conv =>
+        left
+        right
+        right
+        intro a
+        rw [ENNReal.toReal_mul]
+        rw [ENNReal.toReal_pow]
+        rw [ENNReal.toReal_inv]
+        simp
+        rw [← division_def]
+      conv =>
+        left
+        right
+        change ((λ x : ℝ => ∑' (a : ℕ), x ^ a / ↑a !) (ENNReal.toReal γ))
+      rw [← @NormedSpace.exp_eq_tsum_div ℝ ℝ]
+      rw [← Real.exp_eq_exp_ℝ]
+    . intro a
+      apply mass'_neq_top _ _ h
+  . apply mass'_series_converges _ h
+
 theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
   mass n γ = mass' (n - 2) γ - mass' (n - 1) γ := by
   unfold mass
@@ -613,7 +691,7 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
     . simp
     . simp
   . intro h1 h2
-    rw [ne_iff_lt_or_gt]
+    rw [ne_iff_lt_or_gt] -- Proof to simplify with mass'_neq_top
     left
     rw [ENNReal.mul_lt_top_iff]
     left
@@ -702,6 +780,25 @@ theorem if_split_minus (x : ℕ) (γ : ENNReal) :
     . simp
     . simp
 
+theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
+  mass' n γ ≥ mass' (n + 1) γ  := by
+  unfold mass'
+  rw [pow_add]
+  simp [factorial]
+  rw [ENNReal.mul_inv]
+  . have A : γ ^ n * γ * (((n : ENNReal) + 1)⁻¹ * (↑n !)⁻¹) = (γ ^ n * (↑n !)⁻¹) * (γ * ((n : ENNReal) + 1)⁻¹) := by
+      sorry
+    rw [A]
+    clear A
+    have B := @mul_le_of_le_one_right ENNReal (γ ^ n * (↑n !)⁻¹) (γ * ((n : ENNReal) + 1)⁻¹) _ _ _ _
+    apply B
+    clear B
+    . simp
+    . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := sorry
+      exact mul_le_one' h2 C
+  . simp
+  . simp
+
 theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   ∑' n : ℕ, (BernoulliExpNegSampleUnitAux num den wf) n = 1 := by
   rw [ENNReal.tsum_eq_add_tsum_ite 1]
@@ -720,7 +817,32 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
     intro n
     rw [mass_simpl _ _ (by simp)]
   simp
-  sorry
+  rw [ENNReal.tsum_sub]
+  . rw [ENNReal.tsum_eq_add_tsum_ite 0]
+    have X := tsum_shift'_1 (fun n => mass' n γ)
+    have A : ∀ n : ℕ, @ite ENNReal (n = 0) (instDecidableEqNat n 0) 0 (mass' n γ) = @ite ENNReal (n = 0) (Classical.propDecidable (n = 0)) 0 (mass' n γ) := by
+      intro n
+      split
+      . simp
+      . simp
+    conv =>
+      left
+      left
+      right
+      right
+      intro n
+      rw [← A]
+    rw [X]
+    rw [ENNReal.add_sub_cancel_right]
+    . simp [mass']
+    . sorry
+  . sorry
+  . rw [@Pi.le_def]
+    intro i
+    rw [← ge_iff_le]
+    apply mass'_antitone
+    . sorry -- basic prop about γ
+    . sorry -- basic prop about γ
   -- Tempting to do rw [ENNReal.tsum_sub] but not a valid path forward
   -- because one of the conditions does not hold
 
