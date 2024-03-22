@@ -2,6 +2,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Constructions
 import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
+import Mathlib.Order.Filter.AtTopBot
 
 noncomputable section
 
@@ -248,22 +249,6 @@ noncomputable def plop0 (n : ℕ) (γ : ENNReal) := (γ^(n - 2) * (((n - 2)!) : 
 noncomputable def plop1 (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 
-example (γ : ℝ) :
-  (∑ n in range 0, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
-    = (∑ n in range 0, plop2 n (- γ)) := by
-  simp
-
-example (γ : ℝ) :
-  (∑ n in range 1, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
-    = (∑ n in range (2 * 1), plop2 n (- γ)) := by
-  simp [plop2, sum_range_succ, Mathlib.Tactic.RingNF.add_neg]
-
-example (γ : ℝ) :
-  (∑ n in range 2, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
-    = (∑ n in range (2 * 2), plop2 n (- γ)) := by
-  simp [plop2, sum_range_succ, Mathlib.Tactic.RingNF.add_neg]
-  sorry -- OK, heavy algebra
-
 theorem foo (i : ℕ) (γ : ℝ) :
   (∑ n in range i, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
     = (∑ n in range (2 * i), plop2 n (- γ)) := by
@@ -286,64 +271,152 @@ theorem foo (i : ℕ) (γ : ℝ) :
     congr
     rw [Odd.neg_pow (Exists.intro i rfl) γ]
 
--- theorem bar (i : ℕ) (γ : ℝ) :
---   (∑' n : ℕ, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
---     = (∑' n : ℕ, plop2 n (- γ)) := by
---   rw?
+#check Filter.tendsto_add_atTop_iff_nat
 
-example (γ : ENNReal) :
+namespace Filter
+
+theorem tendsto_add_atTop_iff_natddd {f : ℕ → α} {l : Filter α} (k : ℕ) :
+    Filter.Tendsto (fun n => f (n + k)) atTop l ↔ Filter.Tendsto f atTop l :=
+  show Filter.Tendsto (f ∘ fun n => n + k) atTop l ↔ Filter.Tendsto f atTop l by
+    rw [← Filter.tendsto_map'_iff, Filter.map_add_atTop_eq_nat]
+
+theorem map_mul_atTop_eq_nat : map (fun a => 2 * a) atTop = atTop := by
+  sorry
+
+  -- map_atTop_eq_of_gc (fun a => a - a) a (fun a b h => add_le_add_right h a)
+  --   (fun a b h => (le_tsub_iff_right h).symm) fun a h => by rw [tsub_add_cancel_of_le h]
+
+theorem tendsto_mul_atTop_iff_nat {f : ℕ → α} {l : Filter α} :
+    Filter.Tendsto (fun n => f (2 * n)) atTop l ↔ Filter.Tendsto f atTop l :=
+  show Filter.Tendsto (f ∘ fun n => 2 * n) atTop l ↔ Filter.Tendsto f atTop l by
+    rw [← Filter.tendsto_map'_iff, map_mul_atTop_eq_nat]
+
+
+end Filter
+
+example (γ : ℝ) :
+  (∑' n : ℕ, (plop2 (2 * n) γ - plop2 (2 * n + 1) γ))
+    = ∑' n : ℕ, plop2 n (- γ) := by
+  refine (tsum_eq_tsum_of_hasSum_iff_hasSum ?h).symm
+  intro a
+  rw [Summable.hasSum_iff_tendsto_nat]
+  . rw [Summable.hasSum_iff_tendsto_nat]
+    . conv =>
+        right
+        congr
+        . intro n
+          rw [foo]
+        . skip
+        . skip
+      -- like the following, but multiplying
+      -- rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat 1)]
+      sorry
+    . sorry
+  . sorry
+
+
+theorem bar (i : ℕ) (γ : ENNReal) (h : γ ≠ ⊤) :
+  ∑ a in Finset.range i, (plop1 (2 * a) γ - plop1 (2 * a + 1) γ) =
+  ∑ a in Finset.range (2 * i), ENNReal.ofReal (plop2 a (-ENNReal.toReal γ)) := by
+  rw [← @ENNReal.ofReal_toReal (∑ a in Finset.range i, (plop1 (2 * a) γ - plop1 (2 * a + 1) γ))]
+  rw [← ENNReal.ofReal_sum_of_nonneg]
+  congr
+  rw [ENNReal.toReal_sum]
+  have X : ∀ a : ℕ, plop1 (2 * a + 1) γ ≤ plop1 (2 * a) γ := sorry
+  have Y : ∀ a : ℕ, plop1 (2 * a) γ ≠ ⊤ := sorry
+  conv =>
+    left
+    right
+    intro a
+    rw [ENNReal.toReal_sub_of_le (X a) (Y a)]
+  unfold plop1
+  conv =>
+    left
+    right
+    intro a
+    rw [ENNReal.toReal_mul]
+    rw [ENNReal.toReal_pow]
+    rw [ENNReal.toReal_inv]
+    rw [ENNReal.toReal_mul]
+    rw [ENNReal.toReal_pow]
+    rw [ENNReal.toReal_inv]
+    rw [toReal_nat]
+    rw [toReal_nat]
+  unfold plop2
+  clear X Y
+  induction i
+  . simp
+  . rename_i i IH
+    rw [sum_range_succ]
+    have A : 2 * succ i = succ (succ ( 2 * i)) := rfl
+    rw [A]
+    rw [sum_range_succ]
+    rw [sum_range_succ]
+    rw [IH]
+    rw [add_assoc]
+    congr
+    simp
+    rw [← Mathlib.Tactic.RingNF.add_neg]
+    congr
+    rw [neg_mul_eq_neg_mul]
+    congr
+    exact (Odd.neg_pow (Exists.intro i rfl) (ENNReal.toReal γ)).symm
+
+theorem Monotone.iSup_nat_mul {f : ℕ → ENNReal} (hf : Monotone f) : ⨆ n, f (2 * n) = ⨆ n, f n :=
+  le_antisymm (iSup_le fun i => le_iSup _ (2 * i)) <| iSup_mono fun i => hf <| Nat.le_mul_of_pos_left i (le.step le.refl)
+
+
+-- rw plop2 with foo so that every term becomes positive?
+example (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
     = ENNReal.ofReal (∑' n : ℕ, plop2 n (- γ.toReal)) := by
   rw [ENNReal.tsum_eq_iSup_nat]
   rw [ENNReal.ofReal_tsum_of_nonneg]
   . rw [ENNReal.tsum_eq_iSup_nat]
-    -- need to double the bound of the second one
+    have X : Monotone fun i => ∑ a in Finset.range i, (ENNReal.ofReal (plop2 a (-ENNReal.toReal γ))) := sorry
+    conv =>
+      right
+      rw [← Monotone.iSup_nat_mul X]
     rw [iSup_congr]
-    sorry
-  . sorry
+    intro i
+    rw [bar _ _ h]
+  . intro n
+    unfold plop2
+    sorry -- that's not true
   . sorry
 
-  --   rw [ENNReal.tsum_eq_iSup_nat]
-  -- rw [ENNReal.tsum_eq_iSup_nat]
-  -- have A : Monotone fun i => ∑ a in Finset.range i, if a = 0 then 0 else if a = 1 then 0 else f a := by
-  --   apply monotone_nat_of_le_succ
-  --   intro n
-  --   rw [sum_range_succ]
-  --   simp
-  -- rw [← Monotone.iSup_nat_add A 2]
-  -- rw [iSup_congr]
 
-example (γ : ENNReal) :
-  (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ)).toReal
-    = (∑' n : ℕ, plop2 n (- γ.toReal)) := by
-  unfold plop1
-  unfold plop2
-  rw [ENNReal.tsum_sub]
-  . rw [ENNReal.toReal_sub_of_le]
-    . rw [ENNReal.tsum_toReal_eq]
-      . rw [ENNReal.tsum_toReal_eq]
-        . conv =>
-            left
-            left
-            right
-            intro a
-            rw [ENNReal.toReal_mul]
-            rw [ENNReal.toReal_pow]
-            rw [ENNReal.toReal_inv]
-          conv =>
-            left
-            right
-            right
-            intro a
-            rw [ENNReal.toReal_mul]
-            rw [ENNReal.toReal_pow]
-            rw [ENNReal.toReal_inv]
-          simp
-          rw [← _root_.tsum_sub]
-          sorry
-        . sorry
-      . sorry
-    . sorry
-    . sorry
-  . sorry
-  . sorry
+-- example (γ : ENNReal) :
+--   (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ)).toReal
+--     = (∑' n : ℕ, plop2 n (- γ.toReal)) := by
+--   unfold plop1
+--   unfold plop2
+--   rw [ENNReal.tsum_sub]
+--   . rw [ENNReal.toReal_sub_of_le]
+--     . rw [ENNReal.tsum_toReal_eq]
+--       . rw [ENNReal.tsum_toReal_eq]
+--         . conv =>
+--             left
+--             left
+--             right
+--             intro a
+--             rw [ENNReal.toReal_mul]
+--             rw [ENNReal.toReal_pow]
+--             rw [ENNReal.toReal_inv]
+--           conv =>
+--             left
+--             right
+--             right
+--             intro a
+--             rw [ENNReal.toReal_mul]
+--             rw [ENNReal.toReal_pow]
+--             rw [ENNReal.toReal_inv]
+--           simp
+--           rw [← _root_.tsum_sub]
+--           sorry
+--         . sorry
+--       . sorry
+--     . sorry
+--     . sorry
+--   . sorry
+--   . sorry
