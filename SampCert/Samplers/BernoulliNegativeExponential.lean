@@ -787,14 +787,21 @@ theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
   simp [factorial]
   rw [ENNReal.mul_inv]
   . have A : γ ^ n * γ * (((n : ENNReal) + 1)⁻¹ * (↑n !)⁻¹) = (γ ^ n * (↑n !)⁻¹) * (γ * ((n : ENNReal) + 1)⁻¹) := by
-      sorry
+      rw [mul_assoc]
+      rw [mul_assoc]
+      congr 1
+      conv =>
+        right
+        rw [mul_comm]
+      rw [mul_assoc]
     rw [A]
     clear A
     have B := @mul_le_of_le_one_right ENNReal (γ ^ n * (↑n !)⁻¹) (γ * ((n : ENNReal) + 1)⁻¹) _ _ _ _
     apply B
     clear B
     . simp
-    . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := sorry
+    . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := by
+        simp only [ENNReal.inv_le_one, self_le_add_left]
       exact mul_le_one' h2 C
   . simp
   . simp
@@ -841,33 +848,12 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
     intro i
     rw [← ge_iff_le]
     apply mass'_antitone
-    . sorry -- basic prop about γ
-    . sorry -- basic prop about γ
-  -- Tempting to do rw [ENNReal.tsum_sub] but not a valid path forward
-  -- because one of the conditions does not hold
-
-
+    . simp only [_root_.zero_le]
+    . sorry
 
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
   if K % 2 = 0 then return true else return false
-
--- @[simp]
--- theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : num ≤ den) (gam : γ = (num : ℝ) / (den : ℝ)) :
---   (BernoulliExpNegSampleUnit num den wf) false = ENNReal.ofReal (Real.exp (- γ)) := by
---   have B : Real.exp (-γ) ≥ 0 := by exact Real.exp_nonneg (-γ)
---   simp [BernoulliExpNegSampleUnit]
---   unfold SubPMF.pure
---   simp [ite_apply]
---   conv =>
---     left
---     right
---     intro a
---     rw [BernoulliExpNegSampleUnitAux_apply' num den wf a gam]
---   have C : (∑' (a : ℕ), if a % 2 = 0 then 0 else ENNReal.ofReal (γ ^ (a - 1) / ↑(a - 1)! - γ ^ a / ↑a !))
---     = (∑' (a : ℕ), ENNReal.ofReal ((-γ)^a / (a - 1)!)) := by sorry
---   rw [C]
---   sorry -- need to connect to definition of exp
 
 theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) :
   (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
@@ -897,39 +883,27 @@ theorem series_step_2 (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal
 theorem series_step_3 (γ : ENNReal) :
   (∑' n : ℕ, mass (2 * (n + 1)) γ)
     = ∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ) := by
-  unfold mass
-  unfold mass'
-  apply tsum_congr
-  intro b
-  rw [ENNReal.mul_sub]
-  . simp
-    have A : 2 * (b + 1) - 2 = 2 * b := rfl
-    rw [A]
-    have B : γ ^ (2 * b) * (↑(2 * b)!)⁻¹ * (γ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) = (γ ^ (2 * b) * γ) * ((↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹) := by
-      rw [mul_mul_mul_comm]
-    rw [B]
-    clear B
-    have C : γ ^ (2 * b) * γ = γ ^ (2 * b + 1) := by exact (_root_.pow_succ' γ (2 * b)).symm
-    rw [C]
-    clear C
-    have D : (↑(2 * b)!)⁻¹ * ((2 : ENNReal) * (↑b + 1) - 1)⁻¹ = (↑(2 * b + 1)!)⁻¹ := by sorry
-    rw [D]
-  . intro h1 h2
-    sorry -- should be fine
+  have A : ∀ n : ℕ, 2 * (n + 1) ≥ 2 := sorry
+  conv =>
+    left
+    right
+    intro n
+    rw [mass_simpl (2 * (n + 1)) γ (A n)]
 
 theorem series_step_4 (γ : ENNReal) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
     = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  rw [Real.exp_eq_exp_ℝ]
-  rw [NormedSpace.exp_eq_tsum_div]
-  simp [mass']
-  rw [ENNReal.ofReal_tsum_of_nonneg]
-  . sorry
-  . intro n
-    induction n
-    . simp
-    . sorry
-  . sorry
+  sorry
+  -- rw [Real.exp_eq_exp_ℝ]
+  -- rw [NormedSpace.exp_eq_tsum_div]
+  -- simp [mass']
+  -- rw [ENNReal.ofReal_tsum_of_nonneg]
+  -- . sorry
+  -- . intro n
+  --   induction n
+  --   . simp
+  --   . sorry
+  -- . sorry
 
 --instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
 
@@ -941,6 +915,30 @@ theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num
   rw [series_step_2 num den wf γ gam]
   rw [series_step_3 γ]
   rw [series_step_4 γ]
+
+theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (∑' (a : ℕ), BernoulliExpNegSampleUnitAux num den wf a)
+    = (BernoulliExpNegSampleUnit num den wf) false
+      +
+      (BernoulliExpNegSampleUnit num den wf) true := by
+  simp [BernoulliExpNegSampleUnit, ite_apply]
+  sorry -- easy, tedious
+
+theorem BernoulliExpNegSampleAux_normalizes (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (∑' b : Bool, (BernoulliExpNegSampleUnit num den wf) b) = 1 := by
+  simp [tsum_bool]
+  rw [← BernoulliExpNegSampleAux_split num den wf γ gam]
+  rw [BernoulliExpNegSampleUnitAux_normalizes num den wf gam]
+
+@[simp]
+theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSampleUnit num den wf) false = 1 - ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  have A := BernoulliExpNegSampleAux_normalizes num den wf γ gam
+  simp [tsum_bool] at A
+  rw [BernoulliExpNegSampleUnit_apply_true num den wf γ gam] at A
+  rw [← ENNReal.eq_sub_of_add_eq]
+  . exact ENNReal.ofReal_ne_top
+  . trivial
 
 noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
   if iter = 0 then return true
