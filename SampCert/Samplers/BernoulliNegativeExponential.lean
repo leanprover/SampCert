@@ -1007,7 +1007,7 @@ theorem series_step_3 (γ : ENNReal) :
 
 noncomputable def mass'' (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 
-theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
+theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) (h' : γ ≤ 1) :
   (∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ))
     = ENNReal.ofReal (∑' n : ℕ, mass'' n (- γ.toReal)) := by
   rw [← @ENNReal.ofReal_toReal (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))]
@@ -1034,8 +1034,16 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
               rw [ENNReal.toReal_pow]
               rw [ENNReal.toReal_inv]
             simp
-            have A : Summable fun k => mass'' (2 * k) (-ENNReal.toReal γ) := sorry
-            have B : Summable fun k => mass'' (2 * k + 1) (-ENNReal.toReal γ) := sorry
+            have A : Summable fun k => mass'' (2 * k) (-ENNReal.toReal γ) := by
+              have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ (-ENNReal.toReal γ)
+              have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) _ (fun n => 2 * n) X (by simp [Function.Injective] )
+              simp [mass'', Function.comp] at *
+              trivial
+            have B : Summable fun k => mass'' (2 * k + 1) (-ENNReal.toReal γ) := by
+              have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ (-ENNReal.toReal γ)
+              have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) _ (fun n => 2 * n + 1) X (by simp [Function.Injective] )
+              simp [mass'', Function.comp] at *
+              trivial
             have X := @tsum_even_add_odd ℝ _ _ _ _ (fun k => mass'' k (-ENNReal.toReal γ)) A B
             conv =>
               right
@@ -1044,7 +1052,8 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
             clear A B X
             unfold mass''
             simp
-            have A : ∀ k : ℕ, (-ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹ = - ((ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹) := sorry
+            have A : ∀ k : ℕ, (-ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹ = - ((ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹) := by
+              sorry
             conv =>
               right
               right
@@ -1061,21 +1070,21 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
         intro a
         rw [← ge_iff_le]
         apply mass'_antitone
-        sorry -- γ ≤ 1 : is this OK?
+        exact h'
       . apply mass'_series_converges'_even _ h
     . apply mass'_series_converges'_odd _ h
     . rw [Pi.le_def]
       intro i
       rw [← ge_iff_le]
       apply mass'_antitone
-      sorry -- γ ≤ 1 : is this OK?
+      exact h'
   . apply mass'_series_converges'_sub _ h
-    sorry -- γ ≤ 1 : is this OK?
+    exact h'
 
-theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) :
+theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) (h' : γ ≤ 1) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
     = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  rw [series_step_4_pre _ h]
+  rw [series_step_4_pre _ h h']
   congr
   unfold mass''
   rw [Real.exp_eq_exp_ℝ]
@@ -1090,20 +1099,26 @@ theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num
   rw [series_step_1 num den wf γ gam]
   rw [series_step_3 γ]
   rw [series_step_4 γ]
-  apply γ_ne_top num den gam
+  . apply γ_ne_top num den gam
+  . apply γ_le_1 num den wf gam
 
-theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) :
   (∑' (a : ℕ), BernoulliExpNegSampleUnitAux num den wf a)
     = (BernoulliExpNegSampleUnit num den wf) false
       +
       (BernoulliExpNegSampleUnit num den wf) true := by
   simp [BernoulliExpNegSampleUnit, ite_apply]
-  sorry -- easy, tedious
+  rw [← ENNReal.tsum_add]
+  apply tsum_congr
+  intro b
+  split
+  . simp
+  . simp
 
 theorem BernoulliExpNegSampleAux_normalizes (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' b : Bool, (BernoulliExpNegSampleUnit num den wf) b) = 1 := by
   simp [tsum_bool]
-  rw [← BernoulliExpNegSampleAux_split num den wf γ gam]
+  rw [← BernoulliExpNegSampleAux_split num den wf γ]
   rw [BernoulliExpNegSampleUnitAux_normalizes num den wf gam]
 
 @[simp]

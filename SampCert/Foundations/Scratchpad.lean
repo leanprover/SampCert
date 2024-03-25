@@ -534,10 +534,8 @@ theorem plop (γ : ENNReal) :
 
 theorem inj :
   Function.Injective (fun n => 2 * n) := by
-  unfold Function.Injective
-  intro b a h
-  simp at h
-  trivial
+  simp [Function.Injective]
+
 
 
 def f (γ : ℝ) := fun n => γ ^ n / ↑n !
@@ -578,9 +576,8 @@ example (γ : ℝ) (n : ℕ) :
 example (γ : ℝ) :
   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
-  have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ (fun n => 2 * n) X inj
-  unfold Function.comp at Y
-  simp at Y
+  have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ (fun n => 2 * n) X (by simp [Function.Injective] )
+  simp [Function.comp] at *
   trivial
 
 
