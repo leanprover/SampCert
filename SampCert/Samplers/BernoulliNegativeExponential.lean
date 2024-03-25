@@ -1118,7 +1118,7 @@ theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ d
   . simp
   . simp
 
-theorem BernoulliExpNegSampleAux_normalizes (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+theorem BernoulliExpNegSampleUnit_normalizes (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' b : Bool, (BernoulliExpNegSampleUnit num den wf) b) = 1 := by
   simp [tsum_bool]
   rw [← BernoulliExpNegSampleAux_split num den wf]
@@ -1127,7 +1127,7 @@ theorem BernoulliExpNegSampleAux_normalizes (num : Nat) (den : PNat)  (wf : num 
 @[simp]
 theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (BernoulliExpNegSampleUnit num den wf) false = 1 - ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  have A := BernoulliExpNegSampleAux_normalizes num den wf γ gam
+  have A := BernoulliExpNegSampleUnit_normalizes num den wf γ gam
   simp [tsum_bool] at A
   rw [BernoulliExpNegSampleUnit_apply_true num den wf γ gam] at A
   rw [← ENNReal.eq_sub_of_add_eq]
@@ -1141,6 +1141,24 @@ noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
     if ¬ B then return B else
       let R ← BernoulliExpNegSampleGenLoop (iter - 1)
       return R
+
+theorem BernoulliExpNegSampleGenLoop_normalizes (iter : Nat) :
+  (∑' b : Bool, (BernoulliExpNegSampleGenLoop iter) b) = 1 := by
+  induction iter
+  . simp [BernoulliExpNegSampleGenLoop, tsum_bool]
+  . rename_i iter IH
+    rw [BernoulliExpNegSampleGenLoop]
+    simp [tsum_bool, ite_apply]
+    rw [BernoulliExpNegSampleUnit_apply_true 1 1 le.refl ((1 : ENNReal) / (1 : ENNReal)) (by simp only [div_one, cast_one, PNat.one_coe] )]
+    rw [BernoulliExpNegSampleUnit_apply_false 1 1 le.refl ((1 : ENNReal) / (1 : ENNReal)) (by simp only [div_one, cast_one, PNat.one_coe] )]
+    simp
+    simp [tsum_bool] at IH
+    rw [add_assoc]
+    rw [← mul_add]
+    rw [IH]
+    simp
+    rw [tsub_add_cancel_of_le]
+    simp
 
 theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
   (BernoulliExpNegSampleGenLoop iter) true = ENNReal.ofReal (Real.exp (- iter)) := by
@@ -1161,6 +1179,14 @@ theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
       rw [ENNReal.ofReal_mul']
       . exact rfl
       . apply Real.exp_nonneg (-↑iter)
+
+theorem BernoulliExpNegSampleGenLoop_apply_false (iter : Nat) :
+  (BernoulliExpNegSampleGenLoop iter) false = 1 - ENNReal.ofReal (Real.exp (- iter)) := by
+  have A := BernoulliExpNegSampleGenLoop_normalizes iter
+  simp [tsum_bool] at A
+  rw [BernoulliExpNegSampleGenLoop_apply_true] at A
+  rw [← A]
+  simp
 
 theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
   (num % den) ≤ den := by
