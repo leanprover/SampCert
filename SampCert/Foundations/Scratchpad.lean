@@ -367,23 +367,106 @@ theorem Monotone.iSup_nat_mul {f : ℕ → ENNReal} (hf : Monotone f) : ⨆ n, f
 
 
 -- rw plop2 with foo so that every term becomes positive?
-example (γ : ENNReal) (h : γ ≠ ⊤) :
+-- theorem foobar (γ : ENNReal) (h : γ ≠ ⊤) :
+--   (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
+--     = ENNReal.ofReal (∑' n : ℕ, plop2 n (- γ.toReal)) := by
+--   rw [ENNReal.tsum_eq_iSup_nat]
+--   rw [ENNReal.ofReal_tsum_of_nonneg]
+--   . rw [ENNReal.tsum_eq_iSup_nat]
+--     have X : Monotone fun i => ∑ a in Finset.range i, (ENNReal.ofReal (plop2 a (-ENNReal.toReal γ))) := sorry
+--     conv =>
+--       right
+--       rw [← Monotone.iSup_nat_mul X]
+--     rw [iSup_congr]
+--     intro i
+--     rw [bar _ _ h]
+--   . intro n
+--     unfold plop2
+--     sorry -- that's not true
+--   . sorry
+
+example (a b : ENNReal) (h1 : a ≥ b) (h2 : a ≠ ⊤) :
+  ENNReal.toReal (a - b) = ENNReal.toReal a - ENNReal.toReal b := by
+  exact toReal_sub_of_le h1 h2
+
+example (γ : ENNReal) :
+  ∑' (k : ℕ), (-ENNReal.toReal γ) ^ (2 * k + 1)
+    = - ∑' (k : ℕ), (ENNReal.toReal γ) ^ (2 * k + 1) := by
+  rw [← tsum_neg]
+  sorry
+
+
+theorem foobar (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' n : ℕ, (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
     = ENNReal.ofReal (∑' n : ℕ, plop2 n (- γ.toReal)) := by
-  rw [ENNReal.tsum_eq_iSup_nat]
-  rw [ENNReal.ofReal_tsum_of_nonneg]
-  . rw [ENNReal.tsum_eq_iSup_nat]
-    have X : Monotone fun i => ∑ a in Finset.range i, (ENNReal.ofReal (plop2 a (-ENNReal.toReal γ))) := sorry
-    conv =>
-      right
-      rw [← Monotone.iSup_nat_mul X]
-    rw [iSup_congr]
-    intro i
-    rw [bar _ _ h]
-  . intro n
-    unfold plop2
-    sorry -- that's not true
-  . sorry
+  rw [← @ENNReal.ofReal_toReal (∑' (n : ℕ), (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))]
+  rw [ENNReal.tsum_sub]
+  rw [toReal_sub_of_le]
+  rw [tsum_toReal_eq]
+  rw [tsum_toReal_eq]
+  unfold plop1
+  conv =>
+    left
+    right
+    left
+    right
+    intro a
+    rw [ENNReal.toReal_mul]
+    rw [ENNReal.toReal_pow]
+    rw [ENNReal.toReal_inv]
+  conv =>
+    left
+    right
+    right
+    right
+    intro a
+    rw [ENNReal.toReal_mul]
+    rw [ENNReal.toReal_pow]
+    rw [ENNReal.toReal_inv]
+  simp
+
+  conv =>
+    right
+    rw [← tsum_even_add_odd sorry sorry]
+
+  unfold plop2
+  simp
+
+  congr
+
+
+
+
+theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (n : ℕ), (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
+    = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  rw [foobar _ h]
+  congr
+  unfold plop2
+  rw [Real.exp_eq_exp_ℝ]
+  rw [NormedSpace.exp_eq_tsum_div]
+  simp
+  congr
+
+
+
+
+  -- rw [← @ENNReal.ofReal_toReal (∑' (n : ℕ), (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))]
+  -- congr
+  -- rw [ENNReal.tsum_toReal_eq]
+  -- rw [HasSum.tsum_eq]
+  -- rw [Summable.hasSum_iff_tendsto_nat]
+  -- sorry
+  -- sorry
+  -- sorry
+  -- sorry
+
+-- theorem series_step_4' (γ : ENNReal) :
+--   (∑' (n : ℕ), (plop1 (2 * n) γ - plop1 (2 * n + 1) γ))
+--     = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+--   rw [ENNReal.tsum_eq_iSup_nat]
+
+
 
 
 -- example (γ : ENNReal) :
@@ -421,35 +504,14 @@ example (γ : ENNReal) (h : γ ≠ ⊤) :
 --   . sorry
 --   . sorry
 
-example (a b : ℝ) (h1 : a ≤ b) (h1 : a > 0) (h2 : b > 0) :
-  a / b ≤ 1 := by
-  rw [div_le_one]
-  sorry
-  sorry
 
-
-theorem γ_le_1 (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
-  γ ≤ 1 := by
-  subst gam
-  have A : (num : ENNReal) ≠ ⊤ := nat_ne_top num
-  have B : (den : ENNReal) ≠ 0 := NeZero.natCast_ne ↑den ℝ≥0∞
-  have C : ((den : ENNReal)⁻¹ ) ≠ ⊤ := inv_ne_top.mpr B
-  have D : 0 ≤ ENNReal.toReal (den : ENNReal)⁻¹ := toReal_nonneg
-  have E :  0 ≤ (den : ENNReal)⁻¹ * (num : ENNReal) := _root_.zero_le ((den : ENNReal)⁻¹ * ↑num)
-  rw [ENNReal.div_eq_inv_mul]
-  rw [← @ENNReal.ofReal_toReal (num : ENNReal) A]
-  rw [← @ENNReal.ofReal_toReal ((den : ENNReal)⁻¹) C]
-  rw [← ENNReal.ofReal_mul D]
-  rw [toReal_nat]
-  rw [ofReal_le_one]
-  rw [toReal_inv]
-  rw [toReal_nat]
-  rw [inv_mul_eq_div]
-  rw [div_le_one]
-  . rw [cast_le]
-    exact wf
-  . simp only [cast_pos, PNat.pos]
-
-
-
-#check ENNReal.ofReal_mul
+  -- rw [Real.exp_eq_exp_ℝ]
+  -- rw [NormedSpace.exp_eq_tsum_div]
+  -- simp [mass']
+  -- rw [ENNReal.ofReal_tsum_of_nonneg]
+  -- . sorry
+  -- . intro n
+  --   induction n
+  --   . simp
+  --   . sorry
+  -- . sorry
