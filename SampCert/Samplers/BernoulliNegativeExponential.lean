@@ -974,12 +974,80 @@ theorem series_step_3 (γ : ENNReal) :
     intro n
     rw [mass_simpl (2 * (n + 1)) γ (A n)]
 
-theorem series_step_4 (γ : ENNReal) :
+noncomputable def mass'' (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
+
+theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' n : ℕ, (mass' (2 * n) γ - mass' (2 * n + 1) γ))
+    = ENNReal.ofReal (∑' n : ℕ, mass'' n (- γ.toReal)) := by
+  rw [← @ENNReal.ofReal_toReal (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))]
+  . rw [ENNReal.tsum_sub]
+    . congr
+      rw [ENNReal.toReal_sub_of_le]
+      . rw [ENNReal.tsum_toReal_eq]
+        . rw [ENNReal.tsum_toReal_eq]
+          . unfold mass'
+            conv =>
+              left
+              left
+              right
+              intro a
+              rw [ENNReal.toReal_mul]
+              rw [ENNReal.toReal_pow]
+              rw [ENNReal.toReal_inv]
+            conv =>
+              left
+              right
+              right
+              intro a
+              rw [ENNReal.toReal_mul]
+              rw [ENNReal.toReal_pow]
+              rw [ENNReal.toReal_inv]
+            simp
+            have A : Summable fun k => mass'' (2 * k) (-ENNReal.toReal γ) := sorry
+            have B : Summable fun k => mass'' (2 * k + 1) (-ENNReal.toReal γ) := sorry
+            have X := @tsum_even_add_odd ℝ _ _ _ _ (fun k => mass'' k (-ENNReal.toReal γ)) A B
+            conv =>
+              right
+              rw [← X]
+            simp
+            clear A B X
+            unfold mass''
+            simp
+            have A : ∀ k : ℕ, (-ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹ = - ((ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹) := sorry
+            conv =>
+              right
+              right
+              right
+              intro k
+              rw [A]
+            rw [tsum_neg]
+            rfl
+          . sorry -- ∀ (a : ℕ), mass' (2 * a + 1) γ ≠ ⊤
+        . sorry -- ∀ (a : ℕ), mass' (2 * a) γ ≠ ⊤
+      . apply ENNReal.tsum_le_tsum
+        intro a
+        rw [← ge_iff_le]
+        apply mass'_antitone
+        sorry -- γ ≤ 1 : is this OK?
+      . sorry -- ∑' (i : ℕ), mass' (2 * i) γ ≠ ⊤
+    . sorry -- ∑' (i : ℕ), mass' (2 * i + 1) γ ≠ ⊤
+    . rw [Pi.le_def]
+      intro i
+      rw [← ge_iff_le]
+      apply mass'_antitone
+      sorry -- γ ≤ 1 : is this OK?
+  . sorry -- ∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ) ≠ ⊤
+
+theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
     = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
-  sorry
-
---instance : OfNat { i | i % 2 = 0 } 0 := { ofNat := { val := zero, property := (rfl : zero % 2 = zero % 2) } }
+  rw [series_step_4_pre _ h]
+  congr
+  unfold mass''
+  rw [Real.exp_eq_exp_ℝ]
+  rw [NormedSpace.exp_eq_tsum_div]
+  simp
+  congr
 
 @[simp]
 theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
@@ -988,6 +1056,7 @@ theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num
   rw [series_step_1 num den wf γ gam]
   rw [series_step_3 γ]
   rw [series_step_4 γ]
+  apply γ_ne_top num den gam
 
 theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' (a : ℕ), BernoulliExpNegSampleUnitAux num den wf a)
