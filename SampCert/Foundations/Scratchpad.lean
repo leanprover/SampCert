@@ -517,84 +517,89 @@ noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
   -- . sorry
 
 
-example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
-  (∑' n : ℕ, f x) ≤ (∑' n : ℕ, g x) := by
-  exact ENNReal.tsum_le_tsum fun a => h x
+-- example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
+--   (∑' n : ℕ, f x) ≤ (∑' n : ℕ, g x) := by
+--   exact ENNReal.tsum_le_tsum fun a => h x
 
-example (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤) :
-  a - b ≠ ⊤ := by
-  exact ENNReal.sub_ne_top h1
-
-
-theorem plop (γ : ENNReal) :
-  (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) ≥ fun k => (-ENNReal.toReal γ) ^ (2 * k) * (↑(2 * k)!)⁻¹ := by
-  refine Pi.le_def.mpr ?_
-  intro i
-  sorry
-
-theorem inj :
-  Function.Injective (fun n => 2 * n) := by
-  simp [Function.Injective]
+-- example (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤) :
+--   a - b ≠ ⊤ := by
+--   exact ENNReal.sub_ne_top h1
 
 
-
-def f (γ : ℝ) := fun n => γ ^ n / ↑n !
-def g (γ : ℝ) := f γ ∘ (fun n => 2 * n)
-
-example (γ : ℝ) (n : ℕ) :
-  g γ n = γ ^ (2 * n) / (↑(2 * n)!) := by
-  simp [g, f]
-
-example (γ : ℝ) (n : ℕ) :
-  γ ^ (2 * n) / (↑(2 * n)!) = f γ ((fun n => 2 * n) n) := by
-  simp [f]
-
--- example (γ : ℝ) :
---   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
---   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
---   have WW : (∀ x ∉ Set.range fun n => 2 * n, f γ x = 0) := by
---     intro x h
---     simp at h
---     unfold f
---     sorry -- clearly not correct
---   have Z := @Function.Injective.summable_iff ℝ ℕ ℕ _ _ (f γ) (fun n => 2 * n) inj WW
---   unfold f at Z
---   have A := Z.2
---   have B := A X
---   unfold Function.comp at B
---   simp at B
---   trivial
-
--- example (γ : ℝ) :
---   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
---   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
---   have Y := @Summable.subtype ℝ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ sorry ({i : ℕ | Even i})
---   simp [Function.comp] at Y
---   have X : (fun (n : ℕ) => γ ^ (2 * n) / ↑(2 * n)!) = fun (n : {i : ℕ | Even i}) => γ ^ n / ↑(n)! := sorry
+-- theorem plop (γ : ENNReal) :
+--   (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) ≥ fun k => (-ENNReal.toReal γ) ^ (2 * k) * (↑(2 * k)!)⁻¹ := by
+--   refine Pi.le_def.mpr ?_
+--   intro i
 --   sorry
 
-example (γ : ℝ) :
-  Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
-  have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
-  have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ (fun n => 2 * n) X (by simp [Function.Injective] )
-  simp [Function.comp] at *
-  trivial
+-- theorem inj :
+--   Function.Injective (fun n => 2 * n) := by
+--   simp [Function.Injective]
 
 
 
-  -- have Y := @Summable.map ℝ ℕ ℕ _ _ (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) _ _
-  -- unfold Summable
-  -- unfold Summable at X
-  -- cases X
-  -- rename_i s h
+-- def f (γ : ℝ) := fun n => γ ^ n / ↑n !
+-- def g (γ : ℝ) := f γ ∘ (fun n => 2 * n)
+
+-- example (γ : ℝ) (n : ℕ) :
+--   g γ n = γ ^ (2 * n) / (↑(2 * n)!) := by
+--   simp [g, f]
+
+-- example (γ : ℝ) (n : ℕ) :
+--   γ ^ (2 * n) / (↑(2 * n)!) = f γ ((fun n => 2 * n) n) := by
+--   simp [f]
+
+-- -- example (γ : ℝ) :
+-- --   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
+-- --   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
+-- --   have WW : (∀ x ∉ Set.range fun n => 2 * n, f γ x = 0) := by
+-- --     intro x h
+-- --     simp at h
+-- --     unfold f
+-- --     sorry -- clearly not correct
+-- --   have Z := @Function.Injective.summable_iff ℝ ℕ ℕ _ _ (f γ) (fun n => 2 * n) inj WW
+-- --   unfold f at Z
+-- --   have A := Z.2
+-- --   have B := A X
+-- --   unfold Function.comp at B
+-- --   simp at B
+-- --   trivial
+
+-- -- example (γ : ℝ) :
+-- --   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
+-- --   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
+-- --   have Y := @Summable.subtype ℝ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ sorry ({i : ℕ | Even i})
+-- --   simp [Function.comp] at Y
+-- --   have X : (fun (n : ℕ) => γ ^ (2 * n) / ↑(2 * n)!) = fun (n : {i : ℕ | Even i}) => γ ^ n / ↑(n)! := sorry
+-- --   sorry
+
+-- example (γ : ℝ) :
+--   Summable fun (n : ℕ) => γ ^ (2 * n) / (↑(2 * n)!) := by
+--   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ γ
+--   have Y := @Summable.comp_injective ℝ ℕ ℕ _ _ _ (fun n => γ ^ n / ↑n !) _ (fun n => 2 * n) X (by simp [Function.Injective] )
+--   simp [Function.comp] at *
+--   trivial
+
+
+
+--   -- have Y := @Summable.map ℝ ℕ ℕ _ _ (fun n => (-ENNReal.toReal γ) ^ n / ↑n !) _ _
+--   -- unfold Summable
+--   -- unfold Summable at X
+--   -- cases X
+--   -- rename_i s h
 
 
 
 
-example (γ : ENNReal) :
-  Summable fun k => plop2 (2 * k) (-ENNReal.toReal γ) := by
-  unfold plop2
-  have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ (-ENNReal.toReal γ)
-  have Y : (∑' k : ℕ, plop2 (2 * k) (-ENNReal.toReal γ)) ≤  (∑' k : ℕ, plop2 k (-ENNReal.toReal γ)) := sorry
-  have Z := Summable.hasSum X
-  sorry
+-- example (γ : ENNReal) :
+--   Summable fun k => plop2 (2 * k) (-ENNReal.toReal γ) := by
+--   unfold plop2
+--   have X := @NormedSpace.expSeries_div_summable ℝ ℝ _ _ _ _ (-ENNReal.toReal γ)
+--   have Y : (∑' k : ℕ, plop2 (2 * k) (-ENNReal.toReal γ)) ≤  (∑' k : ℕ, plop2 k (-ENNReal.toReal γ)) := sorry
+--   have Z := Summable.hasSum X
+--   sorry
+
+
+example (a b : ℝ) :
+  - (a * b) = (-a) * b := by
+  exact neg_mul_eq_neg_mul a b

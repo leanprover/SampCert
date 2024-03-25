@@ -1053,7 +1053,10 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) (h' : γ ≤ 1) :
             unfold mass''
             simp
             have A : ∀ k : ℕ, (-ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹ = - ((ENNReal.toReal γ) ^ (2 * k + 1) * (↑(2 * k + 1)!)⁻¹) := by
-              sorry
+              intro k
+              rw [neg_mul_eq_neg_mul]
+              congr
+              rw [Odd.neg_pow (Exists.intro k rfl) (ENNReal.toReal γ)]
             conv =>
               right
               right
@@ -1102,7 +1105,7 @@ theorem BernoulliExpNegSampleUnit_apply_true (num : Nat) (den : PNat)  (wf : num
   . apply γ_ne_top num den gam
   . apply γ_le_1 num den wf gam
 
-theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) :
+theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ den) :
   (∑' (a : ℕ), BernoulliExpNegSampleUnitAux num den wf a)
     = (BernoulliExpNegSampleUnit num den wf) false
       +
@@ -1118,7 +1121,7 @@ theorem BernoulliExpNegSampleAux_split (num : Nat) (den : PNat)  (wf : num ≤ d
 theorem BernoulliExpNegSampleAux_normalizes (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' b : Bool, (BernoulliExpNegSampleUnit num den wf) b) = 1 := by
   simp [tsum_bool]
-  rw [← BernoulliExpNegSampleAux_split num den wf γ]
+  rw [← BernoulliExpNegSampleAux_split num den wf]
   rw [BernoulliExpNegSampleUnitAux_normalizes num den wf gam]
 
 @[simp]
