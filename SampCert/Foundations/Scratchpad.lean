@@ -515,3 +515,12 @@ theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) :
   --   . simp
   --   . sorry
   -- . sorry
+
+
+example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
+  (∑' n : ℕ, f x) ≤ (∑' n : ℕ, g x) := by
+  exact ENNReal.tsum_le_tsum fun a => h x
+
+example (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤) :
+  a - b ≠ ⊤ := by
+  exact ENNReal.sub_ne_top h1

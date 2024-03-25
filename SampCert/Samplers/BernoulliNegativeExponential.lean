@@ -667,6 +667,26 @@ theorem mass'_series_converges' (γ : ENNReal) (h : γ ≠ ⊤) :
   rw [h] at A
   simp at A
 
+theorem mass'_series_converges'_even (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' (2 * i) γ) ≠ ⊤ := by
+  have A := mass'_series_converges γ h
+  rw [← tsum_even_add_odd] at A
+  . by_contra h'
+    rw [h'] at A
+    simp at A
+  . exact ENNReal.summable
+  . exact ENNReal.summable
+
+theorem mass'_series_converges'_odd (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' (2 * i + 1) γ) ≠ ⊤ := by
+  have A := mass'_series_converges γ h
+  rw [← tsum_even_add_odd] at A
+  . by_contra h'
+    rw [h'] at A
+    simp at A
+  . exact ENNReal.summable
+  . exact ENNReal.summable
+
 theorem mass'_series_exp' (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' (i : ℕ), mass' i γ) = ENNReal.ofReal (Real.exp (γ.toReal)) := by
   rw [← @ENNReal.ofReal_toReal (∑' (i : ℕ), mass' i γ)]
@@ -829,6 +849,17 @@ theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h : γ ≤ 1) :
       exact mul_le_one' h C
   . simp
   . simp
+
+theorem mass'_series_converges'_sub (γ : ENNReal) (h1 : γ ≠ ⊤) (h2 : γ ≤ 1) :
+  ∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ) ≠ ⊤ := by
+  rw [ENNReal.tsum_sub]
+  . have A := mass'_series_converges'_even _ h1
+    apply ENNReal.sub_ne_top A
+  . apply mass'_series_converges'_odd _ h1
+  . rw [Pi.le_def]
+    intro i
+    rw [← ge_iff_le]
+    apply mass'_antitone _ _ h2
 
 theorem γ_ne_top (num : ℕ) (den : ℕ+) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   γ ≠ ⊤ := by
@@ -1022,21 +1053,24 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) :
               rw [A]
             rw [tsum_neg]
             rfl
-          . sorry -- ∀ (a : ℕ), mass' (2 * a + 1) γ ≠ ⊤
-        . sorry -- ∀ (a : ℕ), mass' (2 * a) γ ≠ ⊤
+          . intro a
+            apply mass'_neq_top _ _ h
+        . intro a
+          apply mass'_neq_top _ _ h
       . apply ENNReal.tsum_le_tsum
         intro a
         rw [← ge_iff_le]
         apply mass'_antitone
         sorry -- γ ≤ 1 : is this OK?
-      . sorry -- ∑' (i : ℕ), mass' (2 * i) γ ≠ ⊤
-    . sorry -- ∑' (i : ℕ), mass' (2 * i + 1) γ ≠ ⊤
+      . apply mass'_series_converges'_even _ h
+    . apply mass'_series_converges'_odd _ h
     . rw [Pi.le_def]
       intro i
       rw [← ge_iff_le]
       apply mass'_antitone
       sorry -- γ ≤ 1 : is this OK?
-  . sorry -- ∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ) ≠ ⊤
+  . apply mass'_series_converges'_sub _ h
+    sorry -- γ ≤ 1 : is this OK?
 
 theorem series_step_4 (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' (n : ℕ), (mass' (2 * n) γ - mass' (2 * n + 1) γ))
