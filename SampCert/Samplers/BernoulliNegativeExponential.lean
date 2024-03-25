@@ -1206,6 +1206,27 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
       return X
     else return false
 
+theorem BernoulliExpNegSample_apply_normalizes (num : Nat) (den : PNat) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (∑' b : Bool, (BernoulliExpNegSample num den) b) = 1 := by
+  unfold BernoulliExpNegSample
+  split
+  . rename_i h
+    have A := BernoulliExpNegSampleUnit_normalizes num den h γ gam
+    simp [tsum_bool] at *
+    rw [A]
+  . rename_i h
+    simp [tsum_bool]
+    rw [add_assoc]
+    rw [← mul_add]
+    have A := BernoulliExpNegSampleUnit_normalizes (num % den) den (rat_less_floor_le1 num den) (((num % (den : ℕ)) : ENNReal) / (den : ENNReal)) rfl
+    simp [tsum_bool] at A
+    rw [A]
+    clear A
+    simp
+    have A := BernoulliExpNegSampleGenLoop_normalizes (num / den)
+    simp [tsum_bool] at A
+    rw [A]
+
 theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
   simp [BernoulliExpNegSample, ite_apply]
@@ -1250,3 +1271,11 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat) (gam : γ = (n
           exact (cmp_eq_gt_iff (⊤ : ENNReal) ↑(num % ↑den)).mp rfl
         . exact ENNReal.ofReal_ne_top
       . apply Real.exp_nonneg
+
+theorem BernoulliExpNegSample_apply_false (num : Nat) (den : PNat) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  (BernoulliExpNegSample num den) false = 1 - ENNReal.ofReal (Real.exp (- (γ.toReal))) := by
+  have A := BernoulliExpNegSample_apply_normalizes num den gam
+  simp [tsum_bool] at A
+  rw [← A]
+  rw [BernoulliExpNegSample_apply_true num den gam]
+  simp
