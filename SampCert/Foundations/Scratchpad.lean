@@ -420,3 +420,36 @@ example (γ : ENNReal) (h : γ ≠ ⊤) :
 --     . sorry
 --   . sorry
 --   . sorry
+
+example (a b : ℝ) (h1 : a ≤ b) (h1 : a > 0) (h2 : b > 0) :
+  a / b ≤ 1 := by
+  rw [div_le_one]
+  sorry
+  sorry
+
+
+theorem γ_le_1 (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  γ ≤ 1 := by
+  subst gam
+  have A : (num : ENNReal) ≠ ⊤ := nat_ne_top num
+  have B : (den : ENNReal) ≠ 0 := NeZero.natCast_ne ↑den ℝ≥0∞
+  have C : ((den : ENNReal)⁻¹ ) ≠ ⊤ := inv_ne_top.mpr B
+  have D : 0 ≤ ENNReal.toReal (den : ENNReal)⁻¹ := toReal_nonneg
+  have E :  0 ≤ (den : ENNReal)⁻¹ * (num : ENNReal) := _root_.zero_le ((den : ENNReal)⁻¹ * ↑num)
+  rw [ENNReal.div_eq_inv_mul]
+  rw [← @ENNReal.ofReal_toReal (num : ENNReal) A]
+  rw [← @ENNReal.ofReal_toReal ((den : ENNReal)⁻¹) C]
+  rw [← ENNReal.ofReal_mul D]
+  rw [toReal_nat]
+  rw [ofReal_le_one]
+  rw [toReal_inv]
+  rw [toReal_nat]
+  rw [inv_mul_eq_div]
+  rw [div_le_one]
+  . rw [cast_le]
+    exact wf
+  . simp only [cast_pos, PNat.pos]
+
+
+
+#check ENNReal.ofReal_mul

@@ -643,6 +643,30 @@ theorem mass'_series_converges (γ : ENNReal) (h : γ ≠ ⊤) :
   rw [← A] at B
   simp at B
 
+theorem mass'_series_converges' (γ : ENNReal) (h : γ ≠ ⊤) :
+  (∑' (i : ℕ), mass' (i + 1) γ) ≠ ⊤ := by
+  have A := mass'_series_converges γ h
+  rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
+  have B := tsum_shift'_1 (λ x => mass' x γ)
+  have C : ∀ n, @ite ENNReal (n = 0) (instDecidableEqNat n 0) 0 (mass' n γ) = @ite ENNReal (n = 0) (Classical.propDecidable (n = 0)) 0 (mass' n γ) := by
+    intro n
+    split
+    . simp
+    . simp
+  revert B
+  conv =>
+    left
+    left
+    right
+    intro n
+    rw [C n]
+  intro B
+  rw [B] at A
+  clear C B
+  by_contra h
+  rw [h] at A
+  simp at A
+
 theorem mass'_series_exp' (γ : ENNReal) (h : γ ≠ ⊤) :
   (∑' (i : ℕ), mass' i γ) = ENNReal.ofReal (Real.exp (γ.toReal)) := by
   rw [← @ENNReal.ofReal_toReal (∑' (i : ℕ), mass' i γ)]
@@ -780,7 +804,7 @@ theorem if_split_minus (x : ℕ) (γ : ENNReal) :
     . simp
     . simp
 
-theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
+theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h : γ ≤ 1) :
   mass' n γ ≥ mass' (n + 1) γ  := by
   unfold mass'
   rw [pow_add]
@@ -802,9 +826,44 @@ theorem mass'_antitone (n : ℕ) (γ : ENNReal) (h1: 0 ≤ γ) (h2 : γ ≤ 1) :
     . simp
     . have C : ((n: ENNReal) + 1)⁻¹ ≤ 1 := by
         simp only [ENNReal.inv_le_one, self_le_add_left]
-      exact mul_le_one' h2 C
+      exact mul_le_one' h C
   . simp
   . simp
+
+theorem γ_ne_top (num : ℕ) (den : ℕ+) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  γ ≠ ⊤ := by
+  subst gam
+  rw [ne_iff_lt_or_gt]
+  left
+  rw [ENNReal.div_eq_inv_mul]
+  rw [ENNReal.mul_lt_top_iff]
+  left
+  constructor
+  . rw [ENNReal.inv_lt_top]
+    apply NeZero.pos
+  . apply (cmp_eq_gt_iff _ _).mp
+    rfl
+
+theorem γ_le_1 (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
+  γ ≤ 1 := by
+  subst gam
+  have A : (num : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top num
+  have B : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
+  have C : ((den : ENNReal)⁻¹ ) ≠ ⊤ := ENNReal.inv_ne_top.mpr B
+  have D : 0 ≤ ENNReal.toReal (den : ENNReal)⁻¹ := ENNReal.toReal_nonneg
+  rw [ENNReal.div_eq_inv_mul]
+  rw [← @ENNReal.ofReal_toReal (num : ENNReal) A]
+  rw [← @ENNReal.ofReal_toReal ((den : ENNReal)⁻¹) C]
+  rw [← ENNReal.ofReal_mul D]
+  rw [ENNReal.toReal_nat]
+  rw [ENNReal.ofReal_le_one]
+  rw [ENNReal.toReal_inv]
+  rw [ENNReal.toReal_nat]
+  rw [inv_mul_eq_div]
+  rw [div_le_one]
+  . rw [cast_le]
+    exact wf
+  . simp only [cast_pos, PNat.pos]
 
 theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   ∑' n : ℕ, (BernoulliExpNegSampleUnitAux num den wf) n = 1 := by
@@ -842,14 +901,15 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
     rw [X]
     rw [ENNReal.add_sub_cancel_right]
     . simp [mass']
-    . sorry
-  . sorry
+    . apply mass'_series_converges' _ (γ_ne_top num den gam)
+  . apply mass'_series_converges' _ (γ_ne_top num den gam)
   . rw [@Pi.le_def]
     intro i
     rw [← ge_iff_le]
     apply mass'_antitone
-    . simp only [_root_.zero_le]
-    . sorry
+    . -- γ ≤ 1
+      rw [gam]
+      apply γ_le_1 num den wf rfl
 
 noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
@@ -858,6 +918,7 @@ noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num �
 theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) :
   (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
     = ∑' (i : ↑{i | i % 2 = 0}), BernoulliExpNegSampleUnitAux num den wf i := by
+  rw [← tsum_even_add_odd]
   --have A := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => if i % 2 = 0 then (BernoulliExpNegSampleUnitAux num den wf i) else 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
   have A :=  @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => @ite ENNReal (i % 2 = 0) (instDecidableEqNat (i % 2) 0) (BernoulliExpNegSampleUnitAux num den wf i) 0) _ _ { i : ℕ | i % 2 = 0} ENNReal.summable ENNReal.summable
   rw [← A]
