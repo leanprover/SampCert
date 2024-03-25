@@ -786,22 +786,6 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
       simp
       exact A
 
--- theorem if_ge_2' (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
---   (@ite ENNReal (x = 0) (Classical.propDecidable (x = 0)) 0
---   (@ite ENNReal (x = 1) (Classical.propDecidable (x = 1)) 0 (BernoulliExpNegSampleUnitAux num den wf x)))
---     = if x = 0 then 0 else if x = 1 then 0 else mass' (x - 2) γ - mass' (x - 1) γ := by
---   split
---   . simp
---   . split
---     . simp
---     . rw [← mass_simpl]
---       . rw [BernoulliExpNegSampleUnitAux_apply']
---         . rename_i h1 h2
---           exact one_lt_iff_ne_zero_and_ne_one.mpr { left := h1, right := h2 }
---         . trivial
---       . rename_i h1 h2
---         exact (two_le_iff x).mpr { left := h1, right := h2 }
-
 theorem if_ge_2 (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (@ite ENNReal (x = 0) (Classical.propDecidable (x = 0)) 0
   (@ite ENNReal (x = 1) (Classical.propDecidable (x = 1)) 0 (BernoulliExpNegSampleUnitAux num den wf x)))
