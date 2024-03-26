@@ -126,6 +126,35 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     right
     intro a
     rw [DiscreteLaplaceSampleLoopIn1Aux_apply_false]
+
+  rw [← @sum_add_tsum_nat_add' ENNReal _ _ _ _ _ t ENNReal.summable]
+  have B : ∀ i : ℕ, (@ite ENNReal (i + ↑t < ↑t) (decLt (i + ↑t) ↑t) ((1 - ENNReal.ofReal (rexp (-ENNReal.toReal (↑(i + ↑t) / ↑↑t)))) / ↑↑t) 0) = 0 := by
+    intro i
+    split
+    . rename_i h
+      sorry -- i + t < t in hypothesis
+    . simp
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    right
+    intro i
+    rw [B]
+  clear B
+  simp
+
+  have A : rexp (- 1 / t) ≠ 1 := by
+    rw [← Real.exp_zero]
+    by_contra h
+    simp at h
+  have X := @geom_sum_Ico' ℝ _ (rexp (- 1 / t)) A 0 t (Nat.zero_le t)
+  simp at X
+  rw [← exp_nat_mul] at X
+  rw [mul_div_cancel' _ (NeZero.natCast_ne ↑t ℝ)] at X
+
   sorry
 
 
