@@ -118,6 +118,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
   (DiscreteLaplaceSampleLoopIn1 t) n = (ENNReal.ofReal ((rexp (-ENNReal.toReal (↑n / ↑↑t))) * ((1 - rexp (- 1 / t)) / (1 - rexp (- 1))))) := by
   rw [DiscreteLaplaceSampleLoopIn1_apply_pre]
   rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+  simp [support]
   conv =>
     left
     right
@@ -145,6 +146,37 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     rw [B]
   clear B
   simp
+
+  rw [sum_ite]
+  simp
+
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    rw [division_def]
+
+  have A := @sum_mul ℕ ENNReal _ (Finset.range t) (fun x => 1 - ENNReal.ofReal (rexp (-ENNReal.toReal (↑x / ↑↑t)))) ((↑↑t)⁻¹)
+  rw [← A]
+  clear A
+
+  rw [ENNReal.ofReal_mul (exp_nonneg (-ENNReal.toReal (↑n / ↑↑t)))]
+  rw [division_def]
+  rw [mul_assoc]
+  congr
+
+  have Y : (∑ i in range ↑t, (1 - ENNReal.ofReal (rexp (-ENNReal.toReal (↑i / ↑↑t))))) = (∑ i in range ↑t, 1) - (∑ i in range ↑t, ENNReal.ofReal (rexp (-ENNReal.toReal (↑i / ↑↑t)))) := by
+    sorry
+  rw [Y]
+  clear Y
+
+  simp
+  rw [ENNReal.sub_mul sorry]
+  rw [ENNReal.mul_inv_cancel sorry sorry]
+
 
   have A : rexp (- 1 / t) ≠ 1 := by
     rw [← Real.exp_zero]

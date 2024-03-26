@@ -598,3 +598,22 @@ noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 --   have Y : (∑' k : ℕ, plop2 (2 * k) (-ENNReal.toReal γ)) ≤  (∑' k : ℕ, plop2 k (-ENNReal.toReal γ)) := sorry
 --   have Z := Summable.hasSum X
 --   sorry
+
+example (a b : ℝ) (h : a ≠ 0) :
+  a * (b / a) = b := by
+  exact mul_div_cancel' b h
+
+example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
+  ∑ i in range n, f i * k = (∑ i in range n, f i) * k := by
+  exact (sum_mul (Finset.range n) (fun i => f i) k).symm
+
+example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
+  ∑ i in range n, f i / k = (∑ i in range n, f i) / k := sorry
+
+example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
+  a * a⁻¹ = 1 := by
+  exact ENNReal.mul_inv_cancel h2 h1
+
+example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) (h3 : 1 ≥ a) :
+  1 - (1 - a) = a := by
+  sorry
