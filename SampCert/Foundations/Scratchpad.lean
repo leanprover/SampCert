@@ -603,3 +603,11 @@ noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 example (a b : ℝ) :
   - (a * b) = (-a) * b := by
   exact neg_mul_eq_neg_mul a b
+
+
+example (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤) (h3 : a ≥ b):
+  a - b + b = a := by
+  exact tsub_add_cancel_of_le h3
+
+example (a b : ℕ) (h1 : a < b) (h2 : a ≥ b) :
+  False := sorry

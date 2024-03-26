@@ -99,26 +99,63 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  unfold UniformSample
-  simp only [Bind.bind, Pure.pure, SubPMF.bind_pure, prob_until_apply, decide_eq_true_eq, rw_ite,
-    one_div, ite_mul, zero_mul, SubPMF.pure_apply]
-  rw [tsum_split_coe_left]
+  simp [UniformSample, support]
+  rw [ENNReal.tsum_eq_add_tsum_ite x]
+  simp [support]
+  have A : ∀ x_1, @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
+          (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n)
+          ((2 ^ log 2 (↑(2 : ℕ+) * ↑n))⁻¹ * (1 - ∑' (x : ℕ), @ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))⁻¹ *
+          @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0)
+          0) = 0 := by
+    intro x1
+    split
+    . simp
+    . split
+      . split
+        . rename_i h1 h2 h3
+          subst h3
+          contradiction
+        . simp
+      . simp
+  conv =>
+    left
+    right
+    right
+    intro x1
+    rw [A]
+  clear A
   simp
+  --have X := @UniformPowerOfTwoSample_autopilot
+  have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))
+           =
+           (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (UniformPowerOfTwoSample (2 * n) x) 0) := by
+    intro x
+    split
+    . split
+      . rename_i h1 h2
+        rw [← not_lt] at h2
+        contradiction
+      . simp
+    . split
+      . rename_i h1 h2
+        simp
+      . rename_i h1 h2
+        simp at h1
+        contradiction
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    rw [A]
   rw [UniformPowerOfTwoSample_autopilot]
-  split
-  . conv =>
-      left
-      right
-      right
-      right
-      intro i
-      rw [rw_ite]
-    simp
-    rw [rw1 n]
-    rw [rw2 n]
-    rw [mul_inv]
-    simp
-  . contradiction
+  simp
+  rw [rw1 n]
+  rw [rw2 n]
+  rw [mul_inv]
+  simp
 
 @[simp]
 theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
