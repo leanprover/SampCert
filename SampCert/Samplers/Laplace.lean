@@ -9,47 +9,95 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 
-open PMF Nat Real
+open PMF Nat Real BigOperators Finset
 
 noncomputable def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : RandomM (Nat × Bool) := do
   let U ← UniformSample t
   let D ← BernoulliExpNegSample U t
   return (U,D)
 
+theorem DiscreteLaplaceSampleLoopIn1Aux_apply_true (t : PNat) (n : ℕ) :
+  DiscreteLaplaceSampleLoopIn1Aux t (n, true)
+    = if n < t then ENNReal.ofReal (rexp (-ENNReal.toReal (n / t))) / t else 0 := by
+  simp [DiscreteLaplaceSampleLoopIn1Aux]
+  conv =>
+    left
+    right
+    intro a
+    rw [tsum_bool]
+  simp
+  rw [ENNReal.tsum_eq_add_tsum_ite n]
+  have A : ∀ x, (@ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
+      (@ite ENNReal (n = x) (instDecidableEqNat n x) (UniformSample t x * BernoulliExpNegSample x t true) 0)) = 0 := by
+    intro x
+    split
+    . simp
+    . split
+      . rename_i h1 h2
+        subst h2
+        contradiction
+      . simp
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [A]
+  simp
+  rw [UniformSample_apply']
+  rw [BernoulliExpNegSample_apply_true n t rfl]
+  simp
+  rw [mul_comm]
+  rw [← division_def]
+
+theorem DiscreteLaplaceSampleLoopIn1Aux_apply_false (t : PNat) (n : ℕ) :
+  DiscreteLaplaceSampleLoopIn1Aux t (n, false)
+    = if n < t then (1 - ENNReal.ofReal (rexp (-ENNReal.toReal (n / t)))) / t else 0 := by
+  simp [DiscreteLaplaceSampleLoopIn1Aux]
+  conv =>
+    left
+    right
+    intro a
+    rw [tsum_bool]
+  simp
+  rw [ENNReal.tsum_eq_add_tsum_ite n]
+  have A : ∀ x, (@ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
+      (@ite ENNReal (n = x) (instDecidableEqNat n x) (UniformSample t x * BernoulliExpNegSample x t false) 0)) = 0 := by
+    intro x
+    split
+    . simp
+    . split
+      . rename_i h1 h2
+        subst h2
+        contradiction
+      . simp
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [A]
+  simp
+  rw [UniformSample_apply']
+  rw [BernoulliExpNegSample_apply_false n t rfl]
+  simp
+  rw [mul_comm]
+  rw [← division_def]
+
 noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM Nat := do
   let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1Aux t) (λ x : Nat × Bool => x.2)
   return r1.1
 
-theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) :
-  (DiscreteLaplaceSampleLoopIn1 t) n = 42 := by
+theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
+  (DiscreteLaplaceSampleLoopIn1 t) n =
+    DiscreteLaplaceSampleLoopIn1Aux t (n, true) * (1 - ∑' (a : ℕ), DiscreteLaplaceSampleLoopIn1Aux t (a, false))⁻¹ := by
   simp [DiscreteLaplaceSampleLoopIn1, ENNReal.tsum_prod']
   rw [ENNReal.tsum_comm]
   simp [tsum_bool]
   rw [ENNReal.tsum_eq_add_tsum_ite n]
-  have A : ∀ x : ℕ, @ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
-          (DiscreteLaplaceSampleLoopIn1Aux t (x, true) *
-          (1 - ∑' (i : { x : Nat × Bool // x.2 = false }), DiscreteLaplaceSampleLoopIn1Aux t ↑i)⁻¹ *
-          @ite ENNReal (n = x) (Classical.propDecidable (n = (x, true).1)) 1 0) = 0 := by
-    intro x
-    split
-    . simp
-    . split
-      . rename_i h h'
-        subst h'
-        contradiction
-      . simp
-  conv =>
-    left
-    right
-    right
-    intro x
-    rw [A]
-  simp
-  simp [DiscreteLaplaceSampleLoopIn1Aux, tsum_bool]
-  rw [ENNReal.tsum_eq_add_tsum_ite n]
-  clear A
   have A : ∀ x : ℕ, (@ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
-            (@ite ENNReal (n = x) (instDecidableEqNat n x) (UniformSample t x * BernoulliExpNegSample x t true) 0)) = 0 := by
+        (DiscreteLaplaceSampleLoopIn1Aux t (x, true) * (1 - ∑' (a : ℕ), DiscreteLaplaceSampleLoopIn1Aux t (a, false))⁻¹ *
+        @ite ENNReal (n = x) (Classical.propDecidable (n = (x, true).1)) 1 0)) = 0 := by
     intro x
     split
     . simp
@@ -60,28 +108,26 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) :
       . simp
   conv =>
     left
-    left
     right
     right
     intro x
     rw [A]
-  clear A
   simp
-  rw [uniformSample_apply']
-  rw [BernoulliExpNegSample_apply_true n t rfl]
-  rw [ENNReal.tsum_comm]
-  rw [← ENNReal.tsum_geometric]
+
+theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t) :
+  (DiscreteLaplaceSampleLoopIn1 t) n = (ENNReal.ofReal ((rexp (-ENNReal.toReal (↑n / ↑↑t))) * ((1 - rexp (- 1 / t)) / (1 - rexp (- 1))))) := by
+  rw [DiscreteLaplaceSampleLoopIn1_apply_pre]
+  rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
   conv =>
     left
     right
     right
-    intro n
-    left
     right
-    intro b
-    rw [ENNReal.tsum_mul_left]
-  simp
+    right
+    intro a
+    rw [DiscreteLaplaceSampleLoopIn1Aux_apply_false]
   sorry
+
 
 noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat) (wf : num ≤ den) (K : Bool × PNat) : RandomM (Bool × PNat) := do
   let A ← BernoulliExpNegSampleUnit num den wf

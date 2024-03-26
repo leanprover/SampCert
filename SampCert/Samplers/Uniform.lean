@@ -125,7 +125,6 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     rw [A]
   clear A
   simp
-  --have X := @UniformPowerOfTwoSample_autopilot
   have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))
            =
            (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (UniformPowerOfTwoSample (2 * n) x) 0) := by
@@ -211,7 +210,7 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   . exact Nat.lt_of_lt_of_le i2 i1
   . trivial
 
-theorem uniformSample_apply' (n : PNat) (x : Nat) :
+theorem UniformSample_apply' (n : PNat) (x : Nat) :
   (UniformSample n) x = if x < n then (1 : ENNReal) / n else 0 := by
   split
   . rename_i h
