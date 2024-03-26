@@ -173,3 +173,12 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   rw [UniformSample_apply]
   . exact Nat.lt_of_lt_of_le i2 i1
   . trivial
+
+theorem uniformSample_apply' (n : PNat) (x : Nat) :
+  (UniformSample n) x = if x < n then (1 : ENNReal) / n else 0 := by
+  split
+  . rename_i h
+    simp [h]
+  . rename_i h
+    apply UniformSample_apply_out
+    exact Nat.not_lt.mp h
