@@ -177,6 +177,8 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
   rw [ENNReal.sub_mul sorry]
   rw [ENNReal.mul_inv_cancel sorry sorry]
 
+  --rw [Real.exp_neg]
+
 
   have A : rexp (- 1 / t) ≠ 1 := by
     rw [← Real.exp_zero]
@@ -188,6 +190,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
   rw [mul_div_cancel' _ (NeZero.natCast_ne ↑t ℝ)] at X
 
   sorry
+
 
 
 noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat) (wf : num ≤ den) (K : Bool × PNat) : RandomM (Bool × PNat) := do

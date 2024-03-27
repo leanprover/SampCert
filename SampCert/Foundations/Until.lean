@@ -223,3 +223,30 @@ theorem prob_until_apply (body : RandomM T) (cond : T → Bool) (x : T) :
     simp [h, prob_until_apply_sat]
   . rename_i h
     simp [h, prob_until_apply_unsat]
+
+@[simp]
+theorem prob_until_apply_norm (body : RandomM T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
+  prob_until (body : RandomM T) (cond : T → Bool) x =
+  (if cond x then body x else 0) * (∑' x : T, if cond x then body x else 0)⁻¹ := by
+  rw [prob_until_apply body cond x]
+  congr
+  have A : ∀ x, body x = (if cond x then body x else 0) + (if cond x then 0 else body x) := by
+    intro x
+    split
+    . simp
+    . simp
+  revert norm
+  conv =>
+    left
+    left
+    right
+    intro y
+    rw [A]
+  clear A
+  rw [tsum_add ENNReal.summable ENNReal.summable]
+  intro B
+  have F : (∑' (x : T), if cond x = true then 0 else body x) ≠ ⊤ := by
+    by_contra h
+    simp [h] at B
+  rw [← B]
+  rw [ENNReal.add_sub_cancel_right F]
