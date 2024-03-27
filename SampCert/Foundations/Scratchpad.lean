@@ -617,3 +617,7 @@ example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
 example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) (h3 : 1 ≥ a) :
   1 - (1 - a) = a := by
   sorry
+
+example (a b c : ENNReal) :
+  a * b + a * c = a * (b + c) := by 
+  exact (mul_add a b c).symm 
