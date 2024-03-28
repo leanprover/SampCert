@@ -687,6 +687,6 @@ example :
   Monotone rexp := by
   exact exp_monotone
 
-example (x : ℝ) (h : 0 ≤ x) :
-  1 ≤ rexp x  := by
-  exact one_le_exp h
+example (x : ℝ) (h : 0 < x) :
+  1 < rexp x  := by
+  exact one_lt_exp_iff.mpr h 
