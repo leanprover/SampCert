@@ -599,25 +599,94 @@ noncomputable def plop2 (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 --   have Z := Summable.hasSum X
 --   sorry
 
-example (a b : ℝ) (h : a ≠ 0) :
-  a * (b / a) = b := by
-  exact mul_div_cancel' b h
+-- example (a b : ℝ) (h : a ≠ 0) :
+--   a * (b / a) = b := by
+--   exact mul_div_cancel' b h
 
-example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
-  ∑ i in range n, f i * k = (∑ i in range n, f i) * k := by
-  exact (sum_mul (Finset.range n) (fun i => f i) k).symm
+-- example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
+--   ∑ i in range n, f i * k = (∑ i in range n, f i) * k := by
+--   exact (sum_mul (Finset.range n) (fun i => f i) k).symm
 
-example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
-  ∑ i in range n, f i / k = (∑ i in range n, f i) / k := sorry
+-- example (n : ℕ) (f : ℕ → ENNReal) (k : ENNReal):
+--   ∑ i in range n, f i / k = (∑ i in range n, f i) / k := sorry
 
-example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
-  a * a⁻¹ = 1 := by
-  exact ENNReal.mul_inv_cancel h2 h1
+-- example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
+--   a * a⁻¹ = 1 := by
+--   exact ENNReal.mul_inv_cancel h2 h1
 
-example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) (h3 : 1 ≥ a) :
-  1 - (1 - a) = a := by
-  sorry
+-- example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) (h3 : 1 ≥ a) :
+--   1 - (1 - a) = a := by
+--   sorry
+
+-- example (a b c : ENNReal) :
+--   a * b + a * c = a * (b + c) := by
+--   exact (mul_add a b c).symm
+
+#check toReal_eq_toReal
+#check toReal_eq_toReal_iff
+
+
+
+example (f : ℕ → ℝ) (h1 : ∀ i, f i ≥ 0) (h2 : Summable f) :
+  (∑' i : ℕ, ENNReal.ofReal (f i)) = ENNReal.ofReal (∑' i : ℕ, f i) := by
+  exact (ofReal_tsum_of_nonneg h1 h2).symm
+
+example (n : ℕ) (f : ℕ → ℝ) (h1 : ∀ i, f i ≥ 0) (h2 : Summable f) :
+  (∑ i in range n, ENNReal.ofReal (f i)) = ENNReal.ofReal (∑ i in range n, f i) := by
+  exact (ofReal_sum_of_nonneg fun i a => h1 i).symm
+
+#check ENNReal.eq_div_iff
+
+example (a : ENNReal) (b : ℝ) (h1 : b ≥ 0) :
+  ENNReal.toReal a * b = ENNReal.toReal (a * (ENNReal.ofReal b)) := by
+  simp
+  left
+  exact (toReal_ofReal h1).symm
+
+example (a b : ℕ) (h : a = b) :
+  (a : ENNReal) = (b : ENNReal) := by
+  exact congrArg Nat.cast h
 
 example (a b c : ENNReal) :
-  a * b + a * c = a * (b + c) := by 
-  exact (mul_add a b c).symm 
+  (a + b) * c = a * c + b * c := by
+  exact add_mul a b c
+
+example (a : ℝ) :
+  a⁻¹ = (1 / a) := by
+  exact inv_eq_one_div a
+
+example (a b : ℝ) :
+  (- (a * b)) = a * (-b) := by
+  exact neg_mul_eq_mul_neg a b
+
+example (a b : ℝ) :
+  (- (a / b)) = (-a) / b := by
+  exact neg_div' b a
+
+example (a b : ℝ) :
+  (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
+  exact mul_inv a b
+
+example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
+  a⁻¹ * a = 1 := by
+  exact ENNReal.inv_mul_cancel h2 h1
+
+example (a b : ℝ) :
+  (a / b)⁻¹ = b / a := by
+  exact inv_div a b
+
+example (a b : ℝ) (h1 : 0 < a) (h2: 0 < b) :
+  0 < a / b := by
+  exact div_pos h1 h2
+
+example :
+  rexp 0 = 1 := by
+  exact exp_zero
+
+example :
+  Monotone rexp := by
+  exact exp_monotone
+
+example (x : ℝ) (h : 0 ≤ x) :
+  1 ≤ rexp x  := by
+  exact one_le_exp h

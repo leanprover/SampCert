@@ -210,7 +210,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     intro i
     split
     . rename_i h
-      sorry -- i + t < t in hypothesis
+      simp at h
     . simp
   conv =>
     left
@@ -243,45 +243,62 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
   rw [mul_assoc]
   congr
 
-  sorry
+  . rw [ENNReal.toReal_div]
+    simp
 
-  have A : ∀ i ∈ range t, 0 ≤ rexp (- (i / t)) := by
-    intro i h
-    apply exp_nonneg (-(↑i / ↑↑t))
+  . have A : ∀ i ∈ range t, 0 ≤ rexp (- (i / t)) := by
+      intro i _
+      apply exp_nonneg (-(↑i / ↑↑t))
 
-  rw [← ENNReal.ofReal_sum_of_nonneg A]
-  clear A
+    rw [← ENNReal.ofReal_sum_of_nonneg A]
+    clear A
 
-  -- rw [ENNReal.sub_mul sorry]
-  -- rw [ENNReal.mul_inv_cancel sorry sorry]
+    have A : rexp (- 1 / t) ≠ 1 := by
+      rw [← Real.exp_zero]
+      by_contra h
+      simp at h
+    have X := @geom_sum_Ico' ℝ _ (rexp (- 1 / t)) A 0 t (Nat.zero_le t)
+    simp at X
+    rw [← exp_nat_mul] at X
+    rw [mul_div_cancel' _ (NeZero.natCast_ne ↑t ℝ)] at X
 
-  --rw [Real.exp_neg]
+    conv =>
+      left
+      right
+      right
+      left
+      right
+      right
+      intro i
+      rw [division_def]
+      rw [neg_mul_eq_mul_neg]
+      rw [Real.exp_nat_mul]
+      rw [inv_eq_one_div]
+      rw [neg_div']
 
-
-  have A : rexp (- 1 / t) ≠ 1 := by
-    rw [← Real.exp_zero]
-    by_contra h
-    simp at h
-  have X := @geom_sum_Ico' ℝ _ (rexp (- 1 / t)) A 0 t (Nat.zero_le t)
-  simp at X
-  rw [← exp_nat_mul] at X
-  rw [mul_div_cancel' _ (NeZero.natCast_ne ↑t ℝ)] at X
-
-  -- conv =>
-  --   left
-  --   right
-  --   right
-  --   left
-  --   right
-  --   right
-  --   intro i
-  --   rw [← Real.exp_nat_mul]
-
-  sorry
-
-  -- sorry
-
-
+    rw [X]
+    clear X
+    rw [ENNReal.mul_inv]
+    . rw [mul_comm]
+      rw [mul_assoc]
+      rw [ENNReal.inv_mul_cancel]
+      . rw [ENNReal.ofReal_inv_of_pos]
+        . rw [inv_div]
+          simp
+        . apply div_pos
+          . rw [Real.exp_neg]
+            simp
+            rw [inv_lt_one_iff]
+            right
+            rw [one_lt_exp_iff]
+            simp
+          . simp
+            rw [← neg_div']
+            simp
+      . simp
+      . simp
+    . simp
+    . simp
 
 noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat) (wf : num ≤ den) (K : Bool × PNat) : RandomM (Bool × PNat) := do
   let A ← BernoulliExpNegSampleUnit num den wf
@@ -297,7 +314,7 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let V := v - 2
   let X := U + num * V
   let Y := X / den
-  let B ← BernoulliSample 1 2 sorry
+  let B ← BernoulliSample 1 2 (le.step le.refl)
   return (B,Y)
 
 noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
