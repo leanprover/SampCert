@@ -301,19 +301,19 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     . simp
 
 -- Note that for the arxiv algorithm, we can call Unit directly
-noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat)  (K : Bool × PNat) : RandomM (Bool × PNat) := do
+noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat)  (K : Bool × Nat) : RandomM (Bool × Nat) := do
   let A ← BernoulliExpNegSample num den
   return (A, K.2 + 1)
 
-noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : RandomM PNat := do
-  let r2 ← prob_while (λ K : Bool × PNat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,1)
+noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : RandomM Nat := do
+  let r2 ← prob_while (λ K : Bool × Nat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,0)
   return r2.2
 
 -- We need to generate and test both implementations
 noncomputable def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
   let U ← DiscreteLaplaceSampleLoopIn1 num
   let v ← DiscreteLaplaceSampleLoopIn2 1 1
-  let V := v - 2
+  let V := v - 1
   let X := U + num * V
   let Y := X / den
   let B ← BernoulliSample 1 2 (le.step le.refl)
@@ -321,7 +321,7 @@ noncomputable def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : RandomM
 
 noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
   let v ← DiscreteLaplaceSampleLoopIn2 den num
-  let V := v - 2
+  let V := v - 1
   let B ← BernoulliSample 1 2 (le.step le.refl)
   return (B,V)
 
