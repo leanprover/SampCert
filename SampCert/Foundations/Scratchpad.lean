@@ -689,4 +689,12 @@ example :
 
 example (x : ℝ) (h : 0 < x) :
   1 < rexp x  := by
-  exact one_lt_exp_iff.mpr h 
+  exact one_lt_exp_iff.mpr h
+
+example (n : ℕ) (h : n ≠ 0) :
+  n - 1 + 1 = n := by
+  exact succ_pred h
+
+example :
+  (1 : ENNReal) - (1 / 2) = 1 / 2 := by
+  exact?

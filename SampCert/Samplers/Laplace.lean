@@ -8,6 +8,7 @@ import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
+import SampCert.Foundations.GeometricGen
 
 open PMF Nat Real BigOperators Finset
 
@@ -309,6 +310,17 @@ noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : Random
   let r2 ← prob_while (λ K : Bool × Nat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,0)
   return r2.2
 
+@[simp]
+theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
+  DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
+    = Geometric.geometric (BernoulliExpNegSample num den) := by
+  unfold DiscreteLaplaceSampleLoopIn2
+  unfold DiscreteLaplaceSampleLoopIn2Aux
+  unfold Geometric.geometric
+  unfold Geometric.loop_cond
+  unfold Geometric.loop_body
+  rfl
+
 -- We need to generate and test both implementations
 noncomputable def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
   let U ← DiscreteLaplaceSampleLoopIn1 num
@@ -324,6 +336,67 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let V := v - 1
   let B ← BernoulliSample 1 2 (le.step le.refl)
   return (B,V)
+
+theorem DiscreteLaplaceSampleLoop_test (num : PNat) (den : PNat) (n : ℕ) (b : Bool) :
+  (DiscreteLaplaceSampleLoop num den) (b,n)
+    = ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) * ((2 : ℕ+): ENNReal)⁻¹ := by
+  simp [DiscreteLaplaceSampleLoop, tsum_bool]
+  rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
+  simp
+  have A : ∀ x, (@ite ENNReal (x = n + 1) (Classical.propDecidable (x = n + 1)) 0
+      (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0
+  (ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ (x - 1) * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) *
+    ((if b = false ∧ n = x - 1 then 1 - ((2 : ℕ+): ENNReal)⁻¹ else 0) + if b = true ∧ n = x - 1 then ((2 : ℕ+): ENNReal)⁻¹ else 0))) ) = 0 := by
+    intro x
+    split
+    . simp
+    . split
+      . simp
+      . split
+        . split
+          . rename_i h1 h2 h3 h4
+            cases h3
+            cases h4
+            rename_i h5 h6 h7 h8
+            subst h7
+            contradiction
+          . rename_i h1 h2 h3 h4
+            cases h3
+            simp at h4
+            rename_i h5 h6
+            subst h6
+            have B : x = x - 1 + 1 := by
+              exact (succ_pred h2).symm
+            contradiction
+        . split
+          . rename_i h1 h2 h3 h4
+            cases h4
+            rename_i h5 h6
+            subst h6
+            have B : x = x - 1 + 1 := by
+              exact (succ_pred h2).symm
+            contradiction
+          . rename_i h1 h2 h3 h4
+            simp at *
+
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [A]
+  clear A
+
+  simp
+  congr
+  split
+  . rename_i h
+    simp [h]
+    sorry
+  . simp
+    rename_i h1
+    intro h2
+    contradiction
 
 noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
