@@ -696,5 +696,7 @@ example (n : ℕ) (h : n ≠ 0) :
   exact succ_pred h
 
 example :
-  (1 : ENNReal) - (1 / 2) = 1 / 2 := by
-  exact?
+  (1 : ENNReal) - 2⁻¹ = 2⁻¹ := by
+  exact one_sub_inv_two
+
+def f (x : ℕ) : ℤ ≥

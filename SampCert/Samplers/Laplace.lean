@@ -337,7 +337,8 @@ noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM 
   let B ← BernoulliSample 1 2 (le.step le.refl)
   return (B,V)
 
-theorem DiscreteLaplaceSampleLoop_test (num : PNat) (den : PNat) (n : ℕ) (b : Bool) :
+@[simp]
+theorem DiscreteLaplaceSampleLoop_apply (num : PNat) (den : PNat) (n : ℕ) (b : Bool) :
   (DiscreteLaplaceSampleLoop num den) (b,n)
     = ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) * ((2 : ℕ+): ENNReal)⁻¹ := by
   simp [DiscreteLaplaceSampleLoop, tsum_bool]
@@ -404,5 +405,25 @@ noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   return Z
 
 @[simp]
-theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (_ : t = (num : ℝ) / (den : ℝ)) :
-  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := sorry
+theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num : ℝ) / (den : ℝ)) :
+  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := by
+  simp [DiscreteLaplaceSample, tsum_prod', tsum_bool]
+  have OR : x ≥ 0 ∨ x < 0 := by exact le_or_gt 0 x
+  cases OR
+  . rename_i h1
+    lift x to ℕ using h1
+    conv =>
+      left
+      left
+      rw [ENNReal.tsum_eq_add_tsum_ite x]
+    simp
+    sorry
+  . rename_i h1
+    have A : ∃ n : ℕ, - n = x := sorry
+    cases A
+    rename_i n h2
+    conv =>
+      left
+      right
+      rw [ENNReal.tsum_eq_add_tsum_ite n]
+    sorry
