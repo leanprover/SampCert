@@ -392,7 +392,7 @@ theorem DiscreteLaplaceSampleLoop_test (num : PNat) (den : PNat) (n : ℕ) (b : 
   split
   . rename_i h
     simp [h]
-    sorry
+    exact ENNReal.one_sub_inv_two
   . simp
     rename_i h1
     intro h2
