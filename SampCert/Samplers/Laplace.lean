@@ -503,9 +503,74 @@ noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   let Z : Int := if r.1 then - r.2 else r.2
   return Z
 
-theorem foobar (num den : PNat) :
-  (∑' (x : Bool × ℕ), if x.1 = true → ¬x.2 = 0 then DiscreteLaplaceSampleLoop num den x else 0) = 42 := by
-  sorry
+theorem avoid_double_counting (num den : PNat) :
+  (∑' (x : Bool × ℕ), if x.1 = true → ¬x.2 = 0 then DiscreteLaplaceSampleLoop num den x else 0)
+    = (((2 : ℕ+) : ENNReal))⁻¹ * (1 + ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) := by
+  simp [ENNReal.tsum_prod', tsum_bool]
+  rw [ENNReal.tsum_mul_right]
+  rw [ENNReal.tsum_mul_right]
+  rw [tsum_shift'_1]
+  rw [ENNReal.tsum_mul_right]
+  rw [ENNReal.tsum_mul_right]
+  rw [mul_comm]
+  conv =>
+    left
+    right
+    rw [mul_comm]
+  rw [← mul_add]
+  conv =>
+    left
+    right
+    rw [mul_comm]
+  conv =>
+    left
+    right
+    right
+    rw [mul_comm]
+  rw [← mul_add]
+
+  have A : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) < 1 := by
+    have B := @one_lt_exp_iff (-(↑↑den / ↑↑num))
+    simp
+    clear B
+    rw [div_pos_iff]
+    left
+    simp
+  rw [ENNReal.tsum_geometric]
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro i
+    rw [pow_add]
+  rw [ENNReal.tsum_mul_right]
+  rw [ENNReal.tsum_geometric]
+  rw [mul_add]
+  have B : (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) ≠ 0 := by
+    simp
+    rw [div_pos_iff]
+    left
+    simp
+  have C : (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) ≠ ⊤ := by
+    simp
+  conv =>
+    left
+    right
+    left
+    rw [mul_comm]
+  rw [ENNReal.inv_mul_cancel B C]
+  conv =>
+    left
+    right
+    right
+    rw [← mul_assoc]
+    left
+    rw [mul_comm]
+  rw [ENNReal.inv_mul_cancel B C]
+  rw [one_mul]
+  rw [pow_one]
 
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num : ℝ) / (den : ℝ)) :
@@ -529,10 +594,21 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
     simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
     simp (config := { contextual := true }) [A]
     clear A
+    conv =>
+      right
+      right
+      left
+      rw [division_def]
     subst gam
     simp
-
-    sorry
+    rw [avoid_double_counting]
+    rw [ENNReal.mul_inv]
+    . simp
+      sorry
+    . left
+      simp
+    . left
+      simp
   . rename_i h1
     have A : ∃ n : ℕ, - n = x := sorry
     cases A
