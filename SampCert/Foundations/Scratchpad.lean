@@ -699,4 +699,6 @@ example :
   (1 : ENNReal) - 2⁻¹ = 2⁻¹ := by
   exact one_sub_inv_two
 
-def f (x : ℕ) : ℤ ≥
+example (a b : ENNReal) (h: a = b) (h1 : b ≠ ⊤):
+  a + b - b = a := by
+  exact ENNReal.add_sub_cancel_right h1

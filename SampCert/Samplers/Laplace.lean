@@ -10,7 +10,7 @@ import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Foundations.GeometricGen
 
-open PMF Nat Real BigOperators Finset
+open Classical PMF Nat Real BigOperators Finset
 
 noncomputable def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : RandomM (Nat × Bool) := do
   let U ← UniformSample t
@@ -405,6 +405,21 @@ noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   return Z
 
 @[simp]
+theorem ite_simpl_1 (x y : ℕ) (a : ENNReal) : ite (x = y) 0 (ite (y = x) a 0) = 0 := by
+  split
+  . simp
+  . rename_i h
+    simp [h]
+    intro h
+    subst h
+    contradiction
+
+@[simp]
+theorem ite_simpl_2 (x y : ℕ) (a : ENNReal) : ite (x = 0) 0 (ite ((y : ℤ) = -(x : ℤ)) a 0) = 0 := sorry
+
+
+
+@[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num : ℝ) / (den : ℝ)) :
   (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := by
   simp [DiscreteLaplaceSample, tsum_prod', tsum_bool]
@@ -416,7 +431,10 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       left
       left
       rw [ENNReal.tsum_eq_add_tsum_ite x]
-    simp
+
+    have A : forall c : ℕ, ((x : ℤ) = -c) ↔ False := by sorry
+    simp (config := { contextual := true })
+
     sorry
   . rename_i h1
     have A : ∃ n : ℕ, - n = x := sorry

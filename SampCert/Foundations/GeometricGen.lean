@@ -15,6 +15,36 @@ open Classical Nat
 section Test
 
 variable (trial : RandomM Bool)
+variable (trial_spec : trial false + trial true = 1)
+
+theorem trial_spec' :
+  trial false = 1 - trial true := by
+  by_contra h
+  rw [← trial_spec] at h
+  rw [ENNReal.add_sub_cancel_right] at h
+  . contradiction
+  . by_contra h'
+    rw [h'] at trial_spec
+    simp at trial_spec
+
+theorem trial_le_1 (i : ℕ) :
+  trial true ^ i ≤ 1 := by
+  induction i
+  . simp
+  . rename_i i IH
+    rw [_root_.pow_succ]
+    have A : trial true ≤ 1 := by
+      by_contra h
+      simp at h
+      have B : 1 < trial false + trial true := by
+        by_contra _
+        simp at *
+        have C : trial true ≤ 1 := le_iff_exists_add'.mpr (Exists.intro (trial false) (id trial_spec.symm))
+        have D := not_le.mpr h
+        contradiction
+      rw [trial_spec] at B
+      simp at B
+    exact mul_le_one' A IH
 
 def loop_cond (st : (Bool × ℕ)) : Bool := st.1
 def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
@@ -287,6 +317,42 @@ theorem geometric_apply (n : ℕ) :
     intro x
     rw [if_simpl]
   simp
+
+@[simp]
+theorem ite_test (a b : ℕ) (x y : ENNReal) :
+  @ite ENNReal (a = b) (propDecidable (a = b)) x y
+   = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
+  split ; any_goals { trivial }
+
+theorem geometric_normalizes :
+  (∑' n : ℕ, geometric trial n) = 1 := by
+  simp
+  rw [tsum_shift'_1]
+  simp
+  rw [trial_spec' trial trial_spec]
+  have A : ∀ n : ℕ, 0 < trial true → trial true < 1 → trial true ^ n ≠ ⊤ := sorry
+  conv =>
+    left
+    right
+    intro n
+    rw [ENNReal.mul_sub (A n)]
+  clear A
+  simp
+  rw [ENNReal.tsum_sub]
+  . rw [ENNReal.tsum_eq_add_tsum_ite 0]
+    simp
+    rw [tsum_shift'_1]
+    simp [pow_add]
+    rw [ENNReal.add_sub_cancel_right]
+    sorry -- ∑' (n : ℕ), trial true ^ n * trial true ≠ ⊤
+  . sorry -- ∑' (i : ℕ), trial true ^ i * trial true ≠ ⊤
+  . rw [Pi.le_def]
+    intro i
+    have A : 0 ≤ trial true ^ i := by exact _root_.zero_le (trial true ^ i)
+    have B := trial_le_1 trial trial_spec 1
+    have C := @mul_le_of_le_one_right ENNReal _ _ _ _ _ _ A B
+    simp at C
+    trivial
 
 end Test
 
