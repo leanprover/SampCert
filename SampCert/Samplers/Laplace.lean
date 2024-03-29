@@ -503,6 +503,10 @@ noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
   let Z : Int := if r.1 then - r.2 else r.2
   return Z
 
+theorem foobar (num den : PNat) :
+  (∑' (x : Bool × ℕ), if x.1 = true → ¬x.2 = 0 then DiscreteLaplaceSampleLoop num den x else 0) = 42 := by
+  sorry
+
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num : ℝ) / (den : ℝ)) :
   (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := by
@@ -527,6 +531,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
     clear A
     subst gam
     simp
+
     sorry
   . rename_i h1
     have A : ∃ n : ℕ, - n = x := sorry
