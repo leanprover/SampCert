@@ -16,8 +16,14 @@ section Test
 
 variable (trial : RandomM Bool)
 variable (trial_spec : trial false + trial true = 1)
+variable (trial_spec' : trial true < 1)
 
-theorem trial_spec' :
+theorem ite_test (a b : ℕ) (x y : ENNReal) :
+  @ite ENNReal (a = b) (propDecidable (a = b)) x y
+   = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
+  split ; any_goals { trivial }
+
+theorem trial_one_minus :
   trial false = 1 - trial true := by
   by_contra h
   rw [← trial_spec] at h
@@ -33,18 +39,34 @@ theorem trial_le_1 (i : ℕ) :
   . simp
   . rename_i i IH
     rw [_root_.pow_succ]
-    have A : trial true ≤ 1 := by
-      by_contra h
-      simp at h
-      have B : 1 < trial false + trial true := by
-        by_contra _
-        simp at *
-        have C : trial true ≤ 1 := le_iff_exists_add'.mpr (Exists.intro (trial false) (id trial_spec.symm))
-        have D := not_le.mpr h
-        contradiction
-      rw [trial_spec] at B
-      simp at B
-    exact mul_le_one' A IH
+    -- have A : trial true ≤ 1 := by
+      -- by_contra h
+      -- simp at h
+      -- have B : 1 < trial false + trial true := by
+      --   by_contra _
+      --   simp at *
+      --   have C : trial true ≤ 1 := le_iff_exists_add'.mpr (Exists.intro (trial false) (id trial_spec.symm))
+      --   have D := not_le.mpr h
+      --   contradiction
+      -- rw [trial_spec] at B
+      -- simp at B
+    exact mul_le_one' (LT.lt.le trial_spec' ) IH
+
+theorem trial_sum_ne_top :
+  (∑' (n : ℕ), trial true ^ n) ≠ ⊤ := by
+  rw [ENNReal.tsum_geometric]
+  rw [ENNReal.inv_ne_top]
+  by_contra h
+  rw [tsub_eq_zero_iff_le] at h
+  have A := not_le.mpr trial_spec'
+  contradiction
+
+theorem trial_sum_ne_top' :
+  ∑' (n : ℕ), trial true ^ n * trial true ≠ ⊤ := by
+  have A := trial_sum_ne_top trial trial_spec'
+  rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
+  simp [ite_test, tsum_shift'_1, pow_add] at A
+  trivial
 
 def loop_cond (st : (Bool × ℕ)) : Bool := st.1
 def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
@@ -318,19 +340,18 @@ theorem geometric_apply (n : ℕ) :
     rw [if_simpl]
   simp
 
-@[simp]
-theorem ite_test (a b : ℕ) (x y : ENNReal) :
-  @ite ENNReal (a = b) (propDecidable (a = b)) x y
-   = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
-  split ; any_goals { trivial }
-
 theorem geometric_normalizes :
   (∑' n : ℕ, geometric trial n) = 1 := by
   simp
   rw [tsum_shift'_1]
   simp
-  rw [trial_spec' trial trial_spec]
-  have A : ∀ n : ℕ, 0 < trial true → trial true < 1 → trial true ^ n ≠ ⊤ := sorry
+  rw [trial_one_minus trial trial_spec]
+  have A : ∀ n : ℕ, 0 < trial true → trial true < 1 → trial true ^ n ≠ ⊤ := by
+    intro n _ _
+    have B := trial_le_1 trial trial_spec' n
+    by_contra h
+    rw [h] at B
+    contradiction
   conv =>
     left
     right
@@ -340,16 +361,15 @@ theorem geometric_normalizes :
   simp
   rw [ENNReal.tsum_sub]
   . rw [ENNReal.tsum_eq_add_tsum_ite 0]
-    simp
-    rw [tsum_shift'_1]
+    simp [ite_test, tsum_shift'_1]
     simp [pow_add]
     rw [ENNReal.add_sub_cancel_right]
-    sorry -- ∑' (n : ℕ), trial true ^ n * trial true ≠ ⊤
-  . sorry -- ∑' (i : ℕ), trial true ^ i * trial true ≠ ⊤
+    apply trial_sum_ne_top' trial trial_spec'
+  . apply trial_sum_ne_top' trial trial_spec'
   . rw [Pi.le_def]
     intro i
     have A : 0 ≤ trial true ^ i := by exact _root_.zero_le (trial true ^ i)
-    have B := trial_le_1 trial trial_spec 1
+    have B := trial_le_1 trial trial_spec' 1
     have C := @mul_le_of_le_one_right ENNReal _ _ _ _ _ _ A B
     simp at C
     trivial
