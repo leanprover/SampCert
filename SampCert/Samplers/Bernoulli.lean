@@ -24,6 +24,7 @@ theorem ite_total_same (a b : ℕ) (x : ENNReal) :
     have A : ¬ (a ≤ b) := by exact h
     simp [A]
 
+@[simp]
 theorem BernoulliSample_normalizes (num : Nat) (den : PNat) (wf : num ≤ den) :
   ∑' b : Bool, BernoulliSample num den wf b = 1 := by
   simp [BernoulliSample]

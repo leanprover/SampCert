@@ -702,3 +702,6 @@ example :
 example (a b : ENNReal) (h: a = b) (h1 : b ≠ ⊤):
   a + b - b = a := by
   exact ENNReal.add_sub_cancel_right h1
+
+example (a b : ENNReal) (h : a < b) :
+  ¬ a ≥ b := by exact not_le.mpr h

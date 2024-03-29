@@ -340,6 +340,7 @@ theorem geometric_apply (n : ℕ) :
     rw [if_simpl]
   simp
 
+@[simp]
 theorem geometric_normalizes :
   (∑' n : ℕ, geometric trial n) = 1 := by
   simp
@@ -373,6 +374,15 @@ theorem geometric_normalizes :
     have C := @mul_le_of_le_one_right ENNReal _ _ _ _ _ _ A B
     simp at C
     trivial
+
+theorem geometric_normalizes' :
+  (∑' n : ℕ, geometric trial (n + 1)) = 1 := by
+  have A := geometric_normalizes trial trial_spec trial_spec'
+  rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
+  simp at A
+  simp [ite_test, tsum_shift'_1] at A
+  simp
+  trivial
 
 end Test
 

@@ -1191,7 +1191,7 @@ noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool 
     else return false
 
 @[simp]
-theorem BernoulliExpNegSample_apply_normalizes (num : Nat) (den : PNat) :
+theorem BernoulliExpNegSample_normalizes (num : Nat) (den : PNat) :
   (∑' b : Bool, (BernoulliExpNegSample num den) b) = 1 := by
   unfold BernoulliExpNegSample
   split
@@ -1288,7 +1288,7 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
 @[simp]
 theorem BernoulliExpNegSample_apply_false (num : Nat) (den : PNat) :
   (BernoulliExpNegSample num den) false = 1 - ENNReal.ofReal (Real.exp (- ((num : NNReal) / (den : NNReal)))) := by
-  have A := BernoulliExpNegSample_apply_normalizes num den
+  have A := BernoulliExpNegSample_normalizes num den
   simp [tsum_bool] at A
   rw [← A]
   simp
