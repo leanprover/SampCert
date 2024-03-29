@@ -436,6 +436,20 @@ theorem ite_simpl_3 (x y : ℕ) (a : ENNReal) : ite (x = y + 1) 0 (ite (x = 0) 0
         . simp at h1
       . simp
 
+@[simp]
+theorem ite_simpl_4 (x y : ℕ) (a : ENNReal) : ite ((x : ℤ) = - (y : ℤ)) (ite (y = 0) 0 a) 0 = 0 := by
+  split
+  . split
+    . simp
+    . rename_i h1 h2
+      have B : (y : ℤ) ≥ 0 := by exact Int.NonNeg.mk (y + 0)
+      have C : -(y : ℤ) ≥ 0 := by exact le_iff_exists_sup.mpr (Exists.intro (Int.ofNat x) (id h1.symm))
+      cases y
+      . contradiction
+      . rename_i n
+        simp at C
+        contradiction
+  . simp
 
 @[simp]
 theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
@@ -529,13 +543,13 @@ theorem avoid_double_counting (num den : PNat) :
     rw [mul_comm]
   rw [← mul_add]
 
-  have A : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) < 1 := by
-    have B := @one_lt_exp_iff (-(↑↑den / ↑↑num))
-    simp
-    clear B
-    rw [div_pos_iff]
-    left
-    simp
+  -- have A : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) < 1 := by
+  --   have B := @one_lt_exp_iff (-(↑↑den / ↑↑num))
+  --   simp
+  --   clear B
+  --   rw [div_pos_iff]
+  --   left
+  --   simp
   rw [ENNReal.tsum_geometric]
   conv =>
     left
@@ -590,10 +604,8 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       left
       rw [ENNReal.tsum_eq_add_tsum_ite x]
 
-    have A : forall c : ℕ, ((x : ℤ) = -c) ↔ False := by sorry
     simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
-    simp (config := { contextual := true }) [A]
-    clear A
+    simp (config := { contextual := true }) [ite_simpl_4]
     conv =>
       right
       right
