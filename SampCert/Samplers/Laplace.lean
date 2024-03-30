@@ -622,7 +622,11 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
     . left
       simp
   . rename_i h1
-    have A : ∃ n : ℕ, - n = x := sorry
+    have A : ∃ n : ℕ, - n = x := by
+      cases x
+      . contradiction
+      . rename_i a
+        exists (a + 1)
     cases A
     rename_i n h2
     conv =>
