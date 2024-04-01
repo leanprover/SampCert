@@ -3,6 +3,7 @@ import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Order.Filter.AtTopBot
+import Mathlib.Data.ENNReal.Inv
 
 noncomputable section
 
@@ -655,9 +656,6 @@ example (a : ℝ) :
   a⁻¹ = (1 / a) := by
   exact inv_eq_one_div a
 
-example (a b : ℝ) :
-  (- (a * b)) = a * (-b) := by
-  exact neg_mul_eq_mul_neg a b
 
 example (a b : ℝ) :
   (- (a / b)) = (-a) / b := by
@@ -667,13 +665,11 @@ example (a b : ℝ) :
   (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
   exact mul_inv a b
 
-example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
-  a⁻¹ * a = 1 := by
-  exact ENNReal.inv_mul_cancel h2 h1
+example (a b : ENNReal) (h1 : a ≠ ⊤)  (h3 : a ≠ 0) :
+  (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
+  exact ENNReal.mul_inv (Or.inl h3) (Or.inl h1)
 
-example (a b : ℝ) :
-  (a / b)⁻¹ = b / a := by
-  exact inv_div a b
+
 
 example (a b : ℝ) (h1 : 0 < a) (h2: 0 < b) :
   0 < a / b := by
@@ -705,3 +701,30 @@ example (a b : ENNReal) (h: a = b) (h1 : b ≠ ⊤):
 
 example (a b : ENNReal) (h : a < b) :
   ¬ a ≥ b := by exact not_le.mpr h
+
+example (a : ENNReal) (h1 : a ≠ ⊤) (h2 : a ≠ 0) :
+  a⁻¹ * a = 1 := by
+  exact ENNReal.inv_mul_cancel h2 h1
+
+example (a : ℕ) (b : ℝ) :
+  rexp ((a : ℝ) * b) = rexp (b)^a := by
+  exact exp_nat_mul b a
+
+
+example (a b : ℝ) :
+  (- (a * b)) = a * (-b) := by
+  exact neg_mul_eq_mul_neg a b
+
+  example (a b : ℝ) :
+  (a / b)⁻¹ = b / a := by
+  exact inv_div a b
+
+example (a b c d : ℝ) :
+  (a - b) * (c + d) = 42 := by
+  rw [mul_add]
+  rw [_root_.sub_mul]
+  rw [_root_.sub_mul]
+
+example (a b c : ℝ) (h : b ≠ 0):
+  ((a / b) = c) ↔ (a = c * b) := by
+  exact div_eq_iff h

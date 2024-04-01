@@ -616,7 +616,67 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
     rw [avoid_double_counting]
     rw [ENNReal.mul_inv]
     . simp
+
+      -- Start of first rewrite
+
+      rw [ENNReal.ofReal_mul]
+      conv =>
+        right
+        rw [mul_comm]
+        left
+        right
+        rw [division_def]
+        rw [neg_mul_eq_mul_neg]
+        rw [exp_nat_mul]
+        rw [inv_div]
+
+      rw [ENNReal.ofReal_pow]
+
+      conv =>
+        left
+        left
+        rw [mul_assoc]
+      conv =>
+        left
+        rw [mul_assoc]
+
+      congr
+
+      --end of first rewrite
+
+      have X : ((2 : ℕ+) : ENNReal) ≠ 0 := sorry
+      have Y : ((2 : ℕ+) : ENNReal) ≠ ⊤ := sorry
+
+      rw [← mul_assoc]
+      conv =>
+        left
+        left
+        rw [mul_assoc]
+        right
+        rw [ENNReal.inv_mul_cancel X Y]
+
+      simp
+
+      clear X Y
+
+      -- end of second rewrite
+
+      rw [ENNReal.ofReal_one.symm]
+      rw [← ENNReal.ofReal_add]
+      rw [← ENNReal.ofReal_sub]
+      rw [ENNReal.ofReal_inv_of_pos]
+      rw [← ENNReal.ofReal_mul]
+
+      congr 1
+
+      -- end of 3rd rewrite
+
+      -- The key rewrite starts now
+
+
       sorry
+
+
     . left
       simp
     . left
