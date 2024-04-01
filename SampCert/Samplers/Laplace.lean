@@ -9,6 +9,7 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Foundations.GeometricGen
+import Mathlib.Data.ENNReal.Inv
 
 open Classical PMF Nat Real BigOperators Finset
 
@@ -617,6 +618,10 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
     rw [ENNReal.mul_inv]
     . simp
 
+      have A : 0 ≤ rexp (-(↑↑den / ↑↑num)) := by apply exp_nonneg (-(↑↑den / ↑↑num))
+      have B : 0 ≤ rexp ((↑↑den / ↑↑num)) := by apply exp_nonneg ((↑↑den / ↑↑num))
+
+
       -- Start of first rewrite
 
       rw [ENNReal.ofReal_mul]
@@ -644,8 +649,8 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
 
       --end of first rewrite
 
-      have X : ((2 : ℕ+) : ENNReal) ≠ 0 := sorry
-      have Y : ((2 : ℕ+) : ENNReal) ≠ ⊤ := sorry
+      have X : ((2 : ℕ+) : ENNReal) ≠ 0 := by simp
+      have Y : ((2 : ℕ+) : ENNReal) ≠ ⊤ := by simp
 
       rw [← mul_assoc]
       conv =>
@@ -673,10 +678,56 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
 
       -- The key rewrite starts now
 
+      rw [← division_def]
+      rw [div_eq_iff]
+      rw [mul_comm]
+      rw [← mul_assoc]
+      rw [← division_def]
 
-      sorry
 
+      apply Eq.symm
+      rw [div_eq_iff]
 
+      rw [mul_add]
+      rw [_root_.sub_mul]
+      rw [_root_.sub_mul]
+      rw [add_mul]
+      rw [_root_.mul_sub]
+      rw [_root_.mul_sub]
+
+      simp only [one_mul, mul_one]
+
+      rw [← exp_add]
+      simp
+
+      -- done, now lots of annoying conversion props
+
+      . apply _root_.ne_of_gt
+        refine Right.add_pos_of_nonneg_of_pos B ?inl.intro.e_a.e_r.h.h.hb
+        simp -- rexp (↑↑den / ↑↑num) + 1 ≠ 0
+      . apply _root_.ne_of_gt
+        refine Right.add_pos_of_pos_of_nonneg ?inl.intro.e_a.e_r.h.ha A
+        simp -- 1 + rexp (-(↑↑den / ↑↑num)) ≠ 0
+      . simp
+        rw [div_nonneg_iff]
+        left
+        simp
+      . refine Right.add_pos_of_pos_of_nonneg ?inl.intro.e_a.ha A
+        simp -- 0 < 1 + rexp (-(↑↑den / ↑↑num))
+      . exact A
+      . simp only [zero_le_one] -- 0 ≤ 1
+      . exact A
+      . exact A
+      . have X : 0 ≤ (rexp (↑↑den / ↑↑num) - 1) := by
+          simp
+          rw [div_nonneg_iff]
+          left
+          simp
+        have Y : 0 ≤ (rexp (↑↑den / ↑↑num) + 1)⁻¹ := by
+          rw [inv_nonneg]
+          refine Right.add_nonneg B ?hb
+          simp
+        exact mul_nonneg X Y
     . left
       simp
     . left

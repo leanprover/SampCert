@@ -728,3 +728,25 @@ example (a b c d : ℝ) :
 example (a b c : ℝ) (h : b ≠ 0):
   ((a / b) = c) ↔ (a = c * b) := by
   exact div_eq_iff h
+
+example (a b c : ℝ) (h : b ≠ 0):
+  ((a * b⁻¹) = c) ↔ (a = c * b) := by
+  exact mul_inv_eq_iff_eq_mul₀ h
+
+#check Iff.symm (mul_inv_eq_iff_eq_mul₀ _)
+
+example (a b c : ℝ) (h : b ≠ 0):
+  (a = c * b) ↔ ((a * b⁻¹) = c) := by
+  exact Iff.symm (mul_inv_eq_iff_eq_mul₀ h)
+
+
+example (a b : ℝ) :
+  a = b → b = a := by
+  exact?
+
+#check Eq.symm
+
+example (a b c d : ℝ) :
+  (a + b) * (c - d) = 42 := by
+  rw [@add_mul]
+  rw [@_root_.mul_sub]
