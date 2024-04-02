@@ -453,6 +453,19 @@ theorem ite_simpl_4 (x y : ℕ) (a : ENNReal) : ite ((x : ℤ) = - (y : ℤ)) (i
   . simp
 
 @[simp]
+theorem ite_simpl_5 (n c : ℕ) (a : ENNReal) (h : n ≠ 0) : ite (- (n : ℤ) = (c : ℤ)) a 0 = 0 := by
+  split
+  . rename_i h'
+    have A : (n : ℤ) ≥ 0 := by exact Int.NonNeg.mk (n + 0)
+    have B : -(n : ℤ) ≥ 0 := by exact le_iff_exists_sup.mpr (Exists.intro (Int.ofNat c) h')
+    cases n
+    . contradiction
+    . rename_i n
+      simp at B
+      contradiction
+  . simp
+
+@[simp]
 theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
   (∑' x, (DiscreteLaplaceSampleLoop num den) x) = 1 := by
   simp only [DiscreteLaplaceSampleLoop, Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure,
@@ -744,4 +757,141 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       left
       right
       rw [ENNReal.tsum_eq_add_tsum_ite n]
-    sorry
+
+    simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
+    subst h2
+    have X : n ≠ 0 := by
+      by_contra h
+      subst h
+      simp at h1
+    simp (config := { contextual := true }) [X, ite_simpl_5]
+
+    conv =>
+      right
+      right
+      left
+      rw [division_def]
+    subst gam
+    simp
+    rw [avoid_double_counting]
+    rw [ENNReal.mul_inv]
+    . simp
+
+      have A : 0 ≤ rexp (-(↑↑den / ↑↑num)) := by apply exp_nonneg (-(↑↑den / ↑↑num))
+      have B : 0 ≤ rexp ((↑↑den / ↑↑num)) := by apply exp_nonneg ((↑↑den / ↑↑num))
+
+
+      -- Start of first rewrite
+
+      rw [ENNReal.ofReal_mul]
+      conv =>
+        right
+        rw [mul_comm]
+        left
+        right
+        rw [division_def]
+        rw [neg_mul_eq_mul_neg]
+        rw [exp_nat_mul]
+        rw [inv_div]
+
+      rw [ENNReal.ofReal_pow]
+
+      conv =>
+        left
+        left
+        rw [mul_assoc]
+      conv =>
+        left
+        rw [mul_assoc]
+
+      congr
+
+      --end of first rewrite
+
+      have X : ((2 : ℕ+) : ENNReal) ≠ 0 := by simp
+      have Y : ((2 : ℕ+) : ENNReal) ≠ ⊤ := by simp
+
+      rw [← mul_assoc]
+      conv =>
+        left
+        left
+        rw [mul_assoc]
+        right
+        rw [ENNReal.inv_mul_cancel X Y]
+
+      simp
+
+      clear X Y
+
+      -- end of second rewrite
+
+      rw [ENNReal.ofReal_one.symm]
+      rw [← ENNReal.ofReal_add]
+      rw [← ENNReal.ofReal_sub]
+      rw [ENNReal.ofReal_inv_of_pos]
+      rw [← ENNReal.ofReal_mul]
+
+      congr 1
+
+      -- end of 3rd rewrite
+
+      -- The key rewrite starts now
+
+      rw [← division_def]
+      rw [div_eq_iff]
+      rw [mul_comm]
+      rw [← mul_assoc]
+      rw [← division_def]
+
+
+      apply Eq.symm
+      rw [div_eq_iff]
+
+      rw [mul_add]
+      rw [_root_.sub_mul]
+      rw [_root_.sub_mul]
+      rw [add_mul]
+      rw [_root_.mul_sub]
+      rw [_root_.mul_sub]
+
+      simp only [one_mul, mul_one]
+
+      rw [← exp_add]
+      simp
+
+      -- done, now lots of annoying conversion props
+
+      . apply _root_.ne_of_gt
+        apply Right.add_pos_of_nonneg_of_pos
+        exact B
+        simp
+      . apply _root_.ne_of_gt
+        apply Right.add_pos_of_pos_of_nonneg
+        simp
+        exact A
+      . simp
+        rw [div_nonneg_iff]
+        left
+        simp
+      . apply Right.add_pos_of_pos_of_nonneg
+        simp
+        exact A
+      . exact A
+      . simp only [zero_le_one] -- 0 ≤ 1
+      . exact A
+      . exact A
+      . have X : 0 ≤ (rexp (↑↑den / ↑↑num) - 1) := by
+          simp
+          rw [div_nonneg_iff]
+          left
+          simp
+        have Y : 0 ≤ (rexp (↑↑den / ↑↑num) + 1)⁻¹ := by
+          rw [inv_nonneg]
+          refine Right.add_nonneg B ?hb
+          simp
+        exact mul_nonneg X Y
+
+    . left
+      simp
+    . left
+      simp

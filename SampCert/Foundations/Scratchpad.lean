@@ -742,11 +742,8 @@ example (a b c : ℝ) (h : b ≠ 0):
 
 example (a b : ℝ) :
   a = b → b = a := by
-  exact?
+  exact fun a_1 => id a_1.symm
 
-#check Eq.symm
-
-example (a b c d : ℝ) :
-  (a + b) * (c - d) = 42 := by
-  rw [@add_mul]
-  rw [@_root_.mul_sub]
+example (a : ℝ) (h : a > 0) :
+  a ≠ 0 := by
+  exact _root_.ne_of_gt h
