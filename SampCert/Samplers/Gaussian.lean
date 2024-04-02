@@ -10,7 +10,7 @@ import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
 
-open PMF Nat Real
+open Classical PMF Nat Real
 
 noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int × Bool) := do
   let Y : Int ← DiscreteLaplaceSample t 1
@@ -19,6 +19,31 @@ noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int �
   let d : PNat := 2 * num * t^2 * den
   let C ← BernoulliExpNegSample n d
   return (Y,C)
+
+@[simp]
+theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℕ) :
+  @ite ENNReal (x = ↑n) (propDecidable (x = ↑n)) 0
+  (@ite ENNReal (↑n = x) (Int.instDecidableEqInt (↑n) x)
+  (ENNReal.ofReal ((rexp ((t : ℝ))⁻¹ - 1) / (rexp ((t : ℝ))⁻¹ + 1) * rexp (-(Complex.abs ↑x / ↑↑t))) *
+    ENNReal.ofReal (rexp (-(↑(↑(Int.natAbs x) * (t : NNReal) * (den : NNReal) - (num : NNReal)) ^ 2 / ((2 : ℕ+) * ↑↑num * ↑↑t ^ 2 * ↑↑den)))))
+  0) = 0 := by
+  split
+  . simp
+  . rename_i h
+    simp [h]
+    intro h
+    subst h
+    contradiction
+
+@[simp]
+theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℕ) :
+  (DiscreteGaussianSampleLoop num den t) (n, true) =
+    ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1) * rexp (-(n / t))) *
+    ENNReal.ofReal (rexp (-((n * t * den - num) ^ 2 / ((2 : ℕ+) * num * t ^ 2 * den)))) := by
+  simp [DiscreteGaussianSampleLoop, tsum_bool]
+  rw [ENNReal.tsum_eq_add_tsum_ite (n : ℤ)]
+  simp (config := { contextual := true })
+  sorry
 
 theorem Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
@@ -32,6 +57,7 @@ noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ
   return r.1
 
 @[simp]
-theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) (_ : σ = (num : ℝ) / (den : ℝ)) :
+theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
-  ENNReal.ofReal ((exp (- x^2 / (2 * σ^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * σ^2)))) := sorry
+  ENNReal.ofReal ((exp (- x^2 / (2 * ((num : ℝ) / (den : ℝ))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : ℝ) / (den : ℝ))^2)))) := by
+  simp [DiscreteGaussianSample, ENNReal.tsum_prod', tsum_bool]

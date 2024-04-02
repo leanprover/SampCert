@@ -557,13 +557,6 @@ theorem avoid_double_counting (num den : PNat) :
     rw [mul_comm]
   rw [← mul_add]
 
-  -- have A : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) < 1 := by
-  --   have B := @one_lt_exp_iff (-(↑↑den / ↑↑num))
-  --   simp
-  --   clear B
-  --   rw [div_pos_iff]
-  --   left
-  --   simp
   rw [ENNReal.tsum_geometric]
   conv =>
     left
@@ -600,9 +593,37 @@ theorem avoid_double_counting (num den : PNat) :
   rw [one_mul]
   rw [pow_one]
 
+theorem laplace_normalizer_swap (num den : ℕ+) :
+  (1 - rexp (-(↑↑den / ↑↑num))) * (1 + rexp (-(↑↑den / ↑↑num)))⁻¹ =
+  (rexp (↑↑den / ↑↑num) - 1) * (rexp (↑↑den / ↑↑num) + 1)⁻¹ := by
+
+  have A : rexp (↑↑den / ↑↑num) + 1 ≠ 0 := sorry
+  have B : 1 + rexp (-(↑↑den / ↑↑num)) ≠ 0 := sorry
+
+  rw [← division_def]
+  rw [div_eq_iff B]
+  rw [mul_comm]
+  rw [← mul_assoc]
+  rw [← division_def]
+
+  apply Eq.symm
+  rw [div_eq_iff A]
+
+  rw [mul_add]
+  rw [_root_.sub_mul]
+  rw [_root_.sub_mul]
+  rw [add_mul]
+  rw [_root_.mul_sub]
+  rw [_root_.mul_sub]
+
+  simp only [one_mul, mul_one]
+
+  rw [← exp_add]
+  simp
+
 @[simp]
-theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num : ℝ) / (den : ℝ)) :
-  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/t) - 1) / (exp (1/t) + 1)) * (exp (- (abs x / t)))) := by
+theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
+  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : ℝ) / (den : ℝ))) - 1) / (exp (1/((num : ℝ) / (den : ℝ))) + 1)) * (exp (- (abs x / ((num : ℝ) / (den : ℝ)))))) := by
   simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SubPMF.bind_apply,
      decide_eq_true_eq, ENNReal.summable,
     Bool.forall_bool, and_self, tsum_prod', tsum_bool, IsEmpty.forall_iff, ↓reduceIte, tsum_zero,
@@ -625,8 +646,6 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       right
       left
       rw [division_def]
-    subst gam
-    simp
     rw [avoid_double_counting]
     rw [ENNReal.mul_inv]
     . simp
@@ -688,39 +707,8 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       congr 1
 
       -- end of 3rd rewrite
+      rw [laplace_normalizer_swap]
 
-      -- The key rewrite starts now
-
-      rw [← division_def]
-      rw [div_eq_iff]
-      rw [mul_comm]
-      rw [← mul_assoc]
-      rw [← division_def]
-
-
-      apply Eq.symm
-      rw [div_eq_iff]
-
-      rw [mul_add]
-      rw [_root_.sub_mul]
-      rw [_root_.sub_mul]
-      rw [add_mul]
-      rw [_root_.mul_sub]
-      rw [_root_.mul_sub]
-
-      simp only [one_mul, mul_one]
-
-      rw [← exp_add]
-      simp
-
-      -- done, now lots of annoying conversion props
-
-      . apply _root_.ne_of_gt
-        refine Right.add_pos_of_nonneg_of_pos B ?inl.intro.e_a.e_r.h.h.hb
-        simp -- rexp (↑↑den / ↑↑num) + 1 ≠ 0
-      . apply _root_.ne_of_gt
-        refine Right.add_pos_of_pos_of_nonneg ?inl.intro.e_a.e_r.h.ha A
-        simp -- 1 + rexp (-(↑↑den / ↑↑num)) ≠ 0
       . simp
         rw [div_nonneg_iff]
         left
@@ -771,8 +759,6 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
       right
       left
       rw [division_def]
-    subst gam
-    simp
     rw [avoid_double_counting]
     rw [ENNReal.mul_inv]
     . simp
@@ -833,42 +819,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) (gam : t = (num :
 
       congr 1
 
-      -- end of 3rd rewrite
-
-      -- The key rewrite starts now
-
-      rw [← division_def]
-      rw [div_eq_iff]
-      rw [mul_comm]
-      rw [← mul_assoc]
-      rw [← division_def]
-
-
-      apply Eq.symm
-      rw [div_eq_iff]
-
-      rw [mul_add]
-      rw [_root_.sub_mul]
-      rw [_root_.sub_mul]
-      rw [add_mul]
-      rw [_root_.mul_sub]
-      rw [_root_.mul_sub]
-
-      simp only [one_mul, mul_one]
-
-      rw [← exp_add]
-      simp
-
-      -- done, now lots of annoying conversion props
-
-      . apply _root_.ne_of_gt
-        apply Right.add_pos_of_nonneg_of_pos
-        exact B
-        simp
-      . apply _root_.ne_of_gt
-        apply Right.add_pos_of_pos_of_nonneg
-        simp
-        exact A
+      rw [laplace_normalizer_swap]
       . simp
         rw [div_nonneg_iff]
         left
