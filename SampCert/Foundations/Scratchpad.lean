@@ -747,3 +747,12 @@ example (a b : ℝ) :
 example (a : ℝ) (h : a > 0) :
   a ≠ 0 := by
   exact _root_.ne_of_gt h
+
+
+example (a b c : ENNReal) (h1 : a ≤ b) (h2 : b < c) :
+  a < c := by
+  exact LE.le.trans_lt h1 h2
+
+example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
+  (∑' x, f x) ≤ ∑' x, g x := by
+  exact ENNReal.tsum_le_tsum h

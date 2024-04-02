@@ -21,7 +21,7 @@ noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int �
   return (Y,C)
 
 @[simp]
-theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℕ) :
+theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
   @ite ENNReal (x = ↑n) (propDecidable (x = ↑n)) 0
   (@ite ENNReal (↑n = x) (Int.instDecidableEqInt (↑n) x)
   (ENNReal.ofReal ((rexp ((t : ℝ))⁻¹ - 1) / (rexp ((t : ℝ))⁻¹ + 1) * rexp (-(Complex.abs ↑x / ↑↑t))) *
@@ -36,14 +36,17 @@ theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℕ) :
     contradiction
 
 @[simp]
-theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℕ) :
+theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
   (DiscreteGaussianSampleLoop num den t) (n, true) =
-    ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1) * rexp (-(n / t))) *
-    ENNReal.ofReal (rexp (-((n * t * den - num) ^ 2 / ((2 : ℕ+) * num * t ^ 2 * den)))) := by
+    ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1) * rexp (-(Int.natAbs n / t))) *
+    ENNReal.ofReal (rexp (-((((Int.natAbs n) * t * den - num) : NNReal) ^ 2 / ((2 : ℕ+) * ↑↑num * t ^ 2 * ↑↑den)))) := by
   simp [DiscreteGaussianSampleLoop, tsum_bool]
   rw [ENNReal.tsum_eq_add_tsum_ite (n : ℤ)]
   simp (config := { contextual := true })
-  sorry
+  congr
+  rw [← Complex.int_cast_abs]
+  rw [cast_natAbs]
+  simp
 
 theorem Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
@@ -59,5 +62,8 @@ noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
-  ENNReal.ofReal ((exp (- x^2 / (2 * ((num : ℝ) / (den : ℝ))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : ℝ) / (den : ℝ))^2)))) := by
+  ENNReal.ofReal ((exp (- x^2 / (2 * ((num : NNReal) / (den : NNReal))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : NNReal) / (den : NNReal))^2)))) := by
   simp [DiscreteGaussianSample, ENNReal.tsum_prod', tsum_bool]
+  rw [ENNReal.tsum_eq_add_tsum_ite (x : ℤ)]
+  simp (config := { contextual := true })
+  sorry

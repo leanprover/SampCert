@@ -597,8 +597,17 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
   (1 - rexp (-(↑↑den / ↑↑num))) * (1 + rexp (-(↑↑den / ↑↑num)))⁻¹ =
   (rexp (↑↑den / ↑↑num) - 1) * (rexp (↑↑den / ↑↑num) + 1)⁻¹ := by
 
-  have A : rexp (↑↑den / ↑↑num) + 1 ≠ 0 := sorry
-  have B : 1 + rexp (-(↑↑den / ↑↑num)) ≠ 0 := sorry
+  have X : 0 ≤ rexp (-(↑↑den / ↑↑num)) := by apply exp_nonneg (-(↑↑den / ↑↑num))
+  have Y : 0 ≤ rexp ((↑↑den / ↑↑num)) := by apply exp_nonneg ((↑↑den / ↑↑num))
+
+  have A : rexp (↑↑den / ↑↑num) + 1 ≠ 0 := by
+    apply _root_.ne_of_gt
+    apply Right.add_pos_of_nonneg_of_pos Y
+    simp
+  have B : 1 + rexp (-(↑↑den / ↑↑num)) ≠ 0 := by
+    apply _root_.ne_of_gt
+    apply Right.add_pos_of_pos_of_nonneg _ X
+    simp
 
   rw [← division_def]
   rw [div_eq_iff B]
@@ -623,7 +632,7 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
 
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
-  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : ℝ) / (den : ℝ))) - 1) / (exp (1/((num : ℝ) / (den : ℝ))) + 1)) * (exp (- (abs x / ((num : ℝ) / (den : ℝ)))))) := by
+  (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
   simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SubPMF.bind_apply,
      decide_eq_true_eq, ENNReal.summable,
     Bool.forall_bool, and_self, tsum_prod', tsum_bool, IsEmpty.forall_iff, ↓reduceIte, tsum_zero,
@@ -846,3 +855,94 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       simp
     . left
       simp
+
+@[simp]
+theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
+  ∑' x : ℤ, (DiscreteLaplaceSample num den) x = 1 := by
+  simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SubPMF.bind_apply]
+  have A := DiscreteLaplaceSampleLoop_normalizes num den
+  conv =>
+    left
+    right
+    intro x
+    right
+    intro a
+    rw [prob_until_apply_norm _ _ _ A]
+  simp only [ENNReal.tsum_prod']
+
+  -- Commuting the integer and natural summand makes the proof simpler
+  rw [ENNReal.tsum_comm]
+  conv =>
+    left
+    right
+    intro b
+    rw [ENNReal.tsum_comm]
+
+  simp only [decide_eq_true_eq, tsum_bool, IsEmpty.forall_iff, ↓reduceIte, forall_true_left,
+    ite_not, ite_mul, zero_mul, SubPMF.pure_apply, mul_ite, mul_one, mul_zero, tsum_ite_eq]
+
+  conv =>
+    left
+    right
+    right
+    intro b
+    rw [ENNReal.tsum_eq_add_tsum_ite (- (b : ℤ))]
+
+  -- superb!
+  simp (config := { contextual := true }) only [reduceIte]
+  simp only [ite_self, tsum_zero, add_zero]
+
+  have B : ∀ a, (@ite ENNReal (a = 0) (instDecidableEqNat a 0) 0
+  (DiscreteLaplaceSampleLoop num den (true, a) *
+    (∑' (b : ℕ), DiscreteLaplaceSampleLoop num den (false, b) +
+        ∑' (b : ℕ), if b = 0 then 0 else DiscreteLaplaceSampleLoop num den (true, b))⁻¹))
+        = (@ite ENNReal (a = 0) (instDecidableEqNat a 0) 0
+    (DiscreteLaplaceSampleLoop num den (true, a))) * ((∑' (b : ℕ), DiscreteLaplaceSampleLoop num den (false, b) +
+        ∑' (b : ℕ), if b = 0 then 0 else DiscreteLaplaceSampleLoop num den (true, b))⁻¹) := by
+    intro a
+    simp
+
+  conv =>
+    left
+    right
+    right
+    intro a
+    rw [B]
+  clear B
+
+  rw [ENNReal.tsum_mul_right]
+  rw [ENNReal.tsum_mul_right]
+  rw [← add_mul]
+
+  rw [ENNReal.mul_inv_cancel]
+  . simp
+    intro _
+    existsi 1
+    simp
+    rw [not_or]
+    simp
+    constructor
+    . apply exp_pos (-(↑↑den / ↑↑num))
+    . rw [div_pos_iff]
+      left
+      simp
+  . rw [← @ENNReal.tsum_add]
+    rw [ne_iff_lt_or_gt]
+    left
+    have B : (∑' (a : ℕ), (DiscreteLaplaceSampleLoop num den (false, a) + if a = 0 then 0 else DiscreteLaplaceSampleLoop num den (true, a))) ≤ (∑' (x : Bool × ℕ), DiscreteLaplaceSampleLoop num den x) := by
+      rw [ENNReal.tsum_prod']
+      rw [ENNReal.tsum_comm]
+      conv =>
+        right
+        right
+        intro b
+        rw [tsum_bool]
+      apply ENNReal.tsum_le_tsum
+      intro a
+      split
+      . simp
+      . simp
+
+    have E : (∑' (x : Bool × ℕ), DiscreteLaplaceSampleLoop num den x) < ⊤ := by simp
+
+    apply LE.le.trans_lt B E
