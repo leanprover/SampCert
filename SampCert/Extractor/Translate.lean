@@ -28,7 +28,7 @@ def IsWFMonadic (e: Expr) : MetaM Bool :=
   | .app (.const ``RandomM ..) _ => return true
   | .app .. => return true -- Need to work out details of this one, related to translation of dependent types
   | .forallE _ _ range _ => IsWFMonadic range
-  | _ => throwError "IsWFMonadic {e}"
+  | _ => return false -- throwError "IsWFMonadic {e}"
 
 def chopLambda (e : Expr) : Expr :=
   match e with
@@ -115,6 +115,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``OfScientific.ofScientific => toDafnyExpr dname env args[4]!
       | ``PNat.val => toDafnyExpr dname env args[0]!
       | ``Subtype.mk => toDafnyExpr dname env args[2]!
+      | ``Int.sub => return .binop .substraction (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
       | _ =>
         if ← IsWFMonadic info.type
         then
