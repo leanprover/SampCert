@@ -756,7 +756,10 @@ example (a b c : ENNReal) (h1 : a ≤ b) (h2 : b < c) :
 example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
   (∑' x, f x) ≤ ∑' x, g x := by
   exact ENNReal.tsum_le_tsum h
-
-example (x y : ℕ) (h : y ≠ 0) :
-  (@HDiv.hDiv ℕ ℕ ℕ instHDiv x y) * (y : ℝ) = x := by
   
+ 
+example (x : ℤ) :
+  (x^2 : ℕ) ≥ 0 := by
+  sorry 
+  
+#check HPow
