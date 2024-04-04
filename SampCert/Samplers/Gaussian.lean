@@ -147,13 +147,126 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
   rexp (-((Int.natAbs x) / ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1))) *
     rexp (-((Int.natAbs (Int.sub (|x| * (@HDiv.hDiv ℤ ℤ ℤ instHDiv num den + 1) * den ^ 2) (num ^ 2))) ^ 2 /
           ((2 : ℕ+) * num ^ 2 * ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2 * den ^ 2))))
-  = ENNReal.ofReal (rexp (-((num ^ 2 * ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2) / (2 * den ^ 2)))) *
+  = ENNReal.ofReal (rexp (-((num ^ 2) / (2 * den ^ 2 * ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) *
       ENNReal.ofReal (rexp (- ((x ^ 2 * den ^ 2) /(2 * num ^ 2)))) := by
-  sorry
+
+  let τ := (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ)
+  have Tau : (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ) = τ := rfl
+  rw [Tau]
+
+  rw [← ENNReal.ofReal_mul]
+  . congr 1
+    simp [← exp_add]
+    simp [division_def]
+    rw [(neg_add _ _).symm]
+    rw [(neg_add _ _).symm]
+    congr 1
+    rw [Tau]
+    have A : ∀ x : ℤ, (Int.natAbs x)^2 = (x : ℝ)^2 := by
+      intro x
+      rw [cast_natAbs]
+      rw [sq_eq_sq_iff_abs_eq_abs]
+      simp
+    rw [A]
+    clear A
+    have A : ∀ x y : ℤ, ((Int.sub x y) : ℝ) = (x : ℝ) - (y : ℝ) := by
+      intro x y
+      rw [← @Int.cast_sub]
+      rfl
+    rw [A]
+    clear A
+
+    rw [pow_two]
+    rw [sub_mul]
+    rw [mul_sub]
+    rw [mul_sub]
+    rw [sub_mul]
+    rw [sub_mul]
+    rw [sub_mul]
+    simp
+
+    have X : (@HDiv.hDiv ℤ ℤ ℤ instHDiv num den) + (1 : ℝ) = (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ) := by
+      rfl
+    rw [X]
+    clear X
+
+    have X : ((Int.natAbs x) : ℝ) = Complex.abs (x : ℂ) := by
+      rw [cast_natAbs]
+      simp
+    rw [X]
+    clear X
+    rw [Tau]
+
+    let α := (num : ℝ) ^ 2
+    have Alpha : ((num : ℕ+) : ℝ) ^ 2 = α := rfl
+    rw [Alpha]
+
+    let β := (den : ℝ) ^ 2
+    have Beta : ((den : ℕ+) : ℝ) ^ 2  = β := rfl
+    rw [Beta]
+
+    let y := Complex.abs (x : ℂ)
+    have Y : Complex.abs (x : ℂ)  = y := rfl
+    rw [Y]
+
+    have A : y * τ * β * α * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
+      = y * ((2: ℕ+): ℝ)⁻¹ * τ⁻¹ := by
+      sorry
+    rw [A]
+    clear A
+
+    have B : α * (y * τ * β) * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
+      = y * ((2: ℕ+): ℝ)⁻¹ * τ⁻¹ := by
+      sorry
+    rw [B]
+    clear B
+
+    have C : (y * τ * β * (y * τ * β) * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹))))
+      = y ^ 2 * β * α⁻¹ * (((2: ℕ+): ℝ))⁻¹ := by
+      sorry
+    rw [C]
+    clear C
+
+    have D : α * α * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
+      = α * β⁻¹ * (τ ^ 2)⁻¹ * (((2: ℕ+): ℝ))⁻¹ := by
+      sorry
+    rw [D]
+    clear D
+
+    rw [(sub_add (_ - _) _ _).symm]
+    rw [sub_eq_neg_add]
+    rw [sub_eq_neg_add]
+    rw [← add_assoc]
+    rw [← add_assoc]
+    rw [← add_assoc]
+
+    have E : y * τ⁻¹ + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) = 0 := by
+      sorry
+    rw [E]
+    rw [zero_add]
+
+    rw [add_comm]
+    congr 1
+    . rw [← mul_assoc]
+      rw [← mul_assoc]
+      congr 1
+      rw [mul_comm]
+      rw [← mul_assoc]
+      congr 1
+      rw [mul_comm]
+    . rw [← mul_assoc]
+      congr 3
+      simp
+      sorry
+
+  . sorry -- 0 ≤ ...
 
 theorem alg_auto' (num den : ℕ+) (x : ℤ) :
   -((x : ℝ) ^ 2 * (den : ℝ) ^ 2 / ((2 : ℝ) * (num : ℝ) ^ 2)) = -(x : ℝ) ^ 2 / ((2 : ℝ) * ((num : ℝ) ^ 2 / (den : ℝ) ^ 2)) := by
-  sorry
+  simp [division_def]
+  rw [mul_assoc]
+  congr 1
+  rw [mul_assoc]
 
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
@@ -199,8 +312,8 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
         rw [ENNReal.div_eq_inv_mul]
         rw [← mul_assoc]
         rw [ENNReal.mul_inv]
-        have A : ENNReal.ofReal (rexp (-(↑↑num ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2 / (2 * ↑↑den ^ 2)))) ≠ 0 := sorry
-        have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2 / (2 * ↑↑den ^ 2)))) ≠ ⊤ := sorry
+        have A : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) ≠ 0 := sorry
+        have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2)))) ≠ ⊤ := sorry
         . conv =>
             left
             left
@@ -233,42 +346,3 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
     sorry -- ≠ ⊤
   . left
     sorry -- ≠ 0
-
-  -- rw [← ENNReal.ofReal_mul]
-  -- conv =>
-  --   left
-  --   right
-  --   right
-  --   right
-  --   intro a
-  --   rw [← ENNReal.ofReal_mul sorry]
-
-  -- rw [← ENNReal.ofReal_tsum_of_nonneg]
-  -- rw [ENNReal.ofReal_inv_of_pos]
-  -- rw [← ENNReal.ofReal_mul]
-
-  -- congr
-  -- . rw [mul_assoc]
-  --   rw [← exp_add]
-
-  --   let γ := (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ)
-  --   have G : γ = (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ) := rfl
-  --   rw [← G]
-
-  --   let α := (num : ℝ) ^ 2
-  --   have A : α = (num : ℝ) ^ 2 := rfl
-  --   rw [← A]
-
-  --   let β := (den : ℝ) ^ 2
-  --   have B : β = (den : ℝ) ^ 2 := rfl
-  --   rw [← B]
-
-  --   sorry
-
-  -- . sorry
-  -- . sorry
-  -- . sorry
-  -- . sorry
-
-  -- . sorry
-  -- . sorry
