@@ -453,11 +453,16 @@ theorem alg_auto' (num den : ℕ+) (x : ℤ) :
   rw [mul_assoc]
 
 @[simp]
+theorem summable_gauss_core (num : PNat) (den : PNat) :
+  Summable fun (i : ℤ) => rexp (-i ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) := by
+  sorry
+
+@[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
   ENNReal.ofReal ((exp (- x^2 / (2 * ((num : NNReal) / (den : NNReal))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : NNReal) / (den : NNReal))^2)))) := by
   simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SubPMF.bind_apply]
-  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (sorry : 0 < ↑num / ↑den + 1) }
+  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) }
 
   conv =>
     left
@@ -496,8 +501,12 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
         rw [ENNReal.div_eq_inv_mul]
         rw [← mul_assoc]
         rw [ENNReal.mul_inv]
-        have A : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) ≠ 0 := sorry
-        have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2)))) ≠ ⊤ := sorry
+        have A : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) ≠ 0 := by
+          refine zero_lt_iff.mp ?ha.h.a
+          simp
+          simp [exp_pos]
+        have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2)))) ≠ ⊤ := by
+          exact ENNReal.ofReal_ne_top
         . conv =>
             left
             left
@@ -517,17 +526,40 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
               rw [alg_auto']
             rw [← ENNReal.ofReal_tsum_of_nonneg]
             . intro n
-              apply exp_nonneg
-            . sorry -- Summable fun i => rexp (-↑i ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2)))
+              simp [exp_nonneg]
+            . simp
         . left
           simp
           simp [exp_pos]
         . left
-          sorry -- ≠ ⊤
-      . sorry
-    . sorry -- ≠ 0
-    . sorry -- ≠ 0
+          exact ENNReal.ofReal_ne_top
+      . apply tsum_pos
+        . simp
+        . intro i
+          simp [exp_nonneg]
+        . simp [exp_pos]
+        . exact 0
+    . refine pos_iff_ne_zero.mp ?h0.a
+      simp
+      rw [div_pos_iff]
+      left
+      simp
+      constructor
+      . apply cast_add_one_pos
+      . apply Right.add_pos_of_pos_of_nonneg
+        . simp [exp_pos]
+        . simp
+    . exact ENNReal.ofReal_ne_top
   . left
-    sorry -- ≠ ⊤
+    apply zero_lt_iff.mp
+    simp
+    rw [div_pos_iff]
+    left
+    simp
+    constructor
+    . apply cast_add_one_pos
+    . apply Right.add_pos_of_pos_of_nonneg
+      . simp [exp_pos]
+      . simp
   . left
-    sorry -- ≠ 0
+    exact ENNReal.ofReal_ne_top
