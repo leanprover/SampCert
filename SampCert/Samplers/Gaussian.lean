@@ -154,6 +154,11 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
   have Tau : (@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + (1 : ℝ) = τ := rfl
   rw [Tau]
 
+  have Tau_ne0 : τ ≠ 0 := by
+    rw [ne_iff_lt_or_gt]
+    right
+    apply cast_add_one_pos
+
   rw [← ENNReal.ofReal_mul]
   . congr 1
     simp [← exp_add]
@@ -248,8 +253,7 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
       rw [pow_two]
       rw [mul_inv]
       rw [← mul_assoc]
-      have X : τ ≠ 0 := by sorry
-      rw [mul_inv_cancel X]
+      rw [mul_inv_cancel Tau_ne0]
       simp
 
     rw [A]
@@ -287,8 +291,7 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
       rw [pow_two]
       rw [mul_inv]
       rw [← mul_assoc]
-      have X : τ ≠ 0 := by sorry
-      rw [mul_inv_cancel X]
+      rw [mul_inv_cancel Tau_ne0]
       simp
 
     rw [B]
@@ -296,7 +299,67 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
     have C : (y * τ * β * (y * τ * β) * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹))))
       = y ^ 2 * β * α⁻¹ * (((2: ℕ+): ℝ))⁻¹ := by
-      sorry
+      rw [pow_two]
+      rw [pow_two]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      congr 1
+      rw [mul_comm]
+      conv =>
+        right
+        rw [mul_comm]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      congr 1
+      rw [mul_comm]
+      congr 1
+      conv =>
+        left
+        right
+        right
+        right
+        right
+        rw [← mul_assoc]
+        rw [mul_comm]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      congr 1
+      rw [mul_inv]
+      rw [← mul_assoc]
+      conv =>
+        left
+        left
+        rw [mul_assoc]
+        right
+        rw [mul_comm]
+        rw [(mul_inv_cancel Tau_ne0)]
+      rw [mul_one]
+      conv =>
+        left
+        left
+        left
+        rw [mul_assoc]
+        right
+        simp
+      rw [mul_one]
+      rw [(mul_inv_cancel Tau_ne0)]
+      simp
+
     rw [C]
     clear C
 
@@ -347,7 +410,10 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
           right
           rw [mul_comm]
       rw [(add_mul _ _ _).symm]
-      have X : (1/(2: ℕ+)) + (1/(2 : ℕ+)) = (1 : ℝ) := sorry
+      have X : (1/(2: ℕ+)) + (1/(2 : ℕ+)) = (1 : ℝ) := by
+        simp
+        rw [← two_mul]
+        exact mul_inv_cancel_of_invertible 2
       conv =>
         left
         right
@@ -376,7 +442,8 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
       rw [sq_eq_sq_iff_abs_eq_abs]
       simp
 
-  . sorry -- 0 ≤ ...
+  . simp [exp_nonneg]
+
 
 theorem alg_auto' (num den : ℕ+) (x : ℤ) :
   -((x : ℝ) ^ 2 * (den : ℝ) ^ 2 / ((2 : ℝ) * (num : ℝ) ^ 2)) = -(x : ℝ) ^ 2 / ((2 : ℝ) * ((num : ℝ) ^ 2 / (den : ℝ) ^ 2)) := by
@@ -453,10 +520,11 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
               apply exp_nonneg
             . sorry -- Summable fun i => rexp (-↑i ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2)))
         . left
-          sorry -- ≠ 0
+          simp
+          simp [exp_pos]
         . left
-          sorry -- ≠ 0
-      . sorry -- 0 < ...
+          sorry -- ≠ ⊤
+      . sorry
     . sorry -- ≠ 0
     . sorry -- ≠ 0
   . left
