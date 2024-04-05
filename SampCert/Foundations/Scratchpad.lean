@@ -796,3 +796,23 @@ example (a b c d: ℝ) :
 example (a b : ℝ) :
   a - b = (-b) + a := by
   exact sub_eq_neg_add a b
+
+example (a b : ℝ) :
+  (-a) + (-b) = - (a + b) := by
+  exact (neg_add a b).symm
+
+example (a b c d : ℝ) :
+  a * c + b * c = (a + b) * c := by
+  exact (add_mul a b c).symm
+
+example (a : ℝ) :
+  a⁻¹ = 1 / a := by
+  exact inv_eq_one_div a
+
+example :
+  (0 : ENNReal) = ENNReal.ofReal 0 := by
+  exact ofReal_zero.symm
+
+example (a b : ℝ) :
+  (-a) / b = - (a/b) := by
+  exact neg_div b a

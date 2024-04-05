@@ -9,6 +9,8 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
+--import Mathlib.NumberTheory.ZetaFunction
+import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 
 open Classical PMF Nat Real
 
@@ -455,7 +457,122 @@ theorem alg_auto' (num den : ℕ+) (x : ℤ) :
 @[simp]
 theorem summable_gauss_core (num : PNat) (den : PNat) :
   Summable fun (i : ℤ) => rexp (-i ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) := by
-  sorry
+  conv =>
+    right
+    intro i
+    --rw [neg_div]
+    --rw [exp_neg]
+    rw [division_def]
+  have A := @summable_exp_mul_sq (Complex.I / (2 * π * (num ^ 2 / den ^ 2)))
+  have B : ∀ n : ℤ, (π : ℂ) * Complex.I * ↑n ^ 2 * (Complex.I / (2 * ↑π * (↑↑num ^ 2 / ↑↑den ^ 2)))
+    = -n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2)) := by
+    intro n
+    rw [division_def]
+    rw [mul_inv]
+    rw [mul_inv]
+    rw [division_def]
+    rw [mul_inv]
+    rw [division_def]
+    rw [← mul_rotate]
+    conv =>
+      rw [mul_comm]
+    rw [neg_mul_comm]
+    congr 1
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_rotate]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    rw [← mul_assoc]
+    simp only [Complex.I_mul_I, neg_mul, one_mul, inv_inv, mul_inv_rev, neg_inj]
+    rw [mul_assoc]
+    rw [mul_assoc]
+    rw [mul_assoc]
+    rw [mul_comm]
+    conv =>
+      right
+      rw [← mul_assoc]
+    congr 1
+    rw [mul_comm]
+    rw [mul_assoc]
+    rw [mul_assoc]
+    have B : (π : ℂ) ≠ 0 := by
+      refine Complex.ofReal_ne_zero.mpr ?_
+      exact pi_ne_zero
+    rw [mul_inv_cancel B]
+    simp
+    rw [mul_comm]
+
+  simp [B] at A
+  clear B
+  conv =>
+    right
+    intro i
+    rw [← division_def]
+
+  have C : ∀ n : ℤ, Complex.exp (-n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) = rexp (-n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) := by
+    intro n
+    simp
+
+  have D : 0 < (Complex.I / (2 * (π : ℂ) * ((num : ℂ) ^ 2 / (den : ℂ) ^ 2))).im := by
+    rw [Complex.div_im]
+    simp
+    rw [division_def]
+    conv =>
+      right
+      right
+      rw [division_def]
+    rw [mul_inv]
+    rw [mul_pos_iff]
+    left
+    constructor
+    . rw [mul_pos_iff]
+      left
+      simp
+      constructor
+      . exact pi_pos
+      . rw [division_def]
+        simp
+        have X : (num ^ 2: ℂ).im = 0 := by
+          rw [pow_two]
+          simp
+        rw [X]
+        simp
+        have Y : ∀ n : ℕ+, (n ^ 2: ℂ).re = n ^ 2 := by
+          intro n
+          rw [pow_two]
+          simp
+          rw [pow_two]
+        rw [Y]
+        rw [Y]
+        simp
+        rw [div_pos_iff]
+        left
+        simp
+    . simp
+      rw [mul_pos_iff]
+      left
+      simp
+      exact pi_ne_zero
+
+  have Y := A D
+  clear A D
+  revert Y
+  conv =>
+    left
+    right
+    intro n
+    rw [C]
+  clear C
+  intro Y
+
+  apply (IsROrC.summable_ofReal ℂ).mp Y
+
+
 
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
