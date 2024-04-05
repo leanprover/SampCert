@@ -211,13 +211,86 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
     have A : y * τ * β * α * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
       = y * ((2: ℕ+): ℝ)⁻¹ * τ⁻¹ := by
-      sorry
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      conv =>
+        right
+        rw [mul_assoc]
+      congr 1
+      simp [← mul_assoc]
+      conv =>
+        right
+        rw [mul_comm]
+      congr 1
+      rw [Tau] ; rw [Alpha] ; rw [Beta]
+      conv =>
+        left
+        left
+        left
+        rw [mul_assoc]
+        rw [mul_assoc]
+        right
+        rw [mul_comm]
+        rw [mul_assoc]
+        right
+        simp
+      rw [mul_one]
+      conv =>
+        left
+        rw [mul_assoc]
+        rw [mul_assoc]
+        right
+        rw [mul_comm]
+        rw [mul_assoc]
+        simp
+      rw [Tau]
+      rw [pow_two]
+      rw [mul_inv]
+      rw [← mul_assoc]
+      have X : τ ≠ 0 := by sorry
+      rw [mul_inv_cancel X]
+      simp
+
     rw [A]
     clear A
 
     have B : α * (y * τ * β) * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
       = y * ((2: ℕ+): ℝ)⁻¹ * τ⁻¹ := by
-      sorry
+      rw [mul_rotate]
+      rw [mul_assoc]
+      conv =>
+        left
+        right
+        rw [mul_assoc]
+        right
+        rw [mul_assoc]
+        right
+        rw [mul_comm]
+        rw [← mul_assoc]
+        simp
+      rw [mul_assoc]
+      conv =>
+        left
+        right
+        rw [← mul_assoc]
+        simp
+        rw [Tau]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      congr 1
+      rw [← mul_assoc]
+      conv =>
+        right
+        rw [mul_comm]
+      congr 1
+      rw [pow_two]
+      rw [mul_inv]
+      rw [← mul_assoc]
+      have X : τ ≠ 0 := by sorry
+      rw [mul_inv_cancel X]
+      simp
+
     rw [B]
     clear B
 
@@ -242,6 +315,7 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
     have E : y * τ⁻¹ + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) = 0 := by
       sorry
+
     rw [E]
     rw [zero_add]
 

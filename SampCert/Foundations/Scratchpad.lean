@@ -756,10 +756,43 @@ example (a b c : ENNReal) (h1 : a ≤ b) (h2 : b < c) :
 example (f g : ℕ → ENNReal) (h : ∀ x, f x ≤ g x) :
   (∑' x, f x) ≤ ∑' x, g x := by
   exact ENNReal.tsum_le_tsum h
-  
- 
+
+
+example (x : ℝ) :
+  x ^ 2 = x * x := by
+  apply pow_two
+
+example (x y : ℤ) :
+  |x - y|^2 = (x - y)^2 := by
+  simp only [sq_abs]
+
 example (x : ℤ) :
-  (x^2 : ℕ) ≥ 0 := by
-  sorry 
-  
-#check HPow
+  ((x^2) : ℝ) = (x : ℝ)^2 := by
+  simp?
+
+example (x : ℝ) :
+  |x|^2 = x^2 := by
+  simp only [sq_abs]
+
+example (x : ℤ) :
+  (Int.natAbs x)^2 = (x : ℝ)^2 := by
+  rw [cast_natAbs]
+  rw [sq_eq_sq_iff_abs_eq_abs]
+  simp
+
+example (x y : ℤ) :
+  ((Int.sub x y) : ℝ) = (x : ℝ) - (y : ℝ) := by
+  rw [← @Int.cast_sub]
+  rfl
+
+example (x y : ℝ) :
+  (-x) + (-y) = - (x + y) := by
+  exact (neg_add x y).symm
+
+example (a b c d: ℝ) :
+  (a - b) - (c - d) = a - b - c + d := by
+  exact (sub_add (a - b) c d).symm
+
+example (a b : ℝ) :
+  a - b = (-b) + a := by
+  exact sub_eq_neg_add a b
