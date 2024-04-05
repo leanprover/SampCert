@@ -302,7 +302,22 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
     have D : α * α * (β⁻¹ * ((τ ^ 2)⁻¹ * (α⁻¹ * (((2: ℕ+): ℝ))⁻¹)))
       = α * β⁻¹ * (τ ^ 2)⁻¹ * (((2: ℕ+): ℝ))⁻¹ := by
-      sorry
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_assoc]
+      congr 1
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      rw [← mul_assoc]
+      congr 1
+      rw [mul_assoc]
+      rw [mul_assoc]
+      rw [mul_comm]
+      rw [← mul_assoc]
+      rw [mul_assoc]
+      simp
+
     rw [D]
     clear D
 
@@ -314,7 +329,34 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
     rw [← add_assoc]
 
     have E : y * τ⁻¹ + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) + -(y * (((2: ℕ+): ℝ))⁻¹ * τ⁻¹) = 0 := by
-      sorry
+      rw [add_assoc]
+      rw [(neg_add _ _).symm]
+      conv =>
+        left
+        right
+        right
+        congr
+        . rw [mul_assoc]
+          rw [mul_comm]
+          rw [mul_assoc]
+          right
+          rw [mul_comm]
+        . rw [mul_assoc]
+          rw [mul_comm]
+          rw [mul_assoc]
+          right
+          rw [mul_comm]
+      rw [(add_mul _ _ _).symm]
+      have X : (1/(2: ℕ+)) + (1/(2 : ℕ+)) = (1 : ℝ) := sorry
+      conv =>
+        left
+        right
+        right
+        left
+        rw [inv_eq_one_div]
+      rw [X]
+      rw [one_mul]
+      simp
 
     rw [E]
     rw [zero_add]
@@ -331,7 +373,8 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
     . rw [← mul_assoc]
       congr 3
       simp
-      sorry
+      rw [sq_eq_sq_iff_abs_eq_abs]
+      simp
 
   . sorry -- 0 ≤ ...
 
