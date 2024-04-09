@@ -5,6 +5,15 @@ import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Order.Filter.AtTopBot
 import Mathlib.Data.ENNReal.Inv
 
+import Mathlib.Analysis.Fourier.PoissonSummation
+import Mathlib.Analysis.Distribution.SchwartzSpace
+import Mathlib.Analysis.SpecialFunctions.Gaussian
+import Mathlib.Analysis.Fourier.FourierTransform
+import Mathlib.Analysis.NormedSpace.Basic
+import Mathlib.Analysis.NormedSpace.Real
+import Mathlib.Topology.Defs.Filter
+
+
 noncomputable section
 
 open Classical Nat Finset BigOperators Real Set ENNReal
@@ -719,12 +728,6 @@ example (a b : ℝ) :
   (a / b)⁻¹ = b / a := by
   exact inv_div a b
 
-example (a b c d : ℝ) :
-  (a - b) * (c + d) = 42 := by
-  rw [mul_add]
-  rw [_root_.sub_mul]
-  rw [_root_.sub_mul]
-
 example (a b c : ℝ) (h : b ≠ 0):
   ((a / b) = c) ↔ (a = c * b) := by
   exact div_eq_iff h
@@ -733,7 +736,7 @@ example (a b c : ℝ) (h : b ≠ 0):
   ((a * b⁻¹) = c) ↔ (a = c * b) := by
   exact mul_inv_eq_iff_eq_mul₀ h
 
-#check Iff.symm (mul_inv_eq_iff_eq_mul₀ _)
+
 
 example (a b c : ℝ) (h : b ≠ 0):
   (a = c * b) ↔ ((a * b⁻¹) = c) := by
@@ -816,3 +819,124 @@ example :
 example (a b : ℝ) :
   (-a) / b = - (a/b) := by
   exact neg_div b a
+
+example (a b : ℝ) :
+  (-a) * b = a * (-b) := by
+  exact neg_mul_comm a b
+
+example (f : ℤ → ℝ) (h : Summable fun x => ((f x) : ℂ)) :
+  Summable fun x => f x := by
+  exact (IsROrC.summable_ofReal ℂ).mp h
+
+example (a b : ℂ) :
+  a⁻¹ * b = b / a := by
+  exact inv_mul_eq_div a b
+
+example (a : ℕ) :
+  (a : ℂ).im = 0 := by
+  exact?
+
+example (a : ℝ) :
+  Real.sqrt x = a ^ (2: ℝ)⁻¹ := by
+  sorry
+
+example (a b : ℝ) :
+  a * (-1 / b) = (-a) / b := by
+  rw [mul_div]
+  simp only [mul_neg, mul_one]
+
+
+def f (ss : ℝ) (x : ℝ) : ℂ := rexp (- (x^2) / (2 * ss))
+def g (ss : ℝ) (x : ℝ) : ℂ := (Real.sqrt (2 * π * ss)) * rexp ( - 2 * π^2 * ss * x^2)
+
+#check SchwartzMap.tsum_eq_tsum_fourierIntegral
+
+open FourierTransform GaussianFourier Filter Asymptotics
+
+#check _root_.fourier_transform_gaussian_pi
+
+#check Real.tsum_exp_neg_mul_int_sq
+
+instance blob : SchwartzMap ℝ ℂ where
+  toFun := f (4)
+  smooth' := sorry
+  decay' := sorry
+
+-- Very informative proof
+#check Complex.tsum_exp_neg_quadratic
+
+theorem Foo (ss : ℝ) :
+  42 = 43 := by
+
+  let f : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
+
+  have A : Continuous f := by
+    apply Complex.continuous_exp.comp
+    apply Continuous.div_const
+    apply Continuous.neg
+    apply Continuous.pow
+    exact Complex.continuous_ofReal
+
+  have B : 𝓕 f = fun x : ℝ ↦ (Real.sqrt (2 * π * ss)) * Complex.exp ( - 2 * π^2 * ss * x^2) := by
+    have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := sorry
+    have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
+    rw [mul_inv] at X
+    rw [mul_inv] at X
+    rw [neg_mul_comm] at X
+    rw [mul_assoc] at X
+    rw [neg_mul_eq_mul_neg] at X
+    rw [← mul_assoc] at X
+    have T : (π : ℂ) ≠ 0 := sorry
+    rw [mul_inv_cancel T] at X
+    simp at X
+    rw [← mul_inv] at X
+
+    rw [division_def] at X
+    revert X
+    conv =>
+      enter [1, 1, y, 1, x, 1, 1]
+      rw [mul_comm]
+      rw [← division_def]
+    conv =>
+      enter [1, 1, y, 1, x, 1]
+      rw [← neg_div]
+    conv =>
+      enter [1, 2, t, 2, 1]
+      rw [mul_inv]
+      simp
+      rw [← mul_assoc]
+      rw [← pow_two]
+    sorry
+
+  have C : f =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+    apply IsLittleO.isBigO
+    have P : (-(1 : ℂ) / (2 * ss)).re < 0 := sorry
+    have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-1 / (2 * ss)) P 0 (-2)
+    simp only [zero_mul, add_zero] at X
+    revert X
+    conv =>
+      enter [1, 2, x, 1]
+      rw [mul_comm]
+      rw [mul_div]
+      rw [mul_neg]
+      rw [mul_one]
+    intro X
+    trivial
+
+  have D : (𝓕 f) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+    apply IsLittleO.isBigO
+    rw [B]
+    apply IsLittleO.const_mul_left
+    have P : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := sorry
+    have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * ↑π ^ 2 * ss) P 0 (-2)
+    simp only [zero_mul, add_zero] at X
+    trivial
+
+  have E := Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay A one_lt_two C D
+
+
+
+
+theorem Bar :
+  42 = 43 := by
+  have A := SchwartzMap.tsum_eq_tsum_fourierIntegral
