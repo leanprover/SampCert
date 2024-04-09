@@ -9,10 +9,10 @@ noncomputable section
 open Classical Nat BigOperators Real
 open FourierTransform GaussianFourier Filter Asymptotics Complex
 
-def sg (ss : ℝ) : ℝ → ℂ := fun x : ℝ => rexp (- (x^2) / (2 * ss))
+def sg (ss μ : ℝ) : ℝ → ℂ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
 
-theorem SumExpBound (ss : ℝ) (h : ss > 0) (x : ℝ) :
-  (∑' (n : ℤ), sg ss (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss) n * (fourier n) (x : UnitAddCircle) := by
+theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
+  (∑' (n : ℤ), sg ss 0 (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss 0) n * (fourier n) (x : UnitAddCircle) := by
 
   let g : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
 
@@ -90,9 +90,42 @@ theorem SumExpBound (ss : ℝ) (h : ss > 0) (x : ℝ) :
 
   have E := Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay A one_lt_two C D
 
-  have F : (sg ss) = g := by
+  have F : (sg ss 0) = g := by
     ext x
     simp [sg]
   rw [F]
 
   apply E
+
+def sg' (ss μ : ℝ) : ℝ → ℝ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
+
+theorem SGBound (ss μ : ℝ) (h : ss > 0) :
+  (∑' (n : ℤ), sg' ss μ n) ≤ ∑' (n : ℤ), sg' ss 0 n := by
+  have A : (∑' (n : ℤ), sg' ss μ n) = (∑' (n : ℤ), sg' ss 0 ((- μ) + n)) := by
+    apply tsum_congr
+    intro b
+    simp [sg, sg']
+    congr
+    rw [neg_add_eq_sub]
+  have B : (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) = |∑' (n : ℤ), sg' ss 0 (-μ + ↑n)| := by
+    rw [_root_.abs_of_nonneg]
+    apply tsum_nonneg
+    intro i
+    simp [sg', exp_nonneg]
+  have C : |∑' (n : ℤ), sg' ss 0 (-μ + ↑n)| = Complex.abs (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) := by
+    rw [← abs_ofReal]
+    congr
+    rw [ofReal_tsum]
+  have D : Complex.abs (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) = Complex.abs (∑' (n : ℤ), sg ss 0 (-μ + ↑n)) := by
+    congr
+  have E : Complex.abs (∑' (n : ℤ), sg ss 0 (-μ + ↑n)) = Complex.abs (∑' (n : ℤ), 𝓕 (sg ss 0) n * (fourier n) (-μ : UnitAddCircle)) := by
+    have X := SGPoi ss h (-μ)
+    congr 1
+  rw [A, B, C, D, E]
+  clear A B C D E
+
+
+
+
+
+  sorry

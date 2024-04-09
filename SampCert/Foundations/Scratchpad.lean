@@ -17,6 +17,7 @@ import Mathlib.Topology.Defs.Filter
 noncomputable section
 
 open Classical Nat Finset BigOperators Real Set ENNReal
+open FourierTransform GaussianFourier Filter Asymptotics Complex
 
 #check Summable.countable_support_ennreal
 
@@ -765,17 +766,17 @@ example (x : ℝ) :
   x ^ 2 = x * x := by
   apply pow_two
 
-example (x y : ℤ) :
-  |x - y|^2 = (x - y)^2 := by
-  simp only [sq_abs]
+-- example (x y : ℤ) :
+--   |x - y|^2 = (x - y)^2 := by
+--   simp only [sq_abs]
 
 example (x : ℤ) :
   ((x^2) : ℝ) = (x : ℝ)^2 := by
   simp?
 
-example (x : ℝ) :
-  |x|^2 = x^2 := by
-  simp only [sq_abs]
+-- example (x : ℝ) :
+--   |x|^2 = x^2 := by
+--   simp only [sq_abs]
 
 example (x : ℤ) :
   (Int.natAbs x)^2 = (x : ℝ)^2 := by
@@ -845,92 +846,15 @@ example (a b : ℝ) :
   rw [mul_div]
   simp only [mul_neg, mul_one]
 
-open FourierTransform GaussianFourier Filter Asymptotics Complex
+example (f : ℤ → ℝ) (h : ∀ n : ℤ, f n ≥ 0) :
+  |∑' n : ℤ, f n| = ∑' n : ℤ, f n := by
+  refine _root_.abs_of_nonneg ?h
+  exact tsum_nonneg h
 
-def f (ss : ℝ) (x : ℝ) : ℂ := rexp (- (x^2) / (2 * ss))
+example (f : ℤ → ℝ) (h : ∀ n : ℤ, f n ≥ 0) :
+  Complex.abs (∑' n : ℤ, (f n : ℂ)) = ∑' n : ℤ, f n := by
+  sorry
 
-theorem Foo (ss : ℝ) (h : ss > 0) (x : ℝ) :
-  (∑' (n : ℤ), f ss (x + n)) = ∑' (n : ℤ), 𝓕 (f ss) n * (fourier n) (x : UnitAddCircle) := by
-
-  let g : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
-
-  have A : Continuous g := by
-    apply Complex.continuous_exp.comp
-    apply Continuous.div_const
-    apply Continuous.neg
-    apply Continuous.pow
-    exact Complex.continuous_ofReal
-
-  have B : 𝓕 g = fun x : ℝ ↦ (((π)⁻¹ * (↑ss)⁻¹ * (2 : ℂ)⁻¹) ^ (2 : ℂ)⁻¹)⁻¹ * Complex.exp ( - 2 * π^2 * ss * x^2) := by
-    have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
-      simp [h, pi_pos]
-
-    have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
-    rw [mul_inv] at X
-    rw [mul_inv] at X
-    rw [neg_mul_comm] at X
-    rw [mul_assoc] at X
-    rw [neg_mul_eq_mul_neg] at X
-    rw [← mul_assoc] at X
-    have T : (π : ℂ) ≠ 0 := by
-      simp [pi_ne_zero]
-    rw [mul_inv_cancel T] at X
-    simp at X
-    rw [← mul_inv] at X
-
-    simp only [g]
-
-    have R : (fun (x : ℝ) => cexp (-(((2 : ℂ) * ss)⁻¹ * x ^ 2))) = (fun (x : ℝ) => cexp (-x ^ 2 / (2 * ss))) := by
-      ext y
-      congr
-      rw [neg_div]
-      congr 1
-      rw [mul_comm]
-      rw [division_def]
-
-    rw [R] at X
-    rw [X]
-    ext t
-    congr 1
-    . simp
-      ring_nf
-    . rw [division_def]
-      simp
-      ring_nf
-
-  have C : g =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
-    apply IsLittleO.isBigO
-    have P : (-(1 : ℂ) / (2 * ss)).re < 0 := by
-      simp [div_eq_mul_inv, h]
-
-    have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-1 / (2 * ss)) P 0 (-2)
-    simp only [zero_mul, add_zero] at X
-    revert X
-    conv =>
-      enter [1, 2, x, 1]
-      rw [mul_comm]
-      rw [mul_div]
-      rw [mul_neg]
-      rw [mul_one]
-    intro X
-    trivial
-
-  have D : (𝓕 g) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
-    apply IsLittleO.isBigO
-    rw [B]
-    apply IsLittleO.const_mul_left
-    have P : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := by
-      simp [h, pow_two, pi_ne_zero]
-
-    have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * ↑π ^ 2 * ss) P 0 (-2)
-    simp only [zero_mul, add_zero] at X
-    trivial
-
-  have E := Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay A one_lt_two C D
-
-  have F : (f ss) = g := by
-    ext x
-    simp [f]
-  rw [F]
-
-  apply E
+example (a : ℝ) :
+  Complex.abs a = |a| := by
+  exact abs_ofReal a
