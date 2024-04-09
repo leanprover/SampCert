@@ -124,6 +124,14 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   rw [A, B, C, D, E]
   clear A B C D E
 
+  have CRUX : Complex.abs (∑' (i : ℤ), 𝓕 (sg ss 0) i * (@fourier 1 i) (-μ)) ≤ ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ)) := sorry
+
+  rw [← Complex.norm_eq_abs]
+  have X : Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := sorry
+  have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) X
+  simp only [smul_neg,  ofReal_one, div_one,
+    Complex.norm_eq_abs, norm_mul] at Y
+
   have A' : (∑' (n : ℤ), sg' ss 0 ↑n) = ∑' (n : ℤ), sg ss 0 ↑n := by
     rw [ofReal_tsum]
     congr
