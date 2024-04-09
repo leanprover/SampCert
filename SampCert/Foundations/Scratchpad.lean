@@ -845,40 +845,26 @@ example (a b : ℝ) :
   rw [mul_div]
   simp only [mul_neg, mul_one]
 
+open FourierTransform GaussianFourier Filter Asymptotics Complex
 
 def f (ss : ℝ) (x : ℝ) : ℂ := rexp (- (x^2) / (2 * ss))
-def g (ss : ℝ) (x : ℝ) : ℂ := (Real.sqrt (2 * π * ss)) * rexp ( - 2 * π^2 * ss * x^2)
 
-#check SchwartzMap.tsum_eq_tsum_fourierIntegral
+theorem Foo (ss : ℝ) (h : ss > 0) (x : ℝ) :
+  (∑' (n : ℤ), f ss (x + n)) = ∑' (n : ℤ), 𝓕 (f ss) n * (fourier n) (x : UnitAddCircle) := by
 
-open FourierTransform GaussianFourier Filter Asymptotics
+  let g : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
 
-#check _root_.fourier_transform_gaussian_pi
-
-#check Real.tsum_exp_neg_mul_int_sq
-
-instance blob : SchwartzMap ℝ ℂ where
-  toFun := f (4)
-  smooth' := sorry
-  decay' := sorry
-
--- Very informative proof
-#check Complex.tsum_exp_neg_quadratic
-
-theorem Foo (ss : ℝ) :
-  42 = 43 := by
-
-  let f : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
-
-  have A : Continuous f := by
+  have A : Continuous g := by
     apply Complex.continuous_exp.comp
     apply Continuous.div_const
     apply Continuous.neg
     apply Continuous.pow
     exact Complex.continuous_ofReal
 
-  have B : 𝓕 f = fun x : ℝ ↦ (Real.sqrt (2 * π * ss)) * Complex.exp ( - 2 * π^2 * ss * x^2) := by
-    have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := sorry
+  have B : 𝓕 g = fun x : ℝ ↦ (((π)⁻¹ * (↑ss)⁻¹ * (2 : ℂ)⁻¹) ^ (2 : ℂ)⁻¹)⁻¹ * Complex.exp ( - 2 * π^2 * ss * x^2) := by
+    have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
+      simp [h, pi_pos]
+
     have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
     rw [mul_inv] at X
     rw [mul_inv] at X
@@ -886,31 +872,37 @@ theorem Foo (ss : ℝ) :
     rw [mul_assoc] at X
     rw [neg_mul_eq_mul_neg] at X
     rw [← mul_assoc] at X
-    have T : (π : ℂ) ≠ 0 := sorry
+    have T : (π : ℂ) ≠ 0 := by
+      simp [pi_ne_zero]
     rw [mul_inv_cancel T] at X
     simp at X
     rw [← mul_inv] at X
 
-    rw [division_def] at X
-    revert X
-    conv =>
-      enter [1, 1, y, 1, x, 1, 1]
-      rw [mul_comm]
-      rw [← division_def]
-    conv =>
-      enter [1, 1, y, 1, x, 1]
-      rw [← neg_div]
-    conv =>
-      enter [1, 2, t, 2, 1]
-      rw [mul_inv]
-      simp
-      rw [← mul_assoc]
-      rw [← pow_two]
-    sorry
+    simp only [g]
 
-  have C : f =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+    have R : (fun (x : ℝ) => cexp (-(((2 : ℂ) * ss)⁻¹ * x ^ 2))) = (fun (x : ℝ) => cexp (-x ^ 2 / (2 * ss))) := by
+      ext y
+      congr
+      rw [neg_div]
+      congr 1
+      rw [mul_comm]
+      rw [division_def]
+
+    rw [R] at X
+    rw [X]
+    ext t
+    congr 1
+    . simp
+      ring_nf
+    . rw [division_def]
+      simp
+      ring_nf
+
+  have C : g =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
     apply IsLittleO.isBigO
-    have P : (-(1 : ℂ) / (2 * ss)).re < 0 := sorry
+    have P : (-(1 : ℂ) / (2 * ss)).re < 0 := by
+      simp [div_eq_mul_inv, h]
+
     have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-1 / (2 * ss)) P 0 (-2)
     simp only [zero_mul, add_zero] at X
     revert X
@@ -923,20 +915,22 @@ theorem Foo (ss : ℝ) :
     intro X
     trivial
 
-  have D : (𝓕 f) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+  have D : (𝓕 g) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
     apply IsLittleO.isBigO
     rw [B]
     apply IsLittleO.const_mul_left
-    have P : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := sorry
+    have P : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := by
+      simp [h, pow_two, pi_ne_zero]
+
     have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * ↑π ^ 2 * ss) P 0 (-2)
     simp only [zero_mul, add_zero] at X
     trivial
 
   have E := Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay A one_lt_two C D
 
+  have F : (f ss) = g := by
+    ext x
+    simp [f]
+  rw [F]
 
-
-
-theorem Bar :
-  42 = 43 := by
-  have A := SchwartzMap.tsum_eq_tsum_fourierIntegral
+  apply E
