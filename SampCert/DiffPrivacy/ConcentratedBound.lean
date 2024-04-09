@@ -12,7 +12,7 @@ open FourierTransform GaussianFourier Filter Asymptotics Complex
 def sg (ss μ : ℝ) : ℝ → ℂ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
 
 theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
-  (∑' (n : ℤ), sg ss 0 (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss 0) n * (fourier n) (x : UnitAddCircle) := by
+  (∑' (n : ℤ), sg ss 0 (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss 0) n * (@fourier 1 n) (x : UnitAddCircle) := by
 
   let g : ℝ → ℂ := fun x ↦ Complex.exp (- (x^2) / (2 * ss))
 
@@ -123,6 +123,25 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
     congr 1
   rw [A, B, C, D, E]
   clear A B C D E
+
+  have A' : (∑' (n : ℤ), sg' ss 0 ↑n) = ∑' (n : ℤ), sg ss 0 ↑n := by
+    rw [ofReal_tsum]
+    congr
+  have B' : (∑' (n : ℤ), sg ss 0 ↑n) = ∑' (n : ℤ), 𝓕 (sg ss 0) ↑n := by
+    have X := SGPoi ss h 0
+    revert X
+    conv =>
+      left
+      right
+      right
+      intro n
+      right
+      rw [QuotientAddGroup.mk_zero]
+      rw [fourier_eval_zero n]
+    intro X
+    simp at X
+    trivial
+
 
 
 
