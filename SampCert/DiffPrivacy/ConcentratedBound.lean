@@ -296,7 +296,25 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
 
       have Quux : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) := by
         apply IsLittleO.isBigO
-        sorry
+        unfold sg
+        simp only [sub_zero, ofReal_exp, ofReal_div, ofReal_neg, ofReal_pow, ofReal_mul,
+          ofReal_ofNat]
+        have Px : 0 < (π⁻¹ / ((2 : ℂ) * ss)).re := by
+          simp [division_def, h, pi_pos]
+        have X := @fourier_transform_gaussian_pi' (π⁻¹ / (2 * ss)) Px 0
+        simp at X
+        have R1 : ∀ x : ℝ, -((π : ℂ) * ((↑π)⁻¹ / (2 * ↑ss)) * ↑x ^ 2) = - (x ^ 2) / (2 * ss) := by
+          intro x
+          ring_nf
+          rw [mul_inv_cancel, one_mul]
+          rw [@ofReal_ne_zero]
+          exact pi_ne_zero
+        have Py : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := by
+          simp [h, pow_two, pi_ne_zero]
+        have Y := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * π ^ 2 * ss) Py 0 (-2)
+        simp only [neg_mul, zero_mul, add_zero, rpow_two, _root_.sq_abs] at Y
+        sorry -- look sfine
+
 
       have T1 : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
 
