@@ -294,28 +294,48 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
       let F : C(UnitAddCircle, ℂ) :=
         ⟨((myfun ss).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
 
-      have D : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+      have Quux : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) := by
         apply IsLittleO.isBigO
         sorry
+
+      have T1 : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
+
+        have X : Summable fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ) := by
+          have S := @Real.summable_abs_int_rpow 2 one_lt_two
+          simp at S
+          simp [S]
+
+        have Y : ((fun (z : ℤ) => 𝓕 (sg ss 0) z) =O[cofinite] fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ)) := by
+          have P2 := @IsBigO.comp_tendsto ℝ ℤ ℂ ℝ _ _ (𝓕 (sg ss 0)) (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) (cocompact ℝ) Quux Int.cast cofinite Int.tendsto_coe_cofinite
+
+          have Q1 : (𝓕 (sg ss 0) ∘ Int.cast) = (fun (z : ℤ) => 𝓕 (sg ss 0) ↑z) := rfl
+          have Q2 : ((fun (x : ℝ) => |x| ^ (-(2 : ℝ))) ∘ Int.cast) = fun x => @Int.cast ℝ intCast |x| ^ (-(2 : ℝ)) := by
+            funext x
+            simp
+
+          rw [Q1] at P2
+          rw [Q2] at P2
+
+          trivial
+
+        have Z := @summable_of_isBigO ℤ ℂ _ _ (fun z : ℤ => 𝓕 (sg ss 0) z) (fun x : ℤ => |x| ^ (-2 : ℝ)) X Y
+        trivial
 
       have Blob : ∀ n : ℤ, fourierCoeff F n = 𝓕 (sg ss 0) n := by
         intro n
         apply Real.fourierCoeff_tsum_comp_add
         intro K
+        unfold myfun
+        unfold sg
+        simp
+        have FOO := @isBigO_norm_restrict_cocompact ℂ _ (myfun ss) 2 two_pos
+        unfold myfun at FOO
         sorry
 
       conv =>
         right
         intro n
         rw [← Blob]
-
-      have T1 : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
-        have X : Summable fun (x : ℝ) => |x| ^ (-(2 : ℝ) : ℝ) := sorry
-        have Y : (𝓕 (sg ss 0)) =O[cofinite] (fun x => |x| ^ (-2 : ℝ)) := sorry
-        have Z := @summable_of_isBigO ℝ ℂ _ _ (𝓕 (sg ss 0)) (fun x => |x| ^ (-2 : ℝ)) X Y
-
-        sorry
-
 
       have T2 : Summable (fourierCoeff F) := by
         convert T1
@@ -329,8 +349,6 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
     have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) X
     simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
     trivial
-
-
 
   rw [A] at CRUX
   clear A
