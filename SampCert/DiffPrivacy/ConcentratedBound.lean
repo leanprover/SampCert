@@ -57,12 +57,29 @@ theorem CharFourierSG (ss : ℝ) (h : ss > 0) :
       rw [rpow_def]
       simp
     . simp
-
-      sorry -- OK
+      have A : ((π)⁻¹ * (ss)⁻¹ * (2 : ℂ)⁻¹).im = 0 := by
+        simp
+      have B : ((2 : ℂ)⁻¹).im = 0 := by
+        simp
+      rw [cpow_inv_two_im_eq_sqrt]
+      . simp
+        have P1 : |π| = π := by
+          rw [_root_.abs_of_nonneg]
+          rw [le_iff_lt_or_eq]
+          left
+          apply pi_pos
+        have P2 : |ss| = ss := by
+          rw [_root_.abs_of_nonneg]
+          rw [le_iff_lt_or_eq]
+          left
+          simp [h]
+        rw [P1, P2]
+        simp
+      . rw [← A]
+        simp
   . rw [division_def]
     simp
     ring_nf
-
 
 theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
   (∑' (n : ℤ), sg ss 0 (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss 0) n * (@fourier 1 n) (x : UnitAddCircle) := by
@@ -186,7 +203,9 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
 
   have CRUX : Complex.abs (∑' (i : ℤ), 𝓕 (sg ss 0) i * (@fourier 1 i) (-μ)) ≤ ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ)) := by
     rw [← Complex.norm_eq_abs]
-    have X : Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := sorry
+    have X : Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := by
+      rw [summable_norm_iff]
+
     have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) X
     simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
     trivial
@@ -218,8 +237,35 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
     simp
     congr 1
     . simp
-      sorry
-    . sorry
+      have A : 0 ≤ (π⁻¹ * ss⁻¹ * (2 : ℝ)⁻¹) := by
+        simp
+        rw [mul_nonneg_iff]
+        left
+        simp
+        constructor
+        . rw [le_iff_lt_or_eq]
+          left
+          apply pi_pos
+        . rw [le_iff_lt_or_eq]
+          left
+          simp [h]
+      exact rpow_nonneg A 2⁻¹
+    . rw [Complex.abs_exp]
+      simp
+      congr 1
+      have X : ((π : ℂ) ^ 2).im = 0 := by
+        refine abs_re_eq_abs.mp ?_
+        simp
+        rw [sq]
+        simp
+        rw [pow_two]
+      rw [X]
+      simp
+      congr
+      . rw [pow_two]
+        simp
+      . rw [pow_two]
+        simp
     . exact h
 
   have C : (∑' (n : ℤ), 𝓕 (sg ss 0) n) = ∑' (n : ℤ), sg ss 0 n := by
