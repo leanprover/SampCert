@@ -11,7 +11,7 @@ open System IO.FS
 
 namespace Lean.ToDafny
 
-def destination : String := "/Users/trjohnb/Code/Dafny-VMC-2/src/DafnyVMCTrait.dfy"
+def destination : String := "/tmp/DafnyVMCTrait.dfy"
 
 def writeLn (ln : String) : IO Unit := do
   let h ← Handle.mk destination Mode.append

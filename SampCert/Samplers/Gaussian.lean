@@ -9,7 +9,6 @@ import SampCert.Samplers.Uniform
 import SampCert.Samplers.Bernoulli
 import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
---import Mathlib.NumberTheory.ZetaFunction
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 
 open Classical PMF Nat Real

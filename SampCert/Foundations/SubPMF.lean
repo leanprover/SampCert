@@ -96,5 +96,4 @@ theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g :=
       simpa only [ENNReal.coe_inj.symm, bind_apply, ENNReal.tsum_mul_left.symm,
         ENNReal.tsum_mul_right.symm, mul_assoc, mul_left_comm, mul_comm] using ENNReal.tsum_comm
 
-
 end SubPMF
