@@ -13,6 +13,7 @@ import Mathlib.Analysis.NormedSpace.Basic
 import Mathlib.Analysis.NormedSpace.Real
 import Mathlib.Topology.Defs.Filter
 import Mathlib.Analysis.Normed.Group.InfiniteSum
+import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 
 
 noncomputable section
@@ -910,16 +911,18 @@ example (a b : ℂ) (h1 : a.im = 0) (h2 : b.im = 0) :
   (a * b).im = 0 := by
   simp [h1, h2]
 
-example (a : ℂ) (h1 : a.im = 0) :
-  (a ^ (2 : ℂ)⁻¹).im = 0 := by
-  rw [cpow_def]
-  split
-  . rename_i h
-    subst h
-    simp
-  . rename_i h
-    rw [← cpow_def_of_ne_zero h 2⁻¹]
-    rw [inv_eq_one_div]
+-- example (a : ℂ) (h1 : a.im = 0) :
+--   (a ^ (2 : ℂ)⁻¹).im = 0 := by
+--   rw [cpow_def]
+--   split
+--   . rename_i h
+--     subst h
+--     simp
+--   . rename_i h
+--     rw [← cpow_def_of_ne_zero h 2⁻¹]
+--     rw [inv_eq_one_div]
 
-#check Complex.abs_cpow_inv_two_im
-#check Complex.abs_eq_sqrt_sq_add_sq
+
+
+#check summable_of_isBigO_nat
+#check summable_exp_mul_sq

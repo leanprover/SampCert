@@ -3,11 +3,16 @@ import Mathlib.Analysis.Distribution.SchwartzSpace
 import Mathlib.Analysis.SpecialFunctions.Gaussian
 import Mathlib.Analysis.Fourier.FourierTransform
 import Mathlib.Topology.Defs.Filter
+import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
+import Mathlib.Topology.ContinuousFunction.Algebra
 
 noncomputable section
 
 open Classical Nat BigOperators Real
 open FourierTransform GaussianFourier Filter Asymptotics Complex
+open ContinuousMap Function
+
+attribute [local instance] Real.fact_zero_lt_one
 
 def sg (ss μ : ℝ) : ℝ → ℂ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
 def fourier_sg (ss : ℝ) : ℝ → ℂ := fun x : ℝ ↦ (((π)⁻¹ * (ss)⁻¹ * (2 : ℝ)⁻¹) ^ (2 : ℝ)⁻¹)⁻¹ * rexp ( - 2 * π^2 * ss * x^2)
@@ -170,6 +175,17 @@ theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
 def sg' (ss μ : ℝ) : ℝ → ℝ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
 def fourier_sg' (ss : ℝ) : ℝ → ℝ := fun x : ℝ ↦ (((π)⁻¹ * (ss)⁻¹ * (2 : ℝ)⁻¹) ^ (2 : ℝ)⁻¹)⁻¹ * rexp ( - 2 * π^2 * ss * x^2)
 
+instance myfun (ss : ℝ) : C(ℝ,ℂ) where
+  toFun := (sg ss 0)
+  continuous_toFun := by
+    unfold sg
+    simp
+    apply Continuous.cexp
+    apply Continuous.div_const
+    apply Continuous.neg
+    apply Continuous.pow
+    exact continuous_ofReal
+
 theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   (∑' (n : ℤ), sg' ss μ n) ≤ ∑' (n : ℤ), sg' ss 0 n := by
 
@@ -201,15 +217,6 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   rw [A, B, C, D, E]
   clear A B C D E
 
-  have CRUX : Complex.abs (∑' (i : ℤ), 𝓕 (sg ss 0) i * (@fourier 1 i) (-μ)) ≤ ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ)) := by
-    rw [← Complex.norm_eq_abs]
-    have X : Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := by
-      rw [summable_norm_iff]
-
-    have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) X
-    simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
-    trivial
-
   have A : (∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ))) = ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) := by
     have X : ∀ i, ∀ x : AddCircle 1, ‖fourier i x‖ = 1 := fun i => fun x => abs_coe_circle _
     conv =>
@@ -221,17 +228,10 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
       rw [X i]
     simp
 
-  rw [A] at CRUX
-  clear A
-  apply le_trans CRUX
-  clear CRUX
-  refine real_le_real.mp ?_
-
   have B : (∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i)) = ∑' (i : ℤ), 𝓕 (sg ss 0) i := by
     rw [ofReal_tsum]
     congr
     ext a
-    -- Experimental
     rw [CharFourierSG]
     unfold fourier_sg
     simp
@@ -287,5 +287,56 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
     rw [ofReal_tsum]
     congr
 
+  have CRUX : Complex.abs (∑' (i : ℤ), 𝓕 (sg ss 0) i * (@fourier 1 i) (-μ)) ≤ ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ)) := by
+    rw [← Complex.norm_eq_abs]
+    have X : Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := by
+      rw [summable_norm_iff]
+      let F : C(UnitAddCircle, ℂ) :=
+        ⟨((myfun ss).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
+
+      have D : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
+        apply IsLittleO.isBigO
+        sorry
+
+      have Blob : ∀ n : ℤ, fourierCoeff F n = 𝓕 (sg ss 0) n := by
+        intro n
+        apply Real.fourierCoeff_tsum_comp_add
+        intro K
+        sorry
+
+      conv =>
+        right
+        intro n
+        rw [← Blob]
+
+      have T1 : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
+        have X : Summable fun (x : ℝ) => |x| ^ (-(2 : ℝ) : ℝ) := sorry
+        have Y : (𝓕 (sg ss 0)) =O[cofinite] (fun x => |x| ^ (-2 : ℝ)) := sorry
+        have Z := @summable_of_isBigO ℝ ℂ _ _ (𝓕 (sg ss 0)) (fun x => |x| ^ (-2 : ℝ)) X Y
+
+        sorry
+
+
+      have T2 : Summable (fourierCoeff F) := by
+        convert T1
+        apply Blob
+
+      unfold Summable
+      existsi (F (-μ))
+
+      apply has_pointwise_sum_fourier_series_of_summable T2 (-↑μ)
+
+    have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) X
+    simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
+    trivial
+
+
+
+  rw [A] at CRUX
+  clear A
+  apply le_trans CRUX
+  clear CRUX
+  refine real_le_real.mp ?_
+
   rw [B, C, D]
-  simp
+  simp only [real_le_real, le_refl]
