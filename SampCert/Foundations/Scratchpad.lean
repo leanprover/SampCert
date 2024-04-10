@@ -12,6 +12,7 @@ import Mathlib.Analysis.Fourier.FourierTransform
 import Mathlib.Analysis.NormedSpace.Basic
 import Mathlib.Analysis.NormedSpace.Real
 import Mathlib.Topology.Defs.Filter
+import Mathlib.Analysis.Normed.Group.InfiniteSum
 
 
 noncomputable section
@@ -858,3 +859,67 @@ example (f : ℤ → ℝ) (h : ∀ n : ℤ, f n ≥ 0) :
 example (a : ℝ) :
   Complex.abs a = |a| := by
   exact abs_ofReal a
+
+-- example :
+--   @AddCircle.toCircle 1 0 = 1 := by
+--   unfold AddCircle.toCircle
+--   simp
+--   unfold expMapCircle
+--   simp
+--   apply?
+
+
+example (n : ℤ) :
+  (@fourier 1 n) 0 = 1 := by
+  exact fourier_eval_zero n
+
+example (n : ℤ) :
+  (@fourier 1 n) (@QuotientAddGroup.mk ℝ AddCommGroup.toAddGroup (AddSubgroup.zmultiples 1) 0) = 1 := by
+  have A := @fourier_eval_zero 1 n
+  rw [← A]
+  simp only [QuotientAddGroup.mk_zero, fourier_apply, smul_zero]
+
+example (f : ℤ → ℂ) :
+  Complex.abs (∑' x : ℤ, f x) ≤ ∑' x : ℤ, Complex.abs (f x) := by
+  rw [← Complex.norm_eq_abs]
+  sorry
+
+example (f : ℤ → ℂ) :
+  ‖∑' x : ℤ, f x‖ ≤ ∑' x : ℤ, ‖f x‖ := by
+  apply norm_tsum_le_tsum_norm
+  sorry
+
+example (i : ℤ) (a : ℝ) :
+  Complex.abs ((@fourier 1 i) a) = 1 := by
+  apply?
+
+example (i : ℤ) (a : ℝ) :
+  ‖((@fourier 1 i) a)‖ = 1 := by
+  have A : ∀ x : AddCircle 1, ‖fourier i x‖ = 1 := fun x => abs_coe_circle _
+  rw [A a]
+
+example (a b c : ℝ) (h1 : a ≤ b) (h2 : b ≤ c) :
+  a ≤ c := by
+  exact le_trans h1 h2
+
+example (a : ℂ) (h1 : a.re ≥ 0) (h2 : a.im = 0):
+  Complex.abs a = a := by
+  rw [abs_apply]
+
+example (a b : ℂ) (h1 : a.im = 0) (h2 : b.im = 0) :
+  (a * b).im = 0 := by
+  simp [h1, h2]
+
+example (a : ℂ) (h1 : a.im = 0) :
+  (a ^ (2 : ℂ)⁻¹).im = 0 := by
+  rw [cpow_def]
+  split
+  . rename_i h
+    subst h
+    simp
+  . rename_i h
+    rw [← cpow_def_of_ne_zero h 2⁻¹]
+    rw [inv_eq_one_div]
+
+#check Complex.abs_cpow_inv_two_im
+#check Complex.abs_eq_sqrt_sq_add_sq

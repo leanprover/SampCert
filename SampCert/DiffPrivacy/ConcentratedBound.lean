@@ -10,6 +10,59 @@ open Classical Nat BigOperators Real
 open FourierTransform GaussianFourier Filter Asymptotics Complex
 
 def sg (ss μ : ℝ) : ℝ → ℂ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
+def fourier_sg (ss : ℝ) : ℝ → ℂ := fun x : ℝ ↦ (((π)⁻¹ * (ss)⁻¹ * (2 : ℝ)⁻¹) ^ (2 : ℝ)⁻¹)⁻¹ * rexp ( - 2 * π^2 * ss * x^2)
+
+theorem CharFourierSG (ss : ℝ) (h : ss > 0) :
+  𝓕 (sg ss 0) = fourier_sg ss := by
+
+  unfold fourier_sg
+
+  have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
+    simp [h, pi_pos]
+
+  have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
+  rw [mul_inv] at X
+  rw [mul_inv] at X
+  rw [neg_mul_comm] at X
+  rw [mul_assoc] at X
+  rw [neg_mul_eq_mul_neg] at X
+  rw [← mul_assoc] at X
+  have T : (π : ℂ) ≠ 0 := by
+    simp [pi_ne_zero]
+  rw [mul_inv_cancel T] at X
+  simp at X
+  rw [← mul_inv] at X
+
+  have R : (fun (x : ℝ) => cexp (-(((2 : ℂ) * ss)⁻¹ * x ^ 2))) = (fun (x : ℝ) => cexp (-x ^ 2 / (2 * ss))) := by
+    ext y
+    congr
+    rw [neg_div]
+    congr 1
+    rw [mul_comm]
+    rw [division_def]
+
+  unfold sg
+  simp
+
+  rw [R] at X
+  rw [X]
+  ext t
+  congr 1
+  . simp
+    ring_nf
+    simp
+    rw [ext_iff]
+    constructor
+    . simp
+      rw [rpow_def]
+      simp
+    . simp
+
+      sorry -- OK
+  . rw [division_def]
+    simp
+    ring_nf
+
 
 theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
   (∑' (n : ℤ), sg ss 0 (x + n)) = ∑' (n : ℤ), 𝓕 (sg ss 0) n * (@fourier 1 n) (x : UnitAddCircle) := by
@@ -23,7 +76,7 @@ theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
     apply Continuous.pow
     exact Complex.continuous_ofReal
 
-  have B : 𝓕 g = fun x : ℝ ↦ (((π)⁻¹ * (↑ss)⁻¹ * (2 : ℂ)⁻¹) ^ (2 : ℂ)⁻¹)⁻¹ * Complex.exp ( - 2 * π^2 * ss * x^2) := by
+  have B : 𝓕 g = fun x : ℝ ↦ (((π)⁻¹ * (ss)⁻¹ * (2 : ℂ)⁻¹) ^ (2 : ℂ)⁻¹)⁻¹ * Complex.exp ( - 2 * π^2 * ss * x^2) := by
     have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
       simp [h, pi_pos]
 
@@ -98,29 +151,36 @@ theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
   apply E
 
 def sg' (ss μ : ℝ) : ℝ → ℝ := fun x : ℝ => rexp (- ((x - μ)^2) / (2 * ss))
+def fourier_sg' (ss : ℝ) : ℝ → ℝ := fun x : ℝ ↦ (((π)⁻¹ * (ss)⁻¹ * (2 : ℝ)⁻¹) ^ (2 : ℝ)⁻¹)⁻¹ * rexp ( - 2 * π^2 * ss * x^2)
 
 theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   (∑' (n : ℤ), sg' ss μ n) ≤ ∑' (n : ℤ), sg' ss 0 n := by
+
   have A : (∑' (n : ℤ), sg' ss μ n) = (∑' (n : ℤ), sg' ss 0 ((- μ) + n)) := by
     apply tsum_congr
     intro b
     simp [sg, sg']
     congr
     rw [neg_add_eq_sub]
+
   have B : (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) = |∑' (n : ℤ), sg' ss 0 (-μ + ↑n)| := by
     rw [_root_.abs_of_nonneg]
     apply tsum_nonneg
     intro i
     simp [sg', exp_nonneg]
+
   have C : |∑' (n : ℤ), sg' ss 0 (-μ + ↑n)| = Complex.abs (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) := by
     rw [← abs_ofReal]
     congr
     rw [ofReal_tsum]
+
   have D : Complex.abs (∑' (n : ℤ), sg' ss 0 (-μ + ↑n)) = Complex.abs (∑' (n : ℤ), sg ss 0 (-μ + ↑n)) := by
     congr
+
   have E : Complex.abs (∑' (n : ℤ), sg ss 0 (-μ + ↑n)) = Complex.abs (∑' (n : ℤ), 𝓕 (sg ss 0) n * (fourier n) (-μ : UnitAddCircle)) := by
     have X := SGPoi ss h (-μ)
     congr 1
+
   rw [A, B, C, D, E]
   clear A B C D E
 
@@ -131,10 +191,38 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
     simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
     trivial
 
-  have A' : (∑' (n : ℤ), sg' ss 0 ↑n) = ∑' (n : ℤ), sg ss 0 ↑n := by
+  have A : (∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ))) = ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) := by
+    have X : ∀ i, ∀ x : AddCircle 1, ‖fourier i x‖ = 1 := fun i => fun x => abs_coe_circle _
+    conv =>
+      left
+      right
+      intro i
+      right
+      rw [← Complex.norm_eq_abs]
+      rw [X i]
+    simp
+
+  rw [A] at CRUX
+  clear A
+  apply le_trans CRUX
+  clear CRUX
+  refine real_le_real.mp ?_
+
+  have B : (∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i)) = ∑' (i : ℤ), 𝓕 (sg ss 0) i := by
     rw [ofReal_tsum]
     congr
-  have B' : (∑' (n : ℤ), sg ss 0 ↑n) = ∑' (n : ℤ), 𝓕 (sg ss 0) ↑n := by
+    ext a
+    -- Experimental
+    rw [CharFourierSG]
+    unfold fourier_sg
+    simp
+    congr 1
+    . simp
+      sorry
+    . sorry
+    . exact h
+
+  have C : (∑' (n : ℤ), 𝓕 (sg ss 0) n) = ∑' (n : ℤ), sg ss 0 n := by
     have X := SGPoi ss h 0
     revert X
     conv =>
@@ -147,11 +235,11 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
       rw [fourier_eval_zero n]
     intro X
     simp at X
-    trivial
+    simp [X]
 
+  have D : (∑' (n : ℤ), sg ss 0 n) = ∑' (n : ℤ), sg' ss 0 n := by
+    rw [ofReal_tsum]
+    congr
 
-
-
-
-
-  sorry
+  rw [B, C, D]
+  simp
