@@ -394,3 +394,12 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   refine real_le_real.mp ?_
   rw [G, H, I]
   simp only [real_le_real, le_refl]
+
+theorem SG_1_periodic (ss μ : ℝ) (h : ss > 0) :
+  (∑' (n : ℤ), sg ss μ n) = ∑' (n : ℤ), sg ss (μ + 1) n := by
+  have A : ∀ n : ℤ, sg ss (μ + 1) n = sg ss μ (n - 1) := by
+    intro n ; simp [sg]
+    ring_nf
+  conv => enter [2,1, n] ; rw [A]
+  clear A
+  sorry
