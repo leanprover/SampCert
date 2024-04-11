@@ -5,3 +5,4 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Extraction
+import SampCert.DiffPrivacy.ConcentratedBound
