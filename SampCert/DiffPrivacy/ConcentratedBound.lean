@@ -70,8 +70,6 @@ theorem CharFourierSG (ss : ℝ) (h : ss > 0) :
     . simp
       have A : ((π)⁻¹ * (ss)⁻¹ * (2 : ℂ)⁻¹).im = 0 := by
         simp
-      have B : ((2 : ℂ)⁻¹).im = 0 := by
-        simp
       rw [cpow_inv_two_im_eq_sqrt]
       . simp
         have P1 : |π| = π := by
@@ -192,7 +190,100 @@ instance myfun (ss : ℝ) : C(ℝ,ℂ) where
     apply Continuous.pow
     exact continuous_ofReal
 
-theorem SGBound (ss μ : ℝ) (h : ss > 0) (S: Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖) :
+theorem SGFourierSummable (ss μ : ℝ) (h : ss > 0) :
+  Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := by
+  rw [summable_norm_iff]
+
+  -- I'm repeating myself, I need to lift this
+  have A : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) := by
+    apply IsLittleO.isBigO
+    rw [CharFourierSG ss h]
+    unfold fourier_sg
+    apply IsLittleO.const_mul_left
+    have P : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := by
+      simp [h, pow_two, pi_ne_zero]
+    have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * ↑π ^ 2 * ss) P 0 (-2)
+    simp only [zero_mul, add_zero] at X
+    simp at X
+    simp [X]
+
+  have B : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
+
+    have X : Summable fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ) := by
+      have S := @Real.summable_abs_int_rpow 2 one_lt_two
+      simp at S
+      simp [S]
+
+    have Y : ((fun (z : ℤ) => 𝓕 (sg ss 0) z) =O[cofinite] fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ)) := by
+      have P2 := @IsBigO.comp_tendsto ℝ ℤ ℂ ℝ _ _ (𝓕 (sg ss 0)) (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) (cocompact ℝ) A Int.cast cofinite Int.tendsto_coe_cofinite
+
+      have Q1 : (𝓕 (sg ss 0) ∘ Int.cast) = (fun (z : ℤ) => 𝓕 (sg ss 0) ↑z) := rfl
+      have Q2 : ((fun (x : ℝ) => |x| ^ (-(2 : ℝ))) ∘ Int.cast) = fun x => @Int.cast ℝ intCast |x| ^ (-(2 : ℝ)) := by
+        funext x
+        simp
+
+      rw [Q1] at P2
+      rw [Q2] at P2
+
+      trivial
+
+    have Z := @summable_of_isBigO ℤ ℂ _ _ (fun z : ℤ => 𝓕 (sg ss 0) z) (fun x : ℤ => |x| ^ (-2 : ℝ)) X Y
+    trivial
+
+  have C : Continuous (sg ss 0) := by
+    unfold sg
+    simp
+    apply Continuous.cexp
+    apply Continuous.div_const
+    apply Continuous.neg
+    apply Continuous.pow
+    exact continuous_ofReal
+
+  let F : C(UnitAddCircle, ℂ) :=
+    ⟨((myfun ss).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
+
+  have D : ∀ n : ℤ, fourierCoeff F n = 𝓕 (sg ss 0) n := by
+    intro n
+    apply Real.fourierCoeff_tsum_comp_add
+    have hb : (1 : ℝ) < 2 := one_lt_two
+    have hf : IsBigO (cocompact ℝ) (sg ss 0) fun x : ℝ => |x| ^ (-(2 : ℝ)) := by
+      apply IsLittleO.isBigO
+      have P : (-(1 : ℂ) / (2 * ss)).re < 0 := by
+        simp [div_eq_mul_inv, h]
+
+      have X := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-1 / (2 * ss)) P 0 (-2)
+      simp only [zero_mul, add_zero] at X
+      revert X
+      conv =>
+        enter [1, 2, x, 1]
+        rw [mul_comm]
+        rw [mul_div]
+        rw [mul_neg]
+        rw [mul_one]
+      intro X
+      unfold sg
+      simp at X
+      simp [X]
+
+    exact (fun K => summable_of_isBigO (Real.summable_abs_int_rpow hb)
+    ((isBigO_norm_restrict_cocompact ⟨_ , C⟩  (zero_lt_one.trans hb) hf K).comp_tendsto
+    Int.tendsto_coe_cofinite))
+
+  conv =>
+    right
+    intro n
+    rw [← D]
+
+  have T2 : Summable (fourierCoeff F) := by
+    convert B
+    apply D
+
+  unfold Summable
+  existsi (F (-μ))
+
+  apply has_pointwise_sum_fourier_series_of_summable T2 (-↑μ)
+
+theorem SGBound (ss μ : ℝ) (h : ss > 0) :
   (∑' (n : ℤ), sg' ss μ n) ≤ ∑' (n : ℤ), sg' ss 0 n := by
 
   have A : (∑' (n : ℤ), sg' ss μ n) = (∑' (n : ℤ), sg' ss 0 ((- μ) + n)) := by
@@ -292,6 +383,7 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) (S: Summable fun (n : ℤ) => ‖𝓕
 
   have J : Complex.abs (∑' (i : ℤ), 𝓕 (sg ss 0) i * (@fourier 1 i) (-μ)) ≤ ∑' (i : ℤ), Complex.abs (𝓕 (sg ss 0) i) * Complex.abs ((@fourier 1 i) (-μ)) := by
     rw [← Complex.norm_eq_abs]
+    have S := SGFourierSummable ss μ h
     have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)) S
     simp only [smul_neg,  ofReal_one, div_one, Complex.norm_eq_abs, norm_mul] at Y
     trivial
@@ -302,79 +394,3 @@ theorem SGBound (ss μ : ℝ) (h : ss > 0) (S: Summable fun (n : ℤ) => ‖𝓕
   refine real_le_real.mp ?_
   rw [G, H, I]
   simp only [real_le_real, le_refl]
-
-theorem SGFourierSummable (ss μ : ℝ) (h : ss > 0) :
-  Summable fun (n : ℤ) => ‖𝓕 (sg ss 0) n * (@fourier 1 n) (-μ)‖ := by
-  rw [summable_norm_iff]
-  let F : C(UnitAddCircle, ℂ) :=
-    ⟨((myfun ss).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
-
-  have Quux : (𝓕 (sg ss 0)) =O[cocompact ℝ] (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) := by
-    apply IsLittleO.isBigO
-    unfold sg
-    simp only [sub_zero, ofReal_exp, ofReal_div, ofReal_neg, ofReal_pow, ofReal_mul,
-      ofReal_ofNat]
-    have Px : 0 < (π⁻¹ / ((2 : ℂ) * ss)).re := by
-      simp [division_def, h, pi_pos]
-    have X := @fourier_transform_gaussian_pi' (π⁻¹ / (2 * ss)) Px 0
-    simp at X
-    have R1 : ∀ x : ℝ, -((π : ℂ) * ((↑π)⁻¹ / (2 * ↑ss)) * ↑x ^ 2) = - (x ^ 2) / (2 * ss) := by
-      intro x
-      ring_nf
-      rw [mul_inv_cancel, one_mul]
-      rw [@ofReal_ne_zero]
-      exact pi_ne_zero
-    have Py : (-(2 : ℂ) * π ^ 2 * ss).re < 0 := by
-      simp [h, pow_two, pi_ne_zero]
-    have Y := @cexp_neg_quadratic_isLittleO_abs_rpow_cocompact (-2 * π ^ 2 * ss) Py 0 (-2)
-    simp only [neg_mul, zero_mul, add_zero, rpow_two, _root_.sq_abs] at Y
-    sorry -- look sfine
-
-
-  have T1 : Summable fun n : ℤ => 𝓕 (sg ss 0) n := by
-
-    have X : Summable fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ) := by
-      have S := @Real.summable_abs_int_rpow 2 one_lt_two
-      simp at S
-      simp [S]
-
-    have Y : ((fun (z : ℤ) => 𝓕 (sg ss 0) z) =O[cofinite] fun (x : ℤ) => (|x| ^ (-(2 : ℝ)) : ℝ)) := by
-      have P2 := @IsBigO.comp_tendsto ℝ ℤ ℂ ℝ _ _ (𝓕 (sg ss 0)) (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) (cocompact ℝ) Quux Int.cast cofinite Int.tendsto_coe_cofinite
-
-      have Q1 : (𝓕 (sg ss 0) ∘ Int.cast) = (fun (z : ℤ) => 𝓕 (sg ss 0) ↑z) := rfl
-      have Q2 : ((fun (x : ℝ) => |x| ^ (-(2 : ℝ))) ∘ Int.cast) = fun x => @Int.cast ℝ intCast |x| ^ (-(2 : ℝ)) := by
-        funext x
-        simp
-
-      rw [Q1] at P2
-      rw [Q2] at P2
-
-      trivial
-
-    have Z := @summable_of_isBigO ℤ ℂ _ _ (fun z : ℤ => 𝓕 (sg ss 0) z) (fun x : ℤ => |x| ^ (-2 : ℝ)) X Y
-    trivial
-
-  have Blob : ∀ n : ℤ, fourierCoeff F n = 𝓕 (sg ss 0) n := by
-    intro n
-    apply Real.fourierCoeff_tsum_comp_add
-    intro K
-    unfold myfun
-    unfold sg
-    simp
-    have FOO := @isBigO_norm_restrict_cocompact ℂ _ (myfun ss) 2 two_pos
-    unfold myfun at FOO
-    sorry
-
-  conv =>
-    right
-    intro n
-    rw [← Blob]
-
-  have T2 : Summable (fourierCoeff F) := by
-    convert T1
-    apply Blob
-
-  unfold Summable
-  existsi (F (-μ))
-
-  apply has_pointwise_sum_fourier_series_of_summable T2 (-↑μ)
