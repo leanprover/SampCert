@@ -314,12 +314,7 @@ noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : Random
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
-    = Geometric.geometric (BernoulliExpNegSample num den) := by
-  unfold DiscreteLaplaceSampleLoopIn2
-  unfold DiscreteLaplaceSampleLoopIn2Aux
-  unfold Geometric.geometric
-  unfold Geometric.loop_cond
-  unfold Geometric.loop_body
+    = Geometric.geometric (BernoulliExpNegSample num den) :=
   rfl
 
 -- We need to generate and test both implementations
