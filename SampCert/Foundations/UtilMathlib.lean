@@ -1,4 +1,3 @@
-
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
