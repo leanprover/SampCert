@@ -39,18 +39,18 @@ theorem trial_le_1 (i : ℕ) :
   . simp
   . rename_i i IH
     rw [_root_.pow_succ]
-    -- have A : trial true ≤ 1 := by
-      -- by_contra h
-      -- simp at h
-      -- have B : 1 < trial false + trial true := by
-      --   by_contra _
-      --   simp at *
-      --   have C : trial true ≤ 1 := le_iff_exists_add'.mpr (Exists.intro (trial false) (id trial_spec.symm))
-      --   have D := not_le.mpr h
-      --   contradiction
-      -- rw [trial_spec] at B
-      -- simp at B
-    exact mul_le_one' (LT.lt.le trial_spec' ) IH
+    have A : trial true ≤ 1 := by
+      by_contra h
+      simp at h
+      have B : 1 < trial false + trial true := by
+        by_contra _
+        simp at *
+        have C : trial true ≤ 1 := le_iff_exists_add'.mpr (Exists.intro (trial false) (id trial_spec.symm))
+        have D := not_le.mpr h
+        contradiction
+      rw [trial_spec] at B
+      simp at B
+    exact Left.mul_le_one IH A
 
 theorem trial_sum_ne_top :
   (∑' (n : ℕ), trial true ^ n) ≠ ⊤ := by
@@ -168,6 +168,10 @@ theorem geometric_progress (fuel n : ℕ) :
     simp [B]
     simp [IH (n + 1)]
     rw [← mul_assoc]
+    conv =>
+      left
+      left
+      rw [mul_comm]
     rw [← _root_.pow_succ]
 
 theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
@@ -325,31 +329,33 @@ theorem if_simpl (x n : ℕ) :
 @[simp]
 theorem geometric_apply (n : ℕ) :
   geometric trial n = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
-  simp [geometric]
+  simp only [geometric, bind, pure, SubPMF.bind_apply, SubPMF.pure_apply]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
-  simp [prob_while]
-  simp [geometric_pwc_sup]
+  simp only [prob_while, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
+    geometric_returns_false, ciSup_const, zero_mul, tsum_zero, add_zero]
+  simp only [ne_eq, Prod.mk.injEq, false_and, not_false_eq_true, geometric_pwc_sup, ite_mul,
+    zero_mul]
   rw [ENNReal.tsum_eq_add_tsum_ite n]
-  simp
+  simp only [↓reduceIte, mul_one]
   conv =>
     left
     right
     right
     intro x
     rw [if_simpl]
-  simp
+  simp only [tsum_zero, add_zero]
 
 @[simp]
 theorem geometric_normalizes :
   (∑' n : ℕ, geometric trial n) = 1 := by
-  simp
+  simp only [geometric_apply]
   rw [tsum_shift'_1]
-  simp
+  simp only [add_tsub_cancel_right]
   rw [trial_one_minus trial trial_spec]
   have A : ∀ n : ℕ, 0 < trial true → trial true < 1 → trial true ^ n ≠ ⊤ := by
     intro n _ _
-    have B := trial_le_1 trial trial_spec' n
+    have B := trial_le_1 trial trial_spec n
     by_contra h
     rw [h] at B
     contradiction
@@ -359,29 +365,31 @@ theorem geometric_normalizes :
     intro n
     rw [ENNReal.mul_sub (A n)]
   clear A
-  simp
+  simp only [mul_one]
   rw [ENNReal.tsum_sub]
   . rw [ENNReal.tsum_eq_add_tsum_ite 0]
-    simp [ite_test, tsum_shift'_1]
-    simp [pow_add]
+    simp only [_root_.pow_zero, ite_test, tsum_shift'_1]
+    simp only [pow_add, pow_one]
     rw [ENNReal.add_sub_cancel_right]
     apply trial_sum_ne_top' trial trial_spec'
   . apply trial_sum_ne_top' trial trial_spec'
   . rw [Pi.le_def]
     intro i
     have A : 0 ≤ trial true ^ i := by exact _root_.zero_le (trial true ^ i)
-    have B := trial_le_1 trial trial_spec' 1
+    have B := trial_le_1 trial trial_spec 1
     have C := @mul_le_of_le_one_right ENNReal _ _ _ _ _ _ A B
-    simp at C
+    simp only [pow_one] at C
     trivial
 
 theorem geometric_normalizes' :
   (∑' n : ℕ, geometric trial (n + 1)) = 1 := by
   have A := geometric_normalizes trial trial_spec trial_spec'
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
-  simp at A
-  simp [ite_test, tsum_shift'_1] at A
-  simp
+  simp only [geometric_apply, ↓reduceIte, zero_add] at A
+  simp only [tsum_shift'_1, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+    add_tsub_cancel_right] at A
+  simp only [geometric_apply, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+    add_tsub_cancel_right]
   trivial
 
 end Test

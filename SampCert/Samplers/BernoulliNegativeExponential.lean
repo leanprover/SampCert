@@ -442,7 +442,10 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
-  simp [BernoulliExpNegSampleUnitAux, prob_while]
+  simp only [BernoulliExpNegSampleUnitAux, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_while,
+    SubPMF.pure_apply, ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.iSup_eq_zero, Prod.forall,
+    Bool.forall_bool, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
+    BernoulliExpNegSampleUnitAux_returns_false, forall_const, true_or, and_true]
   intro b
   right
   split
@@ -451,7 +454,7 @@ theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num 
     rename_i b pb
     subst h
     contradiction
-  simp
+  simp only
 
 theorem if_simpl' (num : ℕ) (den : ℕ+) (x n : ℕ+) :
   @ite ENNReal (x = n) (Classical.propDecidable (x = n)) 0
@@ -568,7 +571,7 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
   . contradiction
   . rename_i n
     let m : ℕ+ := ⟨ succ n , by exact Fin.pos { val := n, isLt := le.refl } ⟩
-    have A : succ n = m := by simp
+    have A : succ n = m := rfl
     rw [A]
     rw [BernoulliExpNegSampleUnitAux_apply num den m wf]
     split
@@ -581,12 +584,15 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
       . contradiction
       . rename_i n
         rw [gamma_extract]
-        . simp
+        . rw [← A]
+          simp only [succ_sub_succ_eq_sub, add_tsub_cancel_right, cast_succ, cast_add, cast_one,
+            ne_eq, ENNReal.one_ne_top, not_false_eq_true, ENNReal.add_sub_cancel_right]
           have B : (n : ENNReal) + 1 ≠ 0 := by exact cast_add_one_ne_zero n
           have C : (n : ENNReal) + 1 ≠ ⊤ := by simp
           rw [gamma_extract' num den (↑n + 1) B C]
-          simp [gam]
-        . simp
+          simp only [gam]
+        . rw [← A]
+          simp only [gt_iff_lt, one_lt_succ_succ]
 
 noncomputable def mass' (n : ℕ) (γ : ENNReal) := (γ^n * (((n)!) : ENNReal)⁻¹)
 
@@ -605,8 +611,8 @@ theorem mass'_neq_top (n : ℕ) (γ : ENNReal) (h : γ ≠ ⊤) :
       rw [ENNReal.mul_lt_top_iff]
       left
       constructor
+      . trivial
       . exact Ne.lt_top h
-      . exact IH
   . have A : n ! > 0 := by exact factorial_pos n
     rw [@ENNReal.inv_lt_iff_inv_lt]
     simp
@@ -717,9 +723,14 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
   unfold mass
   unfold mass'
   rw [ENNReal.mul_sub]
-  . simp
+  . simp only [mul_one]
     rw [mul_mul_mul_comm]
-    rw [← _root_.pow_succ']
+    conv =>
+      left
+      right
+      left
+      rw [mul_comm]
+      rw [← _root_.pow_succ']
     rw [adhoc n h]
     congr
     rw [← ENNReal.mul_inv]
@@ -731,9 +742,10 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
       rw [B] at A
       clear B
       rw [← A]
-      simp
-    . simp
-    . simp
+      simp only [cast_mul, ENNReal.nat_cast_sub, cast_one]
+    . simp only [ne_eq, cast_eq_zero, ENNReal.sub_eq_top_iff, ENNReal.natCast_ne_top,
+      ENNReal.one_ne_top, not_false_eq_true, and_true, or_true]
+    . simp only [ne_eq, ENNReal.natCast_ne_top, not_false_eq_true, true_or]
   . intro h1 h2
     rw [ne_iff_lt_or_gt] -- Proof to simplify with mass'_neq_top
     left
@@ -744,25 +756,29 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
         by_contra
         rename_i h
         subst h
-        simp at *
+        simp only [ge_iff_le, ne_eq, ENNReal.inv_eq_zero, ENNReal.sub_eq_top_iff,
+          ENNReal.natCast_ne_top, ENNReal.one_ne_top, not_false_eq_true, and_true, ENNReal.top_mul,
+          ENNReal.zero_lt_top, not_top_lt] at *
       clear h1 h2
       induction n
-      . simp
+      . simp only [zero_eq, ge_iff_le, _root_.zero_le, tsub_eq_zero_of_le, _root_.pow_zero,
+        ENNReal.one_lt_top]
       . rename_i n IH
         have OR : n = 1 ∨ n ≥ 2 := by
           clear IH γ X
           cases n
-          . simp at h
+          . simp only [zero_eq, reduceSucc, ge_iff_le, reduceLE] at h
           . rename_i n
             cases n
-            . simp
+            . simp only [zero_eq, reduceSucc, ge_iff_le, reduceLE, or_false]
             . rename_i n
               right
               exact AtLeastTwo.prop
         cases OR
         . rename_i h'
           subst h'
-          simp
+          simp only [reduceSucc, ge_iff_le, le_refl, tsub_eq_zero_of_le, _root_.pow_zero,
+            ENNReal.one_lt_top]
         . rename_i h'
           have IH' := IH h'
           clear IH
@@ -779,11 +795,11 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
           rw [ENNReal.mul_lt_top_iff]
           left
           constructor
-          . exact Ne.lt_top X
           . exact IH'
+          . exact Ne.lt_top X
     . have A : (n - 2)! > 0 := by exact factorial_pos (n - 2)
       rw [@ENNReal.inv_lt_iff_inv_lt]
-      simp
+      simp only [ENNReal.inv_top, cast_pos]
       exact A
 
 theorem if_ge_2 (x : ℕ) (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
@@ -862,7 +878,7 @@ theorem γ_ne_top (num : ℕ) (den : ℕ+) (gam : γ = (num : ENNReal) / (den : 
 theorem γ_le_1 (num : ℕ) (den : ℕ+) (wf : num ≤ den) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   γ ≤ 1 := by
   subst gam
-  have A : (num : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top num
+  have A : (num : ENNReal) ≠ ⊤ := ENNReal.natCast_ne_top num
   have B : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
   have C : ((den : ENNReal)⁻¹ ) ≠ ⊤ := ENNReal.inv_ne_top.mpr B
   have D : 0 ≤ ENNReal.toReal (den : ENNReal)⁻¹ := ENNReal.toReal_nonneg
@@ -1271,10 +1287,10 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
           congr
           clear X
           have X : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
-          have Y : (den : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top ↑den
+          have Y : (den : ENNReal) ≠ ⊤ := ENNReal.natCast_ne_top ↑den
           rw [ENNReal.div_mul_cancel X Y]
         . have X : (den : ENNReal) ≠ 0 := NeZero.natCast_ne (↑den) ENNReal
-          have Z : (den : ENNReal) ≠ ⊤ := ENNReal.nat_ne_top ↑den
+          have Z : (den : ENNReal) ≠ ⊤ := ENNReal.natCast_ne_top ↑den
           clear A B C h
           rw [← lt_top_iff_ne_top]
           rw [ENNReal.div_lt_iff (by exact Or.inl X) (by exact Or.inl Z)]

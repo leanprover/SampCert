@@ -31,7 +31,7 @@ theorem CharFourierSG (ss : ℝ) (h : ss > 0) :
   have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
     simp [h, pi_pos]
 
-  have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
+  have X := @fourierIntegral_gaussian_pi' (π * 2 * ss)⁻¹ P 0
   rw [mul_inv] at X
   rw [mul_inv] at X
   rw [neg_mul_comm] at X
@@ -106,7 +106,7 @@ theorem SGPoi (ss : ℝ) (h : ss > 0) (x : ℝ) :
     have P : 0 < (π * (2 : ℂ) * ss)⁻¹.re  := by
       simp [h, pi_pos]
 
-    have X := @fourier_transform_gaussian_pi' (π * 2 * ss)⁻¹ P 0
+    have X := @fourierIntegral_gaussian_pi' (π * 2 * ss)⁻¹ P 0
     rw [mul_inv] at X
     rw [mul_inv] at X
     rw [neg_mul_comm] at X
@@ -218,14 +218,14 @@ theorem SGFourierSummable (ss μ : ℝ) (h : ss > 0) :
       have P2 := @IsBigO.comp_tendsto ℝ ℤ ℂ ℝ _ _ (𝓕 (sg ss 0)) (fun (x : ℝ) => ((|x| ^ (-2 : ℝ)) : ℝ)) (cocompact ℝ) A Int.cast cofinite Int.tendsto_coe_cofinite
 
       have Q1 : (𝓕 (sg ss 0) ∘ Int.cast) = (fun (z : ℤ) => 𝓕 (sg ss 0) ↑z) := rfl
-      have Q2 : ((fun (x : ℝ) => |x| ^ (-(2 : ℝ))) ∘ Int.cast) = fun x => @Int.cast ℝ intCast |x| ^ (-(2 : ℝ)) := by
+      have Q2 : ((fun (x : ℝ) => |x| ^ (-(2 : ℝ))) ∘ Int.cast) = fun x => @Int.cast ℝ instIntCast |x| ^ (-(2 : ℝ)) := by
         funext x
         simp
 
       rw [Q1] at P2
       rw [Q2] at P2
 
-      trivial
+      exact P2
 
     have Z := @summable_of_isBigO ℤ ℂ _ _ (fun z : ℤ => 𝓕 (sg ss 0) z) (fun x : ℤ => |x| ^ (-2 : ℝ)) X Y
     trivial
@@ -403,3 +403,5 @@ theorem SG_1_periodic (ss μ : ℝ) (h : ss > 0) :
   conv => enter [2,1, n] ; rw [A]
   clear A
   sorry
+
+--#check tsum_of_add_one_of_neg_add_one

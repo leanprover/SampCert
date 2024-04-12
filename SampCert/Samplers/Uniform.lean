@@ -16,21 +16,32 @@ noncomputable def UniformSample (n : PNat) : RandomM Nat := do
 theorem rw1_old (n : PNat) :
    (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
    = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
-  simp only [ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
-    log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, cast_eq_zero, PNat.ne_zero, or_self,
-    not_false_eq_true, ENNReal.coe_div, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat,
-    ENNReal.coe_mul, coe_nat]
+  simp only [PNat.val_ofNat, reduceSucc, ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff',
+    OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
+    PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true, and_true, cast_eq_zero,
+    ENNReal.coe_div, pow_eq_zero_iff, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat, ENNReal.coe_mul,
+    coe_natCast]
 
 theorem rw1 (n : PNat) :
    ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : ENNReal)
    = ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : NNReal) := by
-  simp only [ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff', OfNat.ofNat_ne_zero,
-    log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, cast_eq_zero, PNat.ne_zero, or_self,
-    not_false_eq_true, ENNReal.coe_div, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat,
-    ENNReal.coe_mul, coe_nat]
+  simp only [PNat.val_ofNat, reduceSucc, mul_inv_rev, inv_inv, ENNReal.coe_mul, ne_eq,
+    pow_eq_zero_iff', OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos,
+    mul_lt_iff_lt_one_right, lt_one_iff, PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true,
+    and_true, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat, cast_eq_zero, coe_natCast]
+  congr
+  rw [mul_comm]
+  rw [ENNReal.mul_inv]
+  . simp only [inv_inv]
+  . simp only [ne_eq, cast_eq_zero, PNat.ne_zero, not_false_eq_true, inv_eq_top, log_eq_zero_iff,
+    gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff, not_ofNat_le_one, or_self,
+    pow_eq_zero_iff, OfNat.ofNat_ne_zero]
+  . simp only [ne_eq, natCast_ne_top, not_false_eq_true, ENNReal.inv_eq_zero, pow_eq_top_iff,
+    two_ne_top, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
+    PNat.ne_zero, not_ofNat_le_one, or_self, and_true]
 
 theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) := by
-  simp only [ne_eq, cast_eq_zero, PNat.ne_zero, not_false_eq_true, ENNReal.coe_inv, coe_nat]
+  simp
 
 @[simp]
 theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
@@ -99,9 +110,10 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  simp [UniformSample, support]
+  simp only [UniformSample, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_until_apply,
+    decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SubPMF.pure_apply]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
-  simp [support]
+  simp only [support, ↓reduceIte, mul_one]
   have A : ∀ x_1, @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
           (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n)
           ((2 ^ log 2 (↑(2 : ℕ+) * ↑n))⁻¹ * (1 - ∑' (x : ℕ), @ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))⁻¹ *
@@ -109,14 +121,14 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
           0) = 0 := by
     intro x1
     split
-    . simp
+    . simp only
     . split
       . split
         . rename_i h1 h2 h3
           subst h3
           contradiction
-        . simp
-      . simp
+        . simp only [mul_zero]
+      . simp only
   conv =>
     left
     right
@@ -124,7 +136,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     intro x1
     rw [A]
   clear A
-  simp
+  simp only [tsum_zero, add_zero]
   have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))
            =
            (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (UniformPowerOfTwoSample (2 * n) x) 0) := by
@@ -134,12 +146,12 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
       . rename_i h1 h2
         rw [← not_lt] at h2
         contradiction
-      . simp
+      . simp only
     . split
       . rename_i h1 h2
-        simp
+        simp only
       . rename_i h1 h2
-        simp at h1
+        simp only [not_lt] at h1
         contradiction
   conv =>
     left
@@ -150,20 +162,19 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     intro x
     rw [A]
   rw [UniformPowerOfTwoSample_autopilot]
-  simp
+  simp only [rw_ite, one_div, sum_simple]
   rw [rw1 n]
   rw [rw2 n]
   rw [mul_inv]
-  simp
+  simp only [PNat.val_ofNat, reduceSucc, inv_inv, isUnit_iff_ne_zero, ne_eq, pow_eq_zero_iff',
+    OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
+    PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true, and_true,
+    IsUnit.inv_mul_cancel_left, cast_eq_zero, ENNReal.coe_inv, coe_natCast]
 
 @[simp]
 theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
   UniformSample n x = 0 := by
-  simp [UniformSample]
-  intro i h
-  have A : x > i := by exact Nat.lt_of_lt_of_le h support
-  have B : x ≠ i := by exact Nat.ne_of_gt A
-  simp [B]
+  simp [UniformSample, support]
 
 theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
   (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
