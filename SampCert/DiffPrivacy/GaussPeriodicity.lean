@@ -145,3 +145,50 @@ theorem SG_1_periodic (ss μ : ℝ) (h : ss > 0) :
   ext n
   congr 1
   ring_nf
+
+theorem SG_periodic_pos (ss μ : ℝ) (h : ss > 0) (k : ℕ) :
+  (∑' (n : ℤ), sg' ss μ n) = ∑' (n : ℤ), sg' ss (μ + k) n := by
+  revert μ
+  induction k
+  . simp
+  . intro μ
+    rename_i n IH
+    simp
+    rw [← add_assoc]
+    rw [IH]
+    rw [SG_1_periodic _ _ h]
+
+theorem SG_periodic_neg (ss μ : ℝ) (h : ss > 0) (k : ℕ) :
+  (∑' (n : ℤ), sg' ss μ n) = ∑' (n : ℤ), sg' ss (μ - k) n := by
+  revert μ
+  induction k
+  . simp
+  . intro μ
+    rename_i n IH
+    simp
+    rw [sub_add_eq_sub_sub]
+    rw [IH]
+    have X : μ - n = (μ - n - 1) + 1 := by
+      simp
+    rw [X]
+    rw [← SG_1_periodic _ _ h]
+    simp
+
+theorem SG_periodic (ss μ : ℝ) (h : ss > 0) (k : ℤ) :
+  (∑' (n : ℤ), sg' ss μ n) = ∑' (n : ℤ), sg' ss (μ + k) n := by
+  cases k
+  . apply SG_periodic_pos _ _ h
+  . simp
+    have X : ∀ a : ℕ, -(1: ℝ) + -a = - (((1 + a) : ℕ)) := by
+      intro a
+      simp
+      ring_nf
+    rw [X]
+    rw [@Mathlib.Tactic.RingNF.add_neg]
+    apply SG_periodic_neg _ _ h
+
+theorem SG_periodic' (ss : ℝ) (μ : ℤ) (h : ss > 0) :
+  (∑' (n : ℤ), sg' ss μ n) = ∑' (n : ℤ), sg' ss 0 n := by
+  have X := SG_periodic ss 0 h μ
+  rw [X]
+  simp
