@@ -6,96 +6,81 @@ Authors: Jean-Baptiste Tristan
 
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import SampCert.Foundations.UtilMathlib
+import SampCert.DiffPrivacy.GaussBound
 
 open Classical Nat Real
 
 @[simp]
-theorem GaussConvergence (ss : ℝ) (h : ss > 0):
-  Summable fun (i : ℤ) => rexp (-i ^ 2 / (2 * ss)) := by
+theorem GaussConvergence (μ ss : ℝ) (h : ss > 0) :
+  Summable fun (n : ℤ) => sg' ss μ n := by
+  unfold sg'
   conv =>
     right
     intro i
     rw [division_def]
-  have A := @summable_exp_mul_sq (Complex.I / (2 * π * ss))
-  have B : ∀ n : ℤ, (π : ℂ) * Complex.I * ↑n ^ 2 * (Complex.I / (2 * ↑π * ss))
-    = -n ^ 2 / (2 * ss) := by
-    intro n
-    rw [division_def]
-    rw [mul_inv]
-    rw [mul_inv]
-    rw [division_def]
-    rw [mul_inv]
-    rw [← mul_rotate]
-    conv =>
-      rw [mul_comm]
-    rw [neg_mul_comm]
-    congr 1
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_rotate]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    simp only [Complex.I_mul_I, neg_mul, one_mul, inv_inv, mul_inv_rev, neg_inj]
-    rw [mul_assoc]
-    rw [mul_assoc]
-    congr 1
-    rw [mul_comm]
-    rw [mul_assoc]
-    have B : (π : ℂ) ≠ 0 := by
-      refine Complex.ofReal_ne_zero.mpr ?_
-      exact pi_ne_zero
-    rw [mul_inv_cancel B]
-    simp only [mul_one]
 
-  simp only [B] at A
+  have A : ∀ n : ℤ, (-(n - μ) ^ 2 * (2 * ss)⁻¹) = (- n^2 * (2 * ss)⁻¹) + (2 * μ * n * (2 * ss)⁻¹) + (- μ^2 * (2 * ss)⁻¹) := by
+    intro n
+    ring_nf
+
+  conv =>
+    right
+    intro i
+    rw [A]
+    rw [exp_add]
+
+  apply Summable.mul_right
+
+  clear A
+
+  have B : 0 < (Complex.I * ↑(2 * ss)⁻¹ * ↑π⁻¹).im := by
+    simp only [mul_inv_rev, Complex.ofReal_mul, Complex.ofReal_inv, Complex.ofReal_ofNat,
+      Complex.mul_im, Complex.mul_re, Complex.I_re, Complex.inv_re, Complex.ofReal_re,
+      Complex.normSq_ofReal, div_self_mul_self', Complex.re_ofNat, Complex.normSq_ofNat,
+      Complex.inv_im, Complex.ofReal_im, neg_zero, zero_div, Complex.im_ofNat, mul_zero, sub_zero,
+      zero_mul, Complex.I_im, add_zero, sub_self, one_mul, zero_add, gt_iff_lt, inv_pos, h,
+      mul_pos_iff_of_pos_left, ofNat_pos, pi_pos]
+
+  have C := @summable_jacobiTheta₂_term_iff (μ * (2 * ss)⁻¹ * π⁻¹ * Complex.I⁻¹) (Complex.I * (2 * ss)⁻¹ * π⁻¹)
+  replace C := C.symm.1 B
   clear B
-  conv =>
-    right
-    intro i
-    rw [← division_def]
 
-  have C : ∀ n : ℤ, Complex.exp (-n ^ 2 / (2 * ss)) = rexp (-n ^ 2 / (2 * ss)) := by
-    intro n
-    simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg, Complex.ofReal_pow,
-      Complex.ofReal_int_cast, Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.ofReal_nat_cast]
+  unfold jacobiTheta₂_term at C
+  apply (RCLike.summable_ofReal ℂ).mp
 
-  have D : 0 < (Complex.I / (2 * (π : ℂ) * (ss : ℂ))).im := by
-    rw [Complex.div_im]
-    simp only [Complex.I_im, Complex.mul_re, Complex.re_ofNat, Complex.ofReal_re, Complex.im_ofNat,
-      Complex.ofReal_im, mul_zero, sub_zero, Complex.mul_im, zero_mul, add_zero, one_mul, map_mul,
-      Complex.normSq_ofNat, Complex.normSq_ofReal, map_div₀, map_pow, Complex.normSq_nat_cast,
-      Complex.I_re, zero_div]
-    rw [division_def]
-    rw [mul_inv]
-    rw [mul_pos_iff]
-    left
-    constructor
-    . rw [mul_pos_iff]
-      left
-      simp only [gt_iff_lt, zero_lt_two, mul_pos_iff_of_pos_left]
-      constructor
-      . exact pi_pos
-      . exact h
-    . simp only [mul_inv_rev, inv_inv]
-      rw [mul_pos_iff]
-      left
-      simp only [gt_iff_lt, inv_pos, zero_lt_two, mul_pos_iff_of_pos_left, mul_pos_iff_of_pos_right,
-        mul_self_pos, ne_eq, inv_eq_zero, cast_eq_zero, PNat.ne_zero, not_false_eq_true, pow_pos,
-        cast_pos, PNat.pos, and_true]
-      constructor
-      . exact pi_ne_zero
-      . exact OrderIso.mulLeft₀.proof_1 ss h
-
-  have Y := A D
-  clear A D
-  revert Y
-  conv =>
-    left
-    right
-    intro n
-    rw [C]
+  apply Summable.congr C
   clear C
-  intro Y
-  apply (RCLike.summable_ofReal ℂ).mp Y
+
+  intro b
+  have D := Complex.ofReal_exp (-↑b ^ 2 * (2 * ss)⁻¹ + 2 * μ * ↑b * (2 * ss)⁻¹)
+  have E : ∀ x : ℝ, Complex.ofReal' x = @RCLike.ofReal ℂ Complex.instRCLikeComplex x := fun x => rfl
+  rw [← E, D]
+  clear D E
+
+  congr 1
+  rw [add_comm]
+  simp only [mul_inv_rev, Complex.ofReal_mul, Complex.ofReal_inv, Complex.ofReal_ofNat,
+    Complex.inv_I, mul_neg, neg_mul, Complex.ofReal_add, Complex.ofReal_neg, Complex.ofReal_pow,
+    Complex.ofReal_int_cast]
+  congr 1
+  . ring_nf
+    simp only [Complex.I_sq, mul_neg, mul_one, neg_mul, one_div]
+    ring_nf
+    congr 1
+    rw [← mul_rotate]
+    congr 1
+    ring_nf
+    have T : (π : ℂ) ≠ 0 := by
+      simp [pi_ne_zero]
+    rw [mul_inv_cancel T]
+    simp only [one_mul]
+  . ring_nf
+    simp only [Complex.I_sq, mul_neg, mul_one, neg_mul, neg_neg]
+    rw [← mul_rotate]
+    congr 1
+    ring_nf
+    congr 1
+    have T : (π : ℂ) ≠ 0 := by
+      simp [pi_ne_zero]
+    rw [mul_inv_cancel T]
+    simp only [one_mul]
