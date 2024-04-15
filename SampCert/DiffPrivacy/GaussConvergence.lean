@@ -84,3 +84,11 @@ theorem GaussConvergence (μ ss : ℝ) (h : ss > 0) :
       simp [pi_ne_zero]
     rw [mul_inv_cancel T]
     simp only [one_mul]
+
+@[simp]
+theorem GaussConvergence' (μ ss : ℝ) (h : ss > 0) :
+  Summable fun (n : ℕ) => sg' ss μ n := by
+  have A := @summable_int_iff_summable_nat_and_neg_add_zero ℝ _ _ _ _ (fun (n : ℤ) => sg' ss μ n)
+  replace A := A.1 (GaussConvergence μ ss h)
+  cases A
+  simpa only

@@ -5,6 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DiffPrivacy.GaussBound
+import SampCert.DiffPrivacy.GaussConvergence
 
 theorem SG_1_periodic (ss μ : ℝ) (h : ss > 0) :
   (∑' (n : ℤ), sg' ss μ n) = ∑' (n : ℤ), sg' ss (μ + 1) n := by
@@ -30,7 +31,8 @@ theorem SG_1_periodic (ss μ : ℝ) (h : ss > 0) :
     Int.reduceNeg, Int.cast_neg, add_sub_cancel_right, zero_sub]
   clear S1 S2 S3 S4
 
-  have S5 : Summable fun (n : ℕ) => sg' ss μ (n : ℤ) := sorry
+  have S5 : Summable fun (n : ℕ) => sg' ss μ (n : ℤ) := by
+    apply GaussConvergence' μ ss h
   have X5 := @tsum_eq_zero_add ℝ _ _ _ _ (fun (n : ℕ) => (sg' ss μ) n) S5
   rw [X5]; clear X5 S5
 
