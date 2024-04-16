@@ -21,7 +21,14 @@ theorem sg_sum_pos (μ : ℤ) (ss : ℝ) (h : ss > 0) :
   . intro i
     apply exp_nonneg
 
--- rw [inv_pos] to get result for inverse
+theorem sg_sum_pos' (μ : ℤ) (ss : ℝ) (h1 : ss > 0) (α : ℝ)  :
+  0 < (sg' ss μ x / ∑' (x : ℤ), sg' ss μ x)^α := by
+  apply rpow_pos_of_pos
+  rw [div_pos_iff]
+  left
+  constructor
+  . apply exp_pos
+  . apply sg_sum_pos _ _ h1
 
 theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
   RenyiDivergence (fun (x : ℝ) => sg' ss μ x / ∑' x : ℤ, sg' ss μ x)
@@ -32,7 +39,6 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
     simp [h']
   rw [← le_div_iff' A]
   refine Real.exp_le_exp.mp ?_
-  rw [exp_log]
   have B : ∀ μ : ℤ, ∀ x : ℝ, 0 ≤ sg' ss μ x := by
     intro μ x
     unfold sg'
@@ -59,14 +65,15 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
       right
       rw [← Int.cast_zero]
     apply sg_sum_pos _ _ h
-  . -- First, I work on the denominator
-    conv =>
+  rw [exp_log]
+  . conv =>
       left
       ring_nf
       right
       intro x
       rw [mul_rpow (B μ x) (C μ)]
       rw [mul_rpow (B' x) C']
+    -- First, I work on the denominator
     rw [SG_periodic' _ _ h]
     conv =>
       left
@@ -136,7 +143,7 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
     have F := SGBound ss (α * μ) h
     unfold sg'
     unfold sg' at F
-    clear A B B' C C' D X E
+    --clear A B B' C C' D X E
     have X : 0 < ∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * ss)) := by
       conv =>
         right
@@ -156,4 +163,65 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
       rw [← mul_div_assoc]
     apply mul_le_of_le_one_right _ G
     apply exp_nonneg
-  . sorry
+  . apply tsum_pos _ _ 0 _
+    . simp -- some of this proof is similar to the one just above and needs to be hoisted
+      conv =>
+        right
+        intro x
+        rw [division_def]
+        rw [division_def]
+        rw [mul_rpow (B μ x) (C μ)]
+        rw [mul_rpow (B' x) C']
+      conv =>
+        right
+        intro x
+        rw [mul_assoc]
+        right
+        rw [← mul_assoc]
+        left
+        rw [mul_comm]
+      conv =>
+        right
+        intro x
+        ring_nf
+      apply Summable.mul_right
+      apply Summable.mul_right
+      unfold sg'
+      conv =>
+        right
+        intro x
+        rw [← Real.exp_mul]
+        rw [← Real.exp_mul]
+        rw [← exp_add]
+        rw [← mul_div_right_comm]
+        rw [← mul_div_right_comm]
+        rw [div_add_div_same]
+        rw [mul_sub_left_distrib]
+        rw [sub_zero]
+        rw [mul_one]
+        right
+        left
+        ring_nf
+      have X : ∀ x : ℤ, x * ↑μ * α * 2 + (-x ^ 2 - μ ^ 2 * α) = -(x - α * μ)^2 + α * (α -1) * μ^2 := by
+        intro x
+        ring_nf
+      conv =>
+        right
+        intro x
+        rw [X]
+        rw [← div_add_div_same]
+        rw [exp_add]
+      apply Summable.mul_right
+      apply GaussConvergence _ _ h
+    . intro i
+      apply le_of_lt
+      rw [mul_pos_iff]
+      left
+      constructor
+      . apply sg_sum_pos' _ _ h
+      . apply sg_sum_pos' _ _ h
+    . rw [mul_pos_iff]
+      left
+      constructor
+      . apply sg_sum_pos' _ _ h
+      . apply sg_sum_pos' _ _ h
