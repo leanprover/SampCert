@@ -88,5 +88,37 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (h' : α > 1) :
       left
       simp
       ring_nf
+    have E : ∀ x : ℤ, x * μ * α * 2 + (-x ^ 2 - μ ^ 2 * α) = - (x - α * μ)^2 + α * (α -1) * μ^2 := by
+      intro x
+      ring_nf
+    conv =>
+      left
+      left
+      right
+      intro x
+      rw [E]
+      rw [add_div]
+      rw [exp_add]
+    rw [tsum_mul_right]
+    rw [mul_comm]
+    rw [mul_div_assoc]
+    have F := SGBound ss (α * μ) h
+    unfold sg'
+    unfold sg' at F
+    clear A B B' C C' D X E
+    have X : 0 < ∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * ss)) := sorry
+    have G := @div_le_one ℝ _ (∑' (x : ℤ), rexp (-(↑x - α * ↑μ) ^ 2 / (2 * ss))) (∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * ss)))
+    replace G := (G X).2 F
+    clear X F
+    conv =>
+      right
+      rw [← mul_rotate]
+      right
+      left
+      rw [mul_comm]
+    conv =>
+      right
+      rw [← mul_div_assoc]
     sorry
+    --rw [mul_le_of_le_one_right]
   . sorry
