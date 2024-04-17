@@ -280,37 +280,9 @@ theorem RenyiDivergenceBound (μ : ℤ) (ss : ℝ) (h : ss > 0) (α : ℝ) (h' :
       . apply sg_sum_pos' _ _ h
       . apply sg_sum_pos' _ _ h
 
--- theorem summable_shift (f : ℤ → ℝ) (μ : ℤ) (h : Summable fun x : ℤ => f x) :
---   Summable fun x : ℤ => f (x + μ) := by
---   have A := @summable_int_iff_summable_nat_and_neg_add_zero ℝ _ _ _ _ f
---   replace A := A.1 h
---   cases A
---   rename_i A B
---   rw [summable_int_iff_summable_nat_and_neg_add_zero]
---   cases μ
---   . rename_i μ
---     constructor
---     . have C := @summable_nat_add_iff ℝ _ _ _ (fun (n : ℕ) => f n) μ
---       replace C := C.2 A
---       simp at *
---       exact C
---     . have C := @summable_nat_add_iff ℝ _ _ _ (fun (n : ℕ) => f (-((n : ℤ) + 1))) μ
---       replace C := C.2 B
-
---       simp at *
---       conv =>
---         right
---         intro n
---         rw [add_assoc]
---         right
---         right
---         rw [add_comm]
---       sorry -- problem
---   . sorry
-
-theorem tsum_shift (f : ℤ → ℝ) (μ : ℕ)
-  (h2 : ∀ μ : ℤ, Summable fun x : ℕ => f (x + μ))
-  (h3 : ∀ μ : ℤ, Summable fun x : ℕ => f (-(x + 1) + μ))
+theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
+  (h2 : ∀ μ : ℕ, Summable fun x : ℕ => f (x + μ))
+  (h3 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) + μ))
   :
   (∑' x : ℤ, f x) = ∑' x : ℤ, f (x + μ) := by
   have h1 : Summable fun x : ℕ => f x := by
@@ -357,10 +329,16 @@ theorem tsum_shift (f : ℤ → ℝ) (μ : ℕ)
       ring_nf
   . exact h4
 
-theorem tsum_shift' (f : ℤ → ℝ) (μ : ℕ) :
+theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
+  (h2 : ∀ μ : ℕ, Summable fun x : ℕ => f (x - μ))
+  (h3 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) - μ)) :
   ∑' x : ℤ, f (x - μ) = (∑' x : ℤ, f x) := by
-  rw [tsum_of_nat_of_neg_add_one sorry]
-  . rw [← sum_add_tsum_nat_add μ sorry]
+  have h1 : Summable fun x : ℕ => f x := by
+    apply h2 0
+  have h4 : Summable fun x : ℕ => f (- (x + 1)) := by
+    apply h3 0
+  rw [tsum_of_nat_of_neg_add_one]
+  . rw [← sum_add_tsum_nat_add μ (h2 μ)]
     rw [add_rotate]
     conv =>
       left
@@ -369,7 +347,7 @@ theorem tsum_shift' (f : ℤ → ℝ) (μ : ℕ) :
       rw [add_comm]
     conv =>
       right
-      rw [tsum_of_nat_of_neg_add_one sorry sorry]
+      rw [tsum_of_nat_of_neg_add_one h1 h4]
     congr 1
     . apply tsum_congr
       intro b
@@ -377,7 +355,7 @@ theorem tsum_shift' (f : ℤ → ℝ) (μ : ℕ) :
       simp
     . conv =>
         right
-        rw [← sum_add_tsum_nat_add μ sorry]
+        rw [← sum_add_tsum_nat_add μ h4]
       congr 1
       . induction μ
         . simp
@@ -391,9 +369,76 @@ theorem tsum_shift' (f : ℤ → ℝ) (μ : ℕ) :
         congr 1
         simp
         ring_nf
-  . sorry
+  . exact (h2 μ)
+  . exact (h3 μ)
 
-theorem SG_Renyi_shift (ss : ℝ) (h : 0 < ss) (p q : ℝ → ℝ) (α : ℝ) (μ ν τ : ℤ) :
+theorem tsum_shift (f : ℤ → ℝ) (μ : ℤ)
+  (h₀ : ∀ μ : ℤ, Summable fun x : ℤ => f (x + μ)) :
+  ∑' x : ℤ, f (x + μ) = (∑' x : ℤ, f x) := by
+  have h : ∀ μ : ℤ, Summable fun x : ℕ => f (x + μ) := by
+    intro μ
+    have A := @summable_int_iff_summable_nat_and_neg_add_zero ℝ _ _ _ _ (fun x => f (x + μ))
+    replace A := A.1 (h₀ μ)
+    cases A
+    rename_i X Y
+    exact X
+  have h' : ∀ μ : ℤ, Summable fun x : ℕ => f (-(x + 1) + μ) := by
+    intro μ
+    have A := @summable_int_iff_summable_nat_and_neg_add_zero ℝ _ _ _ _ (fun x => f (x + μ))
+    replace A := A.1 (h₀ μ)
+    cases A
+    rename_i X Y
+    exact Y
+  have h1 : ∀ μ : ℕ, Summable fun x : ℕ => f (x + μ) := by
+    intro μ
+    apply h
+  have h2 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) + μ) := by
+    intro μ
+    apply h'
+  have h3 : ∀ μ : ℕ, Summable fun x : ℕ => f (x - μ) := by
+    intro μ
+    apply h
+  have h4 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) - μ) := by
+    intro μ
+    apply h'
+  cases μ
+  . rename_i μ
+    rw [tsum_shift₁ f μ h1 h2]
+    simp
+  . rename_i μ
+    rw [← tsum_shift₂ f (μ + 1) h3 h4]
+    apply tsum_congr
+    intro b
+    congr
+
+theorem SG_shift (μ ss : ℝ) (h : 0 < ss) (τ : ℤ) :
+  (∑' x : ℤ, sg' ss μ (x + τ)) = ∑' x : ℤ, sg' ss μ x := by
+  have B := tsum_shift (fun x : ℤ => sg' ss μ x) τ
+  rw [← B]
+  . apply tsum_congr
+    intro b
+    simp
+  . intro ν
+    conv =>
+      right
+      intro x
+      rw [SGShift]
+    apply GaussConvergence _ _ h
+
+theorem sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
+  rexp (-(x - μ) ^ 2 / (2 * ss)) ^ α * rexp (-(x - ν) ^ 2 / (2 * ss)) ^ (1 - α)
+  = rexp (-((x - μ) ^ 2 * α + (x - ν) ^ 2 * (1 - α)) / (2 * ss)) := by
+  rw [← Real.exp_mul]
+  rw [← Real.exp_mul]
+  rw [← exp_add]
+  rw [← mul_div_right_comm]
+  rw [← mul_div_right_comm]
+  rw [div_add_div_same]
+  rw [← neg_mul_eq_neg_mul]
+  rw [← neg_mul_eq_neg_mul]
+  rw [← neg_add]
+
+theorem SG_Renyi_shift (ss : ℝ) (h : 0 < ss) (α : ℝ) (μ ν τ : ℤ) :
   RenyiDivergence (fun (x : ℝ) => sg' ss μ x / ∑' x : ℤ, sg' ss μ x) (fun (x : ℝ) => sg' ss ν x / ∑' x : ℤ, sg' ss ν x) α
     = RenyiDivergence (fun (x : ℝ) => sg' ss ((μ + τ) : ℤ) x / ∑' x : ℤ, sg' ss ((μ + τ) : ℤ) x) (fun (x : ℝ) => sg' ss ((ν + τ) : ℤ) x / ∑' x : ℤ, sg' ss ((ν + τ) : ℤ) x) α := by
   unfold RenyiDivergence
@@ -415,6 +460,9 @@ theorem SG_Renyi_shift (ss : ℝ) (h : 0 < ss) (p q : ℝ → ℝ) (α : ℝ) (�
   rw [SG_periodic' _ _ h]
   rw [SG_periodic' _ _ h]
   congr 1
+
+  -- re-indexing
+
   have A : ∀ μ : ℤ, ∀ x : ℤ, sg' ss ((μ + τ) : ℤ) x =  sg' ss μ (x - τ) := by
     intro x μ
     simp [sg']
@@ -426,4 +474,85 @@ theorem SG_Renyi_shift (ss : ℝ) (h : 0 < ss) (p q : ℝ → ℝ) (α : ℝ) (�
     rw [A]
     rw [A]
   clear A
-  sorry
+
+  -- Now for the crux of the proof
+
+  unfold sg'
+  conv =>
+    left
+    right
+    intro x
+    rw [sg_mul_simplify]
+  conv =>
+    right
+    right
+    intro x
+    rw [sub_sub]
+    rw [sub_sub]
+    rw [← Int.cast_add]
+    rw [← Int.cast_add]
+    rw [sg_mul_simplify]
+
+  rw [← tsum_shift _ (-τ)]
+  . apply tsum_congr
+    intro b
+    congr 6
+    . simp
+      ring_nf
+    . simp
+      ring_nf
+  . intro β
+    conv =>
+      right
+      intro x
+      rw [Int.cast_add]
+      rw [add_sub_assoc]
+      rw [add_sub_assoc]
+    have X : ∀ x : ℤ, ↑x * ↑β * 2 - ↑x * ↑μ * α * 2 + (↑x * α * ↑ν * 2 - ↑x * ↑ν * 2) + (↑x ^ 2 - ↑β * ↑μ * α * 2) +
+                (↑β * α * ↑ν * 2 - ↑β * ↑ν * 2) +
+              ↑β ^ 2 +
+            (↑μ ^ 2 * α - α * ↑ν ^ 2) +
+          ↑ν ^ 2 =
+          (↑x ^ 2 - 2 * x * (-↑β + ↑μ * α - α * ↑ν + ↑ν)) + (- ↑β * ↑μ * α * 2 + ↑β * α * ↑ν * 2 - ↑β * ↑ν * 2 + ↑β ^ 2 + ↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2) := by
+      intro x
+      ring_nf
+    conv =>
+      right
+      intro x
+      right
+      left
+      right
+      ring_nf
+      rw [X]
+    clear X
+    have X : (- ↑β * ↑μ * α * 2 + ↑β * α * ↑ν * 2 - ↑β * ↑ν * 2 + ↑β ^ 2 + ↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2)
+      = (-↑β + ↑μ * α - α * ↑ν + ↑ν)^2 + (- ↑μ * α * ↑ν * 2 + ↑μ * α ^ 2 * ↑ν * 2 -
+          ↑μ ^ 2 * α ^ 2 + α * ↑ν ^ 2 - α ^ 2 * ↑ν ^ 2 + α * ↑μ ^ 2) := by
+      ring_nf
+    conv =>
+      right
+      intro x
+      rw [X]
+      rw [← add_assoc]
+    clear X
+    have X : ∀ x : ℤ, (x - (-↑β + ↑μ * α - α * ↑ν + ↑ν))^2 = ↑x ^ 2 - 2 * ↑x * (-↑β + ↑μ * α - α * ↑ν + ↑ν) + (-↑β + ↑μ * α - α * ↑ν + ↑ν) ^ 2 := by
+      intro x
+      ring_nf
+    conv =>
+      right
+      intro x
+      rw [← X]
+      rw [neg_add]
+      rw [← div_add_div_same]
+      rw [exp_add]
+    clear X
+    apply Summable.mul_right
+    apply GaussConvergence _ _ h
+
+theorem RenyiDivergenceBound' (μ ν : ℤ) (ss : ℝ) (h : ss > 0) (α : ℝ) (h' : α > 1) :
+  RenyiDivergence (fun (x : ℝ) => sg' ss μ x / ∑' x : ℤ, sg' ss μ x)
+                  (fun (x : ℝ) => sg' ss ν x / ∑' x : ℤ, sg' ss ν x)
+                  α ≤ α * (((μ - ν) : ℤ)^2 / (2 * ss)) := by
+  rw [SG_Renyi_shift ss h α μ ν (-ν)]
+  rw [add_right_neg]
+  apply  RenyiDivergenceBound (μ + -ν) ss h α h'

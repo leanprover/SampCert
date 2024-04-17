@@ -7,12 +7,12 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DiffPrivacy.GaussBound
 import SampCert.DiffPrivacy.GaussConvergence
 
-theorem SGShift (μ ss : ℝ) (n : ℕ) (k : ℤ) :
+theorem SGShift (μ ss : ℝ) (n : ℤ) (k : ℤ) :
   sg' ss μ (((n + k) : ℤ) : ℝ) = sg' ss (μ - k) n := by
   simp [sg']
   ring_nf
 
-theorem SGShift' (μ ss : ℝ) (n : ℕ) (k : ℤ) :
+theorem SGShift' (μ ss : ℝ) (n : ℤ) (k : ℤ) :
   sg' ss μ (((-(n + k)) : ℤ) : ℝ) = sg' ss (-(μ + k)) n := by
   simp [sg']
   ring_nf
