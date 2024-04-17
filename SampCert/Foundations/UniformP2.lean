@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Random
-import Mathlib.Probability.ProbabilityMassFunction.Uniform
+import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Data.Nat.Log
 import SampCert.Foundations.Util
 import SampCert.Foundations.SubPMF
@@ -80,7 +80,9 @@ theorem sum_indicator_finrange (n : Nat) (x : Nat) (h : x < n) :
 @[simp]
 theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
   (UniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
-  simp [UniformPowerOfTwoSample]
+  simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+    uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply, one_div]
   rw [ENNReal.tsum_mul_left]
   rw [sum_indicator_finrange (2 ^ (log 2 n)) x]
   . simp
@@ -89,11 +91,15 @@ theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n
 @[simp]
 theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
   UniformPowerOfTwoSample n x = 0 := by
-  simp [UniformPowerOfTwoSample]
+  simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+    uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply,
+    ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.inv_eq_zero, ENNReal.pow_eq_top_iff,
+    ENNReal.two_ne_top, ne_eq, log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, false_or]
   intro i
   cases i
   rename_i i P
-  simp
+  simp only
   split
   . rename_i h'
     subst h'
@@ -120,8 +126,11 @@ theorem if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
 theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
   ∑' i : ℕ, UniformPowerOfTwoSample n i = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
-  . simp
-    simp [UniformPowerOfTwoSample]
+  . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, UniformPowerOfTwoSample_apply',
+    tsum_zero, add_zero]
+    simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+      CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+      uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply]
     rw [Finset.sum_range]
     conv =>
       left

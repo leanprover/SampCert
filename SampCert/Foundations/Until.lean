@@ -28,12 +28,13 @@ theorem repeat_apply_unsat (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
   prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  . simp
+  . simp only [zero_eq, until_zero, implies_true]
   . rename_i fuel IH
     intro j
-    simp [prob_while_cut, WhileFunctional, ite_apply]
+    simp only [prob_while_cut, WhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
+      bind_apply, pure_apply]
     split
-    . simp [IH]
+    . simp only [IH, mul_zero, tsum_zero]
     . rename_i h'
       split
       . rename_i h'
@@ -50,7 +51,7 @@ theorem prob_until_apply_unsat (body : RandomM T) (cond : T → Bool) (x : T) (h
   simp only [_root_.mul_eq_zero]
   simp only [iSup_eq_zero]
   intro i ; right ; intro j
-  simp [repeat_apply_unsat, h]
+  simp only [h, not_false_eq_true, repeat_apply_unsat]
 
 theorem if_simpl (body : RandomM T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
@@ -109,7 +110,7 @@ theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
   ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  . simp
+  . simp only [zero_eq, until_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   . rename_i fuel IH
     unfold prob_while_cut
     unfold WhileFunctional
@@ -124,13 +125,13 @@ theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
       right
       intro y
       rw [if_simpl]
-    simp [h1]
+    simp only [h1, ↓reduceIte, tsum_zero, add_zero]
     rw [IH]
     clear IH
     conv =>
       right
       rw [Finset.sum_range_succ']
-    simp
+    simp only [_root_.pow_zero, mul_one]
     conv =>
       right
       left
@@ -140,6 +141,12 @@ theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
     rw [← mul_sum]
     rw [← mul_sum]
     congr
+    conv =>
+      right
+      right
+      right
+      intro x
+      rw [mul_comm]
     rw [← mul_sum]
     have A : ∀ i : T, @ite ℝ≥0∞ (cond i = false) (instDecidableEqBool (cond i) false)
             (body i * (body x * ∑ i in range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i)) 0

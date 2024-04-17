@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
-import Mathlib.Probability.ProbabilityMassFunction.Uniform
+import Mathlib.Probability.Distributions.Uniform
 
 open PMF SubPMF Finset BigOperators Nat
 
@@ -31,11 +31,6 @@ theorem BernoulliSample_normalizes (num : Nat) (den : PNat) (wf : num ≤ den) :
   rw [ENNReal.tsum_comm]
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ den]
   simp [tsum_bool]
-  conv =>
-    left
-    right
-    intro x
-    rw [ite_total_same]
   simp [UniformSample_support_Sum']
   exact ENNReal.summable
 
