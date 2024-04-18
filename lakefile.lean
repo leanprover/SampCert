@@ -9,4 +9,5 @@ require mathlib from git
 
 @[default_target]
 lean_lib «SampCert» where
-  -- add any library configuration options here
+
+lean_lib «FastExtract» where

@@ -4,5 +4,4 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.Samplers.Gaussian.Basic
-import SampCert.DiffPrivacy.ConcentratedBound
+import SampCert.Extraction
