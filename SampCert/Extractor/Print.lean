@@ -11,7 +11,7 @@ open System IO.FS
 
 namespace Lean.ToDafny
 
-def destination : String := "/tmp/DafnyVMCTrait.dfy"
+def destination : String := "Tests/SampCert.dfy"
 
 def writeLn (ln : String) : IO Unit := do
   let h ← Handle.mk destination Mode.append
@@ -21,17 +21,27 @@ def writeLn (ln : String) : IO Unit := do
 
 elab "#print_dafny_exports" : command => do
   writeFile destination ""
-  writeLn "module DafnyVMCTrait {"
-  writeLn "  import UniformPowerOfTwo"
-  writeLn "  import FisherYates"
-  writeLn "  import opened Pos"
-  writeLn "  import Uniform"
 
-  writeLn "  trait {:termination false} RandomTrait extends  UniformPowerOfTwo.Interface.Trait, FisherYates.Implementation.Trait, Uniform.Interface.Trait {\n"
+  writeLn "module {:extern} Random {"
+  writeLn "  class {:extern} Random {"
+  writeLn "    static method {:extern \"UniformPowerOfTwoSample\"} ExternUniformPowerOfTwoSample(n: nat) returns (u: nat)"
+  writeLn "  }"
+  writeLn "}"
+
+  writeLn "module {:extern} SampCert {"
+  writeLn "  import Random"
+  writeLn "  type pos = x: nat | x > 0 witness 1"
+
+  writeLn "  class SLang {\n"
+
+  writeLn "    method UniformPowerOfTwoSample(n: nat) returns (u: nat)"
+  writeLn "      requires n >= 1"
+  writeLn "    {"
+  writeLn "      u := Random.Random.ExternUniformPowerOfTwoSample(n);"
+  writeLn "    }"
 
   let { decls, .. } := extension.getState (← getEnv)
   for decl in decls.reverse do
-    --IO.println decl
     let h ← Handle.mk destination Mode.append
     h.putStr decl
   writeLn "}"

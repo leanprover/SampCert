@@ -1,5 +1,7 @@
 on:
   push:
+    branches:
+      - 'main'  
   pull_request:
 
 name: ci
@@ -21,3 +23,9 @@ jobs:
       - name: build std
         id: build
         run: lake build -Kwerror
+
+      - name: extract, build, and run
+        run: wget https://github.com/dafny-lang/dafny/releases/download/v4.4.0/dafny-4.4.0-x64-ubuntu-20.04.zip
+        run: unzip dafny-4.4.0-x64-ubuntu-20.04.zip
+        run: dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/Test.py -o Tests/SampCert.dfy 
+        run: python3 Tests/SampCert-py/Test.py

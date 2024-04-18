@@ -29,7 +29,7 @@ inductive Entry where
 def addEntry (s : State) (e : Entry) : State :=
   match e with
   | .addDecl key val => { s with map := s.map.insert key val }
-  | .toExport decl => { s with decls := decl :: s.decls }
+  | .toExport decl => { s with decls := decl.replace "SLang." "" :: s.decls }
   | .addInline name => { s with inlines := name.toString :: s.inlines }
   | .addFunc key val => { s with glob := s.glob.insert key val}
 
