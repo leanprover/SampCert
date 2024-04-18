@@ -13,7 +13,7 @@ open Classical Nat ENNReal BigOperators Finset
 
 namespace SLang
 
-variable {T : Type} [MeasurableSpace T]
+variable {T : Type}
 
 @[simp]
 theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
