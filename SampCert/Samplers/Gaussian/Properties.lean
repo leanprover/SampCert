@@ -5,26 +5,19 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
-import SampCert.Samplers.Uniform
-import SampCert.Samplers.Bernoulli
-import SampCert.Samplers.BernoulliNegativeExponential
-import SampCert.Samplers.Laplace
+import SampCert.Samplers.Uniform.Basic
+import SampCert.Samplers.Bernoulli.Basic
+import SampCert.Samplers.BernoulliNegativeExponential.Basic
+import SampCert.Samplers.Laplace.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import SampCert.Foundations.UtilMathlib
+import SampCert.Samplers.Gaussian.Code
 
 noncomputable section
 
 open Classical PMF Nat Real
 
 namespace SLang
-
-def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
-  let Y : Int ← DiscreteLaplaceSample t 1
-  let y : Nat := Int.natAbs Y
-  let n : Nat := (Int.natAbs (Int.sub (y * t * den) num))^2
-  let d : PNat := 2 * num * t^2 * den
-  let C ← BernoulliExpNegSample n d
-  return (Y,C)
 
 theorem ite_simpl_gaussian_1 (num den t: ℕ+) (x a : ℤ) :
   @ite ENNReal (x = a) (propDecidable (x = a)) 0
@@ -129,18 +122,6 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
     apply Right.add_nonneg
     . apply exp_nonneg
     . simp only [zero_le_one]
-
-
-theorem Add1 (n : Nat) : 0 < n + 1 := by
-  simp only [add_pos_iff, zero_lt_one, or_true]
-
-noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : SLang ℤ := do
-  let ti : Nat := num.val / den
-  let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
-  let num := num^2
-  let den := den^2
-  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
-  return r.1
 
 theorem if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
   @ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (a * (@ite ENNReal (x = x_1) (propDecidable (x = (x_1, true).1))) 1 0) = 0 := by

@@ -10,16 +10,14 @@ noncomputable section
 
 open Classical NNReal ENNReal PMF
 
-abbrev SubPMF.{u} (α : Type u) : Type u := α → ℝ≥0∞
-
 namespace SLang
 
 variable {α β γ : Type*}
 
-def toPMF (p : SubPMF α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
+def toPMF (p : SLang α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 
 @[ext]
-protected theorem ext {p q : SubPMF α} (h : ∀ x, p x = q x) : p = q := by
+protected theorem ext {p q : SLang α} (h : ∀ x, p x = q x) : p = q := by
   ext x
   simp [h]
 
@@ -45,7 +43,7 @@ variable (p : SLang α) (f : α → SLang β) (g : β → SLang γ)
 theorem bind_apply (b : β) : p.bind f b = ∑' a, p a * f a b := rfl
 
 @[simp]
-theorem pure_bind (a : α) (f : α → SubPMF β) : (pure a).bind f = f a := by
+theorem pure_bind (a : α) (f : α → SLang β) : (pure a).bind f = f a := by
   have : ∀ b a', ite (a' = a) (f a' b) 0 = ite (a' = a) (f a b) 0 := fun b a' => by
     split_ifs with h <;> simp [h]
   ext b
@@ -64,20 +62,3 @@ theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g :=
         ENNReal.tsum_mul_right.symm, mul_assoc, mul_left_comm, mul_comm] using ENNReal.tsum_comm
 
 end SLang
-
-attribute [simp] Lean.Internal.coeM
-attribute [simp] Bind.bind
-attribute [simp] Pure.pure
-attribute [simp] CoeT.coe
-attribute [simp] instCoeT
-attribute [simp] CoeHTCT.coe
-attribute [simp] instCoeHTCT_1
-attribute [simp] CoeHTC.coe
-attribute [simp] instCoeHTC_1
-attribute [simp] CoeOTC.coe
-attribute [simp] instCoeOTC_1
-attribute [simp] CoeTC.coe
-attribute [simp] instCoeTC_1
-attribute [simp] Coe.coe
-attribute [simp] optionCoe
-attribute [simp] CoeOut.coe

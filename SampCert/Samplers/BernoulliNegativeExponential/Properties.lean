@@ -5,8 +5,9 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
-import SampCert.Samplers.Uniform
-import SampCert.Samplers.Bernoulli
+import SampCert.Samplers.Uniform.Basic
+import SampCert.Samplers.Bernoulli.Basic
+import SampCert.Samplers.BernoulliNegativeExponential.Code
 import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
@@ -16,22 +17,6 @@ noncomputable section
 open PMF Nat BigOperators Finset
 
 namespace SLang
-
-theorem halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
-  num ≤ ↑(st * den) := by
-  simp
-  cases st
-  rename_i v p
-  simp
-  exact le_mul_of_one_le_of_le p wf
-
-noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : num ≤ den) (state : (Bool × PNat)) : SLang (Bool × PNat) := do
-  let A ← BernoulliSample num (state.2 * den) (halve_wf num den state.2 wf)
-  return (A, state.2 + 1)
-
-noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : num ≤ den) : SLang Nat := do
-  let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (true,1)
-  return r.2
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_zero (num : ℕ) (den : ℕ+) (st st' : Bool × ℕ+) (wf : num ≤ den) :
@@ -946,10 +931,6 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
       rw [gam]
       apply γ_le_1 num den wf rfl
 
-noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : SLang Bool := do
-  let K ← BernoulliExpNegSampleUnitAux num den wf
-  if K % 2 = 0 then return true else return false
-
 theorem series_step_1 (num : Nat) (den : PNat)  (wf : num ≤ den) (γ : ENNReal) (gam : γ = (num : ENNReal) / (den : ENNReal)) :
   (∑' (a : ℕ), if a % 2 = 0 then BernoulliExpNegSampleUnitAux num den wf a else 0)
     = (∑' (n : ℕ), mass (2 * (n + 1)) γ) := by
@@ -1138,14 +1119,6 @@ theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : nu
   . exact ENNReal.ofReal_ne_top
   . trivial
 
-noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : SLang Bool := do
-  if iter = 0 then return true
-  else
-    let B ← BernoulliExpNegSampleUnit 1 1 (le_refl 1)
-    if ¬ B then return B else
-      let R ← BernoulliExpNegSampleGenLoop (iter - 1)
-      return R
-
 theorem BernoulliExpNegSampleGenLoop_normalizes (iter : Nat) :
   (∑' b : Bool, (BernoulliExpNegSampleGenLoop iter) b) = 1 := by
   induction iter
@@ -1191,24 +1164,6 @@ theorem BernoulliExpNegSampleGenLoop_apply_false (iter : Nat) :
   rw [BernoulliExpNegSampleGenLoop_apply_true] at A
   rw [← A]
   simp
-
-theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
-  (num % den) ≤ den := by
-  have A := Nat.mod_lt num (PNat.pos den)
-  exact lt_succ.mp (le.step A)
-
-noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : SLang Bool := do
-  if h : num ≤ den
-  then let X ← BernoulliExpNegSampleUnit num den h
-       return X
-  else
-    let gamf := num / den
-    let B ← BernoulliExpNegSampleGenLoop (gamf)
-    if B
-    then
-      let X ← BernoulliExpNegSampleUnit (num % den) den (rat_less_floor_le1 num den)
-      return X
-    else return false
 
 @[simp]
 theorem BernoulliExpNegSample_normalizes (num : Nat) (den : PNat) :

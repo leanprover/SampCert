@@ -9,18 +9,6 @@ import SampCert.Extractor.IR
 import SampCert.Extractor.Extension
 import SampCert.SLang
 
-/-
-
-  Todo:
-  * Allow curried SLang computations
-  * Allow parametric polymorphism
-  * Allow higher-order functions
-
-  For now, because of these restrictions,
-  the compilation of prob_while and prob_until is ad-hoc
-
--/
-
 namespace Lean.ToDafny
 
 def IsWFMonadic (e: Expr) : MetaM Bool :=

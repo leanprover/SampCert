@@ -5,22 +5,18 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
-import SampCert.Samplers.Uniform
-import SampCert.Samplers.Bernoulli
-import SampCert.Samplers.BernoulliNegativeExponential
-import SampCert.Foundations.GeometricGen
+import SampCert.Samplers.Uniform.Basic
+import SampCert.Samplers.Bernoulli.Basic
+import SampCert.Samplers.BernoulliNegativeExponential.Basic
+import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
+import SampCert.Samplers.Laplace.Code
 
 noncomputable section
 
 open Classical PMF Nat Real BigOperators Finset
 
 namespace SLang
-
-noncomputable def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : SLang (Nat × Bool) := do
-  let U ← UniformSample t
-  let D ← BernoulliExpNegSample U t
-  return (U,D)
 
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn1Aux_normalizes (t : PNat) :
@@ -159,10 +155,6 @@ theorem DiscreteLaplaceSampleLoopIn1Aux_apply_false (t : PNat) (n : ℕ) :
   simp
   rw [mul_comm]
   rw [← division_def]
-
-noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : SLang Nat := do
-  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1Aux t) (λ x : Nat × Bool => x.2)
-  return r1.1
 
 theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
   (DiscreteLaplaceSampleLoopIn1 t) n =
@@ -310,15 +302,6 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     . simp only [ne_eq, ENNReal.ofReal_ne_top, not_false_eq_true, ENNReal.inv_eq_zero,
       ENNReal.natCast_ne_top, or_self]
 
--- Note that for the arxiv algorithm, we can call Unit directly
-noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat)  (K : Bool × Nat) : SLang (Bool × Nat) := do
-  let A ← BernoulliExpNegSample num den
-  return (A, K.2 + 1)
-
-noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : SLang Nat := do
-  let r2 ← prob_while (λ K : Bool × Nat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,0)
-  return r2.2
-
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
@@ -330,21 +313,7 @@ theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   unfold loop_body
   rfl
 
--- We need to generate and test both implementations
-noncomputable def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
-  let U ← DiscreteLaplaceSampleLoopIn1 num
-  let v ← DiscreteLaplaceSampleLoopIn2 1 1
-  let V := v - 1
-  let X := U + num * V
-  let Y := X / den
-  let B ← BernoulliSample 1 2 (le.step le.refl)
-  return (B,Y)
 
-noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
-  let v ← DiscreteLaplaceSampleLoopIn2 den num
-  let V := v - 1
-  let B ← BernoulliSample 1 2 (le.step le.refl)
-  return (B,V)
 
 @[simp]
 theorem DiscreteLaplaceSampleLoop_apply (num : PNat) (den : PNat) (n : ℕ) (b : Bool) :
@@ -534,12 +503,6 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
     rw [tsum_bool] at A
     trivial
   . simp
-
-
-noncomputable def DiscreteLaplaceSample (num den : PNat) : SLang ℤ := do
-  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
-  let Z : Int := if r.1 then - r.2 else r.2
-  return Z
 
 theorem avoid_double_counting (num den : PNat) :
   (∑' (x : Bool × ℕ), if x.1 = true → ¬x.2 = 0 then DiscreteLaplaceSampleLoop num den x else 0)

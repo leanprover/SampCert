@@ -5,18 +5,15 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
-import SampCert.Samplers.Uniform
+import SampCert.Samplers.Uniform.Basic
 import Mathlib.Probability.Distributions.Uniform
+import SampCert.Samplers.Bernoulli.Code
 
 noncomputable section
 
 open PMF Finset BigOperators Nat
 
 namespace SLang
-
-def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : SLang Bool := do
-  let d ← UniformSample den
-  return d < num
 
 theorem ite_total_same (a b : ℕ) (x : ENNReal) :
   (if a ≤ b then x else 0) + (if b < a then x else 0) = x := by
@@ -76,7 +73,6 @@ theorem BernoulliSample_apply (num : Nat) (den : PNat) (wf : num ≤ den) (b : B
   . simp
   . simp
 
-
-noncomputable def BernoulliSamplePMF (num : Nat) (den : PNat) (wf : num ≤ den) : PMF Bool := PMF.ofFintype (BernoulliSample num den wf) (BernoulliSample_normalizes' num den wf)
+def BernoulliSamplePMF (num : Nat) (den : PNat) (wf : num ≤ den) : PMF Bool := PMF.ofFintype (BernoulliSample num den wf) (BernoulliSample_normalizes' num den wf)
 
 namespace SLang

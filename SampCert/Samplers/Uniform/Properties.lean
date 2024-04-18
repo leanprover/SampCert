@@ -6,16 +6,13 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Foundations.Basic
 import Mathlib.Data.ENNReal.Basic
+import SampCert.Samplers.Uniform.Code
 
 noncomputable section
 
 open PMF Classical Finset Nat ENNReal
 
 namespace SLang
-
-def UniformSample (n : PNat) : SLang Nat := do
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
-  return r
 
 theorem rw1_old (n : PNat) :
    (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)

@@ -5,7 +5,8 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.SLang
-import SampCert.Foundations.SubPMF
+import SampCert.Foundations.Monad
+import SampCert.Foundations.Auto
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 noncomputable section

@@ -8,7 +8,8 @@ import SampCert.SLang
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Data.Nat.Log
 import SampCert.Foundations.Util
-import SampCert.Foundations.SubPMF
+import SampCert.Foundations.Monad
+import SampCert.Foundations.Auto
 
 open Classical Nat PMF
 

@@ -5,6 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
+import SampCert.Samplers.Geometric.Code
 
 noncomputable section
 
@@ -67,15 +68,6 @@ theorem trial_sum_ne_top' :
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
   simp [ite_test, tsum_shift'_1, pow_add] at A
   trivial
-
-def loop_cond (st : (Bool × ℕ)) : Bool := st.1
-def loop_body (st : (Bool × ℕ)) : SLang (Bool × ℕ) := do
-  let x ← trial
-  return (x,st.2 + 1)
-
-def geometric : SLang ℕ := do
-  let st ← prob_while loop_cond (loop_body trial) (true,0)
-  return st.2
 
 @[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
