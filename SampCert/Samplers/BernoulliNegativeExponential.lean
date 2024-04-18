@@ -11,7 +11,11 @@ import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
 
+noncomputable section
+
 open PMF Nat BigOperators Finset
+
+namespace SLang
 
 theorem halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
   num ≤ ↑(st * den) := by
@@ -21,11 +25,11 @@ theorem halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
   simp
   exact le_mul_of_one_le_of_le p wf
 
-noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : num ≤ den) (state : (Bool × PNat)) : RandomM (Bool × PNat) := do
+noncomputable def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : num ≤ den) (state : (Bool × PNat)) : SLang (Bool × PNat) := do
   let A ← BernoulliSample num (state.2 * den) (halve_wf num den state.2 wf)
   return (A, state.2 + 1)
 
-noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Nat := do
+noncomputable def BernoulliExpNegSampleUnitAux (num : Nat) (den : PNat) (wf : num ≤ den) : SLang Nat := do
   let r ← prob_while (λ state : Bool × PNat => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (true,1)
   return r.2
 
@@ -43,8 +47,8 @@ theorem BernoulliExpNegSampleUnitAux_returns_false (num : ℕ) (den : ℕ+) (fue
   . rename_i fuel IH
     intro st r
     simp [prob_while_cut, WhileFunctional]
-    unfold SubPMF.bind
-    unfold SubPMF.pure
+    unfold SLang.bind
+    unfold SLang.pure
     simp [ite_apply]
     split
     . rename_i h
@@ -324,7 +328,7 @@ theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel
     cases fuel'
     . rw [BernoulliExpNegSampleUnitAux_succ_false]
       rw [BernoulliExpNegSampleUnitAux_succ_false]
-      have C : plus_two k zero = plus_one k + 1 := by   -- Useful for cleanup
+      have C : plus_two k Nat.zero = plus_one k + 1 := by   -- Useful for cleanup
         simp [plus_two, plus_one]
         rfl
       rw [C]
@@ -442,8 +446,8 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
-  simp only [BernoulliExpNegSampleUnitAux, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_while,
-    SubPMF.pure_apply, ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.iSup_eq_zero, Prod.forall,
+  simp only [BernoulliExpNegSampleUnitAux, Bind.bind, Pure.pure, SLang.bind_apply, prob_while,
+    SLang.pure_apply, ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.iSup_eq_zero, Prod.forall,
     Bool.forall_bool, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
     BernoulliExpNegSampleUnitAux_returns_false, forall_const, true_or, and_true]
   intro b
@@ -942,7 +946,7 @@ theorem BernoulliExpNegSampleUnitAux_normalizes (num : ℕ) (den : ℕ+) (wf : n
       rw [gam]
       apply γ_le_1 num den wf rfl
 
-noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : RandomM Bool := do
+noncomputable def BernoulliExpNegSampleUnit (num : Nat) (den : PNat) (wf : num ≤ den) : SLang Bool := do
   let K ← BernoulliExpNegSampleUnitAux num den wf
   if K % 2 = 0 then return true else return false
 
@@ -1134,7 +1138,7 @@ theorem BernoulliExpNegSampleUnit_apply_false (num : Nat) (den : PNat)  (wf : nu
   . exact ENNReal.ofReal_ne_top
   . trivial
 
-noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : RandomM Bool := do
+noncomputable def BernoulliExpNegSampleGenLoop (iter : Nat) : SLang Bool := do
   if iter = 0 then return true
   else
     let B ← BernoulliExpNegSampleUnit 1 1 (le_refl 1)
@@ -1193,7 +1197,7 @@ theorem rat_less_floor_le1 (num : Nat) (den : PNat) :
   have A := Nat.mod_lt num (PNat.pos den)
   exact lt_succ.mp (le.step A)
 
-noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : RandomM Bool := do
+noncomputable def BernoulliExpNegSample (num : Nat) (den : PNat) : SLang Bool := do
   if h : num ≤ den
   then let X ← BernoulliExpNegSampleUnit num den h
        return X
@@ -1308,3 +1312,5 @@ theorem BernoulliExpNegSample_apply_false (num : Nat) (den : PNat) :
   simp [tsum_bool] at A
   rw [← A]
   simp
+
+end SLang

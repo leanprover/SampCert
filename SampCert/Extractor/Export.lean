@@ -18,7 +18,7 @@ def saveMethod (m : Method) : CoreM Unit :=
   modifyEnv fun env => extension.addEntry env (.toExport s!"{m.print}")
 
 def toDafnyMethod(declName: Name) : MetaM Unit := do
-  saveMethod (← CodeGen (← toDafnyRandomMDefIn declName))
+  saveMethod (← CodeGen (← toDafnySLangDefIn declName))
 
 initialize
   registerBuiltinAttribute {

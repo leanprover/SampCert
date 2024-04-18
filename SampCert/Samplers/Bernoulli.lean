@@ -8,9 +8,13 @@ import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform
 import Mathlib.Probability.Distributions.Uniform
 
-open PMF SubPMF Finset BigOperators Nat
+noncomputable section
 
-noncomputable def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : RandomM Bool := do
+open PMF Finset BigOperators Nat
+
+namespace SLang
+
+def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : SLang Bool := do
   let d ← UniformSample den
   return d < num
 
@@ -74,3 +78,5 @@ theorem BernoulliSample_apply (num : Nat) (den : PNat) (wf : num ≤ den) (b : B
 
 
 noncomputable def BernoulliSamplePMF (num : Nat) (den : PNat) (wf : num ≤ den) : PMF Bool := PMF.ofFintype (BernoulliSample num den wf) (BernoulliSample_normalizes' num den wf)
+
+namespace SLang

@@ -4,19 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.Foundations.Random
+import SampCert.SLang
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Data.Nat.Log
 import SampCert.Foundations.Util
 import SampCert.Foundations.SubPMF
 
-open Classical
+open Classical Nat PMF
 
-open Nat SubPMF PMF Classical
--- Assumption: the Dafny version indeed has this spec
-
-noncomputable def UniformPowerOfTwoSample (n : PNat) : RandomM Nat :=
-  toSubPMF (uniformOfFintype (Fin (2 ^ (log 2 n))))
+namespace SLang
 
 @[simp]
 theorem sum_indicator_finrange_gen (n : Nat) (x : Nat) :
@@ -150,3 +146,5 @@ theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
     rw [ENNReal.inv_two_add_inv_two]
     rw [one_pow]
   . exact ENNReal.summable
+
+end SLang

@@ -14,6 +14,8 @@ import SampCert.Samplers.BernoulliNegativeExponential
 import SampCert.Samplers.Laplace
 import SampCert.Samplers.Gaussian
 
+open SLang
+
 attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample
 attribute [export_dafny] BernoulliExpNegSampleUnitLoop

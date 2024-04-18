@@ -7,9 +7,13 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Foundations.Basic
 import Mathlib.Data.ENNReal.Basic
 
+noncomputable section
+
 open PMF Classical Finset Nat ENNReal
 
-noncomputable def UniformSample (n : PNat) : RandomM Nat := do
+namespace SLang
+
+def UniformSample (n : PNat) : SLang Nat := do
   let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
 
@@ -110,8 +114,8 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  simp only [UniformSample, Bind.bind, Pure.pure, SubPMF.bind_apply, prob_until_apply,
-    decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SubPMF.pure_apply]
+  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, prob_until_apply,
+    decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SLang.pure_apply]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   simp only [support, ↓reduceIte, mul_one]
   have A : ∀ x_1, @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
@@ -229,3 +233,5 @@ theorem UniformSample_apply' (n : PNat) (x : Nat) :
   . rename_i h
     apply UniformSample_apply_out
     exact Nat.not_lt.mp h
+
+end SLang

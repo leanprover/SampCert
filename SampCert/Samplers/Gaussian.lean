@@ -12,9 +12,13 @@ import SampCert.Samplers.Laplace
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import SampCert.Foundations.UtilMathlib
 
+noncomputable section
+
 open Classical PMF Nat Real
 
-noncomputable def DiscreteGaussianSampleLoop (num den t : PNat) : RandomM (Int × Bool) := do
+namespace SLang
+
+def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
   let Y : Int ← DiscreteLaplaceSample t 1
   let y : Nat := Int.natAbs Y
   let n : Nat := (Int.natAbs (Int.sub (y * t * den) num))^2
@@ -53,8 +57,8 @@ theorem ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
 @[simp]
 theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
   ∑' x, (DiscreteGaussianSampleLoop num den t) x = 1 := by
-  simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SubPMF.bind_apply,
-    SubPMF.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
+  simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
+    SLang.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
     and_true, and_false, ↓reduceIte, add_zero, zero_add]
   conv =>
     left
@@ -102,9 +106,9 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
   (DiscreteGaussianSampleLoop num den t) (n, true)
     = ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1)) * ENNReal.ofReal (rexp (-(Int.natAbs n / t)) *
     rexp (-((Int.natAbs (Int.sub (|n| * t * den) ↑↑num)) ^ 2 / ((2 : ℕ+) * num * ↑↑t ^ 2 * den)))) := by
-  simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SubPMF.bind_apply,
+  simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     DiscreteLaplaceSample_apply, NNReal.coe_nat_cast, PNat.one_coe, cast_one, NNReal.coe_one,
-    div_one, one_div, Int.cast_abs, SubPMF.pure_apply, Prod.mk.injEq, mul_ite,
+    div_one, one_div, Int.cast_abs, SLang.pure_apply, Prod.mk.injEq, mul_ite,
     mul_one, mul_zero, tsum_bool, and_false, ↓reduceIte, and_true, BernoulliExpNegSample_apply_true,
     cast_pow, NNReal.coe_pow, PNat.mul_coe, PNat.pow_coe, cast_mul, NNReal.coe_mul, zero_add]
   rw [ENNReal.tsum_eq_add_tsum_ite (n : ℤ)]
@@ -130,7 +134,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
 theorem Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
 
-noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : RandomM ℤ := do
+noncomputable def DiscreteGaussianSample (num : PNat) (den : PNat) : SLang ℤ := do
   let ti : Nat := num.val / den
   let t : PNat := ⟨ ti + 1 , Add1 ti ⟩
   let num := num^2
@@ -585,7 +589,7 @@ theorem summable_gauss_core (num : PNat) (den : PNat) :
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
   ENNReal.ofReal ((exp (- x^2 / (2 * ((num : NNReal) / (den : NNReal))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : NNReal) / (den : NNReal))^2)))) := by
-  simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SubPMF.bind_apply]
+  simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SLang.bind_apply]
   have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) }
 
   conv =>
@@ -598,7 +602,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
     PNat.mk_coe, cast_add, cast_one, Int.ofNat_ediv, PNat.pow_coe, cast_pow, zero_add, ite_mul,
-    zero_mul, SubPMF.pure_apply, NNReal.coe_nat_cast, div_pow]
+    zero_mul, SLang.pure_apply, NNReal.coe_nat_cast, div_pow]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>
     left
@@ -689,3 +693,5 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
       . simp only [zero_le_one]
   . left
     exact ENNReal.ofReal_ne_top
+
+end SLang

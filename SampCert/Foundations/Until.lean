@@ -10,21 +10,19 @@ import SampCert.Foundations.Util
 
 noncomputable section
 
-open Classical SubPMF ProbabilityTheory Nat ENNReal BigOperators Finset
+open Classical Nat ENNReal BigOperators Finset
+
+namespace SLang
 
 variable {T : Type} [MeasurableSpace T]
 
-noncomputable def prob_until (body : RandomM T) (cond : T → Bool) : RandomM T := do
-  let v ← body
-  prob_while (λ v : T => ¬ cond v) (λ _ : T => body) v
-
 @[simp]
-theorem until_zero (st : T) (body : RandomM T) (cond : T → Bool) (x : T) :
+theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
   prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
   simp [prob_while_cut]
 
 @[simp]
-theorem repeat_apply_unsat (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
+theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
   prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
@@ -44,8 +42,8 @@ theorem repeat_apply_unsat (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
       . simp
 
 @[simp]
-theorem prob_until_apply_unsat (body : RandomM T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
-  prob_until (body : RandomM T) (cond : T → Bool) x = 0 := by
+theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
+  prob_until (body : SLang T) (cond : T → Bool) x = 0 := by
   simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
   simp only [ENNReal.tsum_eq_zero]
   simp only [_root_.mul_eq_zero]
@@ -53,7 +51,7 @@ theorem prob_until_apply_unsat (body : RandomM T) (cond : T → Bool) (x : T) (h
   intro i ; right ; intro j
   simp only [h, not_false_eq_true, repeat_apply_unsat]
 
-theorem if_simpl (body : RandomM T) (cond : T → Bool) (x_1 x : T) :
+theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
   split
   . simp
@@ -65,7 +63,7 @@ theorem if_simpl (body : RandomM T) (cond : T → Bool) (x_1 x : T) :
       . simp
     . simp
 
-theorem repeat_1 (body : RandomM T) (cond : T → Bool) (x : T) (h : cond x) :
+theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
   simp [prob_while_cut, WhileFunctional, ite_apply]
@@ -106,7 +104,7 @@ theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       rw [h'] at h
       contradiction
 
-theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
+theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
   ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
@@ -176,22 +174,22 @@ theorem repeat_closed_form (body : RandomM T) (cond : T → Bool) (fuel : ℕ) (
     . rename_i h
       simp [h]
 
-theorem convergence (body : RandomM T) (cond : T → Bool) (x : T) :
+theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   rw [← ENNReal.tsum_eq_iSup_nat]
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_geometric]
 
-theorem repeat_monotone (body : RandomM T) (cond : T → Bool) (x : T) :
+theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
   ∀ (a : T), Monotone fun i => body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
   have A := @prob_while_cut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
 @[simp]
-theorem prob_until_apply_sat (body : RandomM T) (cond : T → Bool) (x : T) (h : cond x) :
-  prob_until (body : RandomM T) (cond : T → Bool) x
+theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
+  prob_until (body : SLang T) (cond : T → Bool) x
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
   rw [← convergence]
@@ -222,8 +220,8 @@ theorem prob_until_apply_sat (body : RandomM T) (cond : T → Bool) (x : T) (h :
     rw [← ENNReal.tsum_eq_iSup_sum]
 
 @[simp]
-theorem prob_until_apply (body : RandomM T) (cond : T → Bool) (x : T) :
-  prob_until (body : RandomM T) (cond : T → Bool) x =
+theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
+  prob_until (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   split
   . rename_i h
@@ -232,8 +230,8 @@ theorem prob_until_apply (body : RandomM T) (cond : T → Bool) (x : T) :
     simp [h, prob_until_apply_unsat]
 
 @[simp]
-theorem prob_until_apply_norm (body : RandomM T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
-  prob_until (body : RandomM T) (cond : T → Bool) x =
+theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
+  prob_until (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (∑' x : T, if cond x then body x else 0)⁻¹ := by
   rw [prob_until_apply body cond x]
   congr
@@ -257,3 +255,5 @@ theorem prob_until_apply_norm (body : RandomM T) (cond : T → Bool) (x : T) (no
     simp [h] at B
   rw [← B]
   rw [ENNReal.add_sub_cancel_right F]
+
+end SLang
