@@ -12,7 +12,7 @@ open Classical NNReal ENNReal PMF
 
 namespace SLang
 
-variable {α β γ : Type*}
+variable {α β γ : Type}
 
 def toPMF (p : SLang α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 

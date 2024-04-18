@@ -9,4 +9,3 @@ import SampCert.Foundations.Monad
 import SampCert.Foundations.While
 import SampCert.Foundations.Until
 import SampCert.Foundations.UniformP2
-import SampCert.Foundations.Util

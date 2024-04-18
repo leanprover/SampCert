@@ -33,7 +33,7 @@ end PMF
 
 namespace SLang
 
-variable {T U} -- [Preorder T]
+variable {T U : Type}
 
 def zero : SLang T := λ _ : T => 0
 

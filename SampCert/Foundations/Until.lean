@@ -5,8 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.While
-import Mathlib.Probability.ConditionalProbability
-import SampCert.Foundations.Util
+import SampCert.Util.Util
 
 noncomputable section
 

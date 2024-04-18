@@ -7,7 +7,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Data.Nat.Log
-import SampCert.Foundations.Util
+import SampCert.Util.Util
 import SampCert.Foundations.Monad
 import SampCert.Foundations.Auto
 

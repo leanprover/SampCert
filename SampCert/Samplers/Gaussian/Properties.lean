@@ -10,7 +10,7 @@ import SampCert.Samplers.Bernoulli.Basic
 import SampCert.Samplers.BernoulliNegativeExponential.Basic
 import SampCert.Samplers.Laplace.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
-import SampCert.Foundations.UtilMathlib
+import SampCert.Util.UtilMathlib
 import SampCert.Samplers.Gaussian.Code
 
 noncomputable section
