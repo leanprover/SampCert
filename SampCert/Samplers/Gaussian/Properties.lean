@@ -566,6 +566,9 @@ theorem summable_gauss_core (num : PNat) (den : PNat) :
   intro Y
   apply (RCLike.summable_ofReal ℂ).mp Y
 
+theorem Add1 (n : Nat) : 0 < n + 1 := by
+  simp only [add_pos_iff, zero_lt_one, or_true]
+
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
