@@ -4,10 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.Foundations.SubPMF
-
-open MeasurableSpace
-
 attribute [simp] Lean.Internal.coeM
 attribute [simp] Bind.bind
 attribute [simp] Pure.pure
@@ -24,7 +20,3 @@ attribute [simp] instCoeTC_1
 attribute [simp] Coe.coe
 attribute [simp] optionCoe
 attribute [simp] CoeOut.coe
-
-variable {T : Type} [MeasurableSpace T]
-
-abbrev RandomM (T : Type) := SubPMF T

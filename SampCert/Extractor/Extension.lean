@@ -13,7 +13,7 @@ structure State where
   map : SMap Name String := {}
   decls : List String := []
   inlines : List String := []
-  glob : SMap Name RandomMDef := {}
+  glob : SMap Name MDef := {}
   deriving Inhabited
 
 def State.switch (s : State) : State :=
@@ -23,7 +23,7 @@ inductive Entry where
   | addDecl (declNameLean : Name) (declNameDafny : String)
   | toExport (dafnyDecl : String)
   | addInline (declNameLean : Name)
-  | addFunc (defnName : String) (defn : RandomMDef)
+  | addFunc (defnName : String) (defn : MDef)
   deriving Inhabited
 
 def addEntry (s : State) (e : Entry) : State :=

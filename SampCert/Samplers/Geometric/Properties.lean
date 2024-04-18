@@ -5,16 +5,17 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
+import SampCert.Samplers.Geometric.Code
 
 noncomputable section
 
-namespace Geometric
-
 open Classical Nat
 
-section Test
+namespace SLang
 
-variable (trial : RandomM Bool)
+section Geometric
+
+variable (trial : SLang Bool)
 variable (trial_spec : trial false + trial true = 1)
 variable (trial_spec' : trial true < 1)
 
@@ -67,15 +68,6 @@ theorem trial_sum_ne_top' :
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
   simp [ite_test, tsum_shift'_1, pow_add] at A
   trivial
-
-def loop_cond (st : (Bool × ℕ)) : Bool := st.1
-def loop_body (st : (Bool × ℕ)) : RandomM (Bool × ℕ) := do
-  let x ← trial
-  return (x,st.2 + 1)
-
-def geometric : RandomM ℕ := do
-  let st ← prob_while loop_cond (loop_body trial) (true,0)
-  return st.2
 
 @[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
@@ -302,8 +294,8 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
   . rename_i fuel IH
     intro n k b
     simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
-    unfold SubPMF.bind
-    unfold SubPMF.pure
+    unfold SLang.bind
+    unfold SLang.pure
     simp [ite_apply]
     split
     . rename_i h
@@ -314,7 +306,7 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
       subst h
       simp [IH]
 
-theorem if_simpl (x n : ℕ) :
+theorem if_simpl_geo (x n : ℕ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 ((trial true ^ (x - 1) * trial false) * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
   split
   . simp
@@ -329,7 +321,7 @@ theorem if_simpl (x n : ℕ) :
 @[simp]
 theorem geometric_apply (n : ℕ) :
   geometric trial n = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
-  simp only [geometric, bind, pure, SubPMF.bind_apply, SubPMF.pure_apply]
+  simp only [geometric, Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
   simp only [prob_while, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
@@ -343,7 +335,7 @@ theorem geometric_apply (n : ℕ) :
     right
     right
     intro x
-    rw [if_simpl]
+    rw [if_simpl_geo]
   simp only [tsum_zero, add_zero]
 
 @[simp]
@@ -392,6 +384,6 @@ theorem geometric_normalizes' :
     add_tsub_cancel_right]
   trivial
 
-end Test
-
 end Geometric
+
+end SLang

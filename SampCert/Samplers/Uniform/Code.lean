@@ -5,7 +5,13 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.SLang
-import SampCert.Foundations.Monad
-import SampCert.Foundations.While
-import SampCert.Foundations.Until
-import SampCert.Foundations.UniformP2
+
+noncomputable section
+
+namespace SLang
+
+def UniformSample (n : PNat) : SLang Nat := do
+  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
+  return r
+
+end SLang

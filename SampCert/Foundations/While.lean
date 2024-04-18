@@ -4,30 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.Foundations.Random
-import SampCert.Foundations.SubPMF
+import SampCert.SLang
+import SampCert.Foundations.Monad
+import SampCert.Foundations.Auto
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 noncomputable section
 
-open Classical SubPMF Nat ENNReal OrderHom PMF
+namespace SLang
 
 variable {T} [Preorder T]
 
-def WhileFunctional (cond : T → Bool) (body : T → RandomM T) (wh : T → RandomM T) : T → RandomM T :=
-  λ a : T =>
-  if cond a
-    then do
-      let v ← body a
-      wh v
-    else return a
-
-def prob_while_cut (cond : T → Bool) (body : T → RandomM T) (n : Nat) (a : T) : RandomM T :=
-  match n with
-  | Nat.zero => SubPMF.zero
-  | succ n => WhileFunctional cond body (prob_while_cut cond body n) a
-
-theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) :
+theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) :
   Monotone (fun n : Nat => prob_while_cut cond body n init x) := by
   apply monotone_nat_of_le_succ
   intro n
@@ -40,8 +28,8 @@ theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (i
     simp [prob_while_cut,WhileFunctional]
     split
     . rename_i COND
-      unfold SubPMF.bind
-      unfold SubPMF.pure
+      unfold SLang.bind
+      unfold SLang.pure
       simp
       apply ENNReal.tsum_le_tsum
       intro a
@@ -49,11 +37,8 @@ theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → RandomM T) (i
       exact IH a
     . simp
 
-def prob_while (cond : T → Bool) (body : T → RandomM T) (init : T) : RandomM T :=
-  fun x => ⨆ (i : ℕ), (prob_while_cut cond body i init x)
-
 @[simp]
-theorem while_apply (cond : T → Bool) (body : T → RandomM T) (init : T) (x : T) (v : ENNReal) :
+theorem while_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) (v : ENNReal) :
   Filter.Tendsto (fun i => prob_while_cut cond body i init x) Filter.atTop (nhds v) →
   prob_while cond body init x = v := by
   intro H
@@ -61,3 +46,5 @@ theorem while_apply (cond : T → Bool) (body : T → RandomM T) (init : T) (x :
   apply iSup_eq_of_tendsto
   . apply prob_while_cut_monotonic
   . apply H
+
+end SLang

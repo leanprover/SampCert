@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
-import SampCert.Foundations.UtilMathlib
+import SampCert.Util.UtilMathlib
 import SampCert.DiffPrivacy.GaussBound
 
 open Classical Nat Real

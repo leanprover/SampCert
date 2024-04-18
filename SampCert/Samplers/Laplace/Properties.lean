@@ -5,24 +5,24 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Foundations.Basic
-import SampCert.Samplers.Uniform
-import SampCert.Samplers.Bernoulli
-import SampCert.Samplers.BernoulliNegativeExponential
-import SampCert.Foundations.GeometricGen
+import SampCert.Samplers.Uniform.Basic
+import SampCert.Samplers.Bernoulli.Basic
+import SampCert.Samplers.BernoulliNegativeExponential.Basic
+import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
+import SampCert.Samplers.Laplace.Code
+
+noncomputable section
 
 open Classical PMF Nat Real BigOperators Finset
 
-noncomputable def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : RandomM (Nat × Bool) := do
-  let U ← UniformSample t
-  let D ← BernoulliExpNegSample U t
-  return (U,D)
+namespace SLang
 
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn1Aux_normalizes (t : PNat) :
   (∑' x : ℕ × Bool, (DiscreteLaplaceSampleLoopIn1Aux t) x) = 1 := by
-  simp only [DiscreteLaplaceSampleLoopIn1Aux, Bind.bind, Pure.pure, SubPMF.bind_apply,
-    SubPMF.pure_apply, tsum_bool,  NNReal.coe_nat_cast,
+  simp only [DiscreteLaplaceSampleLoopIn1Aux, Bind.bind, Pure.pure, SLang.bind_apply,
+    SLang.pure_apply, tsum_bool,  NNReal.coe_nat_cast,
      ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
     and_true, and_false, ↓reduceIte, add_zero, zero_add]
   conv =>
@@ -156,14 +156,10 @@ theorem DiscreteLaplaceSampleLoopIn1Aux_apply_false (t : PNat) (n : ℕ) :
   rw [mul_comm]
   rw [← division_def]
 
-noncomputable def DiscreteLaplaceSampleLoopIn1 (t : PNat) : RandomM Nat := do
-  let r1 ← prob_until (DiscreteLaplaceSampleLoopIn1Aux t) (λ x : Nat × Bool => x.2)
-  return r1.1
-
 theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
   (DiscreteLaplaceSampleLoopIn1 t) n =
     DiscreteLaplaceSampleLoopIn1Aux t (n, true) * (∑' (a : ℕ), DiscreteLaplaceSampleLoopIn1Aux t (a, true))⁻¹ := by
-  simp only [DiscreteLaplaceSampleLoopIn1, Bind.bind, Pure.pure, SubPMF.bind_apply, ite_mul, zero_mul, SubPMF.pure_apply]
+  simp only [DiscreteLaplaceSampleLoopIn1, Bind.bind, Pure.pure, SLang.bind_apply, ite_mul, zero_mul, SLang.pure_apply]
   conv =>
     left
     right
@@ -306,50 +302,27 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
     . simp only [ne_eq, ENNReal.ofReal_ne_top, not_false_eq_true, ENNReal.inv_eq_zero,
       ENNReal.natCast_ne_top, or_self]
 
--- Note that for the arxiv algorithm, we can call Unit directly
-noncomputable def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat)  (K : Bool × Nat) : RandomM (Bool × Nat) := do
-  let A ← BernoulliExpNegSample num den
-  return (A, K.2 + 1)
-
-noncomputable def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : RandomM Nat := do
-  let r2 ← prob_while (λ K : Bool × Nat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,0)
-  return r2.2
-
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
-    = Geometric.geometric (BernoulliExpNegSample num den) := by
+    = geometric (BernoulliExpNegSample num den) := by
   unfold DiscreteLaplaceSampleLoopIn2
   unfold DiscreteLaplaceSampleLoopIn2Aux
-  unfold Geometric.geometric
-  unfold Geometric.loop_cond
-  unfold Geometric.loop_body
+  unfold geometric
+  unfold loop_cond
+  unfold loop_body
   rfl
 
--- We need to generate and test both implementations
-noncomputable def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
-  let U ← DiscreteLaplaceSampleLoopIn1 num
-  let v ← DiscreteLaplaceSampleLoopIn2 1 1
-  let V := v - 1
-  let X := U + num * V
-  let Y := X / den
-  let B ← BernoulliSample 1 2 (le.step le.refl)
-  return (B,Y)
 
-noncomputable def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : RandomM (Bool × Nat) := do
-  let v ← DiscreteLaplaceSampleLoopIn2 den num
-  let V := v - 1
-  let B ← BernoulliSample 1 2 (le.step le.refl)
-  return (B,V)
 
 @[simp]
 theorem DiscreteLaplaceSampleLoop_apply (num : PNat) (den : PNat) (n : ℕ) (b : Bool) :
   (DiscreteLaplaceSampleLoop num den) (b,n)
     = ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) * ((2 : ℕ+): ENNReal)⁻¹ := by
   simp only [DiscreteLaplaceSampleLoop, Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure,
-    SubPMF.bind_apply, Geometric.geometric_apply, BernoulliExpNegSample_apply_true,
+    SLang.bind_apply, geometric_apply, BernoulliExpNegSample_apply_true,
     NNReal.coe_nat_cast, BernoulliExpNegSample_apply_false, BernoulliSample_apply, cast_one,
-    one_div, SubPMF.pure_apply, Prod.mk.injEq, mul_ite, mul_one, mul_zero, tsum_bool, ↓reduceIte,
+    one_div, SLang.pure_apply, Prod.mk.injEq, mul_ite, mul_one, mul_zero, tsum_bool, ↓reduceIte,
     ite_mul, zero_mul]
   rw [ENNReal.tsum_eq_add_tsum_ite (n + 1)]
   simp only [add_eq_zero, one_ne_zero, and_false, ↓reduceIte, add_tsub_cancel_right, and_true]
@@ -477,9 +450,9 @@ theorem ite_simpl_5 (n c : ℕ) (a : ENNReal) (h : n ≠ 0) : ite (- (n : ℤ) =
 theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
   (∑' x, (DiscreteLaplaceSampleLoop num den) x) = 1 := by
   simp only [DiscreteLaplaceSampleLoop, Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure,
-    SubPMF.bind_apply,
+    SLang.bind_apply,
     NNReal.coe_nat_cast,  cast_one,
-    one_div, SubPMF.pure_apply, ite_mul, tsum_bool, ↓reduceIte, zero_mul, ENNReal.tsum_prod',
+    one_div, SLang.pure_apply, ite_mul, tsum_bool, ↓reduceIte, zero_mul, ENNReal.tsum_prod',
     Prod.mk.injEq, mul_ite, mul_one, mul_zero, true_and, false_and, add_zero, zero_add]
   conv =>
     left
@@ -508,7 +481,7 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
 
   simp only [add_zero]
 
-  have A : Geometric.geometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
+  have A : geometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
   rw [A]
   simp only [ge_iff_le, _root_.zero_le, tsub_eq_zero_of_le, ↓reduceIte,
     cast_one, one_div, zero_mul, ite_self,  add_eq_zero, one_ne_zero,
@@ -525,17 +498,11 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
   rw [A]
   clear A
   rw [mul_one]
-  apply Geometric.geometric_normalizes'
+  apply geometric_normalizes'
   . have A := BernoulliExpNegSample_normalizes den num
     rw [tsum_bool] at A
     trivial
   . simp
-
-
-noncomputable def DiscreteLaplaceSample (num den : PNat) : RandomM ℤ := do
-  let r ← prob_until (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
-  let Z : Int := if r.1 then - r.2 else r.2
-  return Z
 
 theorem avoid_double_counting (num den : PNat) :
   (∑' (x : Bool × ℕ), if x.1 = true → ¬x.2 = 0 then DiscreteLaplaceSampleLoop num den x else 0)
@@ -642,10 +609,10 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
   (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
-  simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SubPMF.bind_apply,
+  simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SLang.bind_apply,
      decide_eq_true_eq, ENNReal.summable,
     Bool.forall_bool, and_self, tsum_prod', tsum_bool, IsEmpty.forall_iff, ↓reduceIte, tsum_zero,
-    forall_true_left, ite_not, zero_add, ite_mul, zero_mul, SubPMF.pure_apply, mul_ite, mul_one,
+    forall_true_left, ite_not, zero_add, ite_mul, zero_mul, SLang.pure_apply, mul_ite, mul_one,
     mul_zero, one_div, Int.cast_abs]
   rw [← Complex.abs_ofReal]
 
@@ -887,7 +854,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
 @[simp]
 theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
   ∑' x : ℤ, (DiscreteLaplaceSample num den) x = 1 := by
-  simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SubPMF.bind_apply]
+  simp only [DiscreteLaplaceSample, Bind.bind, not_and, Pure.pure, SLang.bind_apply]
   have A := DiscreteLaplaceSampleLoop_normalizes num den
   conv =>
     left
@@ -907,7 +874,7 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
     rw [ENNReal.tsum_comm]
 
   simp only [decide_eq_true_eq, tsum_bool, IsEmpty.forall_iff, ↓reduceIte, forall_true_left,
-    ite_not, ite_mul, zero_mul, SubPMF.pure_apply, mul_ite, mul_one, mul_zero, tsum_ite_eq]
+    ite_not, ite_mul, zero_mul, SLang.pure_apply, mul_ite, mul_one, mul_zero, tsum_ite_eq]
 
   -- conv =>
   --   left
@@ -973,3 +940,5 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
     have E : (∑' (x : Bool × ℕ), DiscreteLaplaceSampleLoop num den x) < ⊤ := by simp
 
     apply LE.le.trans_lt B E
+
+end SLang

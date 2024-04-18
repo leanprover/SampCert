@@ -7,25 +7,13 @@ Authors: Jean-Baptiste Tristan
 import Lean
 import SampCert.Extractor.IR
 import SampCert.Extractor.Extension
-import SampCert.Foundations.Basic
-
-/-
-
-  Todo:
-  * Allow curried RandomM computations
-  * Allow parametric polymorphism
-  * Allow higher-order functions
-
-  For now, because of these restrictions,
-  the compilation of prob_while and prob_until is ad-hoc
-
--/
+import SampCert.SLang
 
 namespace Lean.ToDafny
 
 def IsWFMonadic (e: Expr) : MetaM Bool :=
   match e with
-  | .app (.const ``RandomM ..) _ => return true
+  | .app (.const ``SLang ..) _ => return true
   | .app .. => return true -- Need to work out details of this one, related to translation of dependent types
   | .forallE _ _ range _ => IsWFMonadic range
   | _ => return false -- throwError "IsWFMonadic {e}"
@@ -52,7 +40,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
       if let .const name .. := fn then
       match name with
       | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
-      | ``RandomM => return (← toDafnyTyp env args[0]!)
+      | ``SLang => return (← toDafnyTyp env args[0]!)
       | _ => return .dependent (← toDafnyExpr "dummycalledfromtoDafnyTyp" env e)
       else throwError "toDafnyExpr: OOL {fn} {args}"
     )
@@ -82,8 +70,8 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``ite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[3]!) (← toDafnyExpr dname env args[4]!)
       | ``dite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[3]!)) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[4]!))
       | ``throwThe => return .throw (← toDafnyExpr dname env args[4]!)
-      | ``prob_while => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
-      | ``prob_until => return .prob_until (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
+      | ``SLang.prob_while => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
+      | ``SLang.prob_until => return .prob_until (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
       | ``OfNat.ofNat => toDafnyExpr dname env args[1]!
       | ``HAdd.hAdd => return .binop .addition (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
       | ``HSub.hSub => return .binop .substraction (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
@@ -150,7 +138,7 @@ end
 def toDafnyTypTop (env : List String) (e: Expr) : MetaM ((List Typ) × Typ) := do
   match e with
   | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
-  | (.app (.const ``RandomM ..) arg) => return ([],← toDafnyTyp [] arg)
+  | (.app (.const ``SLang ..) arg) => return ([],← toDafnyTyp [] arg)
   | .forallE binder domain range _ =>
     let nenv := binder.toString :: env
     let r ← toDafnyTypTop nenv range
@@ -188,16 +176,16 @@ def printParamTypes (params : List Typ) : String :=
   | [] => ""
   | param :: params => s!"{param.print}, {printParamTypes params}"
 
-def toDafnyRandomMDefIn (declName: Name) : MetaM RandomMDef := do
+def toDafnySLangDefIn (declName: Name) : MetaM MDef := do
   let info ← getConstInfo declName
   match info with
     | ConstantInfo.defnInfo _ =>
       if ← IsWFMonadic info.type then
         let (inParamTyp, outParamTyp) ← toDafnyTypTop [] info.type
         let (inParam, body) ←  toDafnyExprTop declName.toString (List.length inParamTyp) [] info.value!
-        let defn := RandomMDef.mk (declName.toString) inParamTyp outParamTyp inParam body
+        let defn := MDef.mk (declName.toString) inParamTyp outParamTyp inParam body
         return defn
-      else throwError "This extractor works for RandomM monadic computations only (1)"
-    | _ => throwError "This extractor works for RandomM monadic computations only (2)"
+      else throwError "This extractor works for SLang monadic computations only (1)"
+    | _ => throwError "This extractor works for SLang monadic computations only (2)"
 
 end Lean.ToDafny

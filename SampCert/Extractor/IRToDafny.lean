@@ -114,7 +114,7 @@ def Expression.pipeline (body : Expression) : MetaM Expression := do
   --IO.println body4.print
   return body4
 
-def CodeGen (pi : RandomMDef) : MetaM Method := do
+def CodeGen (pi : MDef) : MetaM Method := do
   let body' ← pi.body.pipeline
   modifyEnv fun env => extension.addEntry env (.addFunc pi.name { pi with body := body' })
   return {

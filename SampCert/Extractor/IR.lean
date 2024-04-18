@@ -68,7 +68,7 @@ inductive Expression where
 
 end
 
-structure RandomMDef where
+structure MDef where
   name : String
   inParamType : List Typ
   outParamType : Typ
@@ -163,7 +163,7 @@ def printRequires (types : List Typ) (indent : String) : String :=
     printRequires types indent
   | _ => "printRequires: list of requires contains a non-dependent type"
 
-def RandomMDef.print (m : RandomMDef) : String :=
+def MDef.print (m : MDef) : String :=
   s!"method {m.name}({printArgs m.inParam m.inParamType}) : returns ({m.outParamType.print}) \n {m.body.print} \n "
 
 partial def Expression.map (transform : Expression → MetaM Expression) (e : Expression) : MetaM Expression := do

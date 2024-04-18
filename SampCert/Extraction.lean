@@ -7,12 +7,13 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Extractor.Export
 import SampCert.Extractor.Align
 import SampCert.Extractor.Print
-import SampCert.Extractor.Inline
-import SampCert.Samplers.Uniform
-import SampCert.Samplers.Bernoulli
-import SampCert.Samplers.BernoulliNegativeExponential
-import SampCert.Samplers.Laplace
-import SampCert.Samplers.Gaussian
+import SampCert.Samplers.Uniform.Code
+import SampCert.Samplers.Bernoulli.Code
+import SampCert.Samplers.BernoulliNegativeExponential.Code
+import SampCert.Samplers.Laplace.Code
+import SampCert.Samplers.Gaussian.Code
+
+open SLang
 
 attribute [export_dafny] UniformSample
 attribute [export_dafny] BernoulliSample
