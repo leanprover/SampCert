@@ -5,3 +5,6 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.Extraction
+import SampCert.Extractor.Print
+
+#print_dafny_exports
