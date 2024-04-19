@@ -11,3 +11,5 @@ require mathlib from git
 lean_lib «SampCert» where
 
 lean_lib «FastExtract» where
+
+lean_lib «VMC» where

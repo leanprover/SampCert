@@ -6,7 +6,6 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Extractor.Export
 import SampCert.Extractor.Align
-import SampCert.Extractor.Print
 import SampCert.Samplers.Uniform.Code
 import SampCert.Samplers.Bernoulli.Code
 import SampCert.Samplers.BernoulliNegativeExponential.Code
@@ -30,5 +29,3 @@ attribute [export_dafny] DiscreteLaplaceSampleLoop
 attribute [export_dafny] DiscreteLaplaceSample
 attribute [export_dafny] DiscreteGaussianSampleLoop
 attribute [export_dafny] DiscreteGaussianSample
-
-#print_dafny_exports
