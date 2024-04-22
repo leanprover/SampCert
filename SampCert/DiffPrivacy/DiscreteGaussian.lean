@@ -29,6 +29,13 @@ instance gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
     . apply continuous_ofReal
     . apply continuous_const
 
+theorem gauss_term_swap (σ μ : ℝ) (n : ℝ) :
+  (gauss_term_ℂ σ μ n) = gauss_term_ℝ σ μ n := by
+  simp [gauss_term_ℂ, gauss_term_ℝ]
+
+-- def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
+--  Real.exp (- 2 * (π * σ * x)^2) / ((((π * (σ:ℝ)^2 * (2 : ℝ))⁻¹) ^ (2 : ℝ)⁻¹) : ℝ)
+
 def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
   Complex.exp (- 2 * (π * σ * x)^2) / (((π * (σ:ℂ)^2 * (2 : ℂ))⁻¹) ^ (2 : ℂ)⁻¹)
 
@@ -52,12 +59,21 @@ theorem jacobi_tau_positive {σ : ℝ} (h : σ ≠ 0) :
   0 < (Complex.I * ((2 : ℂ) * σ^2)⁻¹ * π⁻¹).im := by
   simp [pi_pos, h, sq]
 
-theorem summable_gauss_term {σ : ℝ} (μ : ℝ) (h : σ ≠ 0) :
+theorem summable_gauss_term {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun n : ℤ => gauss_term_ℂ σ μ n := by
   rw [gauss_term_jacobi]
   apply Summable.mul_right
   rw [summable_jacobiTheta₂_term_iff]
   apply jacobi_tau_positive h
+
+theorem summable_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  Summable fun n : ℤ => gauss_term_ℝ σ μ n := by
+  rw [← Complex.summable_ofReal]
+  conv =>
+    right
+    intro n
+    rw [← gauss_term_swap]
+  apply summable_gauss_term h
 
 theorem asymptotics_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   gauss_term_ℂ σ 0 =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
