@@ -39,8 +39,8 @@ theorem gauss_term_swap (σ μ : ℝ) (n : ℝ) :
 def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
   Complex.exp (- 2 * (π * σ * x)^2) / (((π * (σ:ℂ)^2 * (2 : ℂ))⁻¹) ^ (2 : ℂ)⁻¹)
 
-def discrete_gaussian (σ μ : ℝ) (x : ℤ) : ℂ :=
-  gauss_term_ℂ σ μ x / ∑' x : ℤ, gauss_term_ℂ σ μ x
+def discrete_gaussian (σ μ : ℝ) (x : ℤ) : ℝ :=
+  gauss_term_ℝ σ μ x / ∑' x : ℤ, gauss_term_ℝ σ μ x
 
 def NotSureYet (σ : ℝ) : C(UnitAddCircle, ℂ) :=
     ⟨((gauss_term_ℂ σ 0).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
@@ -185,3 +185,54 @@ theorem summable_fourier_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     intro n
     rw [← fourier_coeff_correspondance h]
   exact B
+
+theorem gauss_term_pos (σ μ : ℝ) (n : ℤ) :
+  0 < (gauss_term_ℝ σ μ) n := by
+  unfold gauss_term_ℝ
+  apply exp_pos
+
+theorem gauss_term_noneg (σ μ : ℝ) (n : ℤ) :
+  0 ≤ (gauss_term_ℝ σ μ) n := by
+  unfold gauss_term_ℝ
+  apply le_of_lt (gauss_term_pos σ μ n)
+
+theorem sum_gauss_term_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  0 < (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
+  apply tsum_pos (summable_gauss_term' h μ) _ 0
+  . apply gauss_term_pos
+  . intro i
+    apply gauss_term_noneg
+
+theorem sum_gauss_term_nonneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  0 ≤ (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
+  apply le_of_lt (sum_gauss_term_pos h μ)
+
+theorem sum_gauss_term_ne_zero {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  ∑' (n : ℤ), gauss_term_ℝ σ μ n ≠ 0 := by
+  apply Ne.symm (_root_.ne_of_lt (sum_gauss_term_pos h μ))
+
+theorem discrete_gaussian_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
+  0 < discrete_gaussian σ μ n := by
+  unfold discrete_gaussian
+  rw [div_pos_iff]
+  left
+  constructor
+  . apply gauss_term_pos
+  . apply sum_gauss_term_pos h μ
+
+theorem discrete_gaussian_noneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
+  0 ≤ discrete_gaussian σ μ n := by
+  apply le_of_lt (discrete_gaussian_pos h μ n)
+
+theorem discrete_gaussian_summable {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  Summable fun (n : ℤ) => discrete_gaussian σ 0 n := by
+  unfold discrete_gaussian
+  apply Summable.div_const
+  apply summable_gauss_term' h
+
+theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  (∑' n : ℤ, discrete_gaussian σ μ n) = 1 := by
+  unfold discrete_gaussian
+  rw [tsum_div_const]
+  rw [div_eq_one_iff_eq]
+  apply sum_gauss_term_ne_zero h

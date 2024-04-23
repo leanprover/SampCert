@@ -15,14 +15,6 @@ open Real
 noncomputable def RenyiDivergence (p q : ℝ → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : ℤ, (p x)^α  * (q x)^(1 - α))
 
-theorem sg_sum_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
-  0 < (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
-  unfold gauss_term_ℝ
-  apply tsum_pos (summable_gauss_term' h μ) _ 0
-  . apply exp_pos
-  . intro i
-    apply exp_nonneg
-
 theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   0 < ((gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x)^α := by
   apply rpow_pos_of_pos
@@ -30,7 +22,7 @@ theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   left
   constructor
   . apply exp_pos
-  . apply sg_sum_pos h
+  . apply sum_gauss_term_pos h
 
 theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x) x ^ α *
@@ -44,13 +36,13 @@ theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
     intro μ
     rw [inv_nonneg]
     apply le_of_lt
-    apply sg_sum_pos h
+    apply sum_gauss_term_pos h
   have D : 0 < (∑' (x : ℤ), (gauss_term_ℝ σ 0) x)⁻¹ := by
     rw [inv_pos]
     conv =>
       right
       rw [← Int.cast_zero]
-    apply sg_sum_pos h
+    apply sum_gauss_term_pos h
   simp
   conv =>
     left
@@ -107,20 +99,20 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
     intro μ
     rw [inv_nonneg]
     apply le_of_lt
-    apply sg_sum_pos h
+    apply sum_gauss_term_pos h
   have C' : 0 ≤ (∑' (x : ℤ), (gauss_term_ℝ σ 0) x)⁻¹ := by
     rw [inv_nonneg]
     apply le_of_lt
     conv =>
       right
       rw [← Int.cast_zero]
-    apply sg_sum_pos h
+    apply sum_gauss_term_pos h
   have D : 0 < (∑' (x : ℤ), (gauss_term_ℝ σ 0) x)⁻¹ := by
     rw [inv_pos]
     conv =>
       right
       rw [← Int.cast_zero]
-    apply sg_sum_pos h
+    apply sum_gauss_term_pos h
   rw [exp_log]
   . conv =>
       left
@@ -204,7 +196,7 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
       conv =>
         right
         rw [← Int.cast_zero]
-      apply sg_sum_pos h
+      apply sum_gauss_term_pos h
     have G := @div_le_one ℝ _ (∑' (x : ℤ), rexp (-(↑x - α * ↑μ) ^ 2 / (2 * σ^2))) (∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * σ^2)))
     replace G := (G X).2 F
     clear X F

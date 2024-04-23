@@ -445,7 +445,10 @@ theorem Add1 (n : Nat) : 0 < n + 1 := by
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
-  ENNReal.ofReal ((exp (- x^2 / (2 * ((num : NNReal) / (den : NNReal))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : NNReal) / (den : NNReal))^2)))) := by
+  ENNReal.ofReal (discrete_gaussian ((num : ℝ) / (den : ℝ)) 0 x) := by
+  unfold discrete_gaussian
+  unfold gauss_term_ℝ
+  simp
   simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SLang.bind_apply]
   have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) }
 
@@ -560,5 +563,23 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
       . simp only [zero_le_one]
   . left
     exact ENNReal.ofReal_ne_top
+
+@[simp]
+theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
+  ∑' x : ℤ, (DiscreteGaussianSample num den) x = 1 := by
+  have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
+    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  conv =>
+    left
+    right
+    intro x
+    rw [DiscreteGaussianSample_apply]
+  rw [← ENNReal.ofReal_tsum_of_nonneg]
+  . rw [ENNReal.ofReal_one.symm]
+    congr 1
+    apply discrete_gaussian_normalizes A
+  . intro n
+    apply discrete_gaussian_noneg A 0 n
+  . apply discrete_gaussian_summable A 0
 
 end SLang
