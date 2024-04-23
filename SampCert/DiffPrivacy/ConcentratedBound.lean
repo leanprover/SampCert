@@ -12,7 +12,7 @@ import SampCert.Util.Shift
 
 open Real
 
-noncomputable def RenyiDivergence (p q : ℝ → ℝ) (α : ℝ) : ℝ :=
+noncomputable def RenyiDivergence (p q : ℤ → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : ℤ, (p x)^α  * (q x)^(1 - α))
 
 theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
@@ -79,8 +79,8 @@ theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
 
 
 theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : α > 1) :
-  RenyiDivergence (fun (x : ℝ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
-                  (fun (x : ℝ) => (gauss_term_ℝ σ (0 : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ (0 : ℤ)) x)
+  RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
+                  (fun (x : ℤ) => (gauss_term_ℝ σ (0 : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ (0 : ℤ)) x)
                   α ≤ α * (μ^2 / (2 * σ^2)) := by
   unfold RenyiDivergence
   have A : 0 < 1 / (α - 1) := by
@@ -302,8 +302,8 @@ theorem sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rw [← neg_add]
 
 theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
-  RenyiDivergence (fun (x : ℝ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x) (fun (x : ℝ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x) α
-    = RenyiDivergence (fun (x : ℝ) => (gauss_term_ℝ σ ((μ + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((μ + τ) : ℤ)) x) (fun (x : ℝ) => (gauss_term_ℝ σ ((ν + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((ν + τ) : ℤ)) x) α := by
+  RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x) (fun (x : ℤ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x) α
+    = RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ ((μ + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((μ + τ) : ℤ)) x) (fun (x : ℤ) => (gauss_term_ℝ σ ((ν + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((ν + τ) : ℤ)) x) α := by
   unfold RenyiDivergence
   congr 2
   conv =>
@@ -412,10 +412,11 @@ theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     apply Summable.mul_right
     apply summable_gauss_term' h
 
-theorem RenyiDivergenceBound' {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) (h' : α > 1) :
-  RenyiDivergence (fun (x : ℝ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
-                  (fun (x : ℝ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x)
+theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
+  RenyiDivergence (fun (x : ℤ) => discrete_gaussian σ μ x)
+                  (fun (x : ℤ) => discrete_gaussian σ ν x)
                   α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
+  unfold discrete_gaussian
   rw [SG_Renyi_shift h α μ ν (-ν)]
   rw [add_right_neg]
   apply  RenyiDivergenceBound h (μ + -ν) α h'

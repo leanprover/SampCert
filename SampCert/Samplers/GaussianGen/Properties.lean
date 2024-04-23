@@ -8,6 +8,7 @@ import SampCert.Samplers.GaussianGen.Code
 import SampCert.Samplers.Gaussian.Properties
 import SampCert.DiffPrivacy.DiscreteGaussian
 import SampCert.DiffPrivacy.GaussPeriodicity
+import SampCert.DiffPrivacy.ConcentratedBound
 
 noncomputable section
 
@@ -45,5 +46,22 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   congr 2
   . simp [gauss_term_ℝ]
   . rw [SG_periodic' A]
+
+theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
+  RenyiDivergence (fun x : ℤ => ((DiscreteGaussianGenSample num den μ) x).toReal) (fun x : ℤ => ((DiscreteGaussianGenSample num den ν) x).toReal) α ≤
+  α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
+  have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
+    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  conv =>
+    left
+    congr
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+      rw [ENNReal.toReal_ofReal (discrete_gaussian_nonneg A μ x)]
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+      rw [ENNReal.toReal_ofReal (discrete_gaussian_nonneg A ν x)]
+    . skip
+  apply RenyiDivergenceBound' A h
 
 end SLang

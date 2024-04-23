@@ -39,7 +39,7 @@ theorem gauss_term_swap (σ μ : ℝ) (n : ℝ) :
 def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
   Complex.exp (- 2 * (π * σ * x)^2) / (((π * (σ:ℂ)^2 * (2 : ℂ))⁻¹) ^ (2 : ℂ)⁻¹)
 
-def discrete_gaussian (σ μ : ℝ) (x : ℤ) : ℝ :=
+def discrete_gaussian (σ μ : ℝ) (x : ℝ) : ℝ :=
   gauss_term_ℝ σ μ x / ∑' x : ℤ, gauss_term_ℝ σ μ x
 
 def NotSureYet (σ : ℝ) : C(UnitAddCircle, ℂ) :=
@@ -220,7 +220,7 @@ theorem discrete_gaussian_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   . apply gauss_term_pos
   . apply sum_gauss_term_pos h μ
 
-theorem discrete_gaussian_noneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
+theorem discrete_gaussian_nonneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   0 ≤ discrete_gaussian σ μ n := by
   apply le_of_lt (discrete_gaussian_pos h μ n)
 

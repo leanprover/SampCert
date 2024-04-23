@@ -579,7 +579,7 @@ theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
     congr 1
     apply discrete_gaussian_normalizes A
   . intro n
-    apply discrete_gaussian_noneg A 0 n
+    apply discrete_gaussian_nonneg A 0 n
   . apply discrete_gaussian_summable A 0
 
 end SLang
