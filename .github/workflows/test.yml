@@ -28,7 +28,7 @@ jobs:
         run: wget https://github.com/dafny-lang/dafny/releases/download/v4.4.0/dafny-4.4.0-x64-ubuntu-20.04.zip ; unzip dafny-4.4.0-x64-ubuntu-20.04.zip
 
       - name: build Python version of SampCert
-        run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/Test.py -o Tests/SampCert.dfy 
+        run: dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py -o Tests/SampCert.dfy
 
       - name: run Test
-        run: python3 Tests/SampCert-py/Test.py
+        run: python3 Tests/SampCert-py/testing-kolmogorov-discretegaussian.py
