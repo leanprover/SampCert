@@ -24,7 +24,7 @@ jobs:
         run: wget https://github.com/dafny-lang/dafny/releases/download/v4.4.0/dafny-4.4.0-x64-ubuntu-20.04.zip ; unzip dafny-4.4.0-x64-ubuntu-20.04.zip
 
       - name: install Python dependences
-        run: pip install matplotlib numpy
+        run: pip install matplotlib numpy scipy
 
       - name: build std
         id: build
