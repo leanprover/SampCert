@@ -30,5 +30,8 @@ jobs:
       - name: build Python version of SampCert
         run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py -o Tests/SampCert.dfy
 
+      - name: install Python dependences
+        run: pip install matplotlib numpy
+
       - name: run Test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretegaussian.py
