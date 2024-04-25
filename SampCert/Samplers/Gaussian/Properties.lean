@@ -12,6 +12,7 @@ import SampCert.Samplers.Laplace.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import SampCert.Util.UtilMathlib
 import SampCert.Samplers.Gaussian.Code
+import SampCert.DiffPrivacy.DiscreteGaussian
 
 noncomputable section
 
@@ -436,135 +437,7 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
 theorem alg_auto' (num den : ℕ+) (x : ℤ) :
   -((x : ℝ) ^ 2 * (den : ℝ) ^ 2 / ((2 : ℝ) * (num : ℝ) ^ 2)) = -(x : ℝ) ^ 2 / ((2 : ℝ) * ((num : ℝ) ^ 2 / (den : ℝ) ^ 2)) := by
-  simp [division_def]
-  rw [mul_assoc]
-  congr 1
-  rw [mul_assoc]
-
-@[simp]
-theorem summable_gauss_core (num : PNat) (den : PNat) :
-  Summable fun (i : ℤ) => rexp (-i ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) := by
-  conv =>
-    right
-    intro i
-    --rw [neg_div]
-    --rw [exp_neg]
-    rw [division_def]
-  have A := @summable_exp_mul_sq (Complex.I / (2 * π * (num ^ 2 / den ^ 2)))
-  have B : ∀ n : ℤ, (π : ℂ) * Complex.I * ↑n ^ 2 * (Complex.I / (2 * ↑π * (↑↑num ^ 2 / ↑↑den ^ 2)))
-    = -n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2)) := by
-    intro n
-    rw [division_def]
-    rw [mul_inv]
-    rw [mul_inv]
-    rw [division_def]
-    rw [mul_inv]
-    rw [division_def]
-    rw [← mul_rotate]
-    conv =>
-      rw [mul_comm]
-    rw [neg_mul_comm]
-    congr 1
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_rotate]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
-    simp only [Complex.I_mul_I, neg_mul, one_mul, inv_inv, mul_inv_rev, neg_inj]
-    rw [mul_assoc]
-    rw [mul_assoc]
-    rw [mul_assoc]
-    rw [mul_comm]
-    conv =>
-      right
-      rw [← mul_assoc]
-    congr 1
-    rw [mul_comm]
-    rw [mul_assoc]
-    rw [mul_assoc]
-    have B : (π : ℂ) ≠ 0 := by
-      refine Complex.ofReal_ne_zero.mpr ?_
-      exact pi_ne_zero
-    rw [mul_inv_cancel B]
-    simp only [mul_one]
-    rw [mul_comm]
-
-  simp only [B] at A
-  clear B
-  conv =>
-    right
-    intro i
-    rw [← division_def]
-
-  have C : ∀ n : ℤ, Complex.exp (-n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) = rexp (-n ^ 2 / (2 * (↑↑num ^ 2 / ↑↑den ^ 2))) := by
-    intro n
-    simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg, Complex.ofReal_pow,
-      Complex.ofReal_int_cast, Complex.ofReal_mul, Complex.ofReal_ofNat, Complex.ofReal_nat_cast]
-
-  have D : 0 < (Complex.I / (2 * (π : ℂ) * ((num : ℂ) ^ 2 / (den : ℂ) ^ 2))).im := by
-    rw [Complex.div_im]
-    simp only [Complex.I_im, Complex.mul_re, Complex.re_ofNat, Complex.ofReal_re, Complex.im_ofNat,
-      Complex.ofReal_im, mul_zero, sub_zero, Complex.mul_im, zero_mul, add_zero, one_mul, map_mul,
-      Complex.normSq_ofNat, Complex.normSq_ofReal, map_div₀, map_pow, Complex.normSq_nat_cast,
-      Complex.I_re, zero_div]
-    rw [division_def]
-    conv =>
-      right
-      right
-      rw [division_def]
-    rw [mul_inv]
-    rw [mul_pos_iff]
-    left
-    constructor
-    . rw [mul_pos_iff]
-      left
-      simp only [gt_iff_lt, zero_lt_two, mul_pos_iff_of_pos_left]
-      constructor
-      . exact pi_pos
-      . rw [division_def]
-        simp only [Complex.mul_re, Complex.inv_re, map_pow, Complex.normSq_nat_cast, Complex.inv_im,
-          sub_pos]
-        have X : (num ^ 2: ℂ).im = 0 := by
-          rw [pow_two]
-          simp only [Complex.mul_im, Complex.nat_cast_re, Complex.nat_cast_im, mul_zero, zero_mul,
-            add_zero]
-        rw [X]
-        simp only [zero_mul, gt_iff_lt]
-        have Y : ∀ n : ℕ+, (n ^ 2: ℂ).re = n ^ 2 := by
-          intro n
-          rw [pow_two]
-          simp only [Complex.mul_re, Complex.nat_cast_re, Complex.nat_cast_im, mul_zero, sub_zero]
-          rw [pow_two]
-        rw [Y]
-        rw [Y]
-        simp only [gt_iff_lt, cast_pos, PNat.pos, pow_pos, mul_pos_iff_of_pos_left]
-        rw [div_pos_iff]
-        left
-        simp only [gt_iff_lt, cast_pos, PNat.pos, pow_pos, mul_pos_iff_of_pos_left, and_self]
-    . simp only [mul_inv_rev, inv_inv]
-      rw [mul_pos_iff]
-      left
-      simp only [gt_iff_lt, inv_pos, zero_lt_two, mul_pos_iff_of_pos_left, mul_pos_iff_of_pos_right,
-        mul_self_pos, ne_eq, inv_eq_zero, cast_eq_zero, PNat.ne_zero, not_false_eq_true, pow_pos,
-        cast_pos, PNat.pos, and_true]
-      exact pi_ne_zero
-
-  have Y := A D
-  clear A D
-  revert Y
-  conv =>
-    left
-    right
-    intro n
-    rw [C]
-  clear C
-  intro Y
-  apply (RCLike.summable_ofReal ℂ).mp Y
+  ring_nf ; simp ; ring_nf
 
 theorem Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
@@ -572,7 +445,10 @@ theorem Add1 (n : Nat) : 0 < n + 1 := by
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
-  ENNReal.ofReal ((exp (- x^2 / (2 * ((num : NNReal) / (den : NNReal))^2))) / (∑' (y : ℤ), exp (- y^2 / (2 * ((num : NNReal) / (den : NNReal))^2)))) := by
+  ENNReal.ofReal (discrete_gaussian ((num : ℝ) / (den : ℝ)) 0 x) := by
+  unfold discrete_gaussian
+  unfold gauss_term_ℝ
+  simp
   simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SLang.bind_apply]
   have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) }
 
@@ -641,14 +517,24 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
             rw [← ENNReal.ofReal_tsum_of_nonneg]
             . intro n
               simp only [exp_nonneg]
-            . simp only [summable_gauss_core]
+            . have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
+                simp
+              have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
+              unfold gauss_term_ℝ at Y
+              simp at Y
+              exact Y
         . left
           simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
           simp only [exp_pos]
         . left
           exact ENNReal.ofReal_ne_top
       . apply tsum_pos
-        . simp only [summable_gauss_core]
+        . have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
+            simp
+          have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
+          unfold gauss_term_ℝ at Y
+          simp at Y
+          exact Y
         . intro i
           simp only [exp_nonneg]
         . simp only [exp_pos]
@@ -677,5 +563,23 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
       . simp only [zero_le_one]
   . left
     exact ENNReal.ofReal_ne_top
+
+@[simp]
+theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
+  ∑' x : ℤ, (DiscreteGaussianSample num den) x = 1 := by
+  have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
+    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  conv =>
+    left
+    right
+    intro x
+    rw [DiscreteGaussianSample_apply]
+  rw [← ENNReal.ofReal_tsum_of_nonneg]
+  . rw [ENNReal.ofReal_one.symm]
+    congr 1
+    apply discrete_gaussian_normalizes A
+  . intro n
+    apply discrete_gaussian_nonneg A 0 n
+  . apply discrete_gaussian_summable A 0
 
 end SLang
