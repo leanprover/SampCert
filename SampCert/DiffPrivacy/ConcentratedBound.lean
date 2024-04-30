@@ -9,11 +9,9 @@ import SampCert.DiffPrivacy.GaussBound
 import SampCert.DiffPrivacy.GaussConvergence
 import SampCert.DiffPrivacy.GaussPeriodicity
 import SampCert.Util.Shift
+import SampCert.DiffPrivacy.RenyiDivergence
 
 open Real
-
-noncomputable def RenyiDivergence (p q : ℤ → ℝ) (α : ℝ) : ℝ :=
-  (1 / (α - 1)) * Real.log (∑' x : ℤ, (p x)^α  * (q x)^(1 - α))
 
 theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   0 < ((gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x)^α := by

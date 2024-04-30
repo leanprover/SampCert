@@ -7,3 +7,4 @@ Authors: Jean-Baptiste Tristan
 import SampCert.Samplers.Gaussian.Basic
 import SampCert.DiffPrivacy.ConcentratedBound
 import SampCert.Samplers.GaussianGen.Basic
+import SampCert.DiffPrivacy.BoundedAvg
