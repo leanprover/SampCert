@@ -16,11 +16,11 @@ noncomputable section
 
 open Classical Nat Int Real
 
-def DP (q : List T → SLang ℤ) (ε₁ ε₂ : ℕ+) : Prop :=
+def DP (q : List T → SLang U) (ε₁ ε₂ : ℕ+) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   RenyiDivergence
-    (fun x : ℤ => (q l₁ x).toReal)
-    (fun x : ℤ => (q l₂ x).toReal) α
+    (fun x : U => (q l₁ x).toReal)
+    (fun x : U => (q l₂ x).toReal) α
     ≤ (1/2) * (ε₁ / ε₂)^2 * α
 
 namespace SLang
@@ -88,8 +88,14 @@ def Compose (nq1 nq2 : List T → SLang ℤ) (l : List T) : SLang (ℤ × ℤ) :
 def RAdd (ε₁ ε₂ ε₃ ε₄ : ℕ+) : ℕ+ × ℕ+ :=
   (ε₁ * ε₃ + ε₂ * ε₄,ε₃ * ε₄)
 
--- theorem DPCompose (nq1 nq2 : List T → SLang ℤ) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : DP nq1 ε₁ ε₂)  (h2 : DP nq2 ε₃ ε₄) :
---   DP (Compose nq1 nq2) (RAdd ε₁ ε₂ ε₃ ε₄).1 (RAdd ε₁ ε₂ ε₃ ε₄).2 := by
---   sorry
+theorem DPCompose (nq1 nq2 : List T → SLang ℤ) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : DP nq1 ε₁ ε₂)  (h2 : DP nq2 ε₃ ε₄) :
+  DP (Compose nq1 nq2) (RAdd ε₁ ε₂ ε₃ ε₄).1 (RAdd ε₁ ε₂ ε₃ ε₄).2 := by
+  simp [Compose, RAdd, RenyiDivergence, DP]
+  intro α h1 l₁ l₂ h2
+  rw [tsum_prod']
+  . simp
+    sorry
+  . sorry
+  . sorry
 
 end SLang

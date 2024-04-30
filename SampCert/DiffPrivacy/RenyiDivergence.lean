@@ -9,5 +9,7 @@ import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 
 open Real
 
-noncomputable def RenyiDivergence (p q : ℤ → ℝ) (α : ℝ) : ℝ :=
-  (1 / (α - 1)) * Real.log (∑' x : ℤ, (p x)^α  * (q x)^(1 - α))
+variable {T : Type}
+
+noncomputable def RenyiDivergence (p q : T → ℝ) (α : ℝ) : ℝ :=
+  (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))

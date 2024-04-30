@@ -16,5 +16,7 @@ import SampCert.DiffPrivacy.Neighbours
 
 open Classical Nat Int Real
 
+variable {T : Type}
+
 noncomputable def sensitivity (q : List T → ℤ) (Δ : ℕ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → Int.natAbs (q l₁ - q l₂) ≤ Δ
