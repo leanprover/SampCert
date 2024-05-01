@@ -28,7 +28,7 @@ theorem NoisedBoundedAvgQueryIdentical (L U : ℤ) (h : L < U) (ε₁ ε₂ : �
   ext l x
   simp [NoisedBoundedAvgQuery, NoisedBoundedAvgQuery', PostProcess, Compose]
 
-theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvgQuery L U h ε₁ ε₂) ε₁ ε₂ := by
+theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvgQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   rw [← NoisedBoundedAvgQueryIdentical]
   unfold NoisedBoundedAvgQuery'
   simp only
@@ -36,23 +36,10 @@ theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (Noi
   have A := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
   have B := @NoisedBoundedSumQueryDP L U h ε₁ (2 * ε₂)
   have C := DPCompose B A
+  simp at C
+  ring_nf at C
+  rw [← division_def] at C
   have D := DPPostProcess C (fun z => z.1 / z.2)
-  simp [RAdd] at D
-
-  apply DP_cancel_sigma (ε₁ * (2 * ε₂) + 2 * ε₂ * ε₁) (2 * ε₂ * (2 * ε₂)) ε₁ ε₂ D
-  ring_nf
-  simp
-  ring_nf
-  rw [pow_two]
-  rw [← mul_assoc]
-  have A : (ε₂ : ℝ) ≠ 0 := by
-    simp
-  conv =>
-    left
-    left
-    rw [mul_assoc]
-    right
-    rw [mul_inv_cancel A]
-  simp
+  exact D
 
 end SLang

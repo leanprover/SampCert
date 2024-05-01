@@ -65,7 +65,7 @@ theorem BoundedSumQuerySensitivity (L U : ℤ) (h : L < U) : sensitivity (Bounde
 def NoisedBoundedSumQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
   NoisedQuery (BoundedSumQuery L U) (maxBound L U h) ε₁ ε₂ l
 
-theorem NoisedBoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery L U h ε₁ ε₂) ε₁ ε₂ := by
+theorem NoisedBoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply NoisedQueryDP
   apply BoundedSumQuerySensitivity
 

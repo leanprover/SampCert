@@ -16,44 +16,12 @@ noncomputable section
 
 open Classical Nat Int Real
 
-def DP (q : List T → SLang U) (ε₁ ε₂ : ℕ+) : Prop :=
+def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   RenyiDivergence
     (fun x : U => (q l₁ x).toReal)
     (fun x : U => (q l₂ x).toReal) α
-    ≤ (1/2) * (ε₁ / ε₂)^2 * α
-
-theorem DP_cancel_sigma {q : List T → SLang U} (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : DP q ε1 ε2) (h2 : @Eq.{1} Real
-  (@HDiv.hDiv.{0, 0, 0} Real Real Real
-    (@instHDiv.{0} Real
-      (@DivInvMonoid.toDiv.{0} Real
-        (@DivisionMonoid.toDivInvMonoid.{0} Real
-          (@DivisionCommMonoid.toDivisionMonoid.{0} Real
-            (@CommGroupWithZero.toDivisionCommMonoid.{0} Real
-              (@Semifield.toCommGroupWithZero.{0} Real
-                (@LinearOrderedSemifield.toSemifield.{0} Real
-                  (@LinearOrderedField.toLinearOrderedSemifield.{0} Real Real.instLinearOrderedField))))))))
-    (@Nat.cast.{0} Real Real.instNatCast (PNat.val ε1)) (@Nat.cast.{0} Real Real.instNatCast (PNat.val ε2)))
-  (@HDiv.hDiv.{0, 0, 0} Real Real Real
-    (@instHDiv.{0} Real
-      (@DivInvMonoid.toDiv.{0} Real
-        (@DivisionMonoid.toDivInvMonoid.{0} Real
-          (@DivisionCommMonoid.toDivisionMonoid.{0} Real
-            (@CommGroupWithZero.toDivisionCommMonoid.{0} Real
-              (@Semifield.toCommGroupWithZero.{0} Real
-                (@LinearOrderedSemifield.toSemifield.{0} Real
-                  (@LinearOrderedField.toLinearOrderedSemifield.{0} Real Real.instLinearOrderedField))))))))
-    (@Nat.cast.{0} Real Real.instNatCast (PNat.val ε3)) (@Nat.cast.{0} Real Real.instNatCast (PNat.val ε4)))) :
-  DP q ε3 ε4 := by
-  simp [DP] at *
-  intros α h3 l₁ l₂ h4
-  replace h1 := h1 α h3 l₁ l₂ h4
-  have A : (ε1 : ℝ) ^ 2 / ε2 ^ 2 = ε3 ^ 2 / ε4 ^ 2 := by
-    rw [← div_pow]
-    rw [← div_pow]
-    congr
-  rw [← A]
-  trivial
+    ≤ (1/2) * ε ^ 2 * α
 
 namespace SLang
 
@@ -61,7 +29,7 @@ def NoisedQuery (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+) (l : L
   DiscreteGaussianGenSample (Δ * ε₂) ε₁ (query l)
 
 theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  DP (NoisedQuery query Δ ε₁ ε₂) ε₁ ε₂ := by
+  DP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [DP, NoisedQuery]
   intros α h1 l₁ l₂ h2
   have A := @DiscreteGaussianGenSampleZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
@@ -117,12 +85,9 @@ def Compose (nq1 nq2 : List T → SLang ℤ) (l : List T) : SLang (ℤ × ℤ) :
   let B ← nq2 l
   return (A,B)
 
-def RAdd (ε₁ ε₂ ε₃ ε₄ : ℕ+) : ℕ+ × ℕ+ :=
-  (ε₁ * ε₄ + ε₂ * ε₃,ε₂ * ε₄)
-
-theorem DPCompose {nq1 nq2 : List T → SLang ℤ} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : DP nq1 ε₁ ε₂)  (h2 : DP nq2 ε₃ ε₄) :
-  DP (Compose nq1 nq2) (RAdd ε₁ ε₂ ε₃ ε₄).1 (RAdd ε₁ ε₂ ε₃ ε₄).2 := by
-  simp [Compose, RAdd, RenyiDivergence, DP]
+theorem DPCompose {nq1 nq2 : List T → SLang ℤ} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : DP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : DP nq2 ((ε₃ : ℝ) / ε₄)) :
+  DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  simp [Compose, RenyiDivergence, DP]
   intro α h3 l₁ l₂ h4
   simp [DP] at h1 h2
   replace h1 := h1 α h3 l₁ l₂ h4
@@ -194,8 +159,8 @@ def PostProcess (nq : List T → SLang U) (pp : U → ℤ) (l : List T) : SLang 
   let A ← nq l
   return pp A
 
-theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ε₁ ε₂) (pp : U → ℤ)  :
-  DP (PostProcess nq pp) ε₁ ε₂ := by
+theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (pp : U → ℤ)  :
+  DP (PostProcess nq pp) ((ε₁ : ℝ) / ε₂) := by
   simp [PostProcess, DP, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   simp [DP, RenyiDivergence] at h
