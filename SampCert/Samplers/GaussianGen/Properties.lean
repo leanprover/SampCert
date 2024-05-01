@@ -48,7 +48,7 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   . rw [SG_periodic' A]
 
 theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
-  RenyiDivergence (fun x : ℤ => ((DiscreteGaussianGenSample num den μ) x).toReal) (fun x : ℤ => ((DiscreteGaussianGenSample num den ν) x).toReal) α ≤
+  RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
   α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
@@ -57,10 +57,8 @@ theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num :
     congr
     . intro x
       rw [DiscreteGaussianGenSample_apply]
-      rw [ENNReal.toReal_ofReal (discrete_gaussian_nonneg A μ x)]
     . intro x
       rw [DiscreteGaussianGenSample_apply]
-      rw [ENNReal.toReal_ofReal (discrete_gaussian_nonneg A ν x)]
     . skip
   apply RenyiDivergenceBound' A h
 
