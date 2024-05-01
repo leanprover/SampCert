@@ -6,8 +6,9 @@ Authors: Jean-Baptiste Tristan
 
 import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
+--import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
 
-open Real
+open Real ENNReal
 
 variable {T : Type}
 

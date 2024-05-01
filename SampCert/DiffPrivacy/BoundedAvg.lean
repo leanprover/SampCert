@@ -17,13 +17,42 @@ namespace SLang
 def NoisedBoundedAvgQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
   let S ← NoisedBoundedSumQuery L U h ε₁ (2 * ε₂) l
   let C ← NoisedCountingQuery ε₁ (2 * ε₂) l
-  if C ≤ 1 then return (L + U) / 2
-  else return S / C
+  return S / C
+
+def NoisedBoundedAvgQuery' (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ :=
+  let X := Compose (NoisedBoundedSumQuery L U h ε₁ (2 * ε₂)) (NoisedCountingQuery ε₁ (2 * ε₂))
+  PostProcess X (fun z => z.1 / z.2) l
+
+theorem NoisedBoundedAvgQueryIdentical (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) :
+  NoisedBoundedAvgQuery' L U h ε₁ ε₂ = NoisedBoundedAvgQuery L U h ε₁ ε₂  := by
+  ext l x
+  simp [NoisedBoundedAvgQuery, NoisedBoundedAvgQuery', PostProcess, Compose]
 
 theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvgQuery L U h ε₁ ε₂) ε₁ ε₂ := by
+  rw [← NoisedBoundedAvgQueryIdentical]
+  unfold NoisedBoundedAvgQuery'
+  simp only
+
   have A := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
   have B := @NoisedBoundedSumQueryDP L U h ε₁ (2 * ε₂)
-  sorry
+  have C := DPCompose B A
+  have D := DPPostProcess C (fun z => z.1 / z.2)
+  simp [RAdd] at D
 
+  apply DP_cancel_sigma (ε₁ * (2 * ε₂) + 2 * ε₂ * ε₁) (2 * ε₂ * (2 * ε₂)) ε₁ ε₂ D
+  ring_nf
+  simp
+  ring_nf
+  rw [pow_two]
+  rw [← mul_assoc]
+  have A : (ε₂ : ℝ) ≠ 0 := by
+    simp
+  conv =>
+    left
+    left
+    rw [mul_assoc]
+    right
+    rw [mul_inv_cancel A]
+  simp
 
 end SLang

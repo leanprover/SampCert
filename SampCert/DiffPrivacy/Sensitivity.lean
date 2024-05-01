@@ -4,9 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
--- Data : sorted list of integers
--- integer can be added, removed, modified
-
 import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.Algebra.Group.Basic
 import SampCert.DiffPrivacy.ConcentratedBound
