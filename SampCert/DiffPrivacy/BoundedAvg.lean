@@ -33,13 +33,17 @@ theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (Noi
   unfold NoisedBoundedAvgQuery'
   simp only
 
-  have A := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
-  have B := @NoisedBoundedSumQueryDP L U h ε₁ (2 * ε₂)
-  have C := DPCompose B A
-  simp at C
-  ring_nf at C
-  rw [← division_def] at C
-  have D := DPPostProcess C (fun z => z.1 / z.2)
-  exact D
+  have A₁ := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
+  have A₂ := @NoisedCountingQuery_NonZeroNQ ℤ ε₁ (2 * ε₂)
+  have A₃ := @NoisedCountingQuery_NonTopNQ ℤ ε₁ (2 * ε₂)
+  have A₄ := @NoisedCountingQuery_NonTopRDNQ ℤ ε₁ (2 * ε₂)
+  sorry
+  -- have B := @NoisedBoundedSumQueryDP L U h ε₁ (2 * ε₂)
+  -- have C := DPCompose B A
+  -- simp at C
+  -- ring_nf at C
+  -- rw [← division_def] at C
+  -- have D := DPPostProcess C (fun z => z.1 / z.2)
+  -- exact D
 
 end SLang

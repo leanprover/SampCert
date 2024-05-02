@@ -34,8 +34,21 @@ theorem CountingQuery1Sensitive :
 def NoisedCountingQuery (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
   NoisedQuery CountingQuery 1 ε₁ ε₂ l
 
-theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) : @DP T ℤ (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) :
+  @DP T ℤ (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply NoisedQueryDP
   apply CountingQuery1Sensitive
+
+theorem NoisedCountingQuery_NonZeroNQ (ε₁ ε₂ : ℕ+) :
+  @NonZeroNQ T ℤ (NoisedCountingQuery ε₁ ε₂) := by
+  apply NoisedQuery_NonZeroNQ
+
+theorem NoisedCountingQuery_NonTopNQ (ε₁ ε₂ : ℕ+) :
+  @NonTopNQ T ℤ (NoisedCountingQuery ε₁ ε₂) := by
+  apply NoisedQuery_NonTopNQ
+
+theorem NoisedCountingQuery_NonTopRDNQ (ε₁ ε₂ : ℕ+) :
+  @NonTopRDNQ T ℤ (NoisedCountingQuery ε₁ ε₂) := by
+  apply NoisedQuery_NonTopRDNQ
 
 end SLang

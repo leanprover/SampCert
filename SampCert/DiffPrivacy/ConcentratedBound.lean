@@ -548,8 +548,5 @@ theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν 
       apply RenyiSumSG_nonneg h
     . apply RenyiSumSG_nonneg h
     . apply SummableRenyiGauss h
-
-
-
   rw [A]
   apply RenyiDivergenceBound_pre h h'
