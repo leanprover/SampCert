@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.Algebra.Group.Basic
 import SampCert.DiffPrivacy.ConcentratedBound
@@ -11,10 +12,15 @@ import SampCert.SLang
 import SampCert.Samplers.GaussianGen.Basic
 import SampCert.DiffPrivacy.Neighbours
 import SampCert.DiffPrivacy.Sensitivity
+import Mathlib.MeasureTheory.MeasurableSpace.Basic
+import Mathlib.MeasureTheory.Measure.Count
+import Mathlib.Probability.ProbabilityMassFunction.Integrals
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+import Mathlib.Analysis.Convex.Integral
 
 noncomputable section
 
-open Classical Nat Int Real ENNReal
+open Classical Nat Int Real ENNReal MeasureTheory
 
 def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
@@ -501,12 +507,255 @@ def PostProcess (nq : List T → SLang U) (pp : U → ℤ) (l : List T) : SLang 
   let A ← nq l
   return pp A
 
-theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (pp : U → ℤ)  :
-  DP (PostProcess nq pp) ((ε₁ : ℝ) / ε₂) := by
+theorem foo (f : U → ℤ) (g : U → ENNReal) (x : ℤ) :
+  (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by
+  have A := @tsum_split_ite U (fun a : U => x = f a) g (fun _ => 0)
+  simp only [decide_eq_true_eq, tsum_zero, add_zero] at A
+  rw [A]
+  have B : ↑{i | decide (x = f i) = true} = ↑{a | x = f a} := by
+    simp
+  rw [B]
+
+variable {T : Type}
+variable [m1 : MeasurableSpace T]
+variable [m2 : MeasurableSingletonClass T]
+variable [m3: MeasureSpace T]
+
+theorem Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+  MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
+  have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ m1 μ _ f α mem h1 h2
+  revert X
+  conv =>
+    left
+    left
+    intro x
+    rw [← norm_rpow_of_nonneg (nn x)]
+  intro X
+  simp [Integrable] at *
+  constructor
+  . cases X
+    rename_i left right
+    rw [@aestronglyMeasurable_iff_aemeasurable]
+    apply AEMeasurable.pow_const
+    simp [Memℒp] at mem
+    cases mem
+    rename_i left' right'
+    rw [aestronglyMeasurable_iff_aemeasurable] at left'
+    simp [left']
+  . rw [← hasFiniteIntegral_norm_iff]
+    simp [X]
+
+theorem bar (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+  ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
+
+  conv =>
+    left
+    left
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  conv =>
+    right
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  rw [← PMF.integral_eq_tsum]
+  rw [← PMF.integral_eq_tsum]
+
+  have A := @convexOn_rpow α (le_of_lt h)
+  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
+    apply ContinuousOn.rpow
+    . exact continuousOn_id' (Set.Ici 0)
+    . exact continuousOn_const
+    . intro x h'
+      simp at h'
+      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
+      cases OR
+      . rename_i h''
+        subst h''
+        right
+        apply lt_trans zero_lt_one h
+      . rename_i h''
+        left
+        by_contra
+        rename_i h3
+        subst h3
+        simp at h''
+  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
+    exact isClosed_Ici
+  have D := @ConvexOn.map_integral_le T ℝ m1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
+  simp at D
+  apply D
+  . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
+  . apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+  . rw [Function.comp_def]
+    have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T m1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  . have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T m1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  . apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+
+
+theorem quux (f : U → ℤ) (g : U → ENNReal) :
+  (∑' (x : ℤ) (i : ↑{a | x = f a}), g i)
+    = ∑' i : U, g i := by
+  sorry
+
+variable {U : Type}
+variable [m2 : MeasurableSpace U] [m2' : MeasurableSingletonClass U]
+
+def SLangToPMF (q : SLang U) : PMF U := sorry
+
+theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (f : U → ℤ) :
+  DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
   simp [PostProcess, DP, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   simp [DP, RenyiDivergence] at h
   replace h := h α h1 l₁ l₂ h2
-  sorry
+
+  have X₁ : ∀ (x : U), nq l₂ x ≠ 0 := by
+    intro x
+    apply nn l₂ x
+  have X₂ : ∀ (x : U), nq l₂ x ≠ ⊤ := by
+    intro x
+    apply nts l₂ x
+  have X := @RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 X₁ X₂
+  rw [X] at h
+  clear X
+  have Y : ∀ (a : U), (nq l₁ a / nq l₂ a) ^ α * nq l₂ a ≠ ⊤ := by
+    intro a
+    rw [ne_iff_lt_or_gt]
+    left
+    rw [mul_lt_top_iff]
+    left
+    constructor
+    . sorry
+    . rw [lt_top_iff_ne_top]
+      apply nts
+  rw [ENNReal.tsum_toReal_eq Y] at h
+  simp only [toReal_mul] at h
+  revert h
+  conv =>
+    left
+    left
+    right
+    right
+    right
+    intro a
+    rw [← toReal_rpow]
+  intro h
+
+  have R : (∀ (x : U), 0 ≤ (fun a => (nq l₁ a / nq l₂ a).toReal) x) := sorry
+  have Z := @bar U m2 m2' (fun a : U => (nq l₁ a / nq l₂ a).toReal) (SLangToPMF (nq l₂)) α h1 R
+  simp at Z
+
+
+
+  rw [RenyiDivergenceExpectation _ _ h1 sorry sorry]
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    rw [foo f (nq l₁) x]
+    rw [foo f (nq l₂) x]
+  --rw [RenyiDivergenceExpectation _ _ h1 sorry sorry]
+
+  -- ∑' (a : ↑{a | f a = x}), nq l₂ ↑a is pushforward
+  -- we start from the goal, so h is outside, and we want to put it inside
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    left
+    left
+    rw [division_def]
+    rw [← ENNReal.tsum_mul_right]
+    right
+    intro i
+    left
+    rw [← @mul_one _ _ (nq l₁ ↑i)]
+    right
+    rw [← @ENNReal.mul_inv_cancel (nq l₂ i) (nn l₂ i) (nts l₂ i)]
+    rw [mul_comm]
+  conv =>
+    left
+    right
+    ring_nf
+
+  -- not true, should be ≤, Jensen's inequality, exploring for now
+  have A : ∀ x, (∑' (i : ↑{a | x = f a}), nq l₁ ↑i * (nq l₂ ↑i)⁻¹ * nq l₂ ↑i * (∑' (a : ↑{a | x = f a}), nq l₂ ↑a)⁻¹) ^ α
+    = (∑' (i : ↑{a | x = f a}), (nq l₁ ↑i * (nq l₂ ↑i)⁻¹) ^ α * nq l₂ ↑i * (∑' (a : ↑{a | x = f a}), nq l₂ ↑a)⁻¹) := sorry
+
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    rw [A]
+
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro x
+    rw [← ENNReal.tsum_mul_right]
+    right
+    intro i
+    rw [mul_assoc]
+    right
+    rw [@ENNReal.inv_mul_cancel (∑' (a : ↑{a | x = f a}), nq l₂ ↑a) sorry sorry]
+  conv =>
+    left
+    right
+    ring_nf
+
+  have B : (∑' (x : ℤ) (i : ↑{a | x = f a}), (nq l₁ ↑i * (nq l₂ ↑i)⁻¹) ^ α * nq l₂ ↑i)
+    = ∑' i : U, (nq l₁ ↑i * (nq l₂ ↑i)⁻¹) ^ α * nq l₂ ↑i := by
+    sorry
+
+  rw [B]
+  clear A B
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro i
+    rw [← division_def]
+  rw [← RenyiDivergenceExpectation (nq l₁) (nq l₂) h1]
+  exact h
 
 end SLang

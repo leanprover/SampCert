@@ -13,4 +13,16 @@ open Real ENNReal
 variable {T : Type}
 
 noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ℝ :=
-  (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal
+  (α - 1)⁻¹ * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal
+
+theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (h1 : ∀ x : T, q x ≠ 0) (h2 : ∀ x : T, q x ≠ ⊤) :
+  (α - 1)⁻¹ * Real.log ((∑' x : T, (p x)^α  * (q x)^(1 - α))).toReal = (α - 1)⁻¹ * Real.log (∑' x : T, (p x / q x)^α  * (q x)).toReal := by
+  congr 4
+  ext x
+  rw [ENNReal.rpow_sub]
+  . rw [← ENNReal.mul_comm_div]
+    rw [← ENNReal.div_rpow_of_nonneg]
+    . rw [ENNReal.rpow_one]
+    . apply le_of_lt (lt_trans Real.zero_lt_one h )
+  . apply h1 x
+  . apply h2 x
