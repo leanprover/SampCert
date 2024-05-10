@@ -29,6 +29,9 @@ def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
 def NonZeroNQ (nq : List T → SLang U) :=
   ∀ l : List T, ∀ n : U, nq l n ≠ 0
 
+def NonTopSum (nq : List T → SLang U) :=
+  ∀ l : List T, ∑' n : U, nq l n ≠ ⊤
+
 def NonTopNQ (nq : List T → SLang U) :=
   ∀ l : List T, ∀ n : U, nq l n ≠ ⊤
 
@@ -617,41 +620,33 @@ theorem bar (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T,
     rw [one_le_ofReal]
     apply le_of_lt h
 
-theorem quux (f : U → ℤ) (g : U → ENNReal) :
-  (∑' (x : ℤ), if {a : U | x = f a} = {} then 0 else ∑'(i : {a : U | x = f a}), g i)
-    = ∑' i : U, g i := by
-  sorry
-
 variable {U : Type}
-variable [m2 : MeasurableSpace U] [m2' : MeasurableSingletonClass U]
+variable [m2 : MeasurableSpace U] -- [m2' : MeasurableSingletonClass U]
 variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 
 def δ (nq : SLang U) (f : U → ℤ) (a : ℤ)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
-theorem δ_normalizes (nq : SLang U) (f : U → ℤ) (a : ℤ) :
+theorem δ_normalizes (nq : SLang U) (f : U → ℤ) (a : ℤ) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   unfold δ
   rw [ENNReal.tsum_mul_right]
-  rw [ENNReal.mul_inv_cancel]
-  . simp
-    sorry -- ∃ x, a = f x ∧ ¬nq x = 0
-  . sorry -- ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤
+  rw [ENNReal.mul_inv_cancel h1 h2]
 
-def δpmf (nq : SLang U) (f : U → ℤ) (a : ℤ) : PMF {n : U | a = f n} :=
-  ⟨ δ nq f a , δ_normalizes nq f a ⟩
+def δpmf (nq : SLang U) (f : U → ℤ) (a : ℤ) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) : PMF {n : U | a = f n} :=
+  ⟨ δ nq f a , δ_normalizes nq f a h1 h2 ⟩
 
-theorem δpmf_conv (nq : List T → SLang U) (a : ℤ) (x : {n | a = f n}) :
-  nq l₂ x * (∑' (x : {n | a = f n}), nq l₂ x)⁻¹ = (δpmf (nq l₂) f a) x := by
+theorem δpmf_conv (nq : SLang U) (a : ℤ) (x : {n | a = f n}) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
+  nq x * (∑' (x : {n | a = f n}), nq x)⁻¹ = (δpmf nq f a h1 h2) x := by
   simp [δpmf]
   conv =>
     right
     left
     left
 
-theorem δpmf_conv' (nq : List T → SLang U) (l₂ : List T) (f : U → ℤ) (a : ℤ)  :
-  (fun x : {n | a = f n} => nq l₂ x * (∑' (x : {n | a = f n}), nq l₂ x)⁻¹) = (δpmf (nq l₂) f a) := by
+theorem δpmf_conv' (nq : SLang U) (f : U → ℤ) (a : ℤ) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
+  (fun x : {n | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹) = (δpmf nq f a h1 h2) := by
   ext x
   rw [δpmf_conv]
 
@@ -674,7 +669,86 @@ theorem RD1 (p q : T → ENNReal) (α : ℝ) (h : 1 < α) (RD : ∑' (x : T), p 
   rw [← RenyiDivergenceExpectation p q h nz nt]
   trivial
 
-theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (f : U → ℤ) :
+theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum f a) (g : T → ℤ) :
+    HasSum (fun c : ℤ ↦ ∑' b : g ⁻¹' {c}, f b) a := by
+  let A := (Equiv.sigmaFiberEquiv g)
+  have B := @Equiv.hasSum_iff ENNReal T ((y : ℤ) × { x // g x = y }) _ _ f a A
+  replace B := B.2 hf
+  have C := @HasSum.sigma ENNReal ℤ _ _ _ _ (fun y : ℤ => { x // g x = y }) (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) (fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) a B
+  apply C
+  intro b
+  have F := @Summable.hasSum_iff ENNReal _ _ _ (fun c => (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) { fst := b, snd := c }) ((fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) b) _
+  apply (F _).2
+  . rfl
+  . apply ENNReal.summable
+
+theorem ENNReal.tsum_fiberwise (p : T → ENNReal) (f : T → ℤ) :
+  ∑' (x : ℤ), ∑' (b : (f ⁻¹' {x})), p b
+    = ∑' i : T, p i := by
+  apply HasSum.tsum_eq
+  apply ENNReal.HasSum_fiberwise
+  apply Summable.hasSum
+  exact ENNReal.summable
+
+theorem quux (p : T → ENNReal) (f : T → ℤ) :
+ (∑' i : T, p i)
+    = ∑' (x : ℤ), if {a : T | x = f a} = {} then 0 else ∑'(i : {a : T | x = f a}), p i := by
+  rw [← ENNReal.tsum_fiberwise p f]
+  have A : ∀ x, f ⁻¹' {x} = { a | x = f a } := by
+    intro x
+    simp [Set.preimage]
+    rw [Set.ext_iff]
+    simp
+    intro y
+    exact eq_comm
+  conv =>
+    left
+    right
+    intro x
+    rw [A]
+  clear A
+  apply tsum_congr
+  intro b
+  split
+  . rename_i h'
+    rw [h']
+    simp only [tsum_empty]
+  . simp
+
+theorem convergent_subset {p : T → ENNReal} (f : T → ℤ) (conv : ∑' (x : T), p x ≠ ⊤) :
+  ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
+  rw [← foo]
+  have A : (∑' (y : T), if x = f y  then p y else 0) ≤ ∑' (x : T), p x := by
+    apply tsum_le_tsum
+    . intro i
+      split
+      . trivial
+      . simp only [_root_.zero_le]
+    . exact ENNReal.summable
+    . exact ENNReal.summable
+  rw [← lt_top_iff_ne_top]
+  apply lt_of_le_of_lt A
+  rw [lt_top_iff_ne_top]
+  trivial
+
+theorem ENNReal.tsum_pos (f : T → ENNReal) (h1 : ∑' x : T, f x ≠ ⊤) (h2 : ∀ x : T, f x ≠ 0) (i : T) :
+  0 < ∑' x : T, f x := by
+  apply (toNNReal_lt_toNNReal ENNReal.zero_ne_top h1).mp
+  simp only [zero_toNNReal]
+  rw [ENNReal.tsum_toNNReal_eq (ENNReal.ne_top_of_tsum_ne_top h1)]
+  have S : Summable fun a => (f a).toNNReal := by
+    rw [← tsum_coe_ne_top_iff_summable]
+    conv =>
+      left
+      right
+      intro b
+      rw [ENNReal.coe_toNNReal (ENNReal.ne_top_of_tsum_ne_top h1 b)]
+    trivial
+  have B:= @NNReal.tsum_pos T (fun (a : T) => (f a).toNNReal) S i
+  apply B
+  apply ENNReal.toNNReal_pos (h2 i) (ENNReal.ne_top_of_tsum_ne_top h1 i)
+
+theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → ℤ) :
   DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
   simp [PostProcess, DP, RenyiDivergence]
   intro α h1 l₁ l₂ h2
@@ -696,7 +770,9 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
   -- remove the log
   have B : 0 <
   (∑' (x : ℤ),
-      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)).toReal := sorry
+      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)).toReal := by
+    sorry
+
   apply log_le_log B
   clear B
 
@@ -711,24 +787,11 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
   rw [@RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 (nn l₂) (nts l₂)]
 
   -- Shuffle the sum
-  rw [← quux f (fun x => (nq l₁ x / nq l₂ x) ^ α * nq l₂ x)]
+  rw [quux (fun x => (nq l₁ x / nq l₂ x) ^ α * nq l₂ x) f]
 
   apply ENNReal.tsum_le_tsum
 
   intro i
-
-  have S2 : (∑' (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i) a) ^ α ≠ ⊤ := by
-    sorry
-  have S1 : ∀ (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i) a ≠ ⊤ := by
-    sorry
-  have S3 : ∑' (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i) a ≠ ⊤ := by
-    sorry
-
-  have S4 : ∀ (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i) a ≠ ⊤ := by
-    intro a
-    apply ENNReal.ne_top_of_tsum_ne_top S3
-
-  have MasterRW : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq l ↑a ≠ ⊤ := sorry
 
   -- Get rid of elements with probability 0 in the pushforward
   split
@@ -752,6 +815,37 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
 
   -- Part 2: apply Jensen's inequality
   . rename_i NotEmpty
+
+    have MasterRW : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq l ↑a ≠ ⊤ := by
+      intro l
+      apply convergent_subset
+      simp [NonTopSum] at conv
+      have conv := conv l
+      apply conv
+
+    have MasterZero : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq l ↑a ≠ 0 := by
+      intro l
+      simp
+      have T := witness NotEmpty
+      cases T
+      rename_i z w
+      exists z
+      constructor
+      . trivial
+      . apply nn l
+
+    have S2 : (∑' (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a) ^ α ≠ ⊤ := by
+      sorry
+    have S1 : ∀ (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
+      sorry
+    have S3 : ∑' (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
+      sorry
+
+    have S4 : ∀ (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
+      intro a
+      apply ENNReal.ne_top_of_tsum_ne_top S3
+
+
     rw [foo]
     rw [foo]
 
@@ -803,10 +897,8 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
       intro x
       simp only [toReal_nonneg]
 
-    -- stronglyMeasurable_iff_measurable
-    -- measurable_discrete
     have XXX : @Memℒp ℝ Real.normedAddCommGroup (↑{n | i = f n}) Subtype.instMeasurableSpace (fun a => (nq l₁ ↑a / nq l₂ ↑a).toReal)
-      (ENNReal.ofReal α) (PMF.toMeasure (δpmf (nq l₂) f i)) := by
+      (ENNReal.ofReal α) (PMF.toMeasure (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂))) := by
       simp [Memℒp]
       constructor
       . apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
@@ -859,7 +951,7 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
           apply S3
 
 
-    have Jensen's := @bar {n : U | i = f n} Subtype.instMeasurableSpace Subtype.instMeasurableSingletonClass (fun a => (nq l₁ a / nq l₂ a).toReal) (δpmf (nq l₂) f i) α h1 P5 XXX
+    have Jensen's := @bar {n : U | i = f n} Subtype.instMeasurableSpace Subtype.instMeasurableSingletonClass (fun a => (nq l₁ a / nq l₂ a).toReal) (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) α h1 P5 XXX
     clear P5
 
     have P6 : 0 ≤ (∑' (x : ↑{n | i = f n}), nq l₂ ↑x).toReal := by
