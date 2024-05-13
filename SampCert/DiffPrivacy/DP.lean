@@ -731,7 +731,7 @@ theorem convergent_subset {p : T → ENNReal} (f : T → ℤ) (conv : ∑' (x : 
   rw [lt_top_iff_ne_top]
   trivial
 
-theorem ENNReal.tsum_pos (f : T → ENNReal) (h1 : ∑' x : T, f x ≠ ⊤) (h2 : ∀ x : T, f x ≠ 0) (i : T) :
+theorem ENNReal.tsum_pos {f : T → ENNReal} (h1 : ∑' x : T, f x ≠ ⊤) (h2 : ∀ x : T, f x ≠ 0) (i : T) :
   0 < ∑' x : T, f x := by
   apply (toNNReal_lt_toNNReal ENNReal.zero_ne_top h1).mp
   simp only [zero_toNNReal]
@@ -748,40 +748,25 @@ theorem ENNReal.tsum_pos (f : T → ENNReal) (h1 : ∑' x : T, f x ≠ ⊤) (h2 
   apply B
   apply ENNReal.toNNReal_pos (h2 i) (ENNReal.ne_top_of_tsum_ne_top h1 i)
 
-theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → ℤ) :
-  DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
-  simp [PostProcess, DP, RenyiDivergence]
-  intro α h1 l₁ l₂ h2
-  simp [DP, RenyiDivergence] at h
-  replace h := h α h1 l₁ l₂ h2
+theorem ENNReal.tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 : ∀ x : ℤ, f x ≠ 0) :
+  0 < ∑' x : ℤ, f x := by
+  apply ENNReal.tsum_pos h1 h2 42
 
-  -- Part 1, removing fluff
+theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 : ∀ x : ℤ, f x ≠ 0) :
+  0 < (∑' x : ℤ, f x).toReal := by
+  have X : 0 = (0 : ENNReal).toReal := rfl
+  rw [X]
+  clear X
+  apply toReal_strict_mono h1
+  apply ENNReal.tsum_pos_int h1 h2
 
-  apply le_trans _ h
-  clear h
-
-  -- remove the α scaling
-  have A : 0 ≤ (α - 1)⁻¹ := by
-    simp
-    apply le_of_lt h1
-  apply mul_le_mul_of_nonneg_left _ A
-  clear A
-
-  -- remove the log
-  have B : 0 <
+theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → ℤ) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
   (∑' (x : ℤ),
-      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)).toReal := by
-    sorry
+      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
+        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
+  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  apply log_le_log B
-  clear B
-
-  have RDConvegence : ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤ := by
-    simp [NonTopRDNQ] at nt
-    have nt := nt α h1 l₁ l₂ h2
-    trivial
-
-  apply toReal_mono RDConvegence
+  simp [DP, RenyiDivergence] at h
 
   -- Rewrite as cascading expectations
   rw [@RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 (nn l₂) (nts l₂)]
@@ -835,16 +820,55 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
       . apply nn l
 
     have S2 : (∑' (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a) ^ α ≠ ⊤ := by
-      sorry
+      conv =>
+        left
+        left
+        right
+        intro a
+        rw [← δpmf_conv]
+        rw [division_def]
+        rw [mul_assoc]
+        right
+        rw [← mul_assoc]
+        rw [ENNReal.inv_mul_cancel (nn l₂ a) (nts l₂ a)]
+      rw [one_mul]
+      rw [ENNReal.tsum_mul_right]
+      apply ENNReal.rpow_ne_top_of_nonneg (le_of_lt (lt_trans zero_lt_one h1 ))
+      apply mul_ne_top
+      . apply convergent_subset _ (conv l₁)
+      . apply inv_ne_top.mpr (MasterZero l₂)
+
     have S1 : ∀ (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
-      sorry
+      intro a
+      apply mul_ne_top
+      . rw [division_def]
+        apply mul_ne_top (nts l₁ a)
+        apply inv_ne_top.mpr (nn l₂ a)
+      . rw [← δpmf_conv]
+        apply mul_ne_top (nts l₂ a)
+        apply inv_ne_top.mpr (MasterZero l₂)
+
     have S3 : ∑' (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
-      sorry
+      conv =>
+        left
+        right
+        intro a
+        rw [← δpmf_conv]
+        rw [← mul_assoc]
+      rw [ENNReal.tsum_mul_right]
+      apply mul_ne_top
+      . rw [← RenyiDivergenceExpectation _ _ h1]
+        . replace nt := nt α h1 l₁ l₂ h2
+          apply convergent_subset _ nt
+        . intro x
+          apply nn
+        . intro x
+          apply nts
+      . apply inv_ne_top.mpr (MasterZero l₂)
 
     have S4 : ∀ (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
       intro a
       apply ENNReal.ne_top_of_tsum_ne_top S3
-
 
     rw [foo]
     rw [foo]
@@ -1064,5 +1088,104 @@ theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : D
     . rw [mul_comm]
     . congr 1
       rw [ENNReal.inv_rpow]
+
+theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h : ∀ x : T, f x ≠ 0) :
+  ∑' x : T, f x ≠ 0 := by
+  by_contra CONTRA
+  rw [ENNReal.tsum_eq_zero] at CONTRA
+  have A := h default
+  have B := CONTRA default
+  contradiction
+
+variable [Inhabited U]
+
+theorem DPPostProcess_alt1 {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → ℤ) :
+  DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
+  simp [PostProcess, DP, RenyiDivergence]
+  intro α h1 l₁ l₂ h2
+  have h' := h
+  simp [DP, RenyiDivergence] at h'
+  replace h' := h' α h1 l₁ l₂ h2
+
+  -- Part 1, removing fluff
+
+  apply le_trans _ h'
+  clear h'
+
+  -- remove the α scaling
+  have A : 0 ≤ (α - 1)⁻¹ := by
+    simp
+    apply le_of_lt h1
+  apply mul_le_mul_of_nonneg_left _ A
+  clear A
+
+  have RDConvegence : ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤ := by
+    simp [NonTopRDNQ] at nt
+    have nt := nt α h1 l₁ l₂ h2
+    trivial
+
+  have B := DPostPocess_pre h nn nt nts conv f h1 h2
+  have B' : ∑' (x : ℤ), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α) ≠ ⊤ := by
+    by_contra CONTRA
+    rw [CONTRA] at B
+    simp at B
+    contradiction
+
+  -- remove the log
+  apply log_le_log _ (toReal_mono RDConvegence B)
+  apply toReal_pos _ B'
+  apply (tsum_ne_zero_iff ENNReal.summable).mpr
+  exists (f default)
+
+  rw [ENNReal.tsum_eq_add_tsum_ite default]
+  conv =>
+    left
+    right
+    rw [ENNReal.tsum_eq_add_tsum_ite default]
+  simp only [reduceIte]
+  apply mul_ne_zero
+  . by_contra CONTRA
+    rw [ENNReal.rpow_eq_zero_iff_of_pos (lt_trans zero_lt_one h1)] at CONTRA
+    simp at CONTRA
+    cases CONTRA
+    rename_i left right
+    have Y := nn l₁ default
+    contradiction
+  . by_contra CONTRA
+    rw [ENNReal.rpow_eq_zero_iff] at CONTRA
+    cases CONTRA
+    . rename_i CONTRA
+      cases CONTRA
+      rename_i left right
+      simp at left
+      cases left
+      rename_i le1 le2
+      have Y := nn l₂ default
+      contradiction
+    . rename_i CONTRA
+      cases CONTRA
+      rename_i left right
+      simp at left
+      cases left
+      . rename_i left
+        have Y := nts l₂ default
+        contradiction
+      . rename_i left
+        have Rem := conv l₂
+        have X : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) ≤ ∑' (n : U), nq l₂ n := by
+          apply ENNReal.tsum_le_tsum
+          intro a
+          split
+          . simp
+          . split
+            . simp
+            . simp
+        replace Rem := Ne.symm Rem
+        have Y := Ne.lt_top' Rem
+        have Z : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) < ⊤ := by
+          apply lt_of_le_of_lt X Y
+        rw [lt_top_iff_ne_top] at Z
+        contradiction
+
 
 end SLang
