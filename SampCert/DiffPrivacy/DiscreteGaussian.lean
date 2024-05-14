@@ -230,6 +230,12 @@ theorem discrete_gaussian_summable {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   apply Summable.div_const
   apply summable_gauss_term' h
 
+theorem discrete_gaussian_summable' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+  Summable fun (n : ℤ) => discrete_gaussian σ μ n := by
+  unfold discrete_gaussian
+  apply Summable.div_const
+  apply summable_gauss_term' h
+
 theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   (∑' n : ℤ, discrete_gaussian σ μ n) = 1 := by
   unfold discrete_gaussian

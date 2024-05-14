@@ -142,6 +142,48 @@ theorem discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ
     ring_nf
   . rw [SG_periodic h]
 
+theorem NoisedQuery_NonTopSum (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+  NonTopSum (NoisedQuery query Δ ε₁ ε₂) := by
+  simp [NonTopSum, NoisedQuery, DiscreteGaussianGenSample]
+  intro l
+  have X : ∀ n: ℤ, ∀ x : ℤ, (@ite ℝ≥0∞ (x = n - query l) (propDecidable (x = n - query l)) 0
+    (@ite ℝ≥0∞ (n = x + query l) (instDecidableEqInt n (x + query l))
+    (ENNReal.ofReal (discrete_gaussian (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) 0 ↑x)) 0)) = 0 := by
+    intro n x
+    split
+    . simp
+    . split
+      . rename_i h1 h2
+        subst h2
+        simp at h1
+      . simp
+  conv =>
+    right
+    left
+    right
+    intro n
+    rw [ENNReal.tsum_eq_add_tsum_ite (n - query l)]
+    simp
+    right
+    right
+    intro x
+    rw [X]
+  simp
+  have A : (Δ : ℝ) * ε₂ / ε₁ ≠ 0 := by
+    simp
+  conv =>
+    right
+    left
+    right
+    intro n
+    rw [discrete_gaussian_shift A]
+  simp
+  rw [← ENNReal.ofReal_tsum_of_nonneg]
+  . rw [discrete_gaussian_normalizes A]
+    simp
+  . apply discrete_gaussian_nonneg A
+  . apply discrete_gaussian_summable' A (query l)
+
 theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   NonTopRDNQ (NoisedQuery query Δ ε₁ ε₂) := by
   simp [NonTopRDNQ, NoisedQuery, DiscreteGaussianGenSample]
@@ -433,6 +475,40 @@ theorem DPCompose_NonTopNQ {nq1 nq2 : List T → SLang ℤ} (nt1 : NonTopNQ nq1)
   replace nt2 := nt2 l b
   simp [Compose]
   rw [compose_sum_rw]
+  rw [mul_eq_top]
+  intro H
+  cases H
+  . rename_i H
+    cases H
+    contradiction
+  . rename_i H
+    cases H
+    contradiction
+
+theorem DPCompose_NonTopSum {nq1 nq2 : List T → SLang ℤ} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
+  NonTopSum (Compose nq1 nq2) := by
+  simp [NonTopSum] at *
+  intro l
+  replace nt1 := nt1 l
+  replace nt2 := nt2 l
+  simp [Compose]
+  rw [ENNReal.tsum_prod']
+  conv =>
+    right
+    left
+    right
+    intro a
+    right
+    intro b
+    simp
+    rw [compose_sum_rw]
+  conv =>
+    right
+    left
+    right
+    intro a
+    rw [ENNReal.tsum_mul_left]
+  rw [ENNReal.tsum_mul_right]
   rw [mul_eq_top]
   intro H
   cases H

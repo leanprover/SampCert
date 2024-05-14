@@ -14,30 +14,30 @@ noncomputable section
 
 namespace SLang
 
-def NoisedBoundedAvgQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
-  let S ← NoisedBoundedSumQuery L U h ε₁ (2 * ε₂) l
-  let C ← NoisedCountingQuery ε₁ (2 * ε₂) l
-  return S / C
+-- def NoisedBoundedAvgQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
+--   let S ← NoisedBoundedSumQuery L U h ε₁ (2 * ε₂) l
+--   let C ← NoisedCountingQuery ε₁ (2 * ε₂) l
+--   return S / C
 
-def NoisedBoundedAvgQuery' (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ :=
-  let X := Compose (NoisedBoundedSumQuery L U h ε₁ (2 * ε₂)) (NoisedCountingQuery ε₁ (2 * ε₂))
-  PostProcess X (fun z => z.1 / z.2) l
+-- def NoisedBoundedAvgQuery' (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ :=
+--   let X := Compose (NoisedBoundedSumQuery L U h ε₁ (2 * ε₂)) (NoisedCountingQuery ε₁ (2 * ε₂))
+--   PostProcess X (fun z => z.1 / z.2) l
 
-theorem NoisedBoundedAvgQueryIdentical (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) :
-  NoisedBoundedAvgQuery' L U h ε₁ ε₂ = NoisedBoundedAvgQuery L U h ε₁ ε₂  := by
-  ext l x
-  simp [NoisedBoundedAvgQuery, NoisedBoundedAvgQuery', PostProcess, Compose]
+-- theorem NoisedBoundedAvgQueryIdentical (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) :
+--   NoisedBoundedAvgQuery' L U h ε₁ ε₂ = NoisedBoundedAvgQuery L U h ε₁ ε₂  := by
+--   ext l x
+--   simp [NoisedBoundedAvgQuery, NoisedBoundedAvgQuery', PostProcess, Compose]
 
-theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvgQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  rw [← NoisedBoundedAvgQueryIdentical]
-  unfold NoisedBoundedAvgQuery'
-  simp only
+-- theorem BoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvgQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+--   rw [← NoisedBoundedAvgQueryIdentical]
+--   unfold NoisedBoundedAvgQuery'
+--   simp only
 
-  have A₁ := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
-  have A₂ := @NoisedCountingQuery_NonZeroNQ ℤ ε₁ (2 * ε₂)
-  have A₃ := @NoisedCountingQuery_NonTopNQ ℤ ε₁ (2 * ε₂)
-  have A₄ := @NoisedCountingQuery_NonTopRDNQ ℤ ε₁ (2 * ε₂)
-  sorry
+--   have A₁ := @NoisedCountingQueryDP ℤ ε₁ (2 * ε₂)
+--   have A₂ := @NoisedCountingQuery_NonZeroNQ ℤ ε₁ (2 * ε₂)
+--   have A₃ := @NoisedCountingQuery_NonTopNQ ℤ ε₁ (2 * ε₂)
+--   have A₄ := @NoisedCountingQuery_NonTopRDNQ ℤ ε₁ (2 * ε₂)
+--   sorry
   -- have B := @NoisedBoundedSumQueryDP L U h ε₁ (2 * ε₂)
   -- have C := DPCompose B A
   -- simp at C

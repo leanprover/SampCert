@@ -59,14 +59,14 @@ def maxBoundPos (L U : ℤ) (h : L < U) :
 def maxBound (L U : ℤ) (h : L < U) : ℕ+ :=
   ⟨ max (Int.natAbs L) (Int.natAbs U) , maxBoundPos L U h ⟩
 
-theorem BoundedSumQuerySensitivity (L U : ℤ) (h : L < U) : sensitivity (BoundedSumQuery L U) (maxBound L U h) := by
-  sorry
+-- theorem BoundedSumQuerySensitivity (L U : ℤ) (h : L < U) : sensitivity (BoundedSumQuery L U) (maxBound L U h) := by
+--   sorry
 
-def NoisedBoundedSumQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
-  NoisedQuery (BoundedSumQuery L U) (maxBound L U h) ε₁ ε₂ l
+-- def NoisedBoundedSumQuery (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) (l : List ℤ) : SLang ℤ := do
+--   NoisedQuery (BoundedSumQuery L U) (maxBound L U h) ε₁ ε₂ l
 
-theorem NoisedBoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  apply NoisedQueryDP
-  apply BoundedSumQuerySensitivity
+-- theorem NoisedBoundedSumQueryDP (L U : ℤ) (h : L < U) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery L U h ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+--   apply NoisedQueryDP
+--   apply BoundedSumQuerySensitivity
 
 end SLang
