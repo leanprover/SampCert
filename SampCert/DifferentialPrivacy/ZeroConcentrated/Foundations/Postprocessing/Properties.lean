@@ -5,16 +5,13 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.Code
 
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
-
-def PostProcess (nq : List T → SLang U) (pp : U → ℤ) (l : List T) : SLang ℤ := do
-  let A ← nq l
-  return pp A
 
 theorem foo (f : U → ℤ) (g : U → ENNReal) (x : ℤ) :
   (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by

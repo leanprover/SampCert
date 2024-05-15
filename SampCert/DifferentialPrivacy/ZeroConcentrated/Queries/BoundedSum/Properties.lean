@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Mechanism
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Basic
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
@@ -69,9 +69,6 @@ theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) 
       . rename_i h'
         rw [h, h']
         simp at *
-
-def NoisedBoundedSumQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℤ := do
-  NoisedQuery (BoundedSumQuery U) U ε₁ ε₂ l
 
 theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply NoisedQueryDP

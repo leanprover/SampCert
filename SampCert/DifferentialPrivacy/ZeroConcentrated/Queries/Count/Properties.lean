@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Mechanism
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Code
 
 open Classical Nat Int Real
@@ -29,9 +29,6 @@ theorem CountingQuery1Sensitive :
   . rename_i a n b m h1 h2
     subst h1 h2
     simp
-
-def NoisedCountingQuery (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
-  NoisedQuery CountingQuery 1 ε₁ ε₂ l
 
 theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) :
   @DP T ℤ (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by

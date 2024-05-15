@@ -5,15 +5,13 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Code
 
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
-
-def NoisedQuery (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
-  DiscreteGaussianGenSample (Δ * ε₂) ε₁ (query l)
 
 theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   DP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by

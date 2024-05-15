@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Composition.Composition
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.Postprocessing
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Count
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.BoundedSum.BoundedSum
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Composition.Code
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.Code
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Code
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.BoundedSum.Code
 
 open Classical Nat Int Real
 
