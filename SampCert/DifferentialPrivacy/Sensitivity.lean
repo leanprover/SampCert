@@ -6,10 +6,8 @@ Authors: Jean-Baptiste Tristan
 
 import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.Algebra.Group.Basic
-import SampCert.DiffPrivacy.ConcentratedBound
 import SampCert.SLang
-import SampCert.Samplers.GaussianGen.Basic
-import SampCert.DiffPrivacy.Neighbours
+import SampCert.DifferentialPrivacy.Neighbours
 
 open Classical Nat Int Real
 

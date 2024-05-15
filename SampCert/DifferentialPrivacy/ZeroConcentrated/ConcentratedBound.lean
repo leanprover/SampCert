@@ -4,12 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DiffPrivacy.DiscreteGaussian
-import SampCert.DiffPrivacy.GaussBound
-import SampCert.DiffPrivacy.GaussConvergence
-import SampCert.DiffPrivacy.GaussPeriodicity
+import SampCert.DifferentialPrivacy.ZeroConcentrated.DiscreteGaussian
+import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussBound
+import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussConvergence
+import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussPeriodicity
 import SampCert.Util.Shift
-import SampCert.DiffPrivacy.RenyiDivergence
+import SampCert.DifferentialPrivacy.RenyiDivergence
 
 open Real
 

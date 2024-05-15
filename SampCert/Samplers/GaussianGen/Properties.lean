@@ -6,9 +6,9 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.Samplers.GaussianGen.Code
 import SampCert.Samplers.Gaussian.Properties
-import SampCert.DiffPrivacy.DiscreteGaussian
-import SampCert.DiffPrivacy.GaussPeriodicity
-import SampCert.DiffPrivacy.ConcentratedBound
+import SampCert.DifferentialPrivacy.ZeroConcentrated.DiscreteGaussian
+import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussPeriodicity
+import SampCert.DifferentialPrivacy.ZeroConcentrated.ConcentratedBound
 
 noncomputable section
 

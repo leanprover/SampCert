@@ -12,7 +12,7 @@ import SampCert.Samplers.Laplace.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
 import SampCert.Util.UtilMathlib
 import SampCert.Samplers.Gaussian.Code
-import SampCert.DiffPrivacy.DiscreteGaussian
+import SampCert.DifferentialPrivacy.ZeroConcentrated.DiscreteGaussian
 
 noncomputable section
 
