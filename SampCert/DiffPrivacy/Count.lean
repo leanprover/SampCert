@@ -51,4 +51,8 @@ theorem NoisedCountingQuery_NonTopRDNQ (ε₁ ε₂ : ℕ+) :
   @NonTopRDNQ T ℤ (NoisedCountingQuery ε₁ ε₂) := by
   apply NoisedQuery_NonTopRDNQ
 
+theorem NoisedCountingQuery_NonTopSum (ε₁ ε₂ : ℕ+) :
+  @NonTopSum T ℤ (NoisedCountingQuery ε₁ ε₂) := by
+  apply NoisedQuery_NonTopSum
+
 end SLang
