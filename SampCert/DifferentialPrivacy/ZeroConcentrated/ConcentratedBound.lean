@@ -4,14 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.DiscreteGaussian
-import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussBound
-import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussConvergence
-import SampCert.DifferentialPrivacy.ZeroConcentrated.GaussPeriodicity
+import SampCert.Util.Gaussian.DiscreteGaussian
+import SampCert.Util.Gaussian.GaussBound
+import SampCert.Util.Gaussian.GaussConvergence
+import SampCert.Util.Gaussian.GaussPeriodicity
 import SampCert.Util.Shift
 import SampCert.DifferentialPrivacy.RenyiDivergence
+import SampCert.Samplers.GaussianGen.Basic
 
-open Real
+open Real Nat
 
 theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   0 < ((gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x)^α := by
@@ -183,7 +184,7 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
       right
       intro x
       rw [E]
-      rw [add_div]
+      rw [_root_.add_div]
       rw [exp_add]
     rw [tsum_mul_right]
     rw [mul_comm]
@@ -550,3 +551,22 @@ theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν 
     . apply SummableRenyiGauss h
   rw [A]
   apply RenyiDivergenceBound_pre h h'
+
+namespace SLang
+
+theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
+  RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
+  α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
+  have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
+    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  conv =>
+    left
+    congr
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+    . skip
+  apply RenyiDivergenceBound' A h
+
+end SLang

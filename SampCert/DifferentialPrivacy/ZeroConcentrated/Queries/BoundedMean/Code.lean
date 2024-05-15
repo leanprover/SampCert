@@ -9,8 +9,6 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Code
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.BoundedSum.Code
 
-open Classical Nat Int Real
-
 noncomputable section
 
 namespace SLang

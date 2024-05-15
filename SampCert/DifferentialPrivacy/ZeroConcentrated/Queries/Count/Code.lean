@@ -6,8 +6,6 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Code
 
-open Classical Nat Int Real
-
 noncomputable section
 
 namespace SLang

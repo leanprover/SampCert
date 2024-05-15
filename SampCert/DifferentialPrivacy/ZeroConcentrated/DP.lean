@@ -18,10 +18,6 @@ import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.Convex.Integral
 
-noncomputable section
-
-open Classical Nat Int Real ENNReal MeasureTheory Measure
-
 def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   RenyiDivergence (q l₁) (q l₂) α ≤ (1/2) * ε ^ 2 * α

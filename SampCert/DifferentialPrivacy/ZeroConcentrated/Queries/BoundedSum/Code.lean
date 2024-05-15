@@ -9,8 +9,6 @@ import Mathlib.Algebra.Group.Defs
 import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 
-open Classical Nat Int Real
-
 noncomputable section
 
 namespace SLang
