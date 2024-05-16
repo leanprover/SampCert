@@ -4,16 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DiffPrivacy.DiscreteGaussian
-import SampCert.DiffPrivacy.GaussBound
-import SampCert.DiffPrivacy.GaussConvergence
-import SampCert.DiffPrivacy.GaussPeriodicity
+import SampCert.Util.Gaussian.DiscreteGaussian
+import SampCert.Util.Gaussian.GaussBound
+import SampCert.Util.Gaussian.GaussConvergence
+import SampCert.Util.Gaussian.GaussPeriodicity
 import SampCert.Util.Shift
+import SampCert.DifferentialPrivacy.RenyiDivergence
+import SampCert.Samplers.GaussianGen.Basic
 
-open Real
-
-noncomputable def RenyiDivergence (p q : ℤ → ℝ) (α : ℝ) : ℝ :=
-  (1 / (α - 1)) * Real.log (∑' x : ℤ, (p x)^α  * (q x)^(1 - α))
+open Real Nat
 
 theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   0 < ((gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x)^α := by
@@ -77,12 +76,14 @@ theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
     left
     rw [← mul_assoc]
 
+noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
+  (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
 
-theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : α > 1) :
-  RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
+theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : 1 < α) :
+  RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
                   (fun (x : ℤ) => (gauss_term_ℝ σ (0 : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ (0 : ℤ)) x)
                   α ≤ α * (μ^2 / (2 * σ^2)) := by
-  unfold RenyiDivergence
+  unfold RenyiDivergence'
   have A : 0 < 1 / (α - 1) := by
     simp [h']
   rw [← le_div_iff' A]
@@ -183,7 +184,7 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
       right
       intro x
       rw [E]
-      rw [add_div]
+      rw [_root_.add_div]
       rw [exp_add]
     rw [tsum_mul_right]
     rw [mul_comm]
@@ -302,9 +303,9 @@ theorem sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rw [← neg_add]
 
 theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
-  RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x) (fun (x : ℤ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x) α
-    = RenyiDivergence (fun (x : ℤ) => (gauss_term_ℝ σ ((μ + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((μ + τ) : ℤ)) x) (fun (x : ℤ) => (gauss_term_ℝ σ ((ν + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((ν + τ) : ℤ)) x) α := by
-  unfold RenyiDivergence
+  RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x) (fun (x : ℤ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x) α
+    = RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ ((μ + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((μ + τ) : ℤ)) x) (fun (x : ℤ) => (gauss_term_ℝ σ ((ν + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((ν + τ) : ℤ)) x) α := by
+  unfold RenyiDivergence'
   congr 2
   conv =>
     left
@@ -412,11 +413,160 @@ theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     apply Summable.mul_right
     apply summable_gauss_term' h
 
-theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
-  RenyiDivergence (fun (x : ℤ) => discrete_gaussian σ μ x)
+theorem RenyiDivergenceBound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
+  RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
                   (fun (x : ℤ) => discrete_gaussian σ ν x)
                   α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
   unfold discrete_gaussian
   rw [SG_Renyi_shift h α μ ν (-ν)]
   rw [add_right_neg]
   apply  RenyiDivergenceBound h (μ + -ν) α h'
+
+theorem RenyiSumSG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
+  0 ≤ discrete_gaussian σ μ n ^ α * discrete_gaussian σ ν n ^ (1 - α) := by
+  have A := discrete_gaussian_nonneg h μ n
+  have B := discrete_gaussian_nonneg h ν n
+  rw [mul_nonneg_iff]
+  left
+  constructor
+  . apply Real.rpow_nonneg A
+  . apply Real.rpow_nonneg B
+
+theorem SummableRenyiGauss {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
+  Summable fun (x : ℤ) => discrete_gaussian σ μ x ^ α * discrete_gaussian σ ν x ^ (1 - α) := by
+  simp [discrete_gaussian]
+  have B : ∀ μ : ℤ, ∀ x : ℝ, 0 ≤ (gauss_term_ℝ σ μ) x := by
+    intro μ x
+    unfold gauss_term_ℝ
+    apply exp_nonneg
+  have C : ∀ μ : ℤ, 0 ≤ (∑' (x : ℤ), (gauss_term_ℝ σ μ) x)⁻¹ := by
+    intro μ
+    rw [inv_nonneg]
+    apply le_of_lt
+    apply sum_gauss_term_pos h
+  conv =>
+    right
+    intro x
+    rw [division_def]
+    rw [division_def]
+    rw [mul_rpow (B μ x) (C μ)]
+    rw [mul_rpow (B ν x) (C ν)]
+  conv =>
+    right
+    intro x
+    rw [mul_assoc]
+    right
+    rw [← mul_assoc]
+    left
+    rw [mul_comm]
+  conv =>
+    right
+    intro x
+    ring_nf
+  apply Summable.mul_right
+  apply Summable.mul_right
+  unfold gauss_term_ℝ
+  conv =>
+    right
+    intro x
+    rw [← Real.exp_mul]
+    rw [← Real.exp_mul]
+    rw [← exp_add]
+    rw [← mul_div_right_comm]
+    rw [← mul_div_right_comm]
+    rw [div_add_div_same]
+    rw [mul_sub_left_distrib]
+    rw [mul_one]
+    right
+    left
+    ring_nf
+
+  have X : ∀ x : ℤ,
+    ↑x * ↑μ * α * 2 - ↑x * α * ↑ν * 2 + ↑x * ↑ν * 2 + (-↑x ^ 2 - ↑μ ^ 2 * α) + (α * ↑ν ^ 2 - ↑ν ^ 2)
+           = - ((↑x ^ 2 - 2 * x * (↑μ * α - α * ↑ν + ↑ν)) + (↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2)) := by
+        intro x
+        ring_nf
+  conv =>
+    right
+    intro x
+    rw [X]
+  clear X
+
+  have X : (↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2)
+    = (↑μ * α - α * ↑ν + ↑ν)^2 + (- ↑μ * α * ↑ν * 2 + ↑μ * α ^ 2 * ↑ν * 2 -
+        ↑μ ^ 2 * α ^ 2 + α * ↑ν ^ 2 - α ^ 2 * ↑ν ^ 2 + α * ↑μ ^ 2) := by
+    ring_nf
+  conv =>
+    right
+    intro x
+    rw [X]
+    rw [← add_assoc]
+  clear X
+
+  have X : ∀ x : ℤ, (x - (↑μ * α - α * ↑ν + ↑ν))^2 = ↑x ^ 2 - 2 * ↑x * (↑μ * α - α * ↑ν + ↑ν) + (↑μ * α - α * ↑ν + ↑ν) ^ 2 := by
+    intro x
+    ring_nf
+  conv =>
+    right
+    intro x
+    rw [← X]
+    rw [neg_add]
+    rw [← div_add_div_same]
+    rw [exp_add]
+  clear X
+  apply Summable.mul_right
+  apply summable_gauss_term' h
+
+theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
+  RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
+                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
+                  α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
+  have A : RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
+                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
+                  α  = RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
+                  (fun (x : ℤ) => discrete_gaussian σ ν x)
+                  α  := by
+    unfold RenyiDivergence
+    unfold RenyiDivergence'
+    congr
+    simp
+    have A₁ : ∀ x : ℤ, 0 ≤ discrete_gaussian σ μ x ^ α := by
+      intro x
+      apply Real.rpow_nonneg
+      apply discrete_gaussian_nonneg h μ x
+    conv =>
+      left
+      right
+      right
+      intro x
+      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h μ x)]
+      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h ν x)]
+      rw [← ENNReal.ofReal_mul (A₁ x)]
+    rw [← ENNReal.ofReal_tsum_of_nonneg]
+    . simp
+      apply tsum_nonneg
+      intro i
+      apply RenyiSumSG_nonneg h
+    . apply RenyiSumSG_nonneg h
+    . apply SummableRenyiGauss h
+  rw [A]
+  apply RenyiDivergenceBound_pre h h'
+
+namespace SLang
+
+theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
+  RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
+  α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
+  have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
+    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  conv =>
+    left
+    congr
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+    . intro x
+      rw [DiscreteGaussianGenSample_apply]
+    . skip
+  apply RenyiDivergenceBound' A h
+
+end SLang

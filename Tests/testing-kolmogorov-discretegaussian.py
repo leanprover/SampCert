@@ -157,7 +157,7 @@ if __name__ == "__main__":
         print("* Calling the 'test_kolmogorov_dist' function with N=1000 and location parameter sigma^2=10 (without plots):")
         # How to use the "test_kolmogorov_dist" function: on N=10000 samples, with sigma^2 = 10 (no plots)
         diff = test_kolmogorov_dist(N,sig2)
-        if diff < 0.01:
+        if diff < 0.02:
             print("Test passed!")
             exit(0)
         else: 

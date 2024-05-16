@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DiffPrivacy.GaussConvergence
+import SampCert.Util.Gaussian.GaussConvergence
 
 theorem SGShift (μ σ : ℝ) (n : ℤ) (k : ℤ) :
   (gauss_term_ℝ σ μ) (((n + k) : ℤ) : ℝ) = (gauss_term_ℝ σ (μ - k)) n := by
