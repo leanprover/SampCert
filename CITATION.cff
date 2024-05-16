@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Tristan"
+  given-names: "Jean-Baptiste"
+title: "SampCert : Verified Differential Privacy"
+version: 1.0.0
+doi: 10.5281/zenodo.11204806
+date-released: 2024-05-16
+url: "https://github.com/leanprover/SampCert"
