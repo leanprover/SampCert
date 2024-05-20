@@ -10,7 +10,7 @@ noncomputable section
 
 namespace SLang
 
-def Compose (nq1 nq2 : List T → SLang ℤ) (l : List T) : SLang (ℤ × ℤ) := do
+def Compose (nq1 nq2 : List T → SLang U) (l : List T) : SLang (U × U) := do
   let A ← nq1 l
   let B ← nq2 l
   return (A,B)
