@@ -45,7 +45,7 @@ theorem BoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedAvg
   have C₁ := DPCompose B₁ A₁ B₂ A₂ B₄ A₄ B₃ A₃
   have C₂ := DPCompose_NonZeroNQ B₂ A₂
   have C₃ := DPCompose_NonTopNQ B₃ A₃
-  have C₄ := DPCompose_NonTopRDNQ B₄ A₄ B₂ A₂
+  have C₄ := DPCompose_NonTopRDNQ B₄ A₄ B₃ A₃
   have C₅ := DPCompose_NonTopSum B₅ A₅
   simp at *
   ring_nf at *

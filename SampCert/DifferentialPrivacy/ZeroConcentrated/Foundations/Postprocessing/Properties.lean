@@ -695,7 +695,7 @@ theorem DPPostPRocess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : No
   . rw [h]
   . apply nn
 
-theorem DPCompose_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) (sur : Function.Surjective f) :
+theorem DPPostPRocess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) (sur : Function.Surjective f) :
   NonTopSum (PostProcess nq f) := by
   simp [NonTopSum, PostProcess] at *
   intros l
@@ -710,7 +710,7 @@ theorem DPCompose_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTop
   unfold Set.preimage at nt
   sorry -- looks good
 
-theorem DPCompose_NonTopRDNQ {nq : List T → SLang U} (f : U → V) (nt : NonTopRDNQ nq) (ns : NonTopSum nq) (sur : Function.Surjective f) :
+theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} (f : U → V) (nt : NonTopRDNQ nq) (ns : NonTopSum nq) (sur : Function.Surjective f) :
   NonTopRDNQ (PostProcess nq f) := by
   simp [NonTopRDNQ, NonTopSum, PostProcess] at *
   intros α h1 l₁ l₂ h2
