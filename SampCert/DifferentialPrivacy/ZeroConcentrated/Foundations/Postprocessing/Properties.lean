@@ -683,13 +683,49 @@ theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq 
         rw [lt_top_iff_ne_top] at Z
         contradiction
 
-theorem zCDPPostProcess (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (f : U → V) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem DPPostPRocess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
+  NonZeroNQ (PostProcess nq f) := by
+  simp [NonZeroNQ, Function.Surjective, PostProcess] at *
+  intros l n
+  replace sur := sur n
+  cases sur
+  rename_i a h
+  exists a
+  constructor
+  . rw [h]
+  . apply nn
+
+theorem DPCompose_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) (sur : Function.Surjective f) :
+  NonTopSum (PostProcess nq f) := by
+  simp [NonTopSum, PostProcess] at *
+  intros l
+  have nt := nt l
+  rw [← ENNReal.tsum_fiberwise _ f] at nt
+  conv =>
+    right
+    left
+    right
+    intro n
+    rw [condition_to_subset]
+  unfold Set.preimage at nt
+  sorry -- looks good
+
+theorem DPCompose_NonTopRDNQ {nq : List T → SLang U} (f : U → V) (nt : NonTopRDNQ nq) (ns : NonTopSum nq) (sur : Function.Surjective f) :
+  NonTopRDNQ (PostProcess nq f) := by
+  simp [NonTopRDNQ, NonTopSum, PostProcess] at *
+  intros α h1 l₁ l₂ h2
+  replace nt := nt α h1 l₁ l₂ h2
+  have ns1 := ns l₁
+  have ns2 := ns l₂
+  sorry -- probably good but tedious work
+
+theorem zCDPPostProcess (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (f : U → V) (sur : Function.Surjective f) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   repeat any_goals constructor
   . apply DPPostProcess h1 h2 h5 h4 h3
-  . sorry
+  . apply DPPostPRocess_NonZeroNQ h2 sur
   . sorry
   . sorry
   . sorry

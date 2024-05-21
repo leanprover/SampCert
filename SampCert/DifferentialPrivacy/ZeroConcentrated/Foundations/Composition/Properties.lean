@@ -145,8 +145,8 @@ theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ �
       intro c
       rw [compose_sum_rw]
       rw [compose_sum_rw]
-      rw [ENNReal.mul_rpow_of_ne_zero (nn1 l₁ b) (nn2 l₁ c)]
-      rw [ENNReal.mul_rpow_of_ne_zero (nn1 l₂ b) (nn2 l₂ c)]
+      rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h3))]
+      rw [ENNReal.mul_rpow_of_ne_top (nts1 l₂ b) (nts2 l₂ c)]
       rw [mul_assoc]
       right
       rw [mul_comm]
@@ -256,7 +256,7 @@ theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V
     cases H
     contradiction
 
-theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
+theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
   NonTopRDNQ (Compose nq1 nq2) := by
   simp [NonTopRDNQ] at *
   intro α h1 l₁ l₂ h2
@@ -284,8 +284,8 @@ theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang 
     intro x
     right
     intro y
-    rw [ENNReal.mul_rpow_of_ne_zero (nn1 l₁ x) (nn2 l₁ y)]
-    rw [ENNReal.mul_rpow_of_ne_zero (nn1 l₂ x) (nn2 l₂ y)]
+    rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
+    rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 l₂ y)]
     rw [mul_assoc]
     right
     rw [mul_comm]
@@ -329,6 +329,7 @@ theorem zCDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁
   . apply DPCompose_NonZeroNQ h2 h'2
   . apply DPCompose_NonTopSum h3 h'3
   . apply DPCompose_NonTopNQ h4 h'4
-  . apply DPCompose_NonTopRDNQ h5 h'5 h2 h'2
+  . apply DPCompose_NonTopRDNQ h5 h'5 h4 h'4
+
 
 end SLang

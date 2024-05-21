@@ -254,4 +254,5 @@ theorem NoisedQueryzCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounde
   . apply NoisedQuery_NonTopNQ
   . apply NoisedQuery_NonTopRDNQ
 
+
 end SLang
