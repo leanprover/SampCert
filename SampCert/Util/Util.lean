@@ -3,17 +3,31 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.SLang
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
+/-!
+# Utility Functions
+
+## Main Results
+
+- Lemmas converting between conditional summands and series over subsets
+- Lemmas pertaining to leading zeroes in nonnegative series
+
+-/
+
 open Function Nat Set BigOperators Finset
 
+-- MARKUSDE: Surely this is somwehere else? Is this not the defining property of subtypes?
+-- MARKUSDE: (subtle) { _ // _ } represents subtypes, not subsets, right?
 theorem in_subset_satisfies (P : ℕ → Prop) (x : { x // P x }) : P x := by
   cases x
   simp
   trivial
 
+-- MARKUSDE: Refactored to pass linter. Check with JBT: What considerations should
+-- I make when refactoring? Does anything about extraction change etc?
+/-- Simplify a sum over a step function -/
 @[simp]
 theorem sum_simple (bound : ℕ) (k : ENNReal) :
  (∑' (a : ℕ), if a < bound then k else 0) = k * bound := by
@@ -22,21 +36,18 @@ theorem sum_simple (bound : ℕ) (k : ENNReal) :
   have B := @sum_add_tsum_nat_add' ENNReal _ _ _ _ (fun a => if a < bound then k else 0) bound A
   rw [← B]
   clear B
-  have C : ∑' (i : ℕ), (fun a => if a < bound then k else 0) (i + bound) = 0 := by
-    apply (tsum_eq_zero_iff A).mpr
-    intro x
-    induction x
+  rw [(tsum_eq_zero_iff A).mpr]
+  · rw [← @Finset.sum_filter]
+    rw [Finset.filter_true_of_mem]
     . simp
-    . simp
-  simp [C] ; clear A C
-  rw [← @Finset.sum_filter]
-  have D : Finset.filter (fun x => x < bound) (Finset.range bound) = (Finset.range bound) := by
-    apply Finset.filter_true_of_mem
-    intro x H
-    exact List.mem_range.mp H
-  simp [D]
-  exact cast_comm bound k
+      rw [mul_comm]
+    . intro _
+      exact List.mem_range.mp
+  · intro x
+    simp
 
+
+-- MARKUSDE: add @[simp]? I'd guess that's how it would be used.
 theorem tsum_simpl_ite_left (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (x : { i : T | cond i}), if cond x then f x else g x)
     = (∑' (x : { i : T | cond i}), f x) := by
@@ -65,6 +76,7 @@ theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
     simp [A] at h
   . simp
 
+-- MARKUSDE: Is absolute convergence under the hood somewhere here or is there some other trick?
 theorem tsum_split_ite (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i then f i else g i)
     = (∑' (i : { i : T | cond i}), f i) + (∑' (i : { i : T | ¬ cond i}), g i) := by
@@ -129,6 +141,7 @@ theorem tsum_split_coe_left (cond : T → Bool) (f : T → ENNReal) :
   rw [tsum_split_ite']
   simp
 
+/-- Series over a nonnegative conditional term is bounded about by series of the unconditioned term -/
 theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
   (∑' i : ℕ, if cond i then f i else 0) ≤ ∑' i : ℕ, f i := by
   have A := @tsum_add_tsum_compl ENNReal ℕ _ _ f _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
@@ -136,6 +149,7 @@ theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
   rw [tsum_split_coe_right]
   simp
 
+/-- Remove leading zero from series -/
 theorem tsum_shift_1 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else f (n-1)) =
     ∑' n : ℕ, f n := by
@@ -159,6 +173,8 @@ theorem tsum_shift_1 (f : ℕ → ENNReal) :
       rw [sum_range_succ]
     rw [← IH]
 
+-- MARKUSDE: Simplify me (in terms of tsum_shift_1)
+/-- Remove leading zero from series -/
 theorem tsum_shift'_1 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else f n) =
     ∑' n : ℕ, f (n + 1) := by
@@ -182,6 +198,7 @@ theorem tsum_shift'_1 (f : ℕ → ENNReal) :
       rw [sum_range_succ]
     rw [← IH]
 
+/-- Remove two leading zeroes from series -/
 theorem tsum_shift'_2 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else if n = 1 then 0 else f n) =
     ∑' n : ℕ, f (n + 2) := by
@@ -212,3 +229,6 @@ theorem tsum_shift'_2 (f : ℕ → ENNReal) :
       right
       rw [sum_range_succ]
     rw [← IH]
+
+
+#lint docBlame
