@@ -79,7 +79,7 @@ theorem tsum_comp (n : PNat) :
   simp
 
 -- This should be proved more generally
-theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
+theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
   (1 - ∑' (i : ℕ), if ↑n ≤ i then uniformPowerOfTwoSample (2 * n) i else 0)
     = ∑' (i : ℕ), if i < ↑n then uniformPowerOfTwoSample (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then uniformPowerOfTwoSample (2 * n) i else 0) +
@@ -162,7 +162,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     right
     intro x
     rw [A]
-  rw [UniformPowerOfTwoSample_autopilot]
+  rw [uniformPowerOfTwoSample_autopilot]
   simp only [rw_ite, one_div, sum_simple]
   rw [rw1 n]
   rw [rw2 n]

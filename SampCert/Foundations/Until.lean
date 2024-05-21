@@ -183,7 +183,7 @@ theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
 theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
   ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
-  have A := @prob_while_cut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
+  have A := @probWhileCut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
 @[simp]

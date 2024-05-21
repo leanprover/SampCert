@@ -267,7 +267,7 @@ theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
 theorem geometric_pwc_sup (n : ℕ) :
   ⨆ i, probWhileCut loop_cond (loop_body trial) i (true, 0) (false, n) = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
   refine iSup_eq_of_tendsto ?hf ?_
-  . apply prob_while_cut_monotonic
+  . apply probWhileCut_monotonic
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat (n + 1))]
     split
     . rename_i h

@@ -397,7 +397,7 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
   ⨆ i, probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) i (true, 1) (false, n)
     = if n = 1 then 0 else (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   apply iSup_eq_of_tendsto
-  . apply prob_while_cut_monotonic
+  . apply probWhileCut_monotonic
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat n)]
     split
     . rename_i h
