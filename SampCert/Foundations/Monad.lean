@@ -3,8 +3,14 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.SLang
+
+/-!
+# SLang Monad
+
+This file derives standard monadic rewrite rules for ``SLang``
+
+-/
 
 noncomputable section
 
@@ -14,6 +20,7 @@ namespace SLang
 
 variable {α β γ : Type}
 
+/-- Convert a normalized SLang term back into a PMF -/
 def toPMF (p : SLang α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 
 @[ext]
@@ -62,3 +69,5 @@ theorem bind_bind : (p.bind f).bind g = p.bind fun a => (f a).bind g :=
         ENNReal.tsum_mul_right.symm, mul_assoc, mul_left_comm, mul_comm] using ENNReal.tsum_comm
 
 end SLang
+
+#lint docBlame
