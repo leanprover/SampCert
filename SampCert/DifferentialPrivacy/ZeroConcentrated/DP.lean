@@ -34,3 +34,10 @@ def NonTopNQ (nq : List T → SLang U) :=
 def NonTopRDNQ (nq : List T → SLang U) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤
+
+def zCDP (q : List T → SLang U) (ε : ℝ) : Prop :=
+    DP q ε
+  ∧ NonZeroNQ q
+  ∧ NonTopSum q
+  ∧ NonTopNQ q
+  ∧ NonTopRDNQ q
