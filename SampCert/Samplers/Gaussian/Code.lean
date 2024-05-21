@@ -25,7 +25,7 @@ def DiscreteGaussianSample (num : PNat) (den : PNat) : SLang ℤ := do
   let t : PNat := ⟨ ti + 1 , by simp only [add_pos_iff, zero_lt_one, or_true] ⟩
   let num := num^2
   let den := den^2
-  let r ← prob_until (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
+  let r ← probUntil (DiscreteGaussianSampleLoop num den t) (λ x : Int × Bool => x.2)
   return r.1
 
 end SLang

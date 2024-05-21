@@ -17,18 +17,18 @@ variable {T : Type}
 
 @[simp]
 theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
-  simp [prob_while_cut]
+  probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
+  simp [probWhileCut]
 
 @[simp]
 theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
+  probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
   . simp only [zero_eq, until_zero, implies_true]
   . rename_i fuel IH
     intro j
-    simp only [prob_while_cut, WhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
+    simp only [probWhileCut, whileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
       bind_apply, pure_apply]
     split
     . simp only [IH, mul_zero, tsum_zero]
@@ -42,8 +42,8 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
 
 @[simp]
 theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
-  prob_until (body : SLang T) (cond : T → Bool) x = 0 := by
-  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+  probUntil (body : SLang T) (cond : T → Bool) x = 0 := by
+  simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
   simp only [ENNReal.tsum_eq_zero]
   simp only [_root_.mul_eq_zero]
   simp only [iSup_eq_zero]
@@ -63,9 +63,9 @@ theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
     . simp
 
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
-  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
+  ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
-  simp [prob_while_cut, WhileFunctional, ite_apply]
+  simp [probWhileCut, whileFunctional, ite_apply]
   rw [tsum_split_ite']
   simp only [tsum_zero, zero_add]
   have FOO := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
@@ -104,13 +104,13 @@ theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       contradiction
 
 theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
-  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
+  ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
   . simp only [zero_eq, until_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   . rename_i fuel IH
-    unfold prob_while_cut
-    unfold WhileFunctional
+    unfold probWhileCut
+    unfold whileFunctional
     simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply, mul_ite,
       mul_one, mul_zero]
     rw [tsum_split_ite_exp]
@@ -181,16 +181,16 @@ theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
   rw [ENNReal.tsum_geometric]
 
 theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
-  ∀ (a : T), Monotone fun i => body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
+  ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
   have A := @prob_while_cut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
 @[simp]
 theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
-  prob_until (body : SLang T) (cond : T → Bool) x
+  probUntil (body : SLang T) (cond : T → Bool) x
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
-  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+  simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
   rw [← convergence]
   conv =>
     right
@@ -220,7 +220,7 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
 
 @[simp]
 theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
-  prob_until (body : SLang T) (cond : T → Bool) x =
+  probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   split
   . rename_i h
@@ -230,7 +230,7 @@ theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
 
 @[simp]
 theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
-  prob_until (body : SLang T) (cond : T → Bool) x =
+  probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (∑' x : T, if cond x then body x else 0)⁻¹ := by
   rw [prob_until_apply body cond x]
   congr

@@ -11,7 +11,7 @@ noncomputable section
 namespace SLang
 
 def UniformSample (n : PNat) : SLang Nat := do
-  let r ← prob_until (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
+  let r ← probUntil (uniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
 
 end SLang

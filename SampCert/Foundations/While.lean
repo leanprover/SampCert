@@ -16,16 +16,16 @@ namespace SLang
 variable {T} [Preorder T]
 
 theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) :
-  Monotone (fun n : Nat => prob_while_cut cond body n init x) := by
+  Monotone (fun n : Nat => probWhileCut cond body n init x) := by
   apply monotone_nat_of_le_succ
   intro n
   revert init
   induction n
   . intro init
-    simp [prob_while_cut]
+    simp [probWhileCut]
   . rename_i n IH
     intro init
-    simp [prob_while_cut,WhileFunctional]
+    simp [probWhileCut,whileFunctional]
     split
     . rename_i COND
       unfold SLang.bind
@@ -39,10 +39,10 @@ theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → SLang T) (ini
 
 @[simp]
 theorem while_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) (v : ENNReal) :
-  Filter.Tendsto (fun i => prob_while_cut cond body i init x) Filter.atTop (nhds v) →
-  prob_while cond body init x = v := by
+  Filter.Tendsto (fun i => probWhileCut cond body i init x) Filter.atTop (nhds v) →
+  probWhile cond body init x = v := by
   intro H
-  unfold prob_while
+  unfold probWhile
   apply iSup_eq_of_tendsto
   . apply prob_while_cut_monotonic
   . apply H

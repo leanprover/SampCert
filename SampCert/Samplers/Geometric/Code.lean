@@ -22,7 +22,7 @@ def loop_body (st : (Bool × ℕ)) : SLang (Bool × ℕ) := do
   return (x,st.2 + 1)
 
 def geometric : SLang ℕ := do
-  let st ← prob_while loop_cond (loop_body trial) (true,0)
+  let st ← probWhile loop_cond (loop_body trial) (true,0)
   return st.2
 
 end Geometric

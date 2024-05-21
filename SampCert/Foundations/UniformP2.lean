@@ -76,8 +76,8 @@ theorem sum_indicator_finrange (n : Nat) (x : Nat) (h : x < n) :
 
 @[simp]
 theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
-  (UniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
-  simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+  (uniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
+  simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
     CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
     uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply, one_div]
   rw [ENNReal.tsum_mul_left]
@@ -87,8 +87,8 @@ theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n
 
 @[simp]
 theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
-  UniformPowerOfTwoSample n x = 0 := by
-  simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+  uniformPowerOfTwoSample n x = 0 := by
+  simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
     CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
     uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply,
     ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.inv_eq_zero, ENNReal.pow_eq_top_iff,
@@ -121,11 +121,11 @@ theorem if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
     . simp
 
 theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
-  ∑' i : ℕ, UniformPowerOfTwoSample n i = 1 := by
+  ∑' i : ℕ, uniformPowerOfTwoSample n i = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
   . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, UniformPowerOfTwoSample_apply',
     tsum_zero, add_zero]
-    simp only [UniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+    simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
       CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
       uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply]
     rw [Finset.sum_range]

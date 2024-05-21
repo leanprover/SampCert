@@ -71,8 +71,8 @@ theorem trial_sum_ne_top' :
 
 @[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) 0 st₁ st₂ = 0 := by
-  simp [prob_while_cut]
+  probWhileCut loop_cond (loop_body trial) 0 st₁ st₂ = 0 := by
+  simp [probWhileCut]
 
 theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
@@ -81,12 +81,12 @@ theorem ite_simpl (x a : ℕ) (v : ENNReal) :
   . simp
 
 theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (succ fuel) (true,n) st =
-  (trial false) * prob_while_cut loop_cond (loop_body trial) fuel (false, n + 1) st +
-    (trial true) * prob_while_cut loop_cond (loop_body trial) fuel (true, n + 1) st := by
+  probWhileCut loop_cond (loop_body trial) (succ fuel) (true,n) st =
+  (trial false) * probWhileCut loop_cond (loop_body trial) fuel (false, n + 1) st +
+    (trial true) * probWhileCut loop_cond (loop_body trial) fuel (true, n + 1) st := by
   cases st
   rename_i b m
-  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, whileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
   conv =>
     left
     . congr
@@ -104,14 +104,14 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
 
 @[simp]
 theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (succ fuel) (false,n) st =
+  probWhileCut loop_cond (loop_body trial) (succ fuel) (false,n) st =
   if st = (false,n) then 1 else 0 := by
   cases st
-  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, whileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
 @[simp]
 theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
-  prob_while_cut loop_cond (loop_body trial) fuel st (false, n) = 0 := by
+  probWhileCut loop_cond (loop_body trial) fuel st (false, n) = 0 := by
   revert st
   induction fuel
   . simp
@@ -146,7 +146,7 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
 
 @[simp]
 theorem geometric_progress (fuel n : ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel + 1) = (trial true)^fuel * (trial false) := by
+  probWhileCut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel + 1) = (trial true)^fuel * (trial false) := by
   revert n
   induction fuel
   . intro n
@@ -167,7 +167,7 @@ theorem geometric_progress (fuel n : ℕ) :
     rw [← _root_.pow_succ]
 
 theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
-  prob_while_cut loop_cond (loop_body trial) (n + 1) (true, 0) (false, n) = (trial true)^(n-1) * (trial false) := by
+  probWhileCut loop_cond (loop_body trial) (n + 1) (true, 0) (false, n) = (trial true)^(n-1) * (trial false) := by
   have prog := geometric_progress trial (n - 1) 0
   simp at prog
   have A : n - 1 + 1 = n := by exact succ_pred h
@@ -177,9 +177,9 @@ theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
   trivial
 
 theorem geometric_preservation (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
-  prob_while_cut loop_cond (loop_body trial) (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
+  probWhileCut loop_cond (loop_body trial) (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
   =
-  prob_while_cut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel' + 1) := by
+  probWhileCut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel' + 1) := by
   revert fuel' n
   induction fuel
   . intro fuel' n h1
@@ -210,9 +210,9 @@ theorem geometric_preservation (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
       exact rfl
 
 theorem geometric_preservation' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
-  prob_while_cut loop_cond (loop_body trial) (n + 2) (true,0) (false,m)
+  probWhileCut loop_cond (loop_body trial) (n + 2) (true,0) (false,m)
   =
-  prob_while_cut loop_cond (loop_body trial) (n + 1) (true,0) (false,m) := by
+  probWhileCut loop_cond (loop_body trial) (n + 1) (true,0) (false,m) := by
   have prog := geometric_preservation trial (n - 1) (m - 1) 0
   have P : ¬ n = 0 := by
       by_contra
@@ -245,7 +245,7 @@ theorem geometric_preservation' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   exact Nat.sub_le_sub_right h2 1
 
 theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
-  prob_while_cut loop_cond (loop_body trial) (extra + (n + 1)) (true,0) (false,n) = (trial true)^(n-1) * (trial false) := by
+  probWhileCut loop_cond (loop_body trial) (extra + (n + 1)) (true,0) (false,n) = (trial true)^(n-1) * (trial false) := by
   revert n
   induction extra
   . simp
@@ -265,7 +265,7 @@ theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
     . exact Nat.le_add_left n extra
 
 theorem geometric_pwc_sup (n : ℕ) :
-  ⨆ i, prob_while_cut loop_cond (loop_body trial) i (true, 0) (false, n) = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
+  ⨆ i, probWhileCut loop_cond (loop_body trial) i (true, 0) (false, n) = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
   refine iSup_eq_of_tendsto ?hf ?_
   . apply prob_while_cut_monotonic
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat (n + 1))]
@@ -286,14 +286,14 @@ theorem geometric_pwc_sup (n : ℕ) :
 
 @[simp]
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
-  prob_while_cut loop_cond (loop_body trial) fuel (b, k) (true,n) = 0 := by
+  probWhileCut loop_cond (loop_body trial) fuel (b, k) (true,n) = 0 := by
   revert n b k
   induction fuel
   . intro n
     simp
   . rename_i fuel IH
     intro n k b
-    simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
+    simp [probWhileCut,whileFunctional,loop_body,loop_cond]
     unfold SLang.bind
     unfold SLang.pure
     simp [ite_apply]
@@ -324,7 +324,7 @@ theorem geometric_apply (n : ℕ) :
   simp only [geometric, Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
-  simp only [prob_while, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
+  simp only [probWhile, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
     geometric_returns_false, ciSup_const, zero_mul, tsum_zero, add_zero]
   simp only [ne_eq, Prod.mk.injEq, false_and, not_false_eq_true, geometric_pwc_sup, ite_mul,
     zero_mul]
