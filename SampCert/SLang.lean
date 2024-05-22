@@ -94,9 +94,7 @@ def probWhileCut (cond : T → Bool) (body : T → SLang T) (n : Nat) (a : T) : 
 def probWhile (cond : T → Bool) (body : T → SLang T) (init : T) : SLang T :=
   fun x => ⨆ (i : ℕ), (probWhileCut cond body i init x)
 
-/-- MARKUSDE: TODO -/
--- MARKUSDE: What is this doing? Why does it return a constant ``body``?
--- Does this not reach a fixed point in one iteration?
+/-- ``SLang`` value which rejects samples from ``body`` until they satisfy ``cond`` -/
 def probUntil (body : SLang T) (cond : T → Bool) : SLang T := do
   let v ← body
   probWhile (λ v : T => ¬ cond v) (λ _ : T => body) v

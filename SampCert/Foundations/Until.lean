@@ -3,9 +3,15 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.While
 import SampCert.Util.Util
+
+/-!
+# Until
+
+Evaluation lemmas for the ``until`` term of ``SLang``
+
+-/
 
 noncomputable section
 
@@ -15,11 +21,22 @@ namespace SLang
 
 variable {T : Type}
 
+-- MARKUSDE: Check with JBT: should we define a truncated version of Until and use that?
+-- Might make some of the proofs simpler and help put them in SNF. Any extraction reason not to?
+
+-- MARKUSDE: Maybe needs better name, since it's not about until
+/-- Truncation of ``until`` program to zero unrollings is identically zero -/
 @[simp]
 theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
   simp [probWhileCut]
 
+
+-- MARKUSDE: These lemmas anger the simplifier, since it might first simplify ``decide (... = false)``.
+-- Is this a problem?
+
+/-- Truncation of ``until`` program to any number of unrollings evaluates to zero for
+ values which do not satisfy ``cond``. -/
 @[simp]
 theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
@@ -40,6 +57,7 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
         simp [h'] at h
       . simp
 
+/-- ``until`` evaluates to zero for values which do not satisfy ``cond`` -/
 @[simp]
 theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x = 0 := by
@@ -50,7 +68,7 @@ theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h :
   intro i ; right ; intro j
   simp only [h, not_false_eq_true, repeat_apply_unsat]
 
-theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
+lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
   split
   . simp
@@ -62,6 +80,8 @@ theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
       . simp
     . simp
 
+-- MARKUSDE: Unused, and I can't imagine the utility (surely we will be binding to the fill until,
+-- not the truncation, right?). Keep it?
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
@@ -84,7 +104,9 @@ theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
     rw [if_simpl]
   simp
 
-theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
+-- MARKUSDE: move to util?
+/-- Split a conditional series by the condition -/
+lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' i : T, if cond i = false then f i else 0) + (∑' i : T, if cond i = true then g i else 0) := by
   rw [← ENNReal.tsum_add]
@@ -103,6 +125,7 @@ theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       rw [h'] at h
       contradiction
 
+-- MARKUSDE: TODO rename or implement repeat
 theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
@@ -173,6 +196,8 @@ theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x 
     . rename_i h
       simp [h]
 
+-- MARKUSDE: TODO/rename
+-- MARKUSDE: This is simple, where is it used?
 theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
@@ -180,12 +205,18 @@ theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_geometric]
 
+-- MARKUSDE: TODO/rename (or define repeat)
+/-- Truncated ``until`` term is monotone in the maximum number of steps -/
 theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
   ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
   have A := @probWhileCut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
+-- MARKUSDE: err-- what if this sum is 1? What if it's greater than 1? Is ``until`` only meaninfgul when
+--   body is normalized?
+-- MARKUSDE: reduce proof
+/-- ``until`` term evaluates to ``body``, scaled by ??  -/
 @[simp]
 theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x
@@ -218,6 +249,7 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
     intro j
     rw [← ENNReal.tsum_eq_iSup_sum]
 
+-- MARKUSDE: ??
 @[simp]
 theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
   probUntil (body : SLang T) (cond : T → Bool) x =
@@ -228,6 +260,8 @@ theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
   . rename_i h
     simp [h, prob_until_apply_unsat]
 
+-- MARKUSDE: Is this not the same conclusion as the last lemma?
+-- MARKUSDE: How is norm used?
 @[simp]
 theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
   probUntil (body : SLang T) (cond : T → Bool) x =
@@ -256,3 +290,4 @@ theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm
   rw [ENNReal.add_sub_cancel_right F]
 
 end SLang
+-- #lint docBlame
