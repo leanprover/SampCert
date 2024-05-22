@@ -10,9 +10,11 @@ import SampCert.Util.Util
 import SampCert.Foundations.Monad
 import SampCert.Foundations.Auto
 
-/-! # UniformP2
+/-!
+# UniformP2
 
-
+This file contains lemmas about ``UniformP2``, a ``SLang`` sampler for the uniform distribution on
+spaces whose size is a power of two.
 -/
 
 
@@ -20,8 +22,12 @@ open Classical Nat PMF
 
 namespace SLang
 
+-- MARKUSDE: factor out indicator?
+/--
+Simplifies the sum of a indicator variable on ℕ over the space ``Fin n``
+-/
 @[simp]
-theorem sum_indicator_finrange_gen (n : Nat) (x : Nat) :
+lemma sum_indicator_finrange_gen (n : Nat) (x : Nat) :
   (x < n → (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (1 : ENNReal))
   ∧ (x >= n → (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (0 : ENNReal)) := by
   revert x
@@ -71,6 +77,9 @@ theorem sum_indicator_finrange_gen (n : Nat) (x : Nat) :
         simp [neq]
 
 
+/--
+Computes the sum of an indicator variable (indicating inside the support of ``Fin n``) over the space ``Fin n``
+-/
 theorem sum_indicator_finrange (n : Nat) (x : Nat) (h : x < n) :
   (∑' (i : Fin n), @ite ENNReal (x = ↑i) (propDecidable (x = ↑i)) 1 0) = (1 : ENNReal) := by
   have H := sum_indicator_finrange_gen n x
@@ -79,8 +88,11 @@ theorem sum_indicator_finrange (n : Nat) (x : Nat) (h : x < n) :
   apply left
   trivial
 
+/--
+Evaluates the ``uniformPowerOfTwoSample`` distribution at a point inside of its support
+-/
 @[simp]
-theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
+theorem uniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
   (uniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
   simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
     CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
@@ -90,8 +102,11 @@ theorem UniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n
   . simp
   . trivial
 
+/--
+Evaluates the ``uniformPowerOfTwoSample`` distribution at a point outside of its support
+-/
 @[simp]
-theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
+theorem uniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
   uniformPowerOfTwoSample n x = 0 := by
   simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
     CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
@@ -110,7 +125,7 @@ theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 
     contradiction
   . simp
 
-theorem if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
+lemma if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
   (@ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ENNReal ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1)) (propDecidable ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1))) 1 0)) = 0 := by
   split
   . simp
@@ -125,10 +140,13 @@ theorem if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
       contradiction
     . simp
 
-theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
+/--
+The ``SLang`` term ``uniformPowerOfTwo`` is a proper distribution on ``ℕ``.
+-/
+theorem uniformPowerOfTwoSample_normalizes (n : PNat) :
   ∑' i : ℕ, uniformPowerOfTwoSample n i = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
-  . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, UniformPowerOfTwoSample_apply',
+  . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, uniformPowerOfTwoSample_apply',
     tsum_zero, add_zero]
     simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
       CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
@@ -154,3 +172,5 @@ theorem UniformPowerOfTwoSample_normalizes (n : PNat) :
   . exact ENNReal.summable
 
 end SLang
+
+#lint docBlame
