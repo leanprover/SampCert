@@ -4,11 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Basic
 import Mathlib.Algebra.Group.Defs
 import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.BoundedSum.Code
+import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
 
 open Classical Nat Int Real
 
@@ -16,10 +15,12 @@ noncomputable section
 
 namespace SLang
 
+variable [dps : DPSystem ℕ]
+
 theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) U := by
   simp [sensitivity, BoundedSumQuery]
   intros l₁ l₂ H
-  have A : ∀ n : ℕ, (@min ℤ instMinInt (n : ℤ) (U : ℤ) = n) ∨ (@min ℤ instMinInt n U = U) := by
+  have A : ∀ n : ℕ, (@min ℤ instMin (n : ℤ) (U : ℤ) = n) ∨ (@min ℤ instMin n U = U) := by
     intro n
     simp
     exact Nat.le_total n ↑U
@@ -70,24 +71,9 @@ theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) 
         rw [h, h']
         simp at *
 
-theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) : DP (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  apply NoisedQueryDP
+theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
+  dps.prop (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  apply dps.noise_prop
   apply BoundedSumQuerySensitivity
-
-theorem NoisedBoundedSumQuery_NonZeroNQ (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  @NonZeroNQ ℕ ℤ (NoisedBoundedSumQuery U ε₁ ε₂) := by
-  apply NoisedQuery_NonZeroNQ
-
-theorem NoisedBoundedSumQuery_NonTopNQ (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  @NonTopNQ ℕ ℤ (NoisedBoundedSumQuery U ε₁ ε₂) := by
-  apply NoisedQuery_NonTopNQ
-
-theorem NoisedBoundedSumQuery_NonTopRDNQ (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  @NonTopRDNQ ℕ ℤ (NoisedBoundedSumQuery U ε₁ ε₂) := by
-  apply NoisedQuery_NonTopRDNQ
-
-theorem NoisedBoundedSumQuery_NonTopSum (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  @NonTopSum ℕ ℤ (NoisedBoundedSumQuery U ε₁ ε₂) := by
-  apply NoisedQuery_NonTopSum
 
 end SLang

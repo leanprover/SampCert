@@ -10,6 +10,14 @@ noncomputable section
 namespace SLang
 
 variable {T : Type}
+-- variable [MeasurableSpace U]
+-- variable [Countable U]
+-- variable [DiscreteMeasurableSpace U]
+-- variable [Inhabited U]
+-- variable [MeasurableSpace V]
+-- variable [Countable V]
+-- variable [DiscreteMeasurableSpace V]
+-- variable [Inhabited V]
 variable [dps : DPSystem T]
 
 def CountingQuery (l : List T) : ℤ := List.length l

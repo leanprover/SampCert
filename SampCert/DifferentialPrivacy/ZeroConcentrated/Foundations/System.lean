@@ -11,17 +11,9 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.
 
 namespace SLang
 
-variable { T U V : Type }
-variable [MeasurableSpace U]
-variable [Countable U]
-variable [DiscreteMeasurableSpace U]
-variable [Inhabited U]
-variable [MeasurableSpace V]
-variable [Countable V]
-variable [DiscreteMeasurableSpace V]
-variable [Inhabited V]
+variable { T : Type }
 
-noncomputable instance : @DPSystem T U V where
+noncomputable instance zCDPSystem : DPSystem T where
   prop := zCDP
   noise := NoisedQuery
   compose := Compose
