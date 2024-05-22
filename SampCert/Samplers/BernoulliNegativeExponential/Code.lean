@@ -20,6 +20,7 @@ MARKUSDE: Is this really true? This implementation is different from the one I'v
 samples sequences of decreasing reals. "Discrete Von Neumann" maybe?
 -/
 
+-- MARKUSDE: FIXME: mane of samplers violate the naming scheme
 
 noncomputable section
 

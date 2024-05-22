@@ -30,6 +30,7 @@ def loop_body (st : Bool × ℕ) : SLang (Bool × ℕ):= do
 
 /-- ``SLang`` term for a geometric distrubution on ``Nat``. Iteratively samples
   from ``trial``, returning the number of attempts before a ``true`` sample. -/
+-- MARKUSDE: FIXME-- probably violates the eventual naming scheme
 def geometric : SLang ℕ := do
   let st ← probWhile loop_cond (loop_body trial) (true,0)
   return st.2

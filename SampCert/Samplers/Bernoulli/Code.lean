@@ -13,6 +13,7 @@ noncomputable section
 namespace SLang
 
 /-- ``SLang`` term for Bernoulli trial. Samples ``true`` with probability ``num / den``. -/
+-- MARKUSDE: FIXME-- violates the naming scheme
 def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : SLang Bool := do
   let d ← UniformSample den
   return d < num

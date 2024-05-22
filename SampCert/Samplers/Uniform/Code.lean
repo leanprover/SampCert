@@ -14,6 +14,7 @@ namespace SLang
 -- MARKUSDE: Why is it implemented this way?
 /-- ``Slang`` term for a uniform sample over [0, n). Implemented using rejection sampling on
     the uniform sampler on a space whose size is a power of two. -/
+-- MARKUSDE: FIXME-- violates the naming scheme
 def UniformSample (n : PNat) : SLang Nat := do
   let r ← probUntil (uniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
