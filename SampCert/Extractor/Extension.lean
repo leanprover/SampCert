@@ -13,7 +13,7 @@ structure State where
   map : SMap Name String := {}
   decls : List String := []
   inlines : List String := []
-  glob : SMap Name MDef := {}
+  glob : SMap String MDef := {}
   deriving Inhabited
 
 def State.switch (s : State) : State :=
