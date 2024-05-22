@@ -10,13 +10,9 @@ attribute [simp] Pure.pure
 attribute [simp] CoeT.coe
 attribute [simp] instCoeT
 attribute [simp] CoeHTCT.coe
-attribute [simp] instCoeHTCT_1
 attribute [simp] CoeHTC.coe
-attribute [simp] instCoeHTC_1
 attribute [simp] CoeOTC.coe
-attribute [simp] instCoeOTC_1
 attribute [simp] CoeTC.coe
-attribute [simp] instCoeTC_1
 attribute [simp] Coe.coe
 attribute [simp] optionCoe
 attribute [simp] CoeOut.coe

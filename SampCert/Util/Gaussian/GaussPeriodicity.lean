@@ -11,8 +11,8 @@ theorem SGShift (μ σ : ℝ) (n : ℤ) (k : ℤ) :
   simp [gauss_term_ℝ, gauss_term_ℝ]
   ring_nf
 
-theorem SGShift' (μ ss : ℝ) (n : ℤ) (k : ℤ) :
-  (gauss_term_ℝ σ μ) (((-(n + k)) : ℤ) : ℝ) =   (gauss_term_ℝ σ (-(μ + k))) n := by
+theorem SGShift' (μ : ℝ) (n : ℤ) (k : ℤ) :
+  (gauss_term_ℝ σ μ) (((-(n + k)) : ℤ) : ℝ) = (gauss_term_ℝ σ (-(μ + k))) n := by
   simp [gauss_term_ℝ, gauss_term_ℝ]
   ring_nf
 
@@ -29,7 +29,7 @@ theorem SGSummableShift' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   conv =>
     right
     intro n
-    rw [SGShift' μ σ n k]
+    rw [SGShift' μ n k]
   apply GaussConvergenceNatPos h
 
 theorem SG_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :

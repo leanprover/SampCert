@@ -22,10 +22,7 @@ theorem ENNReal_toTeal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
   unfold ENNReal.toReal
   unfold ENNReal.toNNReal
   simp
-  intro H
-  cases H
-  . contradiction
-  . contradiction
+  constructor ; any_goals trivial
 
 theorem simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
   apply @lt_trans _ _ _ 1 _ _ h
@@ -86,7 +83,8 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
     rw [A]
   rw [ENNReal.tsum_eq_add_tsum_ite b]
   simp
-  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 l x * ∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0 else 0) = 0 := by
+  have B : ∀ x : ℤ, (@ite ℝ≥0∞ (x = b) (x.instDecidableEq b) 0
+    (@ite ℝ≥0∞ (b = x) (b.instDecidableEq x) (nq1 l x * ∑' (a_1 : ℤ), @ite ℝ≥0∞ (c = a_1) (c.instDecidableEq a_1) (nq2 l a_1) 0) 0)) = 0 := by
     intro x
     split
     . simp
@@ -105,7 +103,7 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
   congr 1
   rw [ENNReal.tsum_eq_add_tsum_ite c]
   simp
-  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 l x else 0) = 0 := by
+  have C :∀ x : ℤ,  (@ite ℝ≥0∞ (x = c) (propDecidable (x = c)) 0 (@ite ℝ≥0∞ (c = x) (c.instDecidableEq x) (nq2 l x) 0)) = 0 := by
     intro x
     split
     . simp
@@ -196,13 +194,6 @@ theorem DPCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V
   replace nn2 := nn2 l b
   simp [Compose]
   exists a
-  simp
-  intro H
-  cases H
-  . rename_i H
-    contradiction
-  . rename_i H
-    contradiction
 
 theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
   NonTopNQ (Compose nq1 nq2) := by

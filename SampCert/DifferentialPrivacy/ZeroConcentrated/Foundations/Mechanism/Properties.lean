@@ -49,7 +49,7 @@ theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_
   . have A : (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) ≤ (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) := le_refl (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹)
     have B : 0 ≤ (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) := by
       simp
-      apply @le_trans ℝ _ 0 1 α (instStrictOrderedCommRingReal.proof_3) (le_of_lt h1)
+      apply @le_trans ℝ _ 0 1 α (zero_le_one' ℝ) (le_of_lt h1)
     apply mul_le_mul A _ _ B
     . apply sq_le_sq.mpr
       simp only [abs_cast]
@@ -84,7 +84,7 @@ theorem NoisedQuery_NonTopNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   rw [ENNReal.tsum_eq_add_tsum_ite (n - query l)]
   simp
   have X : ∀ x : ℤ, (@ite ℝ≥0∞ (x = n - query l) (propDecidable (x = n - query l)) 0
-    (@ite ℝ≥0∞ (n = x + query l) (instDecidableEqInt n (x + query l))
+    (@ite ℝ≥0∞ (n = x + query l) (n.instDecidableEq (x + query l))
   (ENNReal.ofReal (discrete_gaussian (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) 0 ↑x)) 0)) = 0 := by
     intro x
     split
@@ -116,7 +116,7 @@ theorem NoisedQuery_NonTopSum (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   simp [NonTopSum, NoisedQuery, DiscreteGaussianGenSample]
   intro l
   have X : ∀ n: ℤ, ∀ x : ℤ, (@ite ℝ≥0∞ (x = n - query l) (propDecidable (x = n - query l)) 0
-    (@ite ℝ≥0∞ (n = x + query l) (instDecidableEqInt n (x + query l))
+    (@ite ℝ≥0∞ (n = x + query l) (n.instDecidableEq (x + query l))
     (ENNReal.ofReal (discrete_gaussian (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) 0 ↑x)) 0)) = 0 := by
     intro n x
     split
@@ -158,7 +158,7 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
   simp [NonTopRDNQ, NoisedQuery, DiscreteGaussianGenSample]
   intro α _ l₁ l₂ _
   have A : ∀ x_1 x : ℤ, (@ite ℝ≥0∞ (x_1 = x - query l₁) (propDecidable (x_1 = x - query l₁)) 0
-  (@ite ℝ≥0∞ (x = x_1 + query l₁) (instDecidableEqInt x (x_1 + query l₁))
+  (@ite ℝ≥0∞ (x = x_1 + query l₁) (x.instDecidableEq (x_1 + query l₁))
   (ENNReal.ofReal (discrete_gaussian (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) 0 ↑x_1)) 0 )) = 0 := by
     intro x y
     split
@@ -169,7 +169,7 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
         simp at h1
       . simp
   have B : ∀ x_1 x : ℤ, (@ite ℝ≥0∞ (x_1 = x - query l₂) (propDecidable (x_1 = x - query l₂)) 0
-    (@ite ℝ≥0∞ (x = x_1 + query l₂) (instDecidableEqInt x (x_1 + query l₂))
+    (@ite ℝ≥0∞ (x = x_1 + query l₂) (x.instDecidableEq (x_1 + query l₂))
   (ENNReal.ofReal (discrete_gaussian (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) 0 ↑x_1)) 0)) = 0 := by
     intro x y
     split

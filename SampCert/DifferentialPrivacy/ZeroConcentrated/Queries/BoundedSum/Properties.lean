@@ -19,7 +19,7 @@ namespace SLang
 theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) U := by
   simp [sensitivity, BoundedSumQuery]
   intros l₁ l₂ H
-  have A : ∀ n : ℕ, (@min ℤ instMinInt (n : ℤ) (U : ℤ) = n) ∨ (@min ℤ instMinInt n U = U) := by
+  have A : ∀ n : ℕ, (min (n : ℤ) (U : ℤ) = n) ∨ (min (n : ℤ) U = U) := by
     intro n
     simp
     exact Nat.le_total n ↑U
