@@ -3,13 +3,18 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.SLang
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Data.Nat.Log
 import SampCert.Util.Util
 import SampCert.Foundations.Monad
 import SampCert.Foundations.Auto
+
+/-! # UniformP2
+
+
+-/
+
 
 open Classical Nat PMF
 
