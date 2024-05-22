@@ -560,7 +560,7 @@ theorem BernoulliExpNegSampleUnitAux_apply' (num : ℕ) (den : ℕ+) (n : ℕ) (
   . contradiction
   . rename_i n
     let m : ℕ+ := ⟨ succ n , by exact Fin.pos { val := n, isLt := le.refl } ⟩
-    have A : succ n = m := rfl
+    have A : n + 1 = m := rfl
     rw [A]
     rw [BernoulliExpNegSampleUnitAux_apply num den m wf]
     split
@@ -731,7 +731,7 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
       rw [B] at A
       clear B
       rw [← A]
-      simp only [cast_mul, ENNReal.nat_cast_sub, cast_one]
+      simp only [cast_mul, ENNReal.natCast_sub, cast_one]
     . simp only [ne_eq, cast_eq_zero, ENNReal.sub_eq_top_iff, ENNReal.natCast_ne_top,
       ENNReal.one_ne_top, not_false_eq_true, and_true, or_true]
     . simp only [ne_eq, ENNReal.natCast_ne_top, not_false_eq_true, true_or]
@@ -756,10 +756,10 @@ theorem mass_simpl (n : ℕ) (γ : ENNReal) (h : n ≥ 2) :
         have OR : n = 1 ∨ n ≥ 2 := by
           clear IH γ X
           cases n
-          . simp only [zero_eq, reduceSucc, ge_iff_le, reduceLE] at h
+          . simp at h
           . rename_i n
             cases n
-            . simp only [zero_eq, reduceSucc, ge_iff_le, reduceLE, or_false]
+            . simp
             . rename_i n
               right
               exact AtLeastTwo.prop
@@ -989,6 +989,7 @@ theorem series_step_3 (γ : ENNReal) :
     right
     intro n
     rw [mass_simpl (2 * (n + 1)) γ (A n)]
+  rfl
 
 noncomputable def mass'' (n : ℕ) (γ : ℝ) := (γ^n * (((n)!) : ℝ)⁻¹)
 

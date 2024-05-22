@@ -224,7 +224,7 @@ theorem discrete_gaussian_nonneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) 
   0 ≤ discrete_gaussian σ μ n := by
   apply le_of_lt (discrete_gaussian_pos h μ n)
 
-theorem discrete_gaussian_summable {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
+theorem discrete_gaussian_summable {σ : ℝ} (h : σ ≠ 0) :
   Summable fun (n : ℤ) => discrete_gaussian σ 0 n := by
   unfold discrete_gaussian
   apply Summable.div_const
