@@ -16,8 +16,7 @@ on ``Bool`` which samples ``true`` with probability ``exp (-num / den)``.
 
 This implementation uses an method for sampling from the BNE widely known as ``Von Neumann's algorithm``.
 
-MARKUSDE: Is this really true? This implementation is different from the one I've seen, which explicitly
-samples sequences of decreasing reals. "Discrete Von Neumann" maybe?
+MARKUSDE: Cite?
 -/
 
 -- MARKUSDE: FIXME: mane of samplers violate the naming scheme

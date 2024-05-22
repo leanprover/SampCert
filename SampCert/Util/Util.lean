@@ -11,9 +11,8 @@ import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 ## Main Results
 
-- Lemmas converting between conditional summands and series over subsets
+- Lemmas converting between guarded summands and series over subsets
 - Lemmas pertaining to leading zeroes in nonnegative series
-
 -/
 
 open Function Nat Set BigOperators Finset
@@ -27,7 +26,9 @@ theorem in_subset_satisfies (P : ℕ → Prop) (x : { x // P x }) : P x := by
 
 -- MARKUSDE: Refactored to pass linter. Check with JBT: What considerations should
 -- I make when refactoring? Does anything about extraction change etc?
-/-- Simplify a sum over a step function -/
+/--
+Simplify a sum over a step function
+-/
 @[simp]
 theorem sum_simple (bound : ℕ) (k : ENNReal) :
  (∑' (a : ℕ), if a < bound then k else 0) = k * bound := by
@@ -48,6 +49,9 @@ theorem sum_simple (bound : ℕ) (k : ENNReal) :
 
 
 -- MARKUSDE: add @[simp]? I'd guess that's how it would be used.
+/--
+Simplify guarded series when series indices satisfy the guard
+-/
 theorem tsum_simpl_ite_left (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (x : { i : T | cond i}), if cond x then f x else g x)
     = (∑' (x : { i : T | cond i}), f x) := by
@@ -62,6 +66,9 @@ theorem tsum_simpl_ite_left (cond : T → Bool) (f g : T → ENNReal) :
     have A : cond b = true := by exact P
     simp [A] at h
 
+/--
+Simplify guarded series when series indices never satisfy the guard
+-/
 theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (x : { i : T | ¬ cond i}), if cond x then f x else g x)
     = ((∑' (x : { i : T | ¬ cond i}), g x)) := by
@@ -77,6 +84,10 @@ theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
   . simp
 
 -- MARKUSDE: Is absolute convergence under the hood somewhere here or is there some other trick?
+-- MARKUSDE: cond x = (x % 2 = 0), f _ = 1, g _ = -1
+/--
+Partition series indices based on conditional guard
+-/
 theorem tsum_split_ite (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i then f i else g i)
     = (∑' (i : { i : T | cond i}), f i) + (∑' (i : { i : T | ¬ cond i}), g i) := by
@@ -88,6 +99,9 @@ theorem tsum_split_ite (cond : T → Bool) (f g : T → ENNReal) :
   rw [← C]
   rw [tsum_simpl_ite_right]
 
+/--
+Simplify guarded series based on index type
+-/
 theorem tsum_simpl_ite_left' (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (x : { i : T | cond i}), if cond x = false then f x else g x)
     = (∑' (x : { i : T | cond i}), g x) := by
@@ -102,6 +116,9 @@ theorem tsum_simpl_ite_left' (cond : T → Bool) (f g : T → ENNReal) :
     simp [A] at h
   . simp
 
+/--
+Simplify guarded series based on index type
+-/
 theorem tsum_simpl_ite_right' (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (x : { i : T | cond i = false}), if cond x = false then f x else g x)
     = ((∑' (x : { i : T | cond i = false}), f x)) := by
@@ -116,6 +133,9 @@ theorem tsum_simpl_ite_right' (cond : T → Bool) (f g : T → ENNReal) :
     have A : cond b = false := by exact P
     simp [A] at h
 
+/--
+Partition series indices based on negation of conditional guard
+-/
 theorem tsum_split_ite' (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' (i : { i : T | cond i = false}), f i) + (∑' (i : { i : T | cond i = true}), g i) := by
@@ -129,19 +149,27 @@ theorem tsum_split_ite' (cond : T → Bool) (f g : T → ENNReal) :
   rw [tsum_simpl_ite_left']
   rw [tsum_simpl_ite_right']
 
+/--
+Add vacuous guard to series based on index type
+-/
 theorem tsum_split_coe_right (cond : T → Bool) (f : T → ENNReal) :
   (∑' (i : { i : T | cond i = true}), f i)
     = (∑' (i : T), if cond i = true then f i else 0) := by
   rw [tsum_split_ite]
   simp
 
+/--
+Add vacuous guard to series based on index type
+-/
 theorem tsum_split_coe_left (cond : T → Bool) (f : T → ENNReal) :
   (∑' (i : { i : T | cond i = false}), f i)
     = (∑' (i : T), if cond i = false then f i else 0) := by
   rw [tsum_split_ite']
   simp
 
-/-- Series over a nonnegative conditional term is bounded about by series of the unconditioned term -/
+/--
+Bound a (nonnegative) guarded series above by an unguarded one
+-/
 theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
   (∑' i : ℕ, if cond i then f i else 0) ≤ ∑' i : ℕ, f i := by
   have A := @tsum_add_tsum_compl ENNReal ℕ _ _ f _ _ { i : ℕ | cond i} ENNReal.summable ENNReal.summable
@@ -149,7 +177,9 @@ theorem tsum_split_less (cond : ℕ → Bool) (f : ℕ → ENNReal) :
   rw [tsum_split_coe_right]
   simp
 
-/-- Remove leading zero from series -/
+/--
+Remove leading zero from series
+-/
 theorem tsum_shift_1 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else f (n-1)) =
     ∑' n : ℕ, f n := by
@@ -174,7 +204,9 @@ theorem tsum_shift_1 (f : ℕ → ENNReal) :
     rw [← IH]
 
 -- MARKUSDE: Simplify me (in terms of tsum_shift_1)
-/-- Remove leading zero from series -/
+/--
+Remove leading zero from series
+-/
 theorem tsum_shift'_1 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else f n) =
     ∑' n : ℕ, f (n + 1) := by
@@ -198,7 +230,9 @@ theorem tsum_shift'_1 (f : ℕ → ENNReal) :
       rw [sum_range_succ]
     rw [← IH]
 
-/-- Remove two leading zeroes from series -/
+/--
+Remove two leading zeroes from series
+-/
 theorem tsum_shift'_2 (f : ℕ → ENNReal) :
   (∑' n : ℕ, if n = 0 then 0 else if n = 1 then 0 else f n) =
     ∑' n : ℕ, f (n + 2) := by

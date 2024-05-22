@@ -9,7 +9,7 @@ import SampCert.Util.Util
 /-!
 # Until
 
-Evaluation lemmas for the ``until`` term of ``SLang``
+Evaluation lemmas for the ``until`` term of ``SLang``.
 
 -/
 
@@ -25,7 +25,9 @@ variable {T : Type}
 -- Might make some of the proofs simpler and help put them in SNF. Any extraction reason not to?
 
 -- MARKUSDE: Maybe needs better name, since it's not about until
-/-- Truncation of ``until`` program to zero unrollings is identically zero -/
+/--
+Truncation of ``until`` program to zero unrollings is identically zero
+-/
 @[simp]
 theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
@@ -35,8 +37,10 @@ theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
 -- MARKUSDE: These lemmas anger the simplifier, since it might first simplify ``decide (... = false)``.
 -- Is this a problem?
 
-/-- Truncation of ``until`` program to any number of unrollings evaluates to zero for
- values which do not satisfy ``cond``. -/
+/--
+Truncation of ``until`` program to any number of unrollings will evaluate to zero for
+ values which do not satisfy ``cond``.
+ -/
 @[simp]
 theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
@@ -57,7 +61,9 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
         simp [h'] at h
       . simp
 
-/-- ``until`` evaluates to zero for values which do not satisfy ``cond`` -/
+/--
+``until`` evaluates to zero at all values which do not satisfy ``cond``
+-/
 @[simp]
 theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x = 0 := by
@@ -104,8 +110,10 @@ theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
     rw [if_simpl]
   simp
 
--- MARKUSDE: move to util?
-/-- Split a conditional series by the condition -/
+-- MARKUSDE: move to util with the other series lemmas?
+/--
+Split a conditional series by the condition
+-/
 lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' i : T, if cond i = false then f i else 0) + (∑' i : T, if cond i = true then g i else 0) := by
@@ -126,6 +134,9 @@ lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       contradiction
 
 -- MARKUSDE: TODO rename or implement repeat
+/--
+Closed form for truncated version of ``until``
+-/
 theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
@@ -198,7 +209,10 @@ theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x 
 
 -- MARKUSDE: TODO/rename
 -- MARKUSDE: This is simple, where is it used?
-theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
+/--
+Expression for the limit of the closed form of truncated ``until``
+-/
+lemma convergence (body : SLang T) (cond : T → Bool) (x : T) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   rw [← ENNReal.tsum_eq_iSup_nat]
@@ -206,17 +220,19 @@ theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
   rw [ENNReal.tsum_geometric]
 
 -- MARKUSDE: TODO/rename (or define repeat)
-/-- Truncated ``until`` term is monotone in the maximum number of steps -/
+/--
+Truncated ``until`` term is monotone (as in pointwise, with results in ℝ≥0∞) in the maximum number of steps.
+-/
 theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
   ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
   have A := @probWhileCut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
--- MARKUSDE: err-- what if this sum is 1? What if it's greater than 1? Is ``until`` only meaninfgul when
---   body is normalized?
--- MARKUSDE: reduce proof
-/-- ``until`` term evaluates to ``body``, scaled by ??  -/
+-- MARKUSDE: err-- what if this sum is 1? What if it's greater than 1? Is ``until`` only meaninfgul when body is normalized?
+/--
+``until`` term evaluates to ``body``, normalizing by the total mass of elements which satisfy ``cond``.
+-/
 @[simp]
 theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x
@@ -249,7 +265,12 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
     intro j
     rw [← ENNReal.tsum_eq_iSup_sum]
 
--- MARKUSDE: ??
+/--
+Closed form for evaluation of ``until``. ``until`` is:
+  - zero outside support of ``cond``
+  - ``body`` inside the support of ``cond``
+rescaled by the total mass outside the support of ``cond``.
+-/
 @[simp]
 theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
   probUntil (body : SLang T) (cond : T → Bool) x =
@@ -260,8 +281,12 @@ theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
   . rename_i h
     simp [h, prob_until_apply_unsat]
 
--- MARKUSDE: Is this not the same conclusion as the last lemma?
--- MARKUSDE: How is norm used?
+/--
+When ``body`` is a proper PMF, ``until`` is
+  - zero outside the support of ``cond``
+  - ``body`` inside the support of ``cond``
+normalized into a PMF.
+-/
 @[simp]
 theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
   probUntil (body : SLang T) (cond : T → Bool) x =
@@ -290,4 +315,3 @@ theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm
   rw [ENNReal.add_sub_cancel_right F]
 
 end SLang
--- #lint docBlame

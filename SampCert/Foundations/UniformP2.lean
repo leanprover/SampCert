@@ -95,7 +95,7 @@ Evaluates the ``uniformPowerOfTwoSample`` distribution at a point inside of its 
 theorem uniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
   (uniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
   simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
-    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
     uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply, one_div]
   rw [ENNReal.tsum_mul_left]
   rw [sum_indicator_finrange (2 ^ (log 2 n)) x]
@@ -109,7 +109,7 @@ Evaluates the ``uniformPowerOfTwoSample`` distribution at a point outside of its
 theorem uniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
   uniformPowerOfTwoSample n x = 0 := by
   simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
-    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
     uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply,
     ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.inv_eq_zero, ENNReal.pow_eq_top_iff,
     ENNReal.two_ne_top, ne_eq, log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, false_or]
@@ -149,7 +149,7 @@ theorem uniformPowerOfTwoSample_normalizes (n : PNat) :
   . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, uniformPowerOfTwoSample_apply',
     tsum_zero, add_zero]
     simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
-      CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSubPMF_apply, PMF.bind_apply,
+      CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
       uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply]
     rw [Finset.sum_range]
     conv =>

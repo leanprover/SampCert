@@ -3,9 +3,14 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Geometric.Code
+
+/-!
+# Properties of ``geometricSample``
+
+MARKUSDE: which ones?
+-/
 
 noncomputable section
 
@@ -19,11 +24,16 @@ variable (trial : SLang Bool)
 variable (trial_spec : trial false + trial true = 1)
 variable (trial_spec' : trial true < 1)
 
-theorem ite_test (a b : ℕ) (x y : ENNReal) :
+
+-- MARKUSDE: Instance coercions? Why?
+lemma ite_test (a b : ℕ) (x y : ENNReal) :
   @ite ENNReal (a = b) (propDecidable (a = b)) x y
    = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
   split ; any_goals { trivial }
 
+/--
+Trial distributions are determined by one element
+-/
 theorem trial_one_minus :
   trial false = 1 - trial true := by
   by_contra h
@@ -34,7 +44,8 @@ theorem trial_one_minus :
     rw [h'] at trial_spec
     simp at trial_spec
 
-theorem trial_le_1 (i : ℕ) :
+-- MARKUSDE: surely this is completely removable?
+lemma trial_le_1 (i : ℕ) :
   trial true ^ i ≤ 1 := by
   induction i
   . simp
@@ -53,6 +64,7 @@ theorem trial_le_1 (i : ℕ) :
       simp at B
     exact Left.mul_le_one IH A
 
+-- MARKUSDE TODO/what is ⊤
 theorem trial_sum_ne_top :
   (∑' (n : ℕ), trial true ^ n) ≠ ⊤ := by
   rw [ENNReal.tsum_geometric]
@@ -387,3 +399,5 @@ theorem geometric_normalizes' :
 end Geometric
 
 end SLang
+
+-- #lint docBlame

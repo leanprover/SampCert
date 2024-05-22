@@ -11,7 +11,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Constructions
 /-!
 # While
 
-This file proves properties about the ``while`` term of ``SLang``
+This file proves properties about the ``while`` term of ``SLang``.
 
 -/
 
@@ -23,7 +23,9 @@ variable {T} [Preorder T]
 
 -- MARKUSDE: Is it true that ≤ ordering between SLang terms here is pointwise? How would I check?
 -- In Rocq, I would Unset Printing Notations-- what about Lean?
-/-- The ``while`` program is monotonic (as a pointwise function) in terms of the number of unrollings. -/
+/--
+The ``while`` program is monotonic (as a pointwise function) in terms of the number of unrollings.
+-/
 theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) :
   Monotone (fun n : Nat => probWhileCut cond body n init x) := by
   apply monotone_nat_of_le_succ
@@ -46,7 +48,9 @@ theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init 
       exact IH a
     . simp
 
-/-- The ``probWhile`` term evaluates to the pointwise limit of the ``probWhileCut`` term -/
+/--
+The ``probWhile`` term evaluates to the pointwise limit of the ``probWhileCut`` term
+-/
 @[simp]
 theorem probWhile_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) (v : ENNReal) :
   Filter.Tendsto (fun i => probWhileCut cond body i init x) Filter.atTop (nhds v) →

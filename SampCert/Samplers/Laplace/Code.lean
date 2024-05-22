@@ -14,7 +14,7 @@ This file implements a sampler for the discrete laplace distribution in ``SLang`
 
 ## Implementation notes
 
-MARKUSDE: what is the discrete laplace?
+MARKUSDE: cite?
 
 -/
 
