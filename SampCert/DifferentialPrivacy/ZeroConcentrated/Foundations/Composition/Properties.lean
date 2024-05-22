@@ -83,8 +83,7 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
     rw [A]
   rw [ENNReal.tsum_eq_add_tsum_ite b]
   simp
-  have B : ∀ x : ℤ, (@ite ℝ≥0∞ (x = b) (x.instDecidableEq b) 0
-    (@ite ℝ≥0∞ (b = x) (b.instDecidableEq x) (nq1 l x * ∑' (a_1 : ℤ), @ite ℝ≥0∞ (c = a_1) (c.instDecidableEq a_1) (nq2 l a_1) 0) 0)) = 0 := by
+  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 l x * ∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0 else 0) = 0 := by
     intro x
     split
     . simp
@@ -103,7 +102,7 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
   congr 1
   rw [ENNReal.tsum_eq_add_tsum_ite c]
   simp
-  have C :∀ x : ℤ,  (@ite ℝ≥0∞ (x = c) (propDecidable (x = c)) 0 (@ite ℝ≥0∞ (c = x) (c.instDecidableEq x) (nq2 l x) 0)) = 0 := by
+  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 l x else 0) = 0 := by
     intro x
     split
     . simp
