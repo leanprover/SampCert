@@ -17,7 +17,7 @@ namespace SLang
 
 theorem if_simple_GaussianGen (x_1 x μ : ℤ) :
   (@ite ENNReal (x_1 = x - μ) (propDecidable (x_1 = x - μ)) 0
-  (@ite ENNReal (x = x_1 + μ) (Int.instDecidableEqInt x (x_1 + μ))
+  (@ite ENNReal (x = x_1 + μ) (x.instDecidableEq (x_1 + μ))
   (ENNReal.ofReal (gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x_1 / ∑' (x : ℤ), gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x)) 0)) = 0 := by
   split
   . simp

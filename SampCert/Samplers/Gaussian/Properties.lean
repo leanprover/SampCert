@@ -83,9 +83,9 @@ theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
 @[simp]
 theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0
-  (@ite ENNReal (n = x) (Int.instDecidableEqInt n x)
-  (ENNReal.ofReal ((rexp (↑↑t)⁻¹ - 1) / (rexp (↑↑t)⁻¹ + 1) * rexp (-(|↑x| / ↑↑t))) *
-    ENNReal.ofReal (rexp (-(↑(Int.natAbs (Int.sub (|x| * ↑↑t * ↑↑den) ↑↑num)) ^ 2 / ((2 : ℕ+) * ↑↑num * ↑↑t ^ 2 * ↑↑den)))))
+  (@ite ENNReal (n = x) (n.instDecidableEq x)
+  (ENNReal.ofReal (((t : ℝ)⁻¹.exp - 1) / ((t : ℝ)⁻¹.exp + 1) * (-(@abs ℝ DistribLattice.toLattice AddGroupWithOne.toAddGroup ↑x / (t : ℝ))).exp) *
+    ENNReal.ofReal (-(((|x| * t * den).sub num).natAbs ^ 2 / ((2 : ℕ+) * num * (t : ℝ) ^ 2 * den))).exp)
   0)) = 0 := by
   split
   . simp
@@ -101,7 +101,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
     = ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1)) * ENNReal.ofReal (rexp (-(Int.natAbs n / t)) *
     rexp (-((Int.natAbs (Int.sub (|n| * t * den) ↑↑num)) ^ 2 / ((2 : ℕ+) * num * ↑↑t ^ 2 * den)))) := by
   simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
-    DiscreteLaplaceSample_apply, NNReal.coe_nat_cast, PNat.one_coe, cast_one, NNReal.coe_one,
+    DiscreteLaplaceSample_apply, NNReal.coe_natCast, PNat.one_coe, cast_one, NNReal.coe_one,
     div_one, one_div, Int.cast_abs, SLang.pure_apply, Prod.mk.injEq, mul_ite,
     mul_one, mul_zero, tsum_bool, and_false, ↓reduceIte, and_true, BernoulliExpNegSample_apply_true,
     cast_pow, NNReal.coe_pow, PNat.mul_coe, PNat.pow_coe, cast_mul, NNReal.coe_mul, zero_add]
@@ -254,7 +254,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
     PNat.mk_coe, cast_add, cast_one, Int.ofNat_ediv, PNat.pow_coe, cast_pow, zero_add, ite_mul,
-    zero_mul, SLang.pure_apply, NNReal.coe_nat_cast, div_pow]
+    zero_mul, SLang.pure_apply, NNReal.coe_natCast, div_pow]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>
     left
@@ -372,6 +372,6 @@ theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
     apply discrete_gaussian_normalizes A
   . intro n
     apply discrete_gaussian_nonneg A 0 n
-  . apply discrete_gaussian_summable A 0
+  . apply discrete_gaussian_summable A
 
 end SLang
