@@ -15,5 +15,5 @@ lean_lib «FastExtract» where
 lean_lib «VMC» where
 
 -- From doc-gen4 
-meta if get_config? env = some "dev" then 
+meta if get_config? env = some "doc" then 
 require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "main"
