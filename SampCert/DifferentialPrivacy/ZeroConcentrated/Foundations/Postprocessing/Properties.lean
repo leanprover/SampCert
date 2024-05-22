@@ -684,7 +684,7 @@ theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq 
         rw [lt_top_iff_ne_top] at Z
         contradiction
 
-theorem DPPostPRocess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
+theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
   NonZeroNQ (PostProcess nq f) := by
   simp [NonZeroNQ, Function.Surjective, PostProcess] at *
   intros l n
@@ -696,7 +696,7 @@ theorem DPPostPRocess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : No
   . rw [h]
   . apply nn
 
-theorem DPPostPRocess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) (sur : Function.Surjective f) :
+theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
   NonTopSum (PostProcess nq f) := by
   simp [NonTopSum, PostProcess] at *
   intros l
@@ -708,17 +708,27 @@ theorem DPPostPRocess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : No
     right
     intro n
     rw [condition_to_subset]
-  unfold Set.preimage at nt
-  sorry -- looks good
+  have A : ∀ x : V, f ⁻¹' {x} = {y | x = f y} := by
+    aesop
+  conv =>
+    right
+    left
+    right
+    intro x
+    rw [← A]
+  trivial
 
-theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} (f : U → V) (nt : NonTopRDNQ nq) (ns : NonTopSum nq) (sur : Function.Surjective f) :
+theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :DP nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
   NonTopRDNQ (PostProcess nq f) := by
   simp [NonTopRDNQ, NonTopSum, PostProcess] at *
   intros α h1 l₁ l₂ h2
+  have ntrdnq := nt
   replace nt := nt α h1 l₁ l₂ h2
-  have ns1 := ns l₁
-  have ns2 := ns l₂
-  sorry -- probably good but tedious work
+  have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
+  apply @LT.lt.ne_top _ _ _ _ ⊤
+  rw [Eq.comm] at nt
+  have B := Ne.lt_top' nt
+  exact lt_of_le_of_lt A B
 
 theorem zCDPPostProcess (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (f : U → V) (sur : Function.Surjective f) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
@@ -726,9 +736,12 @@ theorem zCDPPostProcess (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (f : U �
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   repeat any_goals constructor
   . apply DPPostProcess h1 h2 h5 h4 h3
-  . apply DPPostPRocess_NonZeroNQ h2 sur
-  . sorry
-  . sorry
-  . sorry
+  . apply DPPostProcess_NonZeroNQ h2 sur
+  . apply DPPostProcess_NonTopSum f h3
+  . simp [NonTopNQ]
+    intro l
+    apply ENNReal.ne_top_of_tsum_ne_top
+    apply DPPostProcess_NonTopSum f h3
+  . apply DPPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
 
 end SLang
