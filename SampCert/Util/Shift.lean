@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 
-/-! Shift Lemma
+/-! Shift Lemmas
 
 This file contains lemmas about invariance of sums under integer shifts.
 -/
