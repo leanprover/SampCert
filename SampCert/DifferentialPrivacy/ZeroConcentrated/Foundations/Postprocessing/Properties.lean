@@ -147,6 +147,7 @@ theorem δpmf_conv (nq : SLang U) (a : ℤ) (x : {n | a = f n}) (h1 : ∑' (i : 
     right
     left
     left
+  rfl
 
 theorem δpmf_conv' (nq : SLang U) (f : U → ℤ) (a : ℤ) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   (fun x : {n | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹) = (δpmf nq f a h1 h2) := by

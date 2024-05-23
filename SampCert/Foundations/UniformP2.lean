@@ -106,24 +106,20 @@ theorem uniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n
 Evaluates the ``uniformPowerOfTwoSample`` distribution at a point outside of its support
 -/
 @[simp]
-theorem uniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
-  uniformPowerOfTwoSample n x = 0 := by
-  simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
-    CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
-    uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply,
-    ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.inv_eq_zero, ENNReal.pow_eq_top_iff,
-    ENNReal.two_ne_top, ne_eq, log_eq_zero_iff, reduceLE, or_false, not_lt, false_and, false_or]
+theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
+  UniformPowerOfTwoSample n x = 0 := by
+  simp [UniformPowerOfTwoSample]
   intro i
   cases i
   rename_i i P
   simp only
-  split
-  . rename_i h'
-    subst h'
-    have A : x < 2 ^ log 2 ↑n ↔ ¬ x ≥ 2 ^ log 2 ↑n := by exact lt_iff_not_le
-    rw [A] at P
-    contradiction
-  . simp
+  have A : i < 2 ^ log 2 ↑n ↔ ¬ i ≥ 2 ^ log 2 ↑n := by exact lt_iff_not_le
+  rw [A] at P
+  simp at P
+  by_contra CONTRA
+  subst CONTRA
+  replace A := A.1 P
+  contradiction
 
 lemma if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
   (@ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ENNReal ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1)) (propDecidable ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1))) 1 0)) = 0 := by
@@ -172,5 +168,3 @@ theorem uniformPowerOfTwoSample_normalizes (n : PNat) :
   . exact ENNReal.summable
 
 end SLang
-
-#lint docBlame
