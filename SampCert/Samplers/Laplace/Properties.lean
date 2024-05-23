@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -11,6 +10,12 @@ import SampCert.Samplers.BernoulliNegativeExponential.Basic
 import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
+
+/-!
+# Properties of the Laplace Sampler
+
+This file proves that the ``SLang`` Laplace sampler is correct, and is a proper distribution.
+-/
 
 noncomputable section
 
@@ -85,6 +90,7 @@ theorem DiscreteLaplaceSampleLoopIn1Aux_normalizes (t : PNat) :
   clear A
   simp
 
+
 theorem DiscreteLaplaceSampleLoopIn1Aux_apply_true (t : PNat) (n : ℕ) :
   DiscreteLaplaceSampleLoopIn1Aux t (n, true)
     = if n < t then ENNReal.ofReal (rexp (- (n / t))) / t else 0 := by
@@ -156,6 +162,7 @@ theorem DiscreteLaplaceSampleLoopIn1Aux_apply_false (t : PNat) (n : ℕ) :
   rw [mul_comm]
   rw [← division_def]
 
+-- MARKUSDE: ???
 theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
   (DiscreteLaplaceSampleLoopIn1 t) n =
     DiscreteLaplaceSampleLoopIn1Aux t (n, true) * (∑' (a : ℕ), DiscreteLaplaceSampleLoopIn1Aux t (a, true))⁻¹ := by
@@ -601,6 +608,9 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
   rw [← exp_add]
   simp
 
+/--
+Closed form for the evaluation of the ``SLang`` Laplace sampler
+-/
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
   (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
@@ -846,6 +856,9 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
     . left
       simp only [ne_eq, ENNReal.inv_eq_top, cast_eq_zero, PNat.ne_zero, not_false_eq_true]
 
+/--
+``SLang`` Laplace sampler is a proper distribution
+-/
 @[simp]
 theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
   ∑' x : ℤ, (DiscreteLaplaceSample num den) x = 1 := by
