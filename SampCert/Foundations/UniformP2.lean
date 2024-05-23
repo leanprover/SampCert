@@ -107,8 +107,8 @@ Evaluates the ``uniformPowerOfTwoSample`` distribution at a point outside of its
 -/
 @[simp]
 theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
-  UniformPowerOfTwoSample n x = 0 := by
-  simp [UniformPowerOfTwoSample]
+  uniformPowerOfTwoSample n x = 0 := by
+  simp [uniformPowerOfTwoSample]
   intro i
   cases i
   rename_i i P
@@ -142,7 +142,7 @@ The ``SLang`` term ``uniformPowerOfTwo`` is a proper distribution on ``ℕ``.
 theorem uniformPowerOfTwoSample_normalizes (n : PNat) :
   ∑' i : ℕ, uniformPowerOfTwoSample n i = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
-  . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, uniformPowerOfTwoSample_apply',
+  . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, UniformPowerOfTwoSample_apply',
     tsum_zero, add_zero]
     simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
       CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
