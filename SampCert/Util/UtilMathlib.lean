@@ -1,7 +1,12 @@
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.OneVariable
-
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
+/-!
+# Mathlib Util
+
+This file contains a lemma which was in Mathlib at one point, but was removed.
+-/
+
 
 open Complex Real Asymptotics Filter Topology
 
