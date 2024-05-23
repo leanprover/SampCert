@@ -8,9 +8,9 @@ import SampCert.Samplers.Uniform.Code
 import SampCert.Samplers.BernoulliNegativeExponential.Code
 
 /-!
-# Laplace Sampler
+# Discrete Laplace Sampler
 
-This file implements a sampler for the discrete laplace distribution in ``SLang``
+This file implements a sampler for the discrete laplace distribution.
 
 ## Implementation notes
 
@@ -27,6 +27,9 @@ def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : SLang (Nat × Bool) := do
   let D ← BernoulliExpNegSample U t
   return (U,D)
 
+/--
+Sample a natural number ``n`` with probability ``(1-e^(1/t)) * e^(-n/t)``.
+-/
 def DiscreteLaplaceSampleLoopIn1 (t : PNat) : SLang Nat := do
   let r1 ← probUntil (DiscreteLaplaceSampleLoopIn1Aux t) (λ x : Nat × Bool => x.2)
   return r1.1
@@ -36,10 +39,14 @@ def DiscreteLaplaceSampleLoopIn2Aux (num : Nat) (den : PNat)  (K : Bool × Nat) 
   let A ← BernoulliExpNegSample num den
   return (A, K.2 + 1)
 
+-- When called with (1, 1) it will sample a natural number ``n`` with probability ``(1-e^-1) * e^-n``.
 def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : SLang Nat := do
   let r2 ← probWhile (λ K : Bool × Nat => K.1) (DiscreteLaplaceSampleLoopIn2Aux num den) (true,0)
   return r2.2
 
+/--
+Sample a natural number ``n`` with probability ``(1-e^(num/den)) * e^(-n * num/den)``, and a flag for determining its sign.
+-/
 -- We need to generate and test both implementations
 def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
   let U ← DiscreteLaplaceSampleLoopIn1 num
@@ -50,12 +57,16 @@ def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : SLang (Bool × Nat) :
   let B ← BernoulliSample 1 2 (Nat.le.step Nat.le.refl)
   return (B,Y)
 
+-- MARKUSDE: Why can we throw away the ``U`` term?
 def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
   let v ← DiscreteLaplaceSampleLoopIn2 den num
   let V := v - 1
   let B ← BernoulliSample 1 2 (Nat.le.step Nat.le.refl)
   return (B,V)
 
+/--
+``SLang`` term to obtain a sample from the discrete Laplace distribution
+-/
 def DiscreteLaplaceSample (num den : PNat) : SLang ℤ := do
   let r ← probUntil (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
   let Z : Int := if r.1 then - r.2 else r.2
