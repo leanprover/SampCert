@@ -5,8 +5,8 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Basic
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.System
+import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 
 open SLang
 
-#check @BoundedSumQueryDP zCDPSystem
+def combine := @BoundedSumQueryDP zCDPSystem

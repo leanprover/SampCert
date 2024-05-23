@@ -6,27 +6,29 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 import SampCert.DifferentialPrivacy.Sensitivity
 
+noncomputable section
+
+namespace SLang
+
+abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
 
--- variable { T U V : Type }
--- variable [MeasurableSpace U]
--- variable [Countable U]
--- variable [DiscreteMeasurableSpace U]
--- variable [Inhabited U]
--- variable [MeasurableSpace V]
--- variable [Countable V]
--- variable [DiscreteMeasurableSpace V]
--- variable [Inhabited V]
+def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
+  let A ← nq1 l
+  let B ← nq2 l
+  return (A,B)
 
--- [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U]
+def PostProcess (nq : List T → SLang U) (pp : U → V) (l : List T) : SLang V := do
+  let A ← nq l
+  return pp A
 
 class DPSystem (T : Type) where
   prop : Mechanism T Z → ℝ → Prop
-  noise : (List T → ℤ) → ℕ+ → ℕ+ → ℕ+ → Mechanism T ℤ
+  noise : Query T ℤ → ℕ+ → ℕ+ → ℕ+ → Mechanism T ℤ
   noise_prop : ∀ q : List T → ℤ, ∀ Δ εn εd : ℕ+, sensitivity q Δ → prop (noise q Δ εn εd) (εn / εd)
-  compose : {U V : Type} → Mechanism T U → Mechanism T V → Mechanism T (U × V)
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
-  postprocess : {U : Type} → Mechanism T U → (U → V) → Mechanism T V
+    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (Compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+, ∀ pp : U → V, Function.Surjective pp →
-    prop m (ε₁ / ε₂) → prop (postprocess m pp) (ε₁ / ε₂)
+   prop m (ε₁ / ε₂) → prop (PostProcess m pp) (ε₁ / ε₂)
+
+end SLang

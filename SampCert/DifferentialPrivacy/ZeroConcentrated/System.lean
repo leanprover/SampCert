@@ -5,9 +5,9 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Basic
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Composition.Basic
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Postprocessing.Basic
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
 
 namespace SLang
 
@@ -16,8 +16,6 @@ variable { T : Type }
 noncomputable instance zCDPSystem : DPSystem T where
   prop := zCDP
   noise := NoisedQuery
-  compose := Compose
-  postprocess := PostProcess
   noise_prop := NoisedQueryzCDP
   compose_prop := zCDPCompose
   postprocess_prop := zCDPPostProcess

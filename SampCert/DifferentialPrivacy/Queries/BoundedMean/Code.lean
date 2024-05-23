@@ -13,7 +13,7 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
-def NoisedBoundedAvgQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℤ := do
+def NoisedBoundedAvgQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ := do
   let S ← NoisedBoundedSumQuery U ε₁ (2 * ε₂) l
   let C ← NoisedCountingQuery ε₁ (2 * ε₂) l
   return S / C

@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Code
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Code
 
 noncomputable section
 
