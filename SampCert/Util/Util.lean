@@ -7,12 +7,9 @@ import SampCert.SLang
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 
 /-!
-# Utility Functions
+# Util
 
-## Main Results
-
-- Lemmas converting between guarded summands and series over subsets
-- Lemmas pertaining to leading zeroes in nonnegative series
+This file contains a variety of utility lemmas.
 -/
 
 open Function Nat Set BigOperators Finset
