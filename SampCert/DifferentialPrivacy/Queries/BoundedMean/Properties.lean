@@ -17,20 +17,10 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
-def NoisedBoundedAvgQuery' (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ :=
-  let X := Compose (NoisedBoundedSumQuery U ε₁ (2 * ε₂)) (NoisedCountingQuery ε₁ (2 * ε₂))
-  PostProcess X (fun z => z.1 / z.2) l
-
-theorem NoisedBoundedAvgQueryIdentical (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  NoisedBoundedAvgQuery' U ε₁ ε₂ = NoisedBoundedAvgQuery U ε₁ ε₂  := by
-  ext l x
-  cases x
-  rename_i n d h1 h2
-  simp [NoisedBoundedAvgQuery, NoisedBoundedAvgQuery', Compose, PostProcess]
-
 theorem BoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedBoundedAvgQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  rw [← NoisedBoundedAvgQueryIdentical]
+  unfold NoisedBoundedAvgQuery
+  simp
   apply dps.postprocess_prop
   . unfold Function.Surjective
     intro b

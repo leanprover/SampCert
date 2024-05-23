@@ -31,6 +31,7 @@ theorem CountingQuery1Sensitive :
     subst h1 h2
     simp
 
+@[simp]
 theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply dps.noise_prop

@@ -71,6 +71,7 @@ theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) 
         rw [h, h']
         simp at *
 
+@[simp]
 theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply dps.noise_prop
