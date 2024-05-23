@@ -3,8 +3,21 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
+
+/-!
+# Discrete Guassian Helpers
+
+This file contains the mathematical definitions for the discrete Gaussian distribution.
+
+It proves that the sum of discrete Gaussian values exists by lifting a theorem related
+to the summability of Jacobi Theta functions.
+
+It also develops the Fourier transform of the gaussian function.
+
+MARKUSDE: any other main results I'm missing? How is the FT used?
+
+-/
 
 noncomputable section
 
@@ -13,9 +26,15 @@ open Continuous
 
 attribute [local instance] Real.fact_zero_lt_one
 
+/--
+ℝ-valued closed form for the Gaussian PMF over ℝ
+-/
 def gauss_term_ℝ (σ μ : ℝ) (x : ℝ) : ℝ :=
   Real.exp ((-(x - μ)^2) / (2 * σ^2))
 
+/--
+ℂ-valued closed form for the Gaussian over ℝ (as a continuous function).
+-/
 instance gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
   toFun := fun x : ℝ => ((gauss_term_ℝ σ μ x) : ℂ)
   continuous_toFun := by
@@ -29,6 +48,9 @@ instance gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
     . apply continuous_ofReal
     . apply continuous_const
 
+/--
+Agreement between the ℂ-valued and ℝ-valued gaussian formulas over ℝ
+-/
 theorem gauss_term_swap (σ μ : ℝ) (n : ℝ) :
   (gauss_term_ℂ σ μ n) = gauss_term_ℝ σ μ n := by
   simp [gauss_term_ℂ, gauss_term_ℝ]
@@ -36,15 +58,31 @@ theorem gauss_term_swap (σ μ : ℝ) (n : ℝ) :
 -- def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
 --  Real.exp (- 2 * (π * σ * x)^2) / ((((π * (σ:ℝ)^2 * (2 : ℝ))⁻¹) ^ (2 : ℝ)⁻¹) : ℝ)
 
+
+/--
+Fourier transform of ``gauss_term``, namely ``sqrt(2πσ^2) * exp(-2(π σ x)^2)``
+-/
 def fourier_gauss_term (σ : ℝ) (x : ℝ) : ℂ :=
   Complex.exp (- 2 * (π * σ * x)^2) / (((π * (σ:ℂ)^2 * (2 : ℂ))⁻¹) ^ (2 : ℂ)⁻¹)
 
+/--
+Discrete gaussian formula
+-/
 def discrete_gaussian (σ μ : ℝ) (x : ℝ) : ℝ :=
   gauss_term_ℝ σ μ x / ∑' x : ℤ, gauss_term_ℝ σ μ x
 
+-- MARKUSDE: Become sure, and then rename.
+/--
+A continuous map from the unit citcle ℝ\ℤ to ℂ.
+
+Obtained by summing the translates of ``gauss_term_ℂ``, i.e., ``fun x => ∑ (z : ℤ), gauss_term_ℂ σ 0 (x + z)``.
+-/
 def NotSureYet (σ : ℝ) : C(UnitAddCircle, ℂ) :=
     ⟨((gauss_term_ℂ σ 0).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
 
+/--
+Equality between the ``gauss_term`` and Jacobi Theta summands on N.
+-/
 theorem gauss_term_jacobi (σ μ : ℝ) :
   (fun n : ℤ => gauss_term_ℂ σ μ n) = fun n : ℤ => (jacobiTheta₂_term n (μ * ((2 : ℂ) * σ^2)⁻¹ * π⁻¹ * Complex.I⁻¹) (Complex.I * ((2 : ℂ) * σ^2)⁻¹ * π⁻¹)) * Complex.exp (-μ ^ 2 / (2 * σ^2)) := by
   ext n
@@ -55,10 +93,15 @@ theorem gauss_term_jacobi (σ μ : ℝ) :
   simp [pi_ne_zero]
   ring_nf
 
-theorem jacobi_tau_positive {σ : ℝ} (h : σ ≠ 0) :
+lemma jacobi_tau_positive {σ : ℝ} (h : σ ≠ 0) :
   0 < (Complex.I * ((2 : ℂ) * σ^2)⁻¹ * π⁻¹).im := by
   simp [pi_pos, h, sq]
 
+/--
+``gauss_term_ℂ`` is summable over ℤ.
+
+Proven by lifting summability from the Jacobi Theta function.
+-/
 theorem summable_gauss_term {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun n : ℤ => gauss_term_ℂ σ μ n := by
   rw [gauss_term_jacobi]
@@ -66,6 +109,9 @@ theorem summable_gauss_term {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   rw [summable_jacobiTheta₂_term_iff]
   apply jacobi_tau_positive h
 
+/--
+``gauss_term_ℝ`` is summable over ℝ.
+-/
 theorem summable_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun n : ℤ => gauss_term_ℝ σ μ n := by
   rw [← Complex.summable_ofReal]
@@ -75,6 +121,9 @@ theorem summable_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     rw [← gauss_term_swap]
   apply summable_gauss_term h
 
+/--
+Big O asymptotic for ``gauss_term``.
+-/
 theorem asymptotics_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   gauss_term_ℂ σ 0 =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
   apply IsLittleO.isBigO
@@ -96,12 +145,18 @@ theorem asymptotics_gauss_term {σ : ℝ} (h : σ ≠ 0) :
     ofReal_pow]
   trivial
 
+/--
+Shifting the ``gauss_term`` function is eqivalent to shifting the mean.
+-/
 theorem gauss_term_shift (σ μ : ℝ) (n τ : ℤ) :
   gauss_term_ℂ σ μ (n + τ) = gauss_term_ℂ σ (μ - τ) n := by
   simp [gauss_term_ℂ, gauss_term_ℝ]
   congr 4
   ring_nf
 
+/--
+``fourier_gauss_term`` is the Fourier transform of the ``gauss_term`` with mean 0.
+-/
 theorem fourier_gauss_term_correspondance {σ : ℝ} (h : σ ≠ 0) :
   (𝓕 (gauss_term_ℂ σ 0)) = fourier_gauss_term σ := by
   have P : 0 < (π * (2 : ℂ) * σ^2)⁻¹.re  := by
@@ -122,6 +177,9 @@ theorem fourier_gauss_term_correspondance {σ : ℝ} (h : σ ≠ 0) :
   ring_nf
   simp
 
+/--
+Big O asymptotic for Fourier transform of ``gauss_term``.
+-/
 theorem asymptotics_fourier_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   (𝓕 (gauss_term_ℂ σ 0)) =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
   rw [fourier_gauss_term_correspondance h]
@@ -148,6 +206,9 @@ theorem asymptotics_fourier_gauss_term {σ : ℝ} (h : σ ≠ 0) :
     rw [← Y]
   trivial
 
+/--
+Poisson sum formula specialized to ``gauss_term``.
+-/
 theorem poisson_gauss_term {σ : ℝ} (h : σ ≠ 0) (x : ℝ) :
   (∑' n : ℤ, gauss_term_ℂ σ 0 (x + n)) = ∑' (n : ℤ), (𝓕 (gauss_term_ℂ σ 0)) n * (@fourier 1 n) x := by
   have B := asymptotics_gauss_term h
@@ -156,6 +217,9 @@ theorem poisson_gauss_term {σ : ℝ} (h : σ ≠ 0) (x : ℝ) :
   have X := @Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay (gauss_term_ℂ σ 0) ((gauss_term_ℂ σ 0).continuous_toFun) 2 D B C x
   rw [← X]
 
+/--
+Fourier transform for ``gauss_term`` is summable.
+-/
 theorem summable_fourier_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   Summable fun n : ℤ => 𝓕 (gauss_term_ℂ σ 0) n := by
   have A := Real.summable_abs_int_rpow one_lt_two
@@ -163,6 +227,10 @@ theorem summable_fourier_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   have C := @summable_of_isBigO ℤ ℂ _ _ (fun z : ℤ => 𝓕 (gauss_term_ℂ σ 0) z) (fun x : ℤ => |(x : ℝ)| ^ (-2 : ℝ)) A B
   exact C
 
+/--
+Fourier transform of ``gauss_term_ℂ`` at the integers is the same as the Fourier coeficients of the sum of the translates.
+MARKUSDE: ???
+-/
 theorem fourier_coeff_correspondance {σ : ℝ} (h : σ ≠ 0) (n : ℤ) :
   fourierCoeff (NotSureYet σ) n = 𝓕 (gauss_term_ℂ σ 0) n := by
   apply Real.fourierCoeff_tsum_comp_add
@@ -170,6 +238,9 @@ theorem fourier_coeff_correspondance {σ : ℝ} (h : σ ≠ 0) (n : ℤ) :
   ((isBigO_norm_restrict_cocompact ⟨_ , ((gauss_term_ℂ σ 0).continuous_toFun)⟩  (zero_lt_one.trans one_lt_two) (asymptotics_gauss_term h) K).comp_tendsto
   Int.tendsto_coe_cofinite))
 
+/--
+Fourier series obtained by evaluating the Fourier transform of ``gauss_term`` exists (i.e., is summable).
+-/
 theorem summable_fourier_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun (n : ℤ) => 𝓕 (gauss_term_ℂ σ 0) n * (@fourier 1 n) (-μ) := by
   have A : Summable fun n : ℤ => fourierCoeff (NotSureYet σ) n := by
@@ -186,16 +257,19 @@ theorem summable_fourier_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     rw [← fourier_coeff_correspondance h]
   exact B
 
-theorem gauss_term_pos (σ μ : ℝ) (n : ℤ) :
+lemma gauss_term_pos (σ μ : ℝ) (n : ℤ) :
   0 < (gauss_term_ℝ σ μ) n := by
   unfold gauss_term_ℝ
   apply exp_pos
 
-theorem gauss_term_noneg (σ μ : ℝ) (n : ℤ) :
+lemma gauss_term_noneg (σ μ : ℝ) (n : ℤ) :
   0 ≤ (gauss_term_ℝ σ μ) n := by
   unfold gauss_term_ℝ
   apply le_of_lt (gauss_term_pos σ μ n)
 
+/--
+The sum of ``gauss_term_ℝ`` is positive.
+-/
 theorem sum_gauss_term_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   0 < (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
   apply tsum_pos (summable_gauss_term' h μ) _ 0
@@ -203,14 +277,23 @@ theorem sum_gauss_term_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   . intro i
     apply gauss_term_noneg
 
+/--
+The sum of ``gauss_term_ℝ`` is nonnegative.
+-/
 theorem sum_gauss_term_nonneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   0 ≤ (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
   apply le_of_lt (sum_gauss_term_pos h μ)
 
+/--
+The sum of ``gauss_term_ℝ`` is nonzero.
+-/
 theorem sum_gauss_term_ne_zero {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   ∑' (n : ℤ), gauss_term_ℝ σ μ n ≠ 0 := by
   apply Ne.symm (_root_.ne_of_lt (sum_gauss_term_pos h μ))
 
+/--
+The discrete gaussian is positive.
+-/
 theorem discrete_gaussian_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   0 < discrete_gaussian σ μ n := by
   unfold discrete_gaussian
@@ -220,22 +303,34 @@ theorem discrete_gaussian_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   . apply gauss_term_pos
   . apply sum_gauss_term_pos h μ
 
+/--
+The discrete gaussian is nonnegative.
+-/
 theorem discrete_gaussian_nonneg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   0 ≤ discrete_gaussian σ μ n := by
   apply le_of_lt (discrete_gaussian_pos h μ n)
 
+/--
+The discrete Gaussian with mean zero is summable.
+-/
 theorem discrete_gaussian_summable {σ : ℝ} (h : σ ≠ 0) :
   Summable fun (n : ℤ) => discrete_gaussian σ 0 n := by
   unfold discrete_gaussian
   apply Summable.div_const
   apply summable_gauss_term' h
 
+/--
+The discrete Gaussian is summable.
+-/
 theorem discrete_gaussian_summable' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun (n : ℤ) => discrete_gaussian σ μ n := by
   unfold discrete_gaussian
   apply Summable.div_const
   apply summable_gauss_term' h
 
+/--
+The discrete Gaussian is a proper distribution.
+-/
 theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   (∑' n : ℤ, discrete_gaussian σ μ n) = 1 := by
   unfold discrete_gaussian
