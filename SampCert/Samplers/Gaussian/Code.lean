@@ -3,15 +3,22 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.SLang
 import SampCert.Samplers.BernoulliNegativeExponential.Code
 import SampCert.Samplers.Laplace.Code
+
+/-!
+# Sampler for the Discrete Gaussian distribution
+-/
+
 
 noncomputable section
 
 namespace SLang
 
+/--
+Sample a candidate for the Discrete Gaussian with variance ``num/den``.
+-/
 def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
   let Y : Int ← DiscreteLaplaceSample t 1
   let y : Nat := Int.natAbs Y
@@ -20,6 +27,9 @@ def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
   let C ← BernoulliExpNegSample n d
   return (Y,C)
 
+/--
+``SLang`` term to sample a value from the Discrete Gaussian with variance ``(num/den)``^2.
+-/
 def DiscreteGaussianSample (num : PNat) (den : PNat) : SLang ℤ := do
   let ti : Nat := num.val / den
   let t : PNat := ⟨ ti + 1 , by simp only [add_pos_iff, zero_lt_one, or_true] ⟩
