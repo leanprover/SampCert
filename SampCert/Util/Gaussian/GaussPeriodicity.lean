@@ -3,19 +3,35 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Util.Gaussian.GaussConvergence
 
+/-! Gauss Periodicity lemmas
+
+This file contains lemmas related to the periodicity of the ``gauss_term`` function,
+as well as the sum of the ``gauss_term`` function.
+-/
+
+
+/--
+Shifting ``gauss_term_ℝ`` is equivalent to shifting its mean.
+-/
 theorem SGShift (μ σ : ℝ) (n : ℤ) (k : ℤ) :
   (gauss_term_ℝ σ μ) (((n + k) : ℤ) : ℝ) = (gauss_term_ℝ σ (μ - k)) n := by
   simp [gauss_term_ℝ, gauss_term_ℝ]
   ring_nf
 
+/--
+Shifting ``gauss_term_ℝ`` is equivalent to shifting its mean.
+-/
 theorem SGShift' (μ : ℝ) (n : ℤ) (k : ℤ) :
   (gauss_term_ℝ σ μ) (((-(n + k)) : ℤ) : ℝ) = (gauss_term_ℝ σ (-(μ + k))) n := by
   simp [gauss_term_ℝ, gauss_term_ℝ]
   ring_nf
 
+-- MARKUSDE: Is this not just... always true? For all functions?
+/--
+``gauss_term_ℝ`` is summable under any shift.
+-/
 theorem SGSummableShift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) ((n + k) : ℤ) := by
   conv =>
@@ -24,6 +40,9 @@ theorem SGSummableShift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
     rw [SGShift μ σ n k]
   apply GaussConvergenceNatPos h
 
+/--
+``gauss_term_ℝ`` is summable under any shift.
+-/
 theorem SGSummableShift' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) ((-(n + k)) : ℤ) := by
   conv =>
@@ -32,6 +51,9 @@ theorem SGSummableShift' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
     rw [SGShift' μ n k]
   apply GaussConvergenceNatPos h
 
+/--
+The sum of ``gauss_term_ℝ`` does not change when the mean shifts by 1.
+-/
 theorem SG_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ + 1)) n := by
   have A : ∀ n : ℤ, (gauss_term_ℝ σ (μ + 1)) n = (gauss_term_ℝ σ μ) (n - 1) := by
@@ -145,6 +167,9 @@ theorem SG_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   congr 1
   ring_nf
 
+/--
+The sum of ``gauss_term_ℝ`` does not change when the mean shifts by a positive integer.
+-/
 theorem SG_periodic_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ + k)) n := by
   revert μ
@@ -157,6 +182,9 @@ theorem SG_periodic_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
     rw [IH]
     rw [SG_1_periodic h]
 
+/--
+The sum of ``gauss_term_ℝ`` does not change when the mean shifts by a negative integer.
+-/
 theorem SG_periodic_neg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ - k)) n := by
   revert μ
@@ -173,6 +201,9 @@ theorem SG_periodic_neg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
     rw [← SG_1_periodic h]
     simp
 
+/--
+The sum of ``gauss_term_ℝ`` does not change when the mean shifts by any integer.
+-/
 theorem SG_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ + k)) n := by
   cases k
@@ -186,6 +217,9 @@ theorem SG_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
     rw [@Mathlib.Tactic.RingNF.add_neg]
     apply SG_periodic_neg h
 
+/--
+The sum of ``gauss_term_ℝ`` equals the sum of the gaussian with mean zero.
+-/
 theorem SG_periodic' {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ 0) n := by
   have X := SG_periodic h 0 μ
