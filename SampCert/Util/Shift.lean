@@ -3,12 +3,19 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 
+/-! Shift Lemma
+
+This file contains lemmas about invariance of sums under integer shifts.
+-/
+
 open Summable
 
+/--
+A series is right-ℕ-shift-invariant provided its shifted positive and negative parts are summable.
+-/
 theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
   (h2 : ∀ μ : ℕ, Summable fun x : ℕ => f (x + μ))
   (h3 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) + μ))
@@ -58,6 +65,10 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
       ring_nf
   . exact h4
 
+
+/--
+A series is left-ℕ-shift-invariant provided its shifted positive and negative parts are summable.
+-/
 theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
   (h2 : ∀ μ : ℕ, Summable fun x : ℕ => f (x - μ))
   (h3 : ∀ μ : ℕ, Summable fun x : ℕ => f (-(x + 1) - μ)) :
@@ -101,6 +112,9 @@ theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
   . exact (h2 μ)
   . exact (h3 μ)
 
+/--
+A series is invariant under integer shifts provided its shifted positive and negative parts are summable.
+-/
 theorem tsum_shift (f : ℤ → ℝ) (μ : ℤ)
   (h₀ : ∀ μ : ℤ, Summable fun x : ℤ => f (x + μ)) :
   ∑' x : ℤ, f (x + μ) = (∑' x : ℤ, f x) := by
