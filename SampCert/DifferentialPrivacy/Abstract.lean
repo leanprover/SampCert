@@ -18,7 +18,7 @@ def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U 
   let B ← nq2 l
   return (A,B)
 
-def PostProcess (nq : List T → SLang U) (pp : U → V) (l : List T) : SLang V := do
+def PostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
   let A ← nq l
   return pp A
 
