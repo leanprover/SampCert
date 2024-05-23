@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Foundations.Mechanism.Code
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Code
 
 noncomputable section
 
@@ -242,5 +242,17 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
       rw [discrete_gaussian_shift P]
       rw [discrete_gaussian_shift P]
     simp [X]
+
+theorem NoisedQueryzCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  zCDP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  simp [zCDP]
+  repeat any_goals constructor
+  . apply NoisedQueryDP
+    exact bounded_sensitivity
+  . apply NoisedQuery_NonZeroNQ
+  . apply NoisedQuery_NonTopSum
+  . apply NoisedQuery_NonTopNQ
+  . apply NoisedQuery_NonTopRDNQ
+
 
 end SLang

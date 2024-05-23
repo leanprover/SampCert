@@ -4,5 +4,5 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Code
-import SampCert.DifferentialPrivacy.ZeroConcentrated.Queries.Count.Properties
+import SampCert.DifferentialPrivacy.Queries.Count.Code
+import SampCert.DifferentialPrivacy.Queries.Count.Properties
