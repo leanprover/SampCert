@@ -3,11 +3,19 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Util.Gaussian.DiscreteGaussian
+
+/-!
+# Gaussian Convergence
+
+This file contains lemmas about the summability of the gaussian function.
+-/
 
 open Classical Nat Real
 
+/--
+The Gaussian function is summable over the nonnegative integers.
+-/
 @[simp]
 theorem GaussConvergenceNatPos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) n := by
@@ -16,6 +24,9 @@ theorem GaussConvergenceNatPos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   cases A
   simpa only
 
+/--
+The Gaussian function is summable over the negative integers.
+-/
 @[simp]
 theorem GaussConvergenceNatNeg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) ((-(n + 1)) : ℤ) := by
