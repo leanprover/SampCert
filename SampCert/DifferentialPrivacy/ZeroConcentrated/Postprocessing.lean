@@ -729,7 +729,7 @@ theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} 
   have B := Ne.lt_top' nt
   exact lt_of_le_of_lt A B
 
-theorem zCDPPostProcess (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (f : U → V) (sur : Function.Surjective f) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem zCDPPostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5

@@ -29,7 +29,7 @@ class DPSystem (T : Type) where
   noise_prop : ∀ q : List T → ℤ, ∀ Δ εn εd : ℕ+, sensitivity q Δ → prop (noise q Δ εn εd) (εn / εd)
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (Compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
-  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+, ∀ pp : U → V, Function.Surjective pp →
+  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
    prop m (ε₁ / ε₂) → prop (PostProcess m pp) (ε₁ / ε₂)
 
 def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
