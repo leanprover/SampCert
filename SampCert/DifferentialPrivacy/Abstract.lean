@@ -7,6 +7,14 @@ import SampCert.SLang
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.Foundations.Basic
 
+/-!
+# Differential Privacy
+
+This file defines a notion of a differential private system.
+
+MARKUSDE: Check with JBT that I actually understand what he's doing here.
+-/
+
 noncomputable section
 
 namespace SLang
@@ -14,24 +22,53 @@ namespace SLang
 abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
 
+/--
+Product of mechanisms.
+
+MARKUSDE: Doesn't "composition" imply the second one can depend on the first? As in Lemma 31 of "The Discrete Gaussian for Differential Privacy".
+-/
 def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
   let A ← nq1 l
   let B ← nq2 l
   return (A,B)
 
+/--
+Mechanism obtained by applying a post-processing function to a mechanism.
+-/
 def PostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
   let A ← nq l
   return pp A
 
+
+/--
+Abstract definition of a differentially private systemm.
+-/
 class DPSystem (T : Type) where
+  /--
+  Notion of differential privacy with a paramater (ε-DP, ε-zCDP, etc)
+  -/
   prop : Mechanism T Z → ℝ → Prop
+  /--
+  Noise mechanism (eg. Laplace, Discrete Gaussian, etc)
+  Paramaterized by a query, sensitivity, and the numerator/denominator ofa (rational) security paramater.
+  -/
   noise : Query T ℤ → ℕ+ → ℕ+ → ℕ+ → Mechanism T ℤ
+  /--
+  Adding noise to a query makes it differentially private.
+  -/
   noise_prop : ∀ q : List T → ℤ, ∀ Δ εn εd : ℕ+, sensitivity q Δ → prop (noise q Δ εn εd) (εn / εd)
+  /--
+  Notion of privacy composes by addition.
+  -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (Compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  /--
+  Notion of privacy is invariant under post-processing.
+  -/
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
    prop m (ε₁ / ε₂) → prop (PostProcess m pp) (ε₁ / ε₂)
 
+-- MARKUSDE: ??
 def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
   Compose nq1 nq2 =
   fun l => do
@@ -41,6 +78,7 @@ def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
   ext l x
   simp [Compose]
 
+-- MARKUSDE: ??
 def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
   PostProcess nq pp =
   fun l => do
@@ -49,6 +87,7 @@ def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
   ext l x
   simp [PostProcess]
 
+-- MARKUSDE: Move??
 @[simp]
 theorem bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
   (fun l => (p l).bind (fun a : U => (q l).bind fun b : V => h a b))
