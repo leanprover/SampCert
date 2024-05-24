@@ -7,6 +7,10 @@ import SampCert.DifferentialPrivacy.Queries.Count.Code
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.DifferentialPrivacy.Abstract
 
+/-!
+# Properties of the counting query
+-/
+
 open Classical Nat Int Real
 
 noncomputable section
@@ -16,6 +20,9 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
+/--
+The counting query is 1-sensitive
+-/
 theorem CountingQuery1Sensitive :
   @sensitivity T CountingQuery 1 := by
   simp [CountingQuery, sensitivity]
@@ -31,6 +38,9 @@ theorem CountingQuery1Sensitive :
     subst h1 h2
     simp
 
+/--
+The noised counting query satisfies DP property
+-/
 @[simp]
 theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
