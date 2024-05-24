@@ -609,7 +609,7 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
   simp
 
 /--
-Closed form for the evaluation of the ``SLang`` Laplace sampler
+Closed form for the evaluation of the ``SLang`` Laplace sampler.
 -/
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
