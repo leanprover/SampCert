@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Code
 
-/--
+/-!
 # Zero Concentrated Mechanism Properties
 
 This file proves properties about the zero-concentrated differential privacy mechanism.
@@ -20,7 +20,7 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 /--
-The zCDP mechanism is zCDP when its query has bounded sensitivity.
+The zCDP mechanism with boundede sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   DP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
@@ -266,7 +266,7 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
     simp [X]
 
 /--
-The zCDP mechanism is zCDP.
+The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem NoisedQueryzCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   zCDP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by

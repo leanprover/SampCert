@@ -25,7 +25,9 @@ This file defines zero concentrated differential privacy (zCDP).
 
 
 /--
-Definition of zCDP in terms of Renyi Divergence between neighbouring databases.
+MARKUSDE: ???
+
+I guess this is the zCDP equation for mechanisms that satisfy pure DP?
 -/
 def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
@@ -62,7 +64,7 @@ def NonTopRDNQ (nq : List T → SLang U) : Prop :=
 
 
 /--
-Zero-concentrated differential privacy
+The mechanism ``q`` is ``(ε^2)/2``-zCDP
 -/
 def zCDP (q : List T → SLang U) (ε : ℝ) : Prop :=
     DP q ε
