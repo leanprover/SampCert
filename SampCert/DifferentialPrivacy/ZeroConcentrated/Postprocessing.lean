@@ -6,6 +6,10 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 
+/-!
+# Zero Concentrated Postprocessing
+-/
+
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
@@ -22,7 +26,7 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-theorem condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
+lemma condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
   (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by
   have A := @tsum_split_ite U (fun a : U => x = f a) g (fun _ => 0)
   simp only [decide_eq_true_eq, tsum_zero, add_zero] at A
@@ -31,7 +35,7 @@ theorem condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
     simp
   rw [B]
 
-theorem Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
   have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
   revert X
@@ -55,6 +59,9 @@ theorem Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measur
   . rw [← hasFiniteIntegral_norm_iff]
     simp [X]
 
+/--
+Jensen's ineuquality for the exponential applied to Renyi's sum
+-/
 theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
 
@@ -729,6 +736,9 @@ theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} 
   have B := Ne.lt_top' nt
   exact lt_of_le_of_lt A B
 
+/--
+Postprocessing preserves zCDP
+-/
 theorem zCDPPostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *

@@ -9,10 +9,17 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
 
+/-!
+# zCDP System
+-/
+
 namespace SLang
 
 variable { T : Type }
 
+/--
+Instance of a DP system for zCDP, using the discrete Gaussian as a noising mechanism.
+-/
 noncomputable instance zCDPSystem : DPSystem T where
   prop := zCDP
   noise := NoisedQuery
