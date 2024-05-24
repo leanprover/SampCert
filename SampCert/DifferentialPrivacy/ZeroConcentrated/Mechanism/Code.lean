@@ -5,10 +5,19 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.Samplers.GaussianGen.Code
 
+/-!
+# Zero Concentrated Noise Mechanism
+
+Abstract mechanism for adding the proper amount of noise to a query, depending on the sensitivity.
+-/
+
 noncomputable section
 
 namespace SLang
 
+/--
+Mechanism obtained by postcomposing query with by gaussian noise (of variance ``(Δ ε₁ / ε₂)^2``).
+-/
 def NoisedQuery (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
   DiscreteGaussianGenSample (Δ * ε₂) ε₁ (query l)
 
