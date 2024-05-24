@@ -163,31 +163,6 @@ theorem RD1 (p q : T → ENNReal) (α : ℝ) (h : 1 < α) (RD : ∑' (x : T), p 
   rw [← RenyiDivergenceExpectation p q h nz nt]
   trivial
 
-theorem fiberwisation (p : T → ENNReal) (f : T → V) :
- (∑' i : T, p i)
-    = ∑' (x : V), if {a : T | x = f a} = {} then 0 else ∑'(i : {a : T | x = f a}), p i := by
-  rw [← ENNReal.tsum_fiberwise p f]
-  have A : ∀ x, f ⁻¹' {x} = { a | x = f a } := by
-    intro x
-    simp [Set.preimage]
-    rw [Set.ext_iff]
-    simp
-    intro y
-    exact eq_comm
-  conv =>
-    left
-    right
-    intro x
-    rw [A]
-  clear A
-  apply tsum_congr
-  intro b
-  split
-  . rename_i h'
-    rw [h']
-    simp only [tsum_empty]
-  . simp
-
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
   rw [← condition_to_subset]
