@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -11,6 +10,12 @@ import SampCert.Samplers.BernoulliNegativeExponential.Code
 import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
+
+/-!
+# Properties of the Bernoulli Negative Exponential sampler
+
+-- MARKUSDE: which ones?
+-/
 
 noncomputable section
 
@@ -1166,6 +1171,9 @@ theorem BernoulliExpNegSampleGenLoop_apply_false (iter : Nat) :
   rw [← A]
   simp
 
+/--
+Bernoulli negative exponential sampler is a proper distribution
+-/
 @[simp]
 theorem BernoulliExpNegSample_normalizes (num : Nat) (den : PNat) :
   (∑' b : Bool, (BernoulliExpNegSample num den) b) = 1 := by
@@ -1202,6 +1210,9 @@ theorem ENNReal_eq_to_Real_eq (a b : ENNReal) (h : a = b) :
   a.toReal = b.toReal := by
   exact congrArg ENNReal.toReal h
 
+/--
+Evaluation of Bernoulli negative exponential sampler at ``true``
+-/
 @[simp]
 theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
   (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (- ((num : NNReal) / (den : NNReal)))) := by
@@ -1261,6 +1272,9 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
         . exact ENNReal.ofReal_ne_top
       . apply Real.exp_nonneg
 
+/--
+Evaluation of Bernoulli negative exponential sampler at ``false``
+-/
 @[simp]
 theorem BernoulliExpNegSample_apply_false (num : Nat) (den : PNat) :
   (BernoulliExpNegSample num den) false = 1 - ENNReal.ofReal (Real.exp (- ((num : NNReal) / (den : NNReal)))) := by
