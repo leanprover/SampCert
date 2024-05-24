@@ -9,6 +9,10 @@ import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
 
+/-!
+# Bounded Sum Properties
+-/
+
 open Classical Nat Int Real
 
 noncomputable section
@@ -17,6 +21,9 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
+/--
+Sensitivity of the bounded sum is equal to the bound.
+-/
 theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) U := by
   simp [sensitivity, BoundedSumQuery]
   intros l₁ l₂ H
@@ -71,6 +78,9 @@ theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) 
         rw [h, h']
         simp at *
 
+/--
+The noised bounded sum satisfies the DP property of the DP system.
+-/
 @[simp]
 theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by

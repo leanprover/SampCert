@@ -9,6 +9,10 @@ import SampCert.DifferentialPrivacy.Queries.Count.Basic
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Basic
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Code
 
+/-!
+# Properties of the bounded mean
+-/
+
 open Classical Nat Int Real Rat
 
 noncomputable section
@@ -17,7 +21,7 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
-theorem div_surjective :
+lemma div_surjective :
   Function.Surjective fun a : ℤ × ℤ => (a.1 : ℚ) / (a.2 : ℚ) := by
   unfold Function.Surjective
   intro b
@@ -29,11 +33,16 @@ theorem div_surjective :
   rw [intCast_div_eq_divInt]
   simp [mkRat, h1, Rat.normalize, h2]
 
-theorem budget_split (ε₁ ε₂ : ℕ+) :
+lemma budget_split (ε₁ ε₂ : ℕ+) :
   (ε₁ : ℝ) / (ε₂ : ℝ) = (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) + (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) := by
   field_simp
   ring_nf
 
+
+-- MARKUSDE: misnamed?
+/--
+DP bound for noised mean.
+-/
 theorem BoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedBoundedAvgQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   unfold NoisedBoundedAvgQuery
