@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Util.Gaussian.DiscreteGaussian
 import SampCert.Util.Gaussian.GaussBound
 import SampCert.Util.Gaussian.GaussConvergence
@@ -12,9 +11,16 @@ import SampCert.Util.Shift
 import SampCert.DifferentialPrivacy.RenyiDivergence
 import SampCert.Samplers.GaussianGen.Basic
 
+/-!
+# Concentrated Bound
+
+This file proves
+
+-/
+
 open Real Nat
 
-theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
+lemma sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   0 < ((gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x)^α := by
   apply rpow_pos_of_pos
   rw [div_pos_iff]
@@ -23,7 +29,7 @@ theorem sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   . apply exp_pos
   . apply sum_gauss_term_pos h
 
-theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
+lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x) x ^ α *
       (fun (x : ℤ) => (gauss_term_ℝ σ ν) x / ∑' (x : ℤ), (gauss_term_ℝ σ ν) x) x ^ (1 - α)
     = (gauss_term_ℝ σ μ) x ^ α * (gauss_term_ℝ σ ν) x ^ (1 - α) / ∑' (x : ℤ), (gauss_term_ℝ σ ν) x := by
@@ -77,9 +83,16 @@ theorem SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
     rw [← mul_assoc]
   rfl
 
+/--
+Alternative definition for the Renyi Divergence.
+MARKUSDE: Try to get rid of this, if we can.
+-/
 noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
 
+/--
+Upper bound on the Renyi Divergence between gaussians for any paramater `α > 1`.
+-/
 theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : 1 < α) :
   RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
                   (fun (x : ℤ) => (gauss_term_ℝ σ (0 : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ (0 : ℤ)) x)
@@ -276,21 +289,22 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
       . apply sg_sum_pos' h
       . apply sg_sum_pos' h
 
-theorem SG_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ : ℤ) :
-  (∑' x : ℤ, (gauss_term_ℝ σ μ) (x + τ)) = ∑' x : ℤ, (gauss_term_ℝ σ μ) x := by
-  have B := tsum_shift (fun x : ℤ => (gauss_term_ℝ σ μ) x) τ
-  rw [← B]
-  . apply tsum_congr
-    intro b
-    simp
-  . intro ν
-    conv =>
-      right
-      intro x
-      rw [SGShift]
-    apply summable_gauss_term' h
+-- MARKUSDE: Dead code
+-- theorem SG_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ : ℤ) :
+--   (∑' x : ℤ, (gauss_term_ℝ σ μ) (x + τ)) = ∑' x : ℤ, (gauss_term_ℝ σ μ) x := by
+--   have B := tsum_shift (fun x : ℤ => (gauss_term_ℝ σ μ) x) τ
+--   rw [← B]
+--   . apply tsum_congr
+--     intro b
+--     simp
+--   . intro ν
+--     conv =>
+--       right
+--       intro x
+--       rw [SGShift]
+--     apply summable_gauss_term' h
 
-theorem sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
+lemma  sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rexp (-(x - μ) ^ 2 / (2 * ss)) ^ α * rexp (-(x - ν) ^ 2 / (2 * ss)) ^ (1 - α)
   = rexp (-((x - μ) ^ 2 * α + (x - ν) ^ 2 * (1 - α)) / (2 * ss)) := by
   rw [← Real.exp_mul]
@@ -303,7 +317,7 @@ theorem sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rw [← neg_mul_eq_neg_mul]
   rw [← neg_add]
 
-theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
+lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
   RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x) (fun (x : ℤ) => (gauss_term_ℝ σ ν) x / ∑' x : ℤ, (gauss_term_ℝ σ ν) x) α
     = RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ ((μ + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((μ + τ) : ℤ)) x) (fun (x : ℤ) => (gauss_term_ℝ σ ((ν + τ) : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ ((ν + τ) : ℤ)) x) α := by
   unfold RenyiDivergence'
@@ -414,6 +428,9 @@ theorem SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     apply Summable.mul_right
     apply summable_gauss_term' h
 
+/--
+Upper bound on the Renyi Divergence between discrete gaussians for any paramater `α > 1`.
+-/
 theorem RenyiDivergenceBound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
   RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
                   (fun (x : ℤ) => discrete_gaussian σ ν x)
@@ -423,6 +440,9 @@ theorem RenyiDivergenceBound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ 
   rw [add_right_neg]
   apply  RenyiDivergenceBound h (μ + -ν) α h'
 
+/--
+Summand of Renyi divergence between discrete Gaussians is nonnegative.
+-/
 theorem RenyiSumSG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
   0 ≤ discrete_gaussian σ μ n ^ α * discrete_gaussian σ ν n ^ (1 - α) := by
   have A := discrete_gaussian_nonneg h μ n
@@ -433,6 +453,9 @@ theorem RenyiSumSG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
   . apply Real.rpow_nonneg A
   . apply Real.rpow_nonneg B
 
+/--
+Sum in Renyi divergence between discrete Gaussians is well-defined.
+-/
 theorem SummableRenyiGauss {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   Summable fun (x : ℤ) => discrete_gaussian σ μ x ^ α * discrete_gaussian σ ν x ^ (1 - α) := by
   simp [discrete_gaussian]
@@ -518,6 +541,9 @@ theorem SummableRenyiGauss {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   apply Summable.mul_right
   apply summable_gauss_term' h
 
+/--
+Upper bound on Renyi divergence between discrete Gaussians.
+-/
 theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
   RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
                   (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
@@ -555,6 +581,9 @@ theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν 
 
 namespace SLang
 
+/--
+Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussian sampler.
+-/
 theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
   RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
   α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
