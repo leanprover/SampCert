@@ -6,7 +6,9 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
+import SampCert.DifferentialPrivacy.Pure.System
 
 open SLang
 
-def combine := @BoundedSumQueryDP zCDPSystem
+def BoundedMeanZCDP := @BoundedAvgQueryDP zCDPSystem
+def BoundedMeanPureDP := @BoundedAvgQueryDP PureDPSystem

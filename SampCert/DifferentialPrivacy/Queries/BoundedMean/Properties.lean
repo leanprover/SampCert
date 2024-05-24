@@ -34,7 +34,7 @@ theorem budget_split (ε₁ ε₂ : ℕ+) :
   field_simp
   ring_nf
 
-theorem BoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
+theorem BoundedAvgQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (NoisedBoundedAvgQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   unfold NoisedBoundedAvgQuery
   simp
