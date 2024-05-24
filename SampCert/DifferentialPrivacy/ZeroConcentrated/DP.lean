@@ -12,6 +12,7 @@ import SampCert.SLang
 import SampCert.Samplers.GaussianGen.Basic
 import SampCert.DifferentialPrivacy.Neighbours
 import SampCert.DifferentialPrivacy.Sensitivity
+import SampCert.DifferentialPrivacy.Abstract
 import Mathlib.MeasureTheory.MeasurableSpace.Basic
 import Mathlib.MeasureTheory.Measure.Count
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
@@ -21,12 +22,6 @@ import Mathlib.Analysis.Convex.Integral
 def DP (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   RenyiDivergence (q l₁) (q l₂) α ≤ (1/2) * ε ^ 2 * α
-
-def NonZeroNQ (nq : List T → SLang U) :=
-  ∀ l : List T, ∀ n : U, nq l n ≠ 0
-
-def NonTopSum (nq : List T → SLang U) :=
-  ∀ l : List T, ∑' n : U, nq l n ≠ ⊤
 
 def NonTopNQ (nq : List T → SLang U) :=
   ∀ l : List T, ∀ n : U, nq l n ≠ ⊤

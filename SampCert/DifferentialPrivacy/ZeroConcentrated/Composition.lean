@@ -62,62 +62,6 @@ theorem RenyiNoisedQueryNonZero {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 
         contradiction
   . exact h5
 
-theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
-  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
-  have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
-    intro x  y
-    split
-    . rename_i h
-      subst h
-      simp
-    . rename_i h
-      simp
-      intro h
-      contradiction
-  conv =>
-    left
-    right
-    intro a
-    right
-    rw [A]
-  rw [ENNReal.tsum_eq_add_tsum_ite b]
-  simp
-  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 l x * ∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0 else 0) = 0 := by
-    intro x
-    split
-    . simp
-    . split
-      . rename_i h1 h2
-        subst h2
-        contradiction
-      . simp
-  conv =>
-    left
-    right
-    right
-    intro x
-    rw [B]
-  simp
-  congr 1
-  rw [ENNReal.tsum_eq_add_tsum_ite c]
-  simp
-  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 l x else 0) = 0 := by
-    intro x
-    split
-    . simp
-    . split
-      . rename_i h1 h2
-        subst h2
-        contradiction
-      . simp
-  conv =>
-    left
-    right
-    right
-    intro X
-    rw [C]
-  simp
-
 theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : DP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : DP nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
   DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [Compose, RenyiDivergence, DP]
@@ -184,15 +128,6 @@ theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ �
     . apply RenyiNoisedQueryNonZero h3 h4 X nn1 nt1 nts1
     . apply RenyiNoisedQueryNonZero h3 h4 Y nn2 nt2 nts2
 
-theorem DPCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (Compose nq1 nq2) := by
-  simp [NonZeroNQ] at *
-  intro l a b
-  replace nn1 := nn1 l a
-  replace nn2 := nn2 l b
-  simp [Compose]
-  exists a
-
 theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
   NonTopNQ (Compose nq1 nq2) := by
   simp [NonTopNQ] at *
@@ -201,40 +136,6 @@ theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V}
   replace nt2 := nt2 l b
   simp [Compose]
   rw [compose_sum_rw]
-  rw [mul_eq_top]
-  intro H
-  cases H
-  . rename_i H
-    cases H
-    contradiction
-  . rename_i H
-    cases H
-    contradiction
-
-theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
-  NonTopSum (Compose nq1 nq2) := by
-  simp [NonTopSum] at *
-  intro l
-  replace nt1 := nt1 l
-  replace nt2 := nt2 l
-  simp [Compose]
-  rw [ENNReal.tsum_prod']
-  conv =>
-    right
-    left
-    right
-    intro a
-    right
-    intro b
-    simp
-    rw [compose_sum_rw]
-  conv =>
-    right
-    left
-    right
-    intro a
-    rw [ENNReal.tsum_mul_left]
-  rw [ENNReal.tsum_mul_right]
   rw [mul_eq_top]
   intro H
   cases H
@@ -319,6 +220,5 @@ theorem zCDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁
   . apply DPCompose_NonTopSum h3 h'3
   . apply DPCompose_NonTopNQ h4 h'4
   . apply DPCompose_NonTopRDNQ h5 h'5 h4 h'4
-
 
 end SLang
