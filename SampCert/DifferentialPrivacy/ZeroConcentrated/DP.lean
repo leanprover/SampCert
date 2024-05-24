@@ -38,7 +38,7 @@ def NonZeroNQ (nq : List T → SLang U) : Prop :=
   ∀ l : List T, ∀ n : U, nq l n ≠ 0
 
 /--
-The output distribution of a mechanism has a finite sum.
+The output distribution of a mechanism is normalizable.
 -/
 def NonTopSum (nq : List T → SLang U) : Prop :=
   ∀ l : List T, ∑' n : U, nq l n ≠ ⊤
