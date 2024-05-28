@@ -270,13 +270,13 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
   apply toReal_strict_mono h1
   apply ENNReal.tsum_pos_int h1 h2
 
-theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
+theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
   (∑' (x : V),
       (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
         (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
   (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  simp [DP, RenyiDivergence] at h
+  simp [zCDPBound, RenyiDivergence] at h
 
   -- Rewrite as cascading expectations
   rw [@RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 (nn l₂) (nts l₂)]
@@ -602,12 +602,12 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
-  DP (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
-  simp [privPostProcess, DP, RenyiDivergence]
+theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
+  zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
+  simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
-  simp [DP, RenyiDivergence] at h'
+  simp [zCDPBound, RenyiDivergence] at h'
   replace h' := h' α h1 l₁ l₂ h2
 
   -- Part 1, removing fluff
@@ -724,7 +724,7 @@ theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : No
     rw [← A]
   trivial
 
-theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :DP nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
+theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
   NonTopRDNQ (privPostProcess nq f) := by
   simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
   intros α h1 l₁ l₂ h2
