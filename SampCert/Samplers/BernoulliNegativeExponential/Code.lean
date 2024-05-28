@@ -16,18 +16,19 @@ on ``Bool`` which samples ``true`` with probability ``exp (-num / den)``.
 
 This implementation uses an method for sampling from the BNE widely known as ``Von Neumann's algorithm``.
 
-MARKUSDE: Cite?
+The following identifiers violate our naming scheme, but are currently necessary for extraction:
+  - ``BernoulliExpNegSampleUnitLoop``
+  - ``BernoulliExpNegSampleUnitAux``
+  - ``BernoulliExpNegSampleUnit``
+  - ``BernoulliExpNegSampleGenLoop``
+  - ``BernoulliExpNegSample``
 -/
 
--- MARKUSDE: FIXME: mane of samplers violate the naming scheme
 
 noncomputable section
 
 namespace SLang
 
--- MARKUSDE: possible to move wf to paramater? Maybe not.
-
--- MARKUSDE: Worth it to document these technical lemmas?
 lemma halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
   num ≤ ↑(st * den) := by
   simp
@@ -37,7 +38,7 @@ lemma halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :
   exact le_mul_of_one_le_of_le p wf
 
 /--
-``SLang`` term which changes the state according to the discrete Von Neumann's algorithm.
+``SLang`` term which changes the state, according to the discrete Von Neumann's algorithm.
 
 In particular, it updates the state ``(_, n)`` to
   - ``(true, n+1)`` with probability ``(num/den) / n``
@@ -97,7 +98,9 @@ def BernoulliExpNegSampleGenLoop (iter : Nat) : SLang Bool := do
       let R ← BernoulliExpNegSampleGenLoop (iter - 1)
       return R
 
--- Technical lemma
+/--
+Proof term to apply a a call to ``BernoulliExpNegSampleUnit``.
+-/
 lemma rat_less_floor_le1 (num : Nat) (den : PNat) :
   (num % den) ≤ den := by
   have A := Nat.mod_lt num (PNat.pos den)
