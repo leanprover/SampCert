@@ -11,9 +11,7 @@ import SampCert.Samplers.Bernoulli.Code
 /-!
 # Bernoulli Sampler Properties
 
-This file describes properties about the ``SLang`` Bernoulli sampler.
-
-MARKUSDE: which ones?
+This file proves normalization and evaluation properties of the ``BernoulliSample`` sampler.
 -/
 
 noncomputable section
@@ -22,19 +20,8 @@ open PMF Finset BigOperators Nat
 
 namespace SLang
 
--- MARKUSDE: unused?
--- theorem ite_total_same (a b : ℕ) (x : ENNReal) :
---   (if a ≤ b then x else 0) + (if b < a then x else 0) = x := by
---   split
---   . rename_i h
---     have A : ¬ (b < a) := by exact Nat.not_lt.mpr h
---     simp [A]
---   . rename_i h
---     have A : ¬ (a ≤ b) := by exact h
---     simp [A]
-
 /--
-Total mass of the Bernoulli sampler is 1
+Total mass of the Bernoulli sampler is 1.
 -/
 @[simp]
 theorem BernoulliSample_normalizes (num : Nat) (den : PNat) (wf : num ≤ den) :
@@ -46,9 +33,8 @@ theorem BernoulliSample_normalizes (num : Nat) (den : PNat) (wf : num ≤ den) :
   simp [UniformSample_support_Sum']
   exact ENNReal.summable
 
--- MARKUSDE: What is the difference between ∑ and ∑'? Interrogating types is getting me nowhere.
 /--
-Total mass of the Bernoulli sampler is 1
+Total mass of the Bernoulli sampler is 1.
 -/
 theorem BernoulliSample_normalizes' (num : Nat) (den : PNat) (wf : num ≤ den) :
   ∑ b : Bool, BernoulliSample num den wf b = 1 := by
@@ -56,7 +42,7 @@ theorem BernoulliSample_normalizes' (num : Nat) (den : PNat) (wf : num ≤ den) 
   apply BernoulliSample_normalizes num den wf
 
 /--
-Bernoulli sampler evaluates to ``true`` with probability ``num/den``
+Bernoulli sampler evaluates to ``true`` with probability ``num/den``.
 -/
 @[simp]
 theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
@@ -72,7 +58,7 @@ theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
   rw [ENNReal.div_eq_inv_mul]
 
 /--
-Bernoulli sampler evaluates to ``false`` with probability ``num/den``
+Bernoulli sampler evaluates to ``false`` with probability ``num/den``.
 -/
 @[simp]
 theorem BernoulliSample_apply_false (num : Nat) (den : PNat) (wf : num ≤ den) :
@@ -88,7 +74,7 @@ theorem BernoulliSample_apply_false (num : Nat) (den : PNat) (wf : num ≤ den) 
   . trivial
 
 /--
-Closed form for evaulation of Bernoulli distribution in terms of its paramater ``num/den``
+Closed form for evaulation of Bernoulli distribution in terms of its paramater ``num/den``.
 -/
 @[simp]
 theorem BernoulliSample_apply (num : Nat) (den : PNat) (wf : num ≤ den) (b : Bool) :

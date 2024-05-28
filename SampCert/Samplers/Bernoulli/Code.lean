@@ -6,14 +6,22 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 import SampCert.Samplers.Uniform.Code
 
-/-! # Implementation of Bernoulli trial with rational probability -/
+/-!
+# ``BernoulliSample`` Implementation
+
+## Implementation note
+The term ``BernoulliSample`` violates our naming scheme, but this is currently necessary for extraction.
+-/
 
 noncomputable section
 
 namespace SLang
 
-/-- ``SLang`` term for Bernoulli trial. Samples ``true`` with probability ``num / den``. -/
--- MARKUSDE: FIXME-- violates the naming scheme
+/--
+``SLang`` term for Bernoulli trial.
+
+Samples ``true`` with probability ``num / den``.
+-/
 def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : SLang Bool := do
   let d ← UniformSample den
   return d < num
