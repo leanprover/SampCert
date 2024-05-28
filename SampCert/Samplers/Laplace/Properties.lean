@@ -12,9 +12,9 @@ import Mathlib.Data.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
 
 /-!
-# Properties of the Laplace Sampler
+# ``DiscreteLaplaceSample`` Properties
 
-This file proves that the ``SLang`` Laplace sampler is correct, and is a proper distribution.
+This file proves evaluation and normalization properties of ``DiscreteLaplaceSample``.
 -/
 
 noncomputable section
@@ -857,7 +857,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       simp only [ne_eq, ENNReal.inv_eq_top, cast_eq_zero, PNat.ne_zero, not_false_eq_true]
 
 /--
-``SLang`` Laplace sampler is a proper distribution
+``SLang`` Laplace sampler is a proper distribution.
 -/
 @[simp]
 theorem DiscreteLaplaceSample_normalizes (num den : PNat) :

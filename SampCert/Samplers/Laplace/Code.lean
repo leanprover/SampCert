@@ -8,14 +8,19 @@ import SampCert.Samplers.Uniform.Code
 import SampCert.Samplers.BernoulliNegativeExponential.Code
 
 /-!
-# Discrete Laplace Sampler
+# ``DiscreteLaplaceSample`` Implementation
 
 This file implements a sampler for the discrete laplace distribution.
 
 ## Implementation notes
 
-MARKUSDE: cite?
-
+The following identifiers violate our naming scheme, but are currently necessary for extraction:
+  - ``DiscreteLaplaceSampleLoopIn1Aux``
+  - ``DiscreteLaplaceSampleLoopIn1``
+  - ``DiscreteLaplaceSampleLoopIn2Aux``
+  - ``DiscreteLaplaceSampleLoopIn2``
+  - ``DiscreteLaplaceSampleLoop``
+  - ``DiscreteLaplaceSample``
 -/
 
 noncomputable section
@@ -50,7 +55,6 @@ def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : SLang (Bool × Nat) :
   let B ← BernoulliSample 1 2 (Nat.le.step Nat.le.refl)
   return (B,Y)
 
--- MARKUSDE: Why can we throw away the ``U`` term?
 def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
   let v ← DiscreteLaplaceSampleLoopIn2 den num
   let V := v - 1
@@ -58,7 +62,7 @@ def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) :=
   return (B,V)
 
 /--
-``SLang`` term to obtain a sample from the discrete Laplace distribution
+``SLang`` term to obtain a sample from the discrete Laplace distribution.
 -/
 def DiscreteLaplaceSample (num den : PNat) : SLang ℤ := do
   let r ← probUntil (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
