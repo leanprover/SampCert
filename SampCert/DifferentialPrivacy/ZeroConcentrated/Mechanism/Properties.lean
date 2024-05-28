@@ -125,7 +125,7 @@ theorem discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ
   . simp [gauss_term_ℝ]
     congr 3
     ring_nf
-  . rw [SG_periodic h]
+  . rw [shifted_gauss_sum h]
 
 /--
 The zCDP mechanism is normalizable.

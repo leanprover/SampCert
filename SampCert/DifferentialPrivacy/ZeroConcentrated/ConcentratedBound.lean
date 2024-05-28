@@ -54,8 +54,8 @@ lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
     ring_nf
     rw [mul_rpow (B μ x) (C μ)]
     rw [mul_rpow (B ν x) (C ν)]
-  rw [SG_periodic' h]
-  rw [SG_periodic' h]
+  rw [shifted_gauss_sum_0 h]
+  rw [shifted_gauss_sum_0 h]
   conv =>
     left
     rw [mul_assoc]
@@ -137,7 +137,7 @@ theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h'
       rw [mul_rpow (B μ x) (C μ)]
       rw [mul_rpow (B' x) C']
     -- First, I work on the denominator
-    rw [SG_periodic' h]
+    rw [shifted_gauss_sum_0 h]
     conv =>
       left
       right
@@ -336,8 +336,8 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     rw [division_def]
   rw [tsum_mul_right]
   rw [tsum_mul_right]
-  rw [SG_periodic' h]
-  rw [SG_periodic' h]
+  rw [shifted_gauss_sum_0 h]
+  rw [shifted_gauss_sum_0 h]
   congr 1
 
   -- re-indexing

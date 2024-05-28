@@ -51,6 +51,6 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   simp only [tsum_zero, add_zero]
   congr 2
   . simp [gauss_term_ℝ]
-  . rw [SG_periodic' A]
+  . rw [shifted_gauss_sum_0 A]
 
 end SLang

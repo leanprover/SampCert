@@ -15,8 +15,6 @@ The argument transforms the series into a Fourier series, and eliminates the Fou
 bounding them above by their absolute value. This has the effect of shifting the mean to zero; since
 the sum of Fourier coefficients equals the sum of mean-zero Gaussian terms. The Poisson summation formula
 justifies the transformation between series of ``gauss_term_ℝ ...`` and ``𝓕 (gauss_term_ℂ ...)``.
-
-MARKUSDE: Cite lemma 6 of ???
 -/
 
 noncomputable section
@@ -27,8 +25,6 @@ open ContinuousMap Function
 
 attribute [local instance] Real.fact_zero_lt_one
 
-
--- MARKUSDE: clean this proof. up
 /--
 The sum of any gaussian function over ℤ is bounded above by the sum of the mean-zero gaussian function over ℤ.
 -/

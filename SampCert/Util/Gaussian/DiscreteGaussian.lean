@@ -6,17 +6,14 @@ Authors: Jean-Baptiste Tristan
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 
 /-!
-# Discrete Guassian Helpers
+# Discrete Guassian Definitions
 
 This file contains the mathematical definitions for the discrete Gaussian distribution.
 
-It proves that the sum of discrete Gaussian values exists by lifting a theorem related
-to the summability of Jacobi Theta functions.
+It proves that the sum of discrete Gaussian values exists, and develops basic results
+about the Fourier transform of the gaussian function.
 
-It also develops the Fourier transform of the gaussian function.
-
-MARKUSDE: any other main results I'm missing? How is the FT used?
-
+-- TODO: Names in this file are not compliant with mathlib standards.
 -/
 
 noncomputable section
@@ -71,13 +68,14 @@ Discrete gaussian formula
 def discrete_gaussian (σ μ : ℝ) (x : ℝ) : ℝ :=
   gauss_term_ℝ σ μ x / ∑' x : ℤ, gauss_term_ℝ σ μ x
 
--- MARKUSDE: Become sure, and then rename.
 /--
 A continuous map from the unit citcle ℝ\ℤ to ℂ.
 
 Obtained by summing the translates of ``gauss_term_ℂ``, i.e., ``fun x => ∑ (z : ℤ), gauss_term_ℂ σ 0 (x + z)``.
+In a sense, this circle contains all possible (integer) sums of the shifted gaussian, since shiting a gaussian
+by an integer will not change the sum of that gaussian at integer values.
 -/
-def NotSureYet (σ : ℝ) : C(UnitAddCircle, ℂ) :=
+def gauss_series_circle (σ : ℝ) : C(UnitAddCircle, ℂ) :=
     ⟨((gauss_term_ℂ σ 0).periodic_tsum_comp_add_zsmul 1).lift, continuous_coinduced_dom.mpr (map_continuous _)⟩
 
 /--
@@ -100,7 +98,7 @@ lemma jacobi_tau_positive {σ : ℝ} (h : σ ≠ 0) :
 /--
 ``gauss_term_ℂ`` is summable over ℤ.
 
-Proven by lifting summability from the Jacobi Theta function.
+Proven by specializing the summability from the Jacobi Theta function.
 -/
 theorem summable_gauss_term {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun n : ℤ => gauss_term_ℂ σ μ n := by
@@ -229,10 +227,9 @@ theorem summable_fourier_gauss_term {σ : ℝ} (h : σ ≠ 0) :
 
 /--
 Fourier transform of ``gauss_term_ℂ`` at the integers is the same as the Fourier coeficients of the sum of the translates.
-MARKUSDE: ???
 -/
 theorem fourier_coeff_correspondance {σ : ℝ} (h : σ ≠ 0) (n : ℤ) :
-  fourierCoeff (NotSureYet σ) n = 𝓕 (gauss_term_ℂ σ 0) n := by
+  fourierCoeff (gauss_series_circle σ) n = 𝓕 (gauss_term_ℂ σ 0) n := by
   apply Real.fourierCoeff_tsum_comp_add
   apply (fun K => summable_of_isBigO (Real.summable_abs_int_rpow one_lt_two)
   ((isBigO_norm_restrict_cocompact ⟨_ , ((gauss_term_ℂ σ 0).continuous_toFun)⟩  (zero_lt_one.trans one_lt_two) (asymptotics_gauss_term h) K).comp_tendsto
@@ -243,14 +240,14 @@ Fourier series obtained by evaluating the Fourier transform of ``gauss_term`` ex
 -/
 theorem summable_fourier_gauss_term' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   Summable fun (n : ℤ) => 𝓕 (gauss_term_ℂ σ 0) n * (@fourier 1 n) (-μ) := by
-  have A : Summable fun n : ℤ => fourierCoeff (NotSureYet σ) n := by
+  have A : Summable fun n : ℤ => fourierCoeff (gauss_series_circle σ) n := by
     conv =>
       right
       intro n
       rw [fourier_coeff_correspondance h]
     apply summable_fourier_gauss_term h
   have B := has_pointwise_sum_fourier_series_of_summable A (- μ)
-  existsi ((NotSureYet σ) (-μ))
+  existsi ((gauss_series_circle σ) (-μ))
   conv =>
     left
     intro n
