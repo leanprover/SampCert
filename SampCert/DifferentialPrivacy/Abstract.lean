@@ -25,8 +25,8 @@ abbrev Mechanism (T U : Type) := List T → SLang U
 /--
 Product of mechanisms.
 
-MARKUSDE: Doesn't "composition" imply the second one can depend on the first? As in Lemma 31 of "The Discrete Gaussian for Differential Privacy".
-I think this should be named privSeq, the privacy bound composes, but the programs themselves are just sequenced.
+Note that the second mechanism does not depend on the output of the first; this is in currently
+in contrast to the notions of composition found in the DP literature.
 -/
 def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
   let A ← nq1 l
@@ -69,32 +69,13 @@ class DPSystem (T : Type) where
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
    prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
 
--- MARKUSDE: ??
-def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
-  privCompose nq1 nq2 =
-  fun l => do
-    let A ← nq1 l
-    let B ← nq2 l
-    return (A,B) := by
-  ext l x
-  simp [privCompose]
-
--- MARKUSDE: ??
-def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
-  privPostProcess nq pp =
-  fun l => do
-    let A ← nq l
-    return pp A := by
-  ext l x
-  simp [privPostProcess]
-
 @[simp]
 lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
   (fun l => (p l).probBind (fun a : U => (q l).probBind fun b : V => h a b))
     =
   fun l => (privCompose p q l).probBind (fun z => h z.1 z.2) := by
   ext l x
-  simp [ComposeRW, tsum_prod']
+  simp [privCompose, tsum_prod']
   apply tsum_congr
   intro b
   rw [← ENNReal.tsum_mul_left]
