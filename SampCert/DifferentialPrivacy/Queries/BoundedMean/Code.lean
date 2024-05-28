@@ -22,7 +22,7 @@ Compute a noised mean using a noised sum and noised count
 -/
 def NoisedBoundedAvgQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ := do
   let S ← NoisedBoundedSumQuery U ε₁ (2 * ε₂) l
-  let C ← NoisedCountingQuery ε₁ (2 * ε₂) l
+  let C ← queryNoisedCount ε₁ (2 * ε₂) l
   return S / C
 
 end SLang

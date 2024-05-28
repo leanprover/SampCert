@@ -51,6 +51,6 @@ theorem BoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   rw [budget_split]
   apply dps.compose_prop
   . apply NoisedBoundedSumQueryDP
-  . apply NoisedCountingQueryDP
+  . apply queryNoisedCount_DP
 
 end SLang
