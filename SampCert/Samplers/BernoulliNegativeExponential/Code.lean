@@ -45,9 +45,8 @@ In particular, it updates the state ``(_, n)`` to
   - ``(false, n+1)`` with probability ``1 - (num/den) / n``
 -/
 def BernoulliExpNegSampleUnitLoop (num : Nat) (den : PNat) (wf : num ≤ den) (state : (Bool × PNat)) : SLang (Bool × PNat) := do
-  let (_, n) := state
-  let A ← BernoulliSample num (n * den) (halve_wf num den n wf)
-  return (A, n + 1)
+  let A ← BernoulliSample num (state.2 * den) (halve_wf num den state.2 wf)
+  return (A, state.2 + 1)
 
 /--
 ``SLang`` term for the distribution over ``ℕ`` obtained by performing discrete Von Neumann
