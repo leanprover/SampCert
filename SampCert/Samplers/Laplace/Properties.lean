@@ -171,7 +171,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
     left
     right
     intro a
-    rw [prob_until_apply_norm _ _ _ (DiscreteLaplaceSampleLoopIn1Aux_normalizes t)]
+    rw [probUntil_apply_norm _ _ _ (DiscreteLaplaceSampleLoopIn1Aux_normalizes t)]
   simp only [ENNReal.summable, forall_const, tsum_prod', ite_mul, zero_mul]
   rw [ENNReal.tsum_comm]
   simp only [tsum_bool, ↓reduceIte, zero_add, tsum_zero]
@@ -630,7 +630,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       left
       rw [ENNReal.tsum_eq_add_tsum_ite x]
 
-    simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
+    simp only [DiscreteLaplaceSampleLoop_normalizes, probUntil_apply_norm]
     simp (config := { contextual := true }) only [↓reduceIte, IsEmpty.forall_iff, decide_True,
       DiscreteLaplaceSampleLoop_apply, decide_eq_true_eq, Nat.cast_inj, ite_simpl_1, tsum_zero,
       add_zero, forall_true_left, decide_not, Bool.not_eq_true', decide_eq_false_iff_not, ite_not,
@@ -746,7 +746,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       right
       rw [ENNReal.tsum_eq_add_tsum_ite n]
 
-    simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
+    simp only [DiscreteLaplaceSampleLoop_normalizes, probUntil_apply_norm]
     subst h2
     have X : n ≠ 0 := by
       by_contra h
@@ -870,7 +870,7 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
     intro x
     right
     intro a
-    rw [prob_until_apply_norm _ _ _ A]
+    rw [probUntil_apply_norm _ _ _ A]
   simp only [ENNReal.tsum_prod']
 
   -- Commuting the integer and natural summand makes the proof simpler

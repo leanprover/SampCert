@@ -82,7 +82,7 @@ theorem rw_ite (n : PNat) (x : Nat) :
   (if x < n then (probUniformP2 (2 * n)) x else 0)
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
-  rw [uniformPowerOfTwoSample_apply]
+  rw [probUniformP2_apply]
   simp only [PNat.mul_coe, one_div]
   apply double_large_enough
   trivial
@@ -104,7 +104,7 @@ theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
     = ∑' (i : ℕ), if i < ↑n then probUniformP2 (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then probUniformP2 (2 * n) i else 0) +
     (∑' (i : ℕ), if decide (↑n ≤ i) = false then probUniformP2 (2 * n) i else 0) = 1 := by
-    have A := uniformPowerOfTwoSample_normalizes (2 * n)
+    have A := probUniformP2_normalizes (2 * n)
     have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => probUniformP2 (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
@@ -118,7 +118,7 @@ theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
     trivial
   apply ENNReal.sub_eq_of_eq_add_rev
   . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => probUniformP2 (2 * n) i)
-    rw [uniformPowerOfTwoSample_normalizes (2 * n)] at Y
+    rw [probUniformP2_normalizes (2 * n)] at Y
     simp at Y
     clear X
     by_contra
@@ -135,7 +135,7 @@ Evaluation of the ``uniformSample`` distribution inside its support.
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, prob_until_apply,
+  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, probUntil_apply,
     decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SLang.pure_apply]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   simp only [support, ↓reduceIte, mul_one]

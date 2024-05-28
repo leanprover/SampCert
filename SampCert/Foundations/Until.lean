@@ -9,8 +9,14 @@ import SampCert.Util.Util
 /-!
 # Until
 
-Evaluation lemmas for the ``until`` term of ``SLang``.
+Results about the ``probUntil`` term of ``SLang``.
 
+
+## Implementation Notes
+
+Many lemmas in this file deal are stated for truncations of the ``probUntil`` program
+to a finite number of attempts. Because this term is not used outside this file, we
+will not factor out an explicit ``probUntilCut`` term.
 -/
 
 noncomputable section
@@ -21,32 +27,24 @@ namespace SLang
 
 variable {T : Type}
 
--- MARKUSDE: Check with JBT: should we define a truncated version of Until and use that?
--- Might make some of the proofs simpler and help put them in SNF. Any extraction reason not to?
-
--- MARKUSDE: Maybe needs better name, since it's not about until
 /--
-Truncation of ``until`` program to zero unrollings is identically zero
+Truncation of ``probUntil`` program to zero unrollings is identically zero
 -/
 @[simp]
-theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
+theorem probUntilCut_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
   simp [probWhileCut]
 
-
--- MARKUSDE: These lemmas anger the simplifier, since it might first simplify ``decide (... = false)``.
--- Is this a problem?
-
 /--
-Truncation of ``until`` program to any number of unrollings will evaluate to zero for
+Truncation of ``probUntil`` program to any number of unrollings will evaluate to zero, for
  values which do not satisfy ``cond``.
  -/
 @[simp]
-theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
+theorem probUntilCut_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  . simp only [zero_eq, until_zero, implies_true]
+  . simp only [zero_eq, probUntilCut_zero, implies_true]
   . rename_i fuel IH
     intro j
     simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
@@ -62,17 +60,17 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
       . simp
 
 /--
-``until`` evaluates to zero at all values which do not satisfy ``cond``
+``probUntil`` evaluates to zero at all values which do not satisfy ``cond``.
 -/
 @[simp]
-theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
+theorem probUntil_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x = 0 := by
   simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
   simp only [ENNReal.tsum_eq_zero]
   simp only [_root_.mul_eq_zero]
   simp only [iSup_eq_zero]
   intro i ; right ; intro j
-  simp only [h, not_false_eq_true, repeat_apply_unsat]
+  simp only [h, not_false_eq_true, probUntilCut_apply_unsat]
 
 lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
@@ -86,8 +84,7 @@ lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
       . simp
     . simp
 
--- MARKUSDE: Unused, and I can't imagine the utility (surely we will be binding to the fill until,
--- not the truncation, right?). Keep it?
+-- Dead code
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
@@ -110,10 +107,6 @@ theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
     rw [if_simpl]
   simp
 
--- MARKUSDE: move to util with the other series lemmas?
-/--
-Split a conditional series by the condition
--/
 lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' i : T, if cond i = false then f i else 0) + (∑' i : T, if cond i = true then g i else 0) := by
@@ -133,15 +126,11 @@ lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       rw [h'] at h
       contradiction
 
--- MARKUSDE: TODO rename or implement repeat
-/--
-Closed form for truncated version of ``until``
--/
-theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
+theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  . simp only [zero_eq, until_zero, mul_zero, tsum_zero, range_zero, sum_empty]
+  . simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   . rename_i fuel IH
     unfold probWhileCut
     unfold probWhileFunctional
@@ -207,43 +196,39 @@ theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x 
     . rename_i h
       simp [h]
 
--- MARKUSDE: TODO/rename
--- MARKUSDE: This is simple, where is it used?
 /--
 Expression for the limit of the closed form of truncated ``until``
 -/
-lemma convergence (body : SLang T) (cond : T → Bool) (x : T) :
+lemma probUntilCut_convergence (body : SLang T) (cond : T → Bool) (x : T) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   rw [← ENNReal.tsum_eq_iSup_nat]
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_geometric]
 
--- MARKUSDE: TODO/rename (or define repeat)
 /--
-Truncated ``until`` term is monotone (as in pointwise, with results in ℝ≥0∞) in the maximum number of steps.
+Truncated ``until`` term is monotone in the maximum number of steps.
 -/
-theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
+theorem probUntilCut_monotone (body : SLang T) (cond : T → Bool) (x : T) :
   ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
   have A := @probWhileCut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
--- MARKUSDE: err-- what if this sum is 1? What if it's greater than 1? Is ``until`` only meaninfgul when body is normalized?
 /--
 ``until`` term evaluates to ``body``, normalizing by the total mass of elements which satisfy ``cond``.
 -/
 @[simp]
-theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
+theorem probUntil_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   probUntil (body : SLang T) (cond : T → Bool) x
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
-  rw [← convergence]
+  rw [← probUntilCut_convergence]
   conv =>
     right
     right
     intro fuel
-    rw [← repeat_closed_form _ _ _ _ h]
+    rw [← probUntilCut_closed_form _ _ _ _ h]
   rw [eq_comm]
   rw [ENNReal.tsum_eq_iSup_sum]
   conv =>
@@ -257,7 +242,7 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
     right
     right
     intro s
-    rw [finset_sum_iSup_nat (repeat_monotone body cond x)]
+    rw [finset_sum_iSup_nat (probUntilCut_monotone body cond x)]
   rw [iSup_comm]
   conv =>
     right
@@ -272,14 +257,14 @@ Closed form for evaluation of ``until``. ``until`` is:
 rescaled by the total mass outside the support of ``cond``.
 -/
 @[simp]
-theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
+theorem probUntil_apply (body : SLang T) (cond : T → Bool) (x : T) :
   probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   split
   . rename_i h
-    simp [h, prob_until_apply_sat]
+    simp [h, probUntil_apply_sat]
   . rename_i h
-    simp [h, prob_until_apply_unsat]
+    simp [h, probUntil_apply_unsat]
 
 /--
 When ``body`` is a proper PMF, ``until`` is
@@ -288,10 +273,10 @@ When ``body`` is a proper PMF, ``until`` is
 normalized into a PMF.
 -/
 @[simp]
-theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
+theorem probUntil_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
   probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (∑' x : T, if cond x then body x else 0)⁻¹ := by
-  rw [prob_until_apply body cond x]
+  rw [probUntil_apply body cond x]
   congr
   have A : ∀ x, body x = (if cond x then body x else 0) + (if cond x then 0 else body x) := by
     intro x

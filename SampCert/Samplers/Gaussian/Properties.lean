@@ -264,7 +264,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
     right
     intro a
     left
-    rw [prob_until_apply_norm _ _ _ A]
+    rw [probUntil_apply_norm _ _ _ A]
   clear A
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,

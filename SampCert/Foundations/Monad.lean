@@ -8,8 +8,7 @@ import SampCert.SLang
 /-!
 # SLang Monad
 
-This file derives standard monadic rewrite rules for ``SLang``
-
+This file contains the standard monadic equations for ``SLang``.
 -/
 
 noncomputable section
@@ -20,7 +19,9 @@ namespace SLang
 
 variable {α β γ : Type}
 
-/-- Convert a normalized SLang term back into a PMF -/
+/--
+Convert a normalized SLang term back into a PMF.
+-/
 def toPMF (p : SLang α) (h : HasSum p 1) : PMF α := ⟨ p , h ⟩
 
 @[ext]
@@ -69,5 +70,3 @@ theorem bind_bind : (p.probBind f).probBind g = p.probBind fun a => (f a).probBi
         ENNReal.tsum_mul_right.symm, mul_assoc, mul_left_comm, mul_comm] using ENNReal.tsum_comm
 
 end SLang
-
-#lint docBlame
