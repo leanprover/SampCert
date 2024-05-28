@@ -7,7 +7,9 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 
 /-!
-# Zero Concentrated Postprocessing
+# Postprocessing
+
+This file proves zCDP for ``privPostProcess``.
 -/
 
 noncomputable section
@@ -136,7 +138,7 @@ theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : �
 
 def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
-theorem δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
+lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   unfold δ
@@ -602,7 +604,7 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
+theorem privPostProcess_zCDPBound {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
   zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
@@ -690,7 +692,7 @@ theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBo
         rw [lt_top_iff_ne_top] at Z
         contradiction
 
-theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
+theorem privPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
   NonZeroNQ (privPostProcess nq f) := by
   simp [NonZeroNQ, Function.Surjective, privPostProcess] at *
   intros l n
@@ -702,7 +704,7 @@ theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : No
   . rw [h]
   . apply nn
 
-theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
+theorem privPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
   NonTopSum (privPostProcess nq f) := by
   simp [NonTopSum, privPostProcess] at *
   intros l
@@ -724,7 +726,7 @@ theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : No
     rw [← A]
   trivial
 
-theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
+theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
   NonTopRDNQ (privPostProcess nq f) := by
   simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
   intros α h1 l₁ l₂ h2
@@ -739,18 +741,18 @@ theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} 
 /--
 Postprocessing preserves zCDP
 -/
-theorem zCDPPostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem privPostProcess_zCDP {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   repeat any_goals constructor
-  . apply DPPostProcess h1 h2 h5 h4 h3
-  . apply DPPostProcess_NonZeroNQ h2 sur
-  . apply DPPostProcess_NonTopSum f h3
+  . apply privPostProcess_zCDPBound h1 h2 h5 h4 h3
+  . apply privPostProcess_NonZeroNQ h2 sur
+  . apply privPostProcess_NonTopSum f h3
   . simp [NonTopNQ]
     intro l
     apply ENNReal.ne_top_of_tsum_ne_top
-    apply DPPostProcess_NonTopSum f h3
-  . apply DPPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
+    apply privPostProcess_NonTopSum f h3
+  . apply privPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
 
 end SLang
