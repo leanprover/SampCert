@@ -14,8 +14,8 @@ import SampCert.Samplers.GaussianGen.Basic
 /-!
 # Concentrated Bound
 
-This file proves
-
+This file derives a cDP bound for the discrete Gaussian. In particular, it bounds
+the Renyi divergence between discrete Gaussian evaluations with integer means.
 -/
 
 open Real Nat
@@ -85,7 +85,7 @@ lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
 
 /--
 Alternative definition for the Renyi Divergence.
-MARKUSDE: Try to get rid of this, if we can.
+FIXME: is there any reason to not get rid of this?
 -/
 noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
@@ -93,7 +93,7 @@ noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
 /--
 Upper bound on the Renyi Divergence between gaussians for any paramater `α > 1`.
 -/
-theorem RenyiDivergenceBound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : 1 < α) :
+theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (h' : 1 < α) :
   RenyiDivergence' (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' x : ℤ, (gauss_term_ℝ σ μ) x)
                   (fun (x : ℤ) => (gauss_term_ℝ σ (0 : ℤ)) x / ∑' x : ℤ, (gauss_term_ℝ σ (0 : ℤ)) x)
                   α ≤ α * (μ^2 / (2 * σ^2)) := by
@@ -431,19 +431,19 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
 /--
 Upper bound on the Renyi Divergence between discrete gaussians for any paramater `α > 1`.
 -/
-theorem RenyiDivergenceBound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
+theorem Renyi_divergence_bound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
   RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
                   (fun (x : ℤ) => discrete_gaussian σ ν x)
                   α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
   unfold discrete_gaussian
   rw [SG_Renyi_shift h α μ ν (-ν)]
   rw [add_right_neg]
-  apply  RenyiDivergenceBound h (μ + -ν) α h'
+  apply  Renyi_divergence_bound h (μ + -ν) α h'
 
 /--
 Summand of Renyi divergence between discrete Gaussians is nonnegative.
 -/
-theorem RenyiSumSG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
+theorem Renyi_sum_SG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
   0 ≤ discrete_gaussian σ μ n ^ α * discrete_gaussian σ ν n ^ (1 - α) := by
   have A := discrete_gaussian_nonneg h μ n
   have B := discrete_gaussian_nonneg h ν n
@@ -456,7 +456,7 @@ theorem RenyiSumSG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
 /--
 Sum in Renyi divergence between discrete Gaussians is well-defined.
 -/
-theorem SummableRenyiGauss {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
+theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   Summable fun (x : ℤ) => discrete_gaussian σ μ x ^ α * discrete_gaussian σ ν x ^ (1 - α) := by
   simp [discrete_gaussian]
   have B : ∀ μ : ℤ, ∀ x : ℝ, 0 ≤ (gauss_term_ℝ σ μ) x := by
@@ -544,7 +544,7 @@ theorem SummableRenyiGauss {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
 /--
 Upper bound on Renyi divergence between discrete Gaussians.
 -/
-theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
+theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
   RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
                   (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
                   α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
@@ -573,18 +573,18 @@ theorem RenyiDivergenceBound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν 
     . simp
       apply tsum_nonneg
       intro i
-      apply RenyiSumSG_nonneg h
-    . apply RenyiSumSG_nonneg h
-    . apply SummableRenyiGauss h
+      apply Renyi_sum_SG_nonneg h
+    . apply Renyi_sum_SG_nonneg h
+    . apply Renyi_Gauss_summable h
   rw [A]
-  apply RenyiDivergenceBound_pre h h'
+  apply Renyi_divergence_bound_pre h h'
 
 namespace SLang
 
 /--
 Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussian sampler.
 -/
-theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
+theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
   RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
   α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
@@ -597,6 +597,6 @@ theorem DiscreteGaussianGenSampleZeroConcentrated {α : ℝ} (h : 1 < α) (num :
     . intro x
       rw [DiscreteGaussianGenSample_apply]
     . skip
-  apply RenyiDivergenceBound' A h
+  apply Renyi_Gauss_divergence_bound' A h
 
 end SLang

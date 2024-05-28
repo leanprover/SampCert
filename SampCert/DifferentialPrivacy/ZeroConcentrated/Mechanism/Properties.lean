@@ -26,7 +26,7 @@ theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_
   DP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [DP, NoisedQuery]
   intros α h1 l₁ l₂ h2
-  have A := @DiscreteGaussianGenSampleZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
+  have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
   apply le_trans A
   clear A
   replace bounded_sensitivity := bounded_sensitivity l₁ l₂ h2
@@ -253,11 +253,11 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
   rw [← ENNReal.ofReal_tsum_of_nonneg]
   . simp
   . intro n
-    have X := @RenyiSumSG_nonneg _ α P (query l₁) (query l₂) n
+    have X := @Renyi_sum_SG_nonneg _ α P (query l₁) (query l₂) n
     rw [discrete_gaussian_shift P]
     rw [discrete_gaussian_shift P]
     simp [X]
-  . have X := @SummableRenyiGauss _ P (query l₁) (query l₂)
+  . have X := @Renyi_Gauss_summable _ P (query l₁) (query l₂)
     conv =>
       right
       intro x

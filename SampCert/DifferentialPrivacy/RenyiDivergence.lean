@@ -9,7 +9,7 @@ import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
 
 /-! Renyi Divergence
 
-This file defines the Renyi divergence and evaluates its expectation.
+This file defines the Renyi divergence and equations for evaluating its expectation.
 -/
 
 
@@ -23,7 +23,6 @@ The Renyi divergence.
 noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ℝ :=
   (α - 1)⁻¹ * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal
 
--- MARKUSDE: misnamed?
 /--
 Closed form of the series in the definition of hte Renyi divergence.
 -/
@@ -39,7 +38,6 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
   . apply h1 x
   . apply h2 x
 
--- MARKUSDE: misnamed?
 /--
 Closed form for the Renti Divergence.
 -/
