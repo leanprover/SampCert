@@ -8,9 +8,9 @@ import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.DifferentialPrivacy.Abstract
 
 /-!
-# ``queryNoisedCount`` Properties
+# ``privNoisedCount`` Properties
 
-This file proves abstract differential privacy for ``queryNoisedCount``.
+This file proves abstract differential privacy for ``privNoisedCount``.
 -/
 
 open Classical Nat Int Real
@@ -44,8 +44,8 @@ theorem exactCount_1_sensitive :
 The noised counting query satisfies DP property
 -/
 @[simp]
-theorem queryNoisedCount_DP (ε₁ ε₂ : ℕ+) :
-  dps.prop (queryNoisedCount ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem privNoisedCount_DP (ε₁ ε₂ : ℕ+) :
+  dps.prop (privNoisedCount ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply dps.noise_prop
   apply exactCount_1_sensitive
 

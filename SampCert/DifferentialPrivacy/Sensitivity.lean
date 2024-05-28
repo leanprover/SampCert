@@ -19,7 +19,9 @@ open Classical Nat Int Real
 variable {T : Type}
 
 /--
-A query `q` has sensivity `Δ`, namely, `|q(x) - q(x')| ≤ Δ` for neighbouring lists `x` and `x'`.
+A query `q` has sensivity `Δ`.
+
+Namely, `|q(x) - q(x')| ≤ Δ` for neighbouring lists `x` and `x'`.
 -/
 noncomputable def sensitivity (q : List T → ℤ) (Δ : ℕ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → Int.natAbs (q l₁ - q l₂) ≤ Δ

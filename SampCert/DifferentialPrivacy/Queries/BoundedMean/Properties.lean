@@ -10,9 +10,9 @@ import SampCert.DifferentialPrivacy.Queries.BoundedSum.Basic
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Code
 
 /-!
-# ``queryNoisedBoundedMean`` Properties
+# ``privNoisedBoundedMean`` Properties
 
-This file proves abstract differential privacy for ``queryNoisedBoundedMean``.
+This file proves abstract differential privacy for ``privNoisedBoundedMean``.
 -/
 
 open Classical Nat Int Real Rat
@@ -44,14 +44,14 @@ lemma budget_split (ε₁ ε₂ : ℕ+) :
 /--
 DP bound for noised mean.
 -/
-theorem queryNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  dps.prop (queryNoisedBoundedMean U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  unfold queryNoisedBoundedMean
+theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
+  dps.prop (privNoisedBoundedMean U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  unfold privNoisedBoundedMean
   simp
   apply dps.postprocess_prop div_surjective
   rw [budget_split]
   apply dps.compose_prop
-  . apply queryNoisedBoundedSum_DP
-  . apply queryNoisedCount_DP
+  . apply privNoisedBoundedSum_DP
+  . apply privNoisedCount_DP
 
 end SLang

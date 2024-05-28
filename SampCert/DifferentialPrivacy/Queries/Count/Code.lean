@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.Abstract
 
 /-!
-# ``queryNoisedCount`` Implementation
+# ``privNoisedCount`` Implementation
 
 This file defines a differentially private noising of an exact length query.
 -/
@@ -26,7 +26,7 @@ def exactCount (l : List T) : ℤ := List.length l
 /--
 Noised counting mechanism from the DP system
 -/
-def queryNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
+def privNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
   dps.noise exactCount 1 ε₁ ε₂ l
 
 end SLang
