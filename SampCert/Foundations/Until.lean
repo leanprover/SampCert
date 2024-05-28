@@ -7,7 +7,7 @@ import SampCert.Foundations.While
 import SampCert.Util.Util
 
 /-!
-# ``probUntil`` properties
+# ``probUntil`` Properties
 
 This file proves evaluation and normalization results about ``probUntil``.
 

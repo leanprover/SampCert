@@ -9,7 +9,7 @@ import SampCert.Foundations.Auto
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
-# ``probWhile`` properties
+# ``probWhile`` Properties
 
 This file proves evaluation and normalization results about ``probWhile``.
 -/

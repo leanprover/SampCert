@@ -5,16 +5,21 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.SLang
 
-/-! # Implementation for a Unifrom Sampler over a finite set -/
+/-!
+# ``UniformSample`` Implementation
+
+This file contains the implementation for a uniform sampler over a finite set.
+
+## Implementation Notes
+``UniformSample`` violates our naming scheme, but this is currently necessary for extraction.
+-/
 
 noncomputable section
 
 namespace SLang
 
--- MARKUSDE: Why is it implemented this way?
 /-- ``Slang`` term for a uniform sample over [0, n). Implemented using rejection sampling on
-    the uniform sampler on a space whose size is a power of two. -/
--- MARKUSDE: FIXME-- violates the naming scheme
+  top of the power of two uniform sampler ``probUniformP2``. -/
 def UniformSample (n : PNat) : SLang Nat := do
   let r ← probUntil (probUniformP2 (2 * n)) (λ x : Nat => x < n)
   return r

@@ -6,7 +6,7 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 
 /-!
-# Monad properties
+# Monad Properties
 
 This file contains the standard monadic equations for ``SLang``.
 -/

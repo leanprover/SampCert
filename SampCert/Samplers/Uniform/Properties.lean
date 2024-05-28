@@ -8,10 +8,9 @@ import Mathlib.Data.ENNReal.Basic
 import SampCert.Samplers.Uniform.Code
 
 /-!
-# Properties of ``uniformSample``
+# ``UniformSample`` Properties
 
-MARKUSDE: which ones?
-
+This file proves normalization and evaluation properties of the ``UniformSample`` sampler.
 -/
 
 noncomputable section
@@ -57,7 +56,7 @@ The sample space of ``uniformP2 (2*n)`` is large enough to fit the sample
 space for ``uniform(n)``.
 -/
 @[simp]
-theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
+lemma double_large_enough (n : PNat) (x : Nat) (support : x < n) :
   x < 2 ^ (log 2 ↑(2 * n)) := by
   have A : ∀ m : ℕ, m < 2 ^ (log 2 ↑(2 * m)) := by
     intro m
@@ -78,7 +77,7 @@ Note that the support of ``uniformPowerOfTwoSample`` (namely ``[0, 2 ^ log 2 (2 
 larger than support restriction ``[0, n)`` imposed by the guard.
 -/
 @[simp]
-theorem rw_ite (n : PNat) (x : Nat) :
+lemma rw_ite (n : PNat) (x : Nat) :
   (if x < n then (probUniformP2 (2 * n)) x else 0)
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
@@ -88,7 +87,7 @@ theorem rw_ite (n : PNat) (x : Nat) :
   trivial
   trivial
 
--- MARKUSDE: only used in once place?
+-- Inline?
 lemma tsum_comp (n : PNat) :
   (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => probUniformP2 (2 * n) i) ↑x)
     = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), probUniformP2 (2 * n) ↑i := by
@@ -97,9 +96,8 @@ lemma tsum_comp (n : PNat) :
   ext x
   simp
 
--- MARKUSDE: also only used in one file, is this  just a lemma or is it meant for something more?
--- This should be proved more generally
-theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
+
+lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
   (1 - ∑' (i : ℕ), if ↑n ≤ i then probUniformP2 (2 * n) i else 0)
     = ∑' (i : ℕ), if i < ↑n then probUniformP2 (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then probUniformP2 (2 * n) i else 0) +
@@ -129,9 +127,8 @@ theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
     rw [X]
 
 /--
-Evaluation of the ``uniformSample`` distribution inside its support.
+Evaluation of the ``UniformSample`` distribution inside its support.
 -/
--- MARKUSDE: simplify proof?
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
@@ -197,14 +194,17 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     IsUnit.inv_mul_cancel_left, cast_eq_zero, ENNReal.coe_inv, coe_natCast]
 
 /--
-Evaluation of the ``uniformSample`` distribution outside of its support.
+Evaluation of the ``UniformSample`` distribution outside of its support.
 -/
 @[simp]
 theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
   UniformSample n x = 0 := by
   simp [UniformSample, support]
 
-theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
+/--
+Sum of the ``UniformSample`` distribution over a subset of its support.
+-/
+lemma UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
   (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
   induction m
   . simp
@@ -219,9 +219,9 @@ theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
     rw [ENNReal.div_add_div_same]
 
 /--
-Sum of the ``uniformSample`` distribution inside its support.
+Sum of the ``UniformSample`` distribution inside its support.
 -/
-theorem UniformSample_support_Sum' (n : PNat) :
+lemma UniformSample_support_Sum' (n : PNat) :
   (Finset.sum (range n) fun i => UniformSample n i) = 1 := by
   rw [UniformSample_support_Sum n n le.refl]
   apply ENNReal.div_self
@@ -229,7 +229,7 @@ theorem UniformSample_support_Sum' (n : PNat) :
   . simp
 
 /--
-Sum over the whole space of ``uniformSample`` is ``1``.
+Sum over the whole space of ``UniformSample`` is ``1``.
 -/
 @[simp]
 theorem UniformSample_normalizes (n : PNat) :
@@ -239,7 +239,7 @@ theorem UniformSample_normalizes (n : PNat) :
   . exact ENNReal.summable
 
 /--
-``uniformSample`` is a proper distribution
+``UniformSample`` is a proper distribution
 -/
 theorem UniformSample_HasSum_1  (n : PNat) :
   HasSum (UniformSample n) 1 := by
@@ -249,12 +249,12 @@ theorem UniformSample_HasSum_1  (n : PNat) :
   trivial
 
 /--
-Conversion of ``uniformSample`` from a ``SLang`` term to a ``PMF``.
+Conversion of ``UniformSample`` from a ``SLang`` term to a ``PMF``.
 -/
 noncomputable def UniformSample_PMF (n : PNat) : PMF ℕ := ⟨ UniformSample n , UniformSample_HasSum_1 n⟩
 
 /--
-Evaluation of ``uniformSample`` on ``ℕ`` guarded by its support, when inside the support.
+Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when inside the support.
 -/
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by
@@ -265,7 +265,7 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   . trivial
 
 /--
-Evaluation of ``uniformSample`` on ``ℕ`` guarded by its support, when outside the support.
+Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when outside the support.
 -/
 theorem UniformSample_apply' (n : PNat) (x : Nat) :
   (UniformSample n) x = if x < n then (1 : ENNReal) / n else 0 := by
