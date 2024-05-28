@@ -16,7 +16,7 @@ namespace SLang
     the uniform sampler on a space whose size is a power of two. -/
 -- MARKUSDE: FIXME-- violates the naming scheme
 def UniformSample (n : PNat) : SLang Nat := do
-  let r ← probUntil (uniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
+  let r ← probUntil (probUniformP2 (2 * n)) (λ x : Nat => x < n)
   return r
 
 end SLang

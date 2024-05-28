@@ -15,11 +15,9 @@ This file describes the SLang language.
 
 ## Implementation notes
 
-Each ``SLang`` value is an unnormalized distribution over a type. There are no restrictions
-on the type; the underlying measure space should be interpreted as discrete.
-
-MARKUSDE: Are the SLang values intended to be normalizable? I guess not, right?
-
+Each ``SLang`` value is a distribution over a type (normalization of these distributions
+is proven separately). There are no restrictions on the type; the underlying probability
+space should be interpreted as discrete.
 -/
 
 open Classical Nat ENNReal PMF
@@ -59,37 +57,37 @@ namespace SLang
 variable {T U : Type}
 
 /--
-The zero distribution as a ``SLang``
+The zero distribution as a ``SLang``.
 -/
-def zero : SLang T := λ _ : T => 0
+def probZero : SLang T := λ _ : T => 0
 
 /--
-The Dirac distribution as a ``SLang``
+The Dirac distribution as a ``SLang``.
 -/
-def pure (a : T) : SLang T := fun a' => if a' = a then 1 else 0
+def probPure (a : T) : SLang T := fun a' => if a' = a then 1 else 0
 
 /--
-Monadic bind for ``SLang`` values
+Monadic bind for ``SLang`` values.
 -/
-def bind (p : SLang T) (f : T → SLang U) : SLang U :=
+def probBind (p : SLang T) (f : T → SLang U) : SLang U :=
   fun b => ∑' a, p a * f a b
 
 instance : Monad SLang where
-  pure a := pure a
-  bind pa pb := pa.bind pb
+  pure a := probPure a
+  bind pa pb := pa.probBind pb
 
 /--
-``SLang`` value for the uniform distribution over ``m`` elements;
+``SLang`` value for the uniform distribution over ``m`` elements, where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
-def uniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
+def probUniformP2 (n : ℕ+) : SLang ℕ :=
   toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
   --((PMF.uniformOfFintype (Fin (2 ^ (log 2 n)))) : PMF ℕ).1
 
 /--
 ``SLang`` functional which executes ``body`` only when ``cond`` is ``false``.
 -/
-def whileFunctional (cond : T → Bool) (body : T → SLang T) (wh : T → SLang T) : T → SLang T :=
+def probWhileFunctional (cond : T → Bool) (body : T → SLang T) (wh : T → SLang T) : T → SLang T :=
   λ a : T =>
   if cond a
     then do
@@ -97,32 +95,26 @@ def whileFunctional (cond : T → Bool) (body : T → SLang T) (wh : T → SLang
       wh v
     else return a
 
--- MARKUSDE: Rename me
 /--
-``SLang`` value obtained by unrolling a loop body exactly ``n`` times
+``SLang`` value obtained by unrolling a loop body exactly ``n`` times.
 -/
 def probWhileCut (cond : T → Bool) (body : T → SLang T) (n : Nat) (a : T) : SLang T :=
   match n with
-  | Nat.zero => zero
-  | succ n => whileFunctional cond body (probWhileCut cond body n) a
+  | Nat.zero => probZero
+  | succ n => probWhileFunctional cond body (probWhileCut cond body n) a
 
--- MARKUSDE: Rename me
+
 /--
-``SLang`` value for an unbounded iteration of a loop
+``SLang`` value for an unbounded iteration of a loop.
 -/
 def probWhile (cond : T → Bool) (body : T → SLang T) (init : T) : SLang T :=
   fun x => ⨆ (i : ℕ), (probWhileCut cond body i init x)
 
--- MARKUSDE: Rename me
 /--
-``SLang`` value which rejects samples from ``body`` until they satisfy ``cond``
+``SLang`` value which rejects samples from ``body`` until they satisfy ``cond``.
 -/
 def probUntil (body : SLang T) (cond : T → Bool) : SLang T := do
   let v ← body
   probWhile (λ v : T => ¬ cond v) (λ _ : T => body) v
 
--- MARKUSDE: Possibly define a truncated ``until`` operator? Many lemmas stated this way
-
 end SLang
-
-#lint docBlame

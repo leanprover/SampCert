@@ -93,8 +93,8 @@ Evaluates the ``uniformPowerOfTwoSample`` distribution at a point inside of its 
 -/
 @[simp]
 theorem uniformPowerOfTwoSample_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
-  (uniformPowerOfTwoSample n) x = 1 / (2 ^ (log 2 n)) := by
-  simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+  (probUniformP2 n) x = 1 / (2 ^ (log 2 n)) := by
+  simp only [probUniformP2, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
     CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
     uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply, one_div]
   rw [ENNReal.tsum_mul_left]
@@ -107,8 +107,8 @@ Evaluates the ``uniformPowerOfTwoSample`` distribution at a point outside of its
 -/
 @[simp]
 theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
-  uniformPowerOfTwoSample n x = 0 := by
-  simp [uniformPowerOfTwoSample]
+  probUniformP2 n x = 0 := by
+  simp [probUniformP2]
   intro i
   cases i
   rename_i i P
@@ -140,11 +140,11 @@ lemma if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
 The ``SLang`` term ``uniformPowerOfTwo`` is a proper distribution on ``ℕ``.
 -/
 theorem uniformPowerOfTwoSample_normalizes (n : PNat) :
-  ∑' i : ℕ, uniformPowerOfTwoSample n i = 1 := by
+  ∑' i : ℕ, probUniformP2 n i = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ (2 ^ (log 2 n))]
   . simp only [ge_iff_le, le_add_iff_nonneg_left, _root_.zero_le, UniformPowerOfTwoSample_apply',
     tsum_zero, add_zero]
-    simp only [uniformPowerOfTwoSample, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
+    simp only [probUniformP2, Lean.Internal.coeM, Bind.bind, Pure.pure, CoeT.coe,
       CoeHTCT.coe, CoeHTC.coe, CoeOTC.coe, CoeOut.coe, toSLang_apply, PMF.bind_apply,
       uniformOfFintype_apply, Fintype.card_fin, cast_pow, cast_ofNat, PMF.pure_apply]
     rw [Finset.sum_range]

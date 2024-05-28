@@ -36,11 +36,11 @@ theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init 
     simp [probWhileCut]
   . rename_i n IH
     intro init
-    simp [probWhileCut,whileFunctional]
+    simp [probWhileCut,probWhileFunctional]
     split
     . rename_i COND
-      unfold SLang.bind
-      unfold SLang.pure
+      unfold probBind
+      unfold SLang.probPure
       simp
       apply ENNReal.tsum_le_tsum
       intro a

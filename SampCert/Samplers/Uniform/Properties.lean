@@ -79,7 +79,7 @@ larger than support restriction ``[0, n)`` imposed by the guard.
 -/
 @[simp]
 theorem rw_ite (n : PNat) (x : Nat) :
-  (if x < n then (uniformPowerOfTwoSample (2 * n)) x else 0)
+  (if x < n then (probUniformP2 (2 * n)) x else 0)
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
   rw [uniformPowerOfTwoSample_apply]
@@ -90,8 +90,8 @@ theorem rw_ite (n : PNat) (x : Nat) :
 
 -- MARKUSDE: only used in once place?
 lemma tsum_comp (n : PNat) :
-  (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => uniformPowerOfTwoSample (2 * n) i) ↑x)
-    = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), uniformPowerOfTwoSample (2 * n) ↑i := by
+  (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => probUniformP2 (2 * n) i) ↑x)
+    = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), probUniformP2 (2 * n) ↑i := by
   apply tsum_congr_set_coe
   simp
   ext x
@@ -100,24 +100,24 @@ lemma tsum_comp (n : PNat) :
 -- MARKUSDE: also only used in one file, is this  just a lemma or is it meant for something more?
 -- This should be proved more generally
 theorem uniformPowerOfTwoSample_autopilot (n : PNat) :
-  (1 - ∑' (i : ℕ), if ↑n ≤ i then uniformPowerOfTwoSample (2 * n) i else 0)
-    = ∑' (i : ℕ), if i < ↑n then uniformPowerOfTwoSample (2 * n) i else 0 := by
-  have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then uniformPowerOfTwoSample (2 * n) i else 0) +
-    (∑' (i : ℕ), if decide (↑n ≤ i) = false then uniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
+  (1 - ∑' (i : ℕ), if ↑n ≤ i then probUniformP2 (2 * n) i else 0)
+    = ∑' (i : ℕ), if i < ↑n then probUniformP2 (2 * n) i else 0 := by
+  have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then probUniformP2 (2 * n) i else 0) +
+    (∑' (i : ℕ), if decide (↑n ≤ i) = false then probUniformP2 (2 * n) i else 0) = 1 := by
     have A := uniformPowerOfTwoSample_normalizes (2 * n)
-    have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => uniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
+    have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => probUniformP2 (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
-    have C := @tsum_split_coe_right _ (fun i => ↑n ≤ i) (fun i => uniformPowerOfTwoSample (2 * n) i)
+    have C := @tsum_split_coe_right _ (fun i => ↑n ≤ i) (fun i => probUniformP2 (2 * n) i)
     rw [C] at B
     clear C
-    have D := @tsum_split_coe_left _ (fun i => ↑n ≤ i) (fun i => uniformPowerOfTwoSample (2 * n) i)
+    have D := @tsum_split_coe_left _ (fun i => ↑n ≤ i) (fun i => probUniformP2 (2 * n) i)
     rw [tsum_comp n] at B
     rw [D] at B
     clear D
     trivial
   apply ENNReal.sub_eq_of_eq_add_rev
-  . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => uniformPowerOfTwoSample (2 * n) i)
+  . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => probUniformP2 (2 * n) i)
     rw [uniformPowerOfTwoSample_normalizes (2 * n)] at Y
     simp at Y
     clear X
@@ -141,7 +141,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   simp only [support, ↓reduceIte, mul_one]
   have A : ∀ x_1, @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
           (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n)
-          ((2 ^ log 2 (↑(2 : ℕ+) * ↑n))⁻¹ * (1 - ∑' (x : ℕ), @ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (uniformPowerOfTwoSample (2 * n) x))⁻¹ *
+          ((2 ^ log 2 (↑(2 : ℕ+) * ↑n))⁻¹ * (1 - ∑' (x : ℕ), @ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (probUniformP2 (2 * n) x))⁻¹ *
           @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0)
           0) = 0 := by
     intro x1
@@ -162,9 +162,9 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     rw [A]
   clear A
   simp only [tsum_zero, add_zero]
-  have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (uniformPowerOfTwoSample (2 * n) x))
+  have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (probUniformP2 (2 * n) x))
            =
-           (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (uniformPowerOfTwoSample (2 * n) x) 0) := by
+           (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (probUniformP2 (2 * n) x) 0) := by
     intro x
     split
     . split

@@ -49,7 +49,7 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
   . simp only [zero_eq, until_zero, implies_true]
   . rename_i fuel IH
     intro j
-    simp only [probWhileCut, whileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
+    simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
       bind_apply, pure_apply]
     split
     . simp only [IH, mul_zero, tsum_zero]
@@ -91,7 +91,7 @@ lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
-  simp [probWhileCut, whileFunctional, ite_apply]
+  simp [probWhileCut, probWhileFunctional, ite_apply]
   rw [tsum_split_ite']
   simp only [tsum_zero, zero_add]
   have FOO := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
@@ -144,7 +144,7 @@ theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x 
   . simp only [zero_eq, until_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   . rename_i fuel IH
     unfold probWhileCut
-    unfold whileFunctional
+    unfold probWhileFunctional
     simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply, mul_ite,
       mul_one, mul_zero]
     rw [tsum_split_ite_exp]

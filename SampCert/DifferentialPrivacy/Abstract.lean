@@ -90,9 +90,9 @@ def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
 -- MARKUSDE: Move??
 @[simp]
 theorem bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
-  (fun l => (p l).bind (fun a : U => (q l).bind fun b : V => h a b))
+  (fun l => (p l).probBind (fun a : U => (q l).probBind fun b : V => h a b))
     =
-  fun l => (Compose p q l).bind (fun z => h z.1 z.2) := by
+  fun l => (Compose p q l).probBind (fun z => h z.1 z.2) := by
   ext l x
   simp [ComposeRW, tsum_prod']
   apply tsum_congr

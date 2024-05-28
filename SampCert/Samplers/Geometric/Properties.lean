@@ -108,7 +108,7 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
     (trial true) * probWhileCut loop_cond (loop_body trial) fuel (true, n + 1) st := by
   cases st
   rename_i b m
-  simp [probWhileCut, whileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, probWhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
   conv =>
     left
     . congr
@@ -132,7 +132,7 @@ theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
   probWhileCut loop_cond (loop_body trial) (succ fuel) (false,n) st =
   if st = (false,n) then 1 else 0 := by
   cases st
-  simp [probWhileCut, whileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, probWhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
 /--
 Evaluation for an unrolling of ``geometric`` on a ``(false, -)`` state
@@ -342,9 +342,9 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
     simp
   . rename_i fuel IH
     intro n k b
-    simp [probWhileCut,whileFunctional,loop_body,loop_cond]
-    unfold SLang.bind
-    unfold SLang.pure
+    simp [probWhileCut,probWhileFunctional,loop_body,loop_cond]
+    unfold probBind
+    unfold probPure
     simp [ite_apply]
     split
     . rename_i h

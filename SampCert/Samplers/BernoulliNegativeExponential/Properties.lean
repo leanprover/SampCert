@@ -36,9 +36,9 @@ theorem BernoulliExpNegSampleUnitAux_returns_false (num : ℕ) (den : ℕ+) (fue
   . simp [probWhileCut]
   . rename_i fuel IH
     intro st r
-    simp [probWhileCut, whileFunctional]
-    unfold SLang.bind
-    unfold SLang.pure
+    simp [probWhileCut, probWhileFunctional]
+    unfold probBind
+    unfold probPure
     simp [ite_apply]
     split
     . rename_i h
@@ -74,7 +74,7 @@ theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : 
     + (1 - (num / (r * den))) * probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st := by
   cases st
   rename_i b' r'
-  simp [probWhileCut, whileFunctional, ite_apply, ENNReal.tsum_prod', tsum_bool, BernoulliExpNegSampleUnitLoop]
+  simp [probWhileCut, probWhileFunctional, ite_apply, ENNReal.tsum_prod', tsum_bool, BernoulliExpNegSampleUnitLoop]
   conv =>
     left
     congr
@@ -97,7 +97,7 @@ theorem BernoulliExpNegSampleUnitAux_succ_false (num : ℕ) (den : ℕ+) (fuel :
   probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (false, r) st =
   if st = (false,r) then 1 else 0 := by
   cases st
-  simp [probWhileCut, whileFunctional]
+  simp [probWhileCut, probWhileFunctional]
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_monotone_counter (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
