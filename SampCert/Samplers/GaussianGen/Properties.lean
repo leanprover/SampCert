@@ -9,9 +9,9 @@ import SampCert.Util.Gaussian.DiscreteGaussian
 import SampCert.Util.Gaussian.GaussPeriodicity
 
 /-!
-# General Discrete Gaussian Properties
+# ``DiscreteGaussianGenSample`` Properties
 
-This file contains properties of the general discrete Gaussian sampler.
+This file proves evaluation and normalization properties of ``DiscreteGaussianGenSample``.
 -/
 noncomputable section
 
@@ -32,7 +32,7 @@ lemma if_simple_GaussianGen (x_1 x μ : ℤ) :
     . simp
 
 /--
-``SLang`` general discrete gaussian term evaluates to the mathematical ``discrete_gaussian`` specification.
+``SLang`` general discrete gaussian term evaluates according to the mathematical ``discrete_gaussian`` distribution.
 -/
 theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   (DiscreteGaussianGenSample num den μ) x =

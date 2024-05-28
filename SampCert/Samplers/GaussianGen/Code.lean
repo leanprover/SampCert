@@ -7,7 +7,11 @@ import SampCert.SLang
 import SampCert.Samplers.Gaussian.Code
 
 /-!
-# General Discrete Gaussian implementation
+# ``DiscreteGaussianGenSample`` Implementation
+
+## Implementation Note
+The identifier ``DiscreteGaussianGenSample`` violates our naming scheme, however we will keep it
+this way for parity with ``DiscreteGaussianGen``.
 -/
 
 noncomputable section
