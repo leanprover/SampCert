@@ -8,7 +8,13 @@ import SampCert.Samplers.BernoulliNegativeExponential.Code
 import SampCert.Samplers.Laplace.Code
 
 /-!
-# Sampler for the Discrete Gaussian distribution
+# ``DiscreteGaussianSample`` Implementation
+
+## Implementation Notes
+
+The following identifiers violate our naming scheme, but are currently necessary for extraction:
+  - ``DiscreteGaussianSampleLoop``
+  - ``DiscreteGaussianSample``
 -/
 
 

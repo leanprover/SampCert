@@ -14,11 +14,10 @@ import SampCert.Samplers.Gaussian.Code
 import SampCert.Util.Gaussian.DiscreteGaussian
 
 /-!
-# Discrete Gaussian Sampler properties
+# ``DiscreteGaussianSample`` Properties
 
-This file proves facts about the Discrete Gaussian Sampler
+This file proves evaluation and normalization properties of ``DiscreteGaussianSample``.
 
-MARKUSDE: Which ones?
 -/
 
 noncomputable section
@@ -56,7 +55,7 @@ lemma ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
     . simp
 
 /--
-Gaussian sampling attempt is a proper distribution
+Gaussian sampling attempt is a proper distribution.
 -/
 @[simp]
 theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
@@ -106,7 +105,7 @@ lemma ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
     contradiction
 
 /--
-Evaluation of the discrete Gaussian sample loop distribution when the termination flag is ``true``
+Evaluation of the discrete Gaussian sample loop distribution when the termination flag is ``true``.
 -/
 @[simp]
 theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
