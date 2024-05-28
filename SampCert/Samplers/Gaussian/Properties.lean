@@ -17,7 +17,6 @@ import SampCert.Util.Gaussian.DiscreteGaussian
 # ``DiscreteGaussianSample`` Properties
 
 This file proves evaluation and normalization properties of ``DiscreteGaussianSample``.
-
 -/
 
 noncomputable section

@@ -9,20 +9,16 @@ import Mathlib.Topology.Algebra.InfiniteSum.Basic
 /-!
 # Util
 
-This file contains a variety of utility lemmas.
+This file contains general SampCert utility lemmas
 -/
 
 open Function Nat Set BigOperators Finset
 
--- MARKUSDE: Surely this is somwehere else? Is this not the defining property of subtypes?
--- MARKUSDE: (subtle) { _ // _ } represents subtypes, not subsets, right?
 theorem in_subset_satisfies (P : ℕ → Prop) (x : { x // P x }) : P x := by
   cases x
   simp
   trivial
 
--- MARKUSDE: Refactored to pass linter. Check with JBT: What considerations should
--- I make when refactoring? Does anything about extraction change etc?
 /--
 Simplify a sum over a step function
 -/
@@ -45,7 +41,6 @@ theorem sum_simple (bound : ℕ) (k : ENNReal) :
     simp
 
 
--- MARKUSDE: add @[simp]? I'd guess that's how it would be used.
 /--
 Simplify guarded series when series indices satisfy the guard
 -/
@@ -80,8 +75,6 @@ theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
     simp [A] at h
   . simp
 
--- MARKUSDE: Is absolute convergence under the hood somewhere here or is there some other trick?
--- MARKUSDE: cond x = (x % 2 = 0), f _ = 1, g _ = -1
 /--
 Partition series indices based on conditional guard
 -/
@@ -200,7 +193,6 @@ theorem tsum_shift_1 (f : ℕ → ENNReal) :
       rw [sum_range_succ]
     rw [← IH]
 
--- MARKUSDE: Simplify me (in terms of tsum_shift_1)
 /--
 Remove leading zero from series
 -/
@@ -260,6 +252,3 @@ theorem tsum_shift'_2 (f : ℕ → ENNReal) :
       right
       rw [sum_range_succ]
     rw [← IH]
-
-
-#lint docBlame
