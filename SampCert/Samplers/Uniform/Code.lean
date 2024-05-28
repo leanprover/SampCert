@@ -21,7 +21,7 @@ namespace SLang
 /-- ``Slang`` term for a uniform sample over [0, n). Implemented using rejection sampling on
   top of the power of two uniform sampler ``probUniformP2``. -/
 def UniformSample (n : PNat) : SLang Nat := do
-  let r ← probUntil (probUniformP2 (2 * n)) (λ x : Nat => x < n)
+  let r ← probUntil (UniformPowerOfTwoSample (2 * n)) (λ x : Nat => x < n)
   return r
 
 end SLang

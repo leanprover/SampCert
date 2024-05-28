@@ -18,7 +18,10 @@ open SLang
 
 Attributes which trigger extraction.
 
-The names in this file are protected: the extractor will not work if these names are changed.
+The names in this file are protected: the extractor will not work if these names are changed.a
+
+Additionally, the following names are protected:
+ - ``UniformPowerOfTwoSample``
 -/
 
 attribute [export_dafny] UniformSample

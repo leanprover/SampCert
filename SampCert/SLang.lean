@@ -80,7 +80,8 @@ instance : Monad SLang where
 ``SLang`` value for the uniform distribution over ``m`` elements, where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
-def probUniformP2 (n : ℕ+) : SLang ℕ :=
+-- MARKUSDE: I would like to change this to ``probUniformP2`` once it doesn't break extraction.
+def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
   toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
   --((PMF.uniformOfFintype (Fin (2 ^ (log 2 n)))) : PMF ℕ).1
 
