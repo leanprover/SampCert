@@ -49,7 +49,7 @@ def DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat) : SLang Nat := do
 def DiscreteLaplaceSampleLoop' (num : PNat) (den : PNat) : SLang (Bool × Nat) := do
   let U ← DiscreteLaplaceSampleLoopIn1 num
   let v ← DiscreteLaplaceSampleLoopIn2 1 1
-  let V := v - 1 -- MARKUSDE ???
+  let V := v - 1
   let X := U + num * V
   let Y := X / den
   let B ← BernoulliSample 1 2 (Nat.le.step Nat.le.refl)

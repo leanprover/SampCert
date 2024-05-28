@@ -12,9 +12,9 @@ import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
 
 /-!
-# Properties of the Bernoulli Negative Exponential sampler
+# ``BernoulliNegExpSample`` Properties
 
--- MARKUSDE: which ones?
+This file proves evaluation and normalization for ``BernoulliNegExpSample``.
 -/
 
 noncomputable section

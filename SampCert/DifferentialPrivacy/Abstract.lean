@@ -11,8 +11,6 @@ import SampCert.Foundations.Basic
 # Differential Privacy
 
 This file defines a notion of a differential private system.
-
-MARKUSDE: Check with JBT that I actually understand what he's doing here.
 -/
 
 noncomputable section

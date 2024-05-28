@@ -289,7 +289,7 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       . apply sg_sum_pos' h
       . apply sg_sum_pos' h
 
--- MARKUSDE: Dead code
+-- Dead code
 -- theorem SG_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ : ℤ) :
 --   (∑' x : ℤ, (gauss_term_ℝ σ μ) (x + τ)) = ∑' x : ℤ, (gauss_term_ℝ σ μ) x := by
 --   have B := tsum_shift (fun x : ℤ => (gauss_term_ℝ σ μ) x) τ

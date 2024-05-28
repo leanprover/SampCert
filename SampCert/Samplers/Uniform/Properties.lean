@@ -28,8 +28,6 @@ namespace SLang
 --     ENNReal.coe_div, pow_eq_zero_iff, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat, ENNReal.coe_mul,
 --     coe_natCast]
 
--- MARKUSDE: Used in one place, inline?
-
 theorem rw1 (n : PNat) :
   ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : ENNReal)
    = ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : NNReal) := by
