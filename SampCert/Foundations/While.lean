@@ -9,9 +9,9 @@ import SampCert.Foundations.Auto
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
-# While
+# ``probWhile`` properties
 
-This file proves properties about the ``probWhile`` term of ``SLang``.
+This file proves evaluation and normalization results about ``probWhile``.
 -/
 
 noncomputable section

@@ -11,7 +11,7 @@ import SampCert.Foundations.Monad
 import SampCert.Foundations.Auto
 
 /-!
-# UniformP2
+# ``probUniformP2`` properties
 
 This file contains lemmas about ``probUniformP2``, a ``SLang`` sampler for the
 uniform distribution on spaces whose size is a power of two.

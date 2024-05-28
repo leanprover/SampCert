@@ -7,10 +7,9 @@ import SampCert.Foundations.While
 import SampCert.Util.Util
 
 /-!
-# Until
+# ``probUntil`` properties
 
-Results about the ``probUntil`` term of ``SLang``.
-
+This file proves evaluation and normalization results about ``probUntil``.
 
 ## Implementation Notes
 
@@ -28,7 +27,7 @@ namespace SLang
 variable {T : Type}
 
 /--
-Truncation of ``probUntil`` program to zero unrollings is identically zero
+Truncation of ``probUntil`` program to zero unrollings is identically zero.
 -/
 @[simp]
 theorem probUntilCut_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
