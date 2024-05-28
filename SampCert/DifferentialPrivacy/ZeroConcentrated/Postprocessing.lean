@@ -603,8 +603,8 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   contradiction
 
 theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
-  DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
-  simp [PostProcess, DP, RenyiDivergence]
+  DP (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
+  simp [privPostProcess, DP, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
   simp [DP, RenyiDivergence] at h'
@@ -691,8 +691,8 @@ theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq 
         contradiction
 
 theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
-  NonZeroNQ (PostProcess nq f) := by
-  simp [NonZeroNQ, Function.Surjective, PostProcess] at *
+  NonZeroNQ (privPostProcess nq f) := by
+  simp [NonZeroNQ, Function.Surjective, privPostProcess] at *
   intros l n
   replace sur := sur n
   cases sur
@@ -703,8 +703,8 @@ theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : No
   . apply nn
 
 theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
-  NonTopSum (PostProcess nq f) := by
-  simp [NonTopSum, PostProcess] at *
+  NonTopSum (privPostProcess nq f) := by
+  simp [NonTopSum, privPostProcess] at *
   intros l
   have nt := nt l
   rw [← ENNReal.tsum_fiberwise _ f] at nt
@@ -725,8 +725,8 @@ theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : No
   trivial
 
 theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :DP nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
-  NonTopRDNQ (PostProcess nq f) := by
-  simp [NonTopRDNQ, NonTopSum, PostProcess] at *
+  NonTopRDNQ (privPostProcess nq f) := by
+  simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
   intros α h1 l₁ l₂ h2
   have ntrdnq := nt
   replace nt := nt α h1 l₁ l₂ h2
@@ -740,7 +740,7 @@ theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} 
 Postprocessing preserves zCDP
 -/
 theorem zCDPPostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
-  zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
+  zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   repeat any_goals constructor

@@ -26,8 +26,9 @@ abbrev Mechanism (T U : Type) := List T → SLang U
 Product of mechanisms.
 
 MARKUSDE: Doesn't "composition" imply the second one can depend on the first? As in Lemma 31 of "The Discrete Gaussian for Differential Privacy".
+I think this should be named privSeq, the privacy bound composes, but the programs themselves are just sequenced.
 -/
-def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
+def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
   let A ← nq1 l
   let B ← nq2 l
   return (A,B)
@@ -35,7 +36,7 @@ def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U 
 /--
 Mechanism obtained by applying a post-processing function to a mechanism.
 -/
-def PostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
+def privPostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
   let A ← nq l
   return pp A
 
@@ -61,37 +62,37 @@ class DPSystem (T : Type) where
   Notion of privacy composes by addition.
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (Compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
   Notion of privacy is invariant under post-processing.
   -/
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
-   prop m (ε₁ / ε₂) → prop (PostProcess m pp) (ε₁ / ε₂)
+   prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
 
 -- MARKUSDE: ??
 def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
-  Compose nq1 nq2 =
+  privCompose nq1 nq2 =
   fun l => do
     let A ← nq1 l
     let B ← nq2 l
     return (A,B) := by
   ext l x
-  simp [Compose]
+  simp [privCompose]
 
 -- MARKUSDE: ??
 def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
-  PostProcess nq pp =
+  privPostProcess nq pp =
   fun l => do
     let A ← nq l
     return pp A := by
   ext l x
-  simp [PostProcess]
+  simp [privPostProcess]
 
 @[simp]
 lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
   (fun l => (p l).probBind (fun a : U => (q l).probBind fun b : V => h a b))
     =
-  fun l => (Compose p q l).probBind (fun z => h z.1 z.2) := by
+  fun l => (privCompose p q l).probBind (fun z => h z.1 z.2) := by
   ext l x
   simp [ComposeRW, tsum_prod']
   apply tsum_congr

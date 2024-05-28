@@ -137,8 +137,8 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : DP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : DP nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
-  DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
-  simp [Compose, RenyiDivergence, DP]
+  DP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  simp [privCompose, RenyiDivergence, DP]
   intro α h3 l₁ l₂ h4
   have X := h1
   have Y := h2
@@ -206,24 +206,24 @@ theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ �
 All outputs of a composed query have nonzero probability.
 -/
 theorem DPCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (Compose nq1 nq2) := by
+  NonZeroNQ (privCompose nq1 nq2) := by
   simp [NonZeroNQ] at *
   intro l a b
   replace nn1 := nn1 l a
   replace nn2 := nn2 l b
-  simp [Compose]
+  simp [privCompose]
   exists a
 
 /--
 All outputs of a composed query have finite probability.
 -/
 theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
-  NonTopNQ (Compose nq1 nq2) := by
+  NonTopNQ (privCompose nq1 nq2) := by
   simp [NonTopNQ] at *
   intro l a b
   replace nt1 := nt1 l a
   replace nt2 := nt2 l b
-  simp [Compose]
+  simp [privCompose]
   rw [compose_sum_rw]
   rw [mul_eq_top]
   intro H
@@ -239,12 +239,12 @@ theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V}
 Composed queries are normalizable.
 -/
 theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
-  NonTopSum (Compose nq1 nq2) := by
+  NonTopSum (privCompose nq1 nq2) := by
   simp [NonTopSum] at *
   intro l
   replace nt1 := nt1 l
   replace nt2 := nt2 l
-  simp [Compose]
+  simp [privCompose]
   rw [ENNReal.tsum_prod']
   conv =>
     right
@@ -276,12 +276,12 @@ theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V
 Renyi divergence beteeen composed queries on neighbours are finite.
 -/
 theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
-  NonTopRDNQ (Compose nq1 nq2) := by
+  NonTopRDNQ (privCompose nq1 nq2) := by
   simp [NonTopRDNQ] at *
   intro α h1 l₁ l₂ h2
   replace nt1 := nt1 α h1 l₁ l₂ h2
   replace nt2 := nt2 α h1 l₁ l₂ h2
-  simp [Compose]
+  simp [privCompose]
   rw [ENNReal.tsum_prod']
   simp
   conv =>
@@ -342,7 +342,7 @@ theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang 
 zCDP composition bound.
 -/
 theorem zCDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  zCDP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   cases h' ; rename_i h'1 h'2 ; cases h'2 ; rename_i h'2 h'3 ; cases h'3 ; rename_i h'3 h'4 ; cases h'4 ; rename_i h'4 h'5
