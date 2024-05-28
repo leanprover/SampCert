@@ -312,12 +312,12 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
-    = geometric (BernoulliExpNegSample num den) := by
+    = probGeometric (BernoulliExpNegSample num den) := by
   unfold DiscreteLaplaceSampleLoopIn2
   unfold DiscreteLaplaceSampleLoopIn2Aux
-  unfold geometric
-  unfold loop_cond
-  unfold loop_body
+  unfold probGeometric
+  unfold geoLoopCond
+  unfold geoLoopBody
   rfl
 
 
@@ -483,7 +483,7 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
 
   simp only [add_zero]
 
-  have A : geometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
+  have A : probGeometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
   rw [A]
   simp only [ge_iff_le, _root_.zero_le, tsub_eq_zero_of_le, ↓reduceIte,
     cast_one, one_div, zero_mul, ite_self,  add_eq_zero, one_ne_zero,
@@ -500,7 +500,7 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
   rw [A]
   clear A
   rw [mul_one]
-  apply geometric_normalizes'
+  apply probGeometric_normalizes'
   . have A := BernoulliExpNegSample_normalizes den num
     rw [tsum_bool] at A
     trivial
