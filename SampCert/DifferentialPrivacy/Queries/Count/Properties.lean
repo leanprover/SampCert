@@ -10,7 +10,7 @@ import SampCert.DifferentialPrivacy.Abstract
 /-!
 # ``queryNoisedCount`` Properties
 
-This file proves differential privacy for ``queryNoisedCount``.
+This file proves abstract differential privacy for ``queryNoisedCount``.
 -/
 
 open Classical Nat Int Real

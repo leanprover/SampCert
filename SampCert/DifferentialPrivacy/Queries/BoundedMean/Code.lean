@@ -8,7 +8,9 @@ import SampCert.DifferentialPrivacy.Queries.Count.Code
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
 
 /-!
-# Bounded mean implementation
+# ``queryNoisedBoundedMean`` Implementation
+
+This file defines a differentially private noising of a bounded mean query.
 -/
 
 noncomputable section
@@ -20,8 +22,8 @@ variable [dps : DPSystem ℕ]
 /--
 Compute a noised mean using a noised sum and noised count
 -/
-def NoisedBoundedAvgQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ := do
-  let S ← NoisedBoundedSumQuery U ε₁ (2 * ε₂) l
+def queryNoisedBoundedMean (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ := do
+  let S ← queryNoisedBoundedSum U ε₁ (2 * ε₂) l
   let C ← queryNoisedCount ε₁ (2 * ε₂) l
   return S / C
 

@@ -9,7 +9,9 @@ import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 
 /-!
-# Code for bounded sum query
+# ``queryNoisedBoundedSum`` Implementation
+
+This file defines a differentially private noising of a bounded sum query.
 -/
 
 noncomputable section
@@ -21,13 +23,13 @@ variable [dps : DPSystem ℕ]
 /--
 Bounded sum query: computes a sum and truncates it at an upper bound.
 -/
-def BoundedSumQuery (U : ℕ+) (l : List ℕ) : ℤ :=
+def exactBoundedSum (U : ℕ+) (l : List ℕ) : ℤ :=
   List.sum (List.map (fun n : ℕ => (Nat.min n U)) l)
 
 /--
 Noised bounded sum query obtained by applying the DP noise mechanism to the bounded sum.
 -/
-def NoisedBoundedSumQuery (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℤ := do
-  dps.noise (BoundedSumQuery U) U ε₁ ε₂ l
+def queryNoisedBoundedSum (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℤ := do
+  dps.noise (exactBoundedSum U) U ε₁ ε₂ l
 
 end SLang
