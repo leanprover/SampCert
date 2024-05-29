@@ -6,6 +6,13 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 
+/-!
+# zCDP Composition
+
+This file builds up to a zCDP bound on composed zCDP queries. In this definition of
+composition, query values cannot depend on the value of prior queries.
+-/
+
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
@@ -16,20 +23,23 @@ variable { T U V : Type }
 variable [Inhabited U]
 variable [Inhabited V]
 
-theorem ENNReal_toTeal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
+lemma ENNReal_toReal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
   x.toReal ≠ 0 := by
   unfold ENNReal.toReal
   unfold ENNReal.toNNReal
   simp
   constructor ; any_goals trivial
 
-theorem simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
+lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
   apply @lt_trans _ _ _ 1 _ _ h
   simp only [zero_lt_one]
 
-theorem RenyiNoisedQueryNonZero {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : DP nq ε) (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
+/--
+The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
+-/
+theorem Renyi_noised_query_NZ {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq ε) (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
   (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
-  simp [DP] at h3
+  simp [zCDPBound] at h3
   replace h3 := h3 α h1 l₁ l₂ h2
   simp [RenyiDivergence] at h3
   simp [NonZeroNQ] at h4
@@ -37,7 +47,7 @@ theorem RenyiNoisedQueryNonZero {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 
   replace h5 := h5 α h1 l₁ l₂ h2
   have h6 := h4 l₁
   have h7 := h4 l₂
-  apply ENNReal_toTeal_NZ
+  apply ENNReal_toReal_NZ
   . by_contra CONTRA
     rw [ENNReal.tsum_eq_zero] at CONTRA
     replace CONTRA := CONTRA default
@@ -62,7 +72,10 @@ theorem RenyiNoisedQueryNonZero {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 
         contradiction
   . exact h5
 
-theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
+/--
+Simplification lemma for products of noised queries.
+-/
+lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
   (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
   have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
     intro x  y
@@ -118,13 +131,17 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
     rw [C]
   simp
 
-theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : DP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : DP nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
-  DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
-  simp [Compose, RenyiDivergence, DP]
+
+/--
+Composed queries satisfy zCDP Renyi divergence bound.
+-/
+theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
+  zCDPBound (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   have X := h1
   have Y := h2
-  simp [DP] at h1 h2
+  simp [zCDPBound] at h1 h2
   replace h1 := h1 α h3 l₁ l₂ h4
   replace h2 := h2 α h3 l₁ l₂ h4
   simp [RenyiDivergence] at h1 h2
@@ -181,25 +198,31 @@ theorem DPCompose {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ �
           simp
         . simp
       . apply lt_trans zero_lt_one h3
-    . apply RenyiNoisedQueryNonZero h3 h4 X nn1 nt1 nts1
-    . apply RenyiNoisedQueryNonZero h3 h4 Y nn2 nt2 nts2
+    . apply Renyi_noised_query_NZ h3 h4 X nn1 nt1 nts1
+    . apply Renyi_noised_query_NZ h3 h4 Y nn2 nt2 nts2
 
-theorem DPCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (Compose nq1 nq2) := by
+/--
+All outputs of a composed query have nonzero probability.
+-/
+theorem privCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
+  NonZeroNQ (privCompose nq1 nq2) := by
   simp [NonZeroNQ] at *
   intro l a b
   replace nn1 := nn1 l a
   replace nn2 := nn2 l b
-  simp [Compose]
+  simp [privCompose]
   exists a
 
-theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
-  NonTopNQ (Compose nq1 nq2) := by
+/--
+All outputs of a composed query have finite probability.
+-/
+theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
+  NonTopNQ (privCompose nq1 nq2) := by
   simp [NonTopNQ] at *
   intro l a b
   replace nt1 := nt1 l a
   replace nt2 := nt2 l b
-  simp [Compose]
+  simp [privCompose]
   rw [compose_sum_rw]
   rw [mul_eq_top]
   intro H
@@ -211,13 +234,16 @@ theorem DPCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V}
     cases H
     contradiction
 
-theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
-  NonTopSum (Compose nq1 nq2) := by
+/--
+Composed queries are normalizable.
+-/
+theorem privCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
+  NonTopSum (privCompose nq1 nq2) := by
   simp [NonTopSum] at *
   intro l
   replace nt1 := nt1 l
   replace nt2 := nt2 l
-  simp [Compose]
+  simp [privCompose]
   rw [ENNReal.tsum_prod']
   conv =>
     right
@@ -245,13 +271,16 @@ theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V
     cases H
     contradiction
 
-theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
-  NonTopRDNQ (Compose nq1 nq2) := by
+/--
+Renyi divergence beteeen composed queries on neighbours are finite.
+-/
+theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
+  NonTopRDNQ (privCompose nq1 nq2) := by
   simp [NonTopRDNQ] at *
   intro α h1 l₁ l₂ h2
   replace nt1 := nt1 α h1 l₁ l₂ h2
   replace nt2 := nt2 α h1 l₁ l₂ h2
-  simp [Compose]
+  simp [privCompose]
   rw [ENNReal.tsum_prod']
   simp
   conv =>
@@ -308,17 +337,20 @@ theorem DPCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang 
     rename_i h4 h5
     contradiction
 
-theorem zCDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  zCDP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+/--
+``privCompose`` satisfies zCDP
+-/
+theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
+  zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   cases h' ; rename_i h'1 h'2 ; cases h'2 ; rename_i h'2 h'3 ; cases h'3 ; rename_i h'3 h'4 ; cases h'4 ; rename_i h'4 h'5
   repeat any_goals constructor
-  . apply DPCompose h1 h'1 h2 h'2 h5 h'5 h4 h'4
-  . apply DPCompose_NonZeroNQ h2 h'2
-  . apply DPCompose_NonTopSum h3 h'3
-  . apply DPCompose_NonTopNQ h4 h'4
-  . apply DPCompose_NonTopRDNQ h5 h'5 h4 h'4
+  . apply privCompose_zCDPBound h1 h'1 h2 h'2 h5 h'5 h4 h'4
+  . apply privCompose_NonZeroNQ h2 h'2
+  . apply privCompose_NonTopSum h3 h'3
+  . apply privCompose_NonTopNQ h4 h'4
+  . apply privCompose_NonTopRDNQ h5 h'5 h4 h'4
 
 
 end SLang

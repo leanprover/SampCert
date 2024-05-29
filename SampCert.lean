@@ -9,4 +9,4 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 
 open SLang
 
-def combine := @BoundedSumQueryDP zCDPSystem
+def combine := @privNoisedBoundedMean_DP gaussian_zCDPSystem

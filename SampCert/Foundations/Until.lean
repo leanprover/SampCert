@@ -3,9 +3,20 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.While
 import SampCert.Util.Util
+
+/-!
+# ``probUntil`` Properties
+
+This file proves evaluation and normalization results about ``probUntil``.
+
+## Implementation Notes
+
+Many lemmas in this file deal are stated for truncations of the ``probUntil`` program
+to a finite number of attempts. Because this term is not used outside this file, we
+will not factor out an explicit ``probUntilCut`` term.
+-/
 
 noncomputable section
 
@@ -15,20 +26,27 @@ namespace SLang
 
 variable {T : Type}
 
+/--
+Truncation of ``probUntil`` program to zero unrollings is identically zero.
+-/
 @[simp]
-theorem until_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
-  simp [prob_while_cut]
+theorem probUntilCut_zero (st : T) (body : SLang T) (cond : T → Bool) (x : T) :
+  probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 0 st x = 0 := by
+  simp [probWhileCut]
 
+/--
+Truncation of ``probUntil`` program to any number of unrollings will evaluate to zero, for
+ values which do not satisfy ``cond``.
+ -/
 @[simp]
-theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
-  prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
+theorem probUntilCut_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i x : T) (h : ¬ cond x) :
+  probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  . simp only [zero_eq, until_zero, implies_true]
+  . simp only [zero_eq, probUntilCut_zero, implies_true]
   . rename_i fuel IH
     intro j
-    simp only [prob_while_cut, WhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
+    simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
       bind_apply, pure_apply]
     split
     . simp only [IH, mul_zero, tsum_zero]
@@ -40,17 +58,20 @@ theorem repeat_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : ℕ) (i 
         simp [h'] at h
       . simp
 
+/--
+``probUntil`` evaluates to zero at all values which do not satisfy ``cond``.
+-/
 @[simp]
-theorem prob_until_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
-  prob_until (body : SLang T) (cond : T → Bool) x = 0 := by
-  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
+theorem probUntil_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : ¬ cond x) :
+  probUntil (body : SLang T) (cond : T → Bool) x = 0 := by
+  simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
   simp only [ENNReal.tsum_eq_zero]
   simp only [_root_.mul_eq_zero]
   simp only [iSup_eq_zero]
   intro i ; right ; intro j
-  simp only [h, not_false_eq_true, repeat_apply_unsat]
+  simp only [h, not_false_eq_true, probUntilCut_apply_unsat]
 
-theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
+lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
   split
   . simp
@@ -62,10 +83,11 @@ theorem if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
       . simp
     . simp
 
+-- Dead code
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
-  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
+  ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
     = body x := by
-  simp [prob_while_cut, WhileFunctional, ite_apply]
+  simp [probWhileCut, probWhileFunctional, ite_apply]
   rw [tsum_split_ite']
   simp only [tsum_zero, zero_add]
   have FOO := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
@@ -84,7 +106,7 @@ theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
     rw [if_simpl]
   simp
 
-theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
+lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
     = (∑' i : T, if cond i = false then f i else 0) + (∑' i : T, if cond i = true then g i else 0) := by
   rw [← ENNReal.tsum_add]
@@ -103,14 +125,14 @@ theorem tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
       rw [h'] at h
       contradiction
 
-theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
-  ∑' (i : T), body i * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
+theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
+  ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  . simp only [zero_eq, until_zero, mul_zero, tsum_zero, range_zero, sum_empty]
+  . simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   . rename_i fuel IH
-    unfold prob_while_cut
-    unfold WhileFunctional
+    unfold probWhileCut
+    unfold probWhileFunctional
     simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply, mul_ite,
       mul_one, mul_zero]
     rw [tsum_split_ite_exp]
@@ -173,30 +195,39 @@ theorem repeat_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x 
     . rename_i h
       simp [h]
 
-theorem convergence (body : SLang T) (cond : T → Bool) (x : T) :
+/--
+Expression for the limit of the closed form of truncated ``until``
+-/
+lemma probUntilCut_convergence (body : SLang T) (cond : T → Bool) (x : T) :
   ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   rw [← ENNReal.tsum_eq_iSup_nat]
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_geometric]
 
-theorem repeat_monotone (body : SLang T) (cond : T → Bool) (x : T) :
-  ∀ (a : T), Monotone fun i => body a * prob_while_cut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
+/--
+Truncated ``until`` term is monotone in the maximum number of steps.
+-/
+theorem probUntilCut_monotone (body : SLang T) (cond : T → Bool) (x : T) :
+  ∀ (a : T), Monotone fun i => body a * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) i a x := by
   intro a
-  have A := @prob_while_cut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
+  have A := @probWhileCut_monotonic T (fun v => decide (cond v = false)) (fun _ => body) a x
   exact Monotone.const_mul' A (body a)
 
+/--
+``until`` term evaluates to ``body``, normalizing by the total mass of elements which satisfy ``cond``.
+-/
 @[simp]
-theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
-  prob_until (body : SLang T) (cond : T → Bool) x
+theorem probUntil_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
+  probUntil (body : SLang T) (cond : T → Bool) x
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
-  simp only [prob_until, Bind.bind, Bool.not_eq_true, bind_apply, prob_while]
-  rw [← convergence]
+  simp only [probUntil, Bind.bind, Bool.not_eq_true, bind_apply, probWhile]
+  rw [← probUntilCut_convergence]
   conv =>
     right
     right
     intro fuel
-    rw [← repeat_closed_form _ _ _ _ h]
+    rw [← probUntilCut_closed_form _ _ _ _ h]
   rw [eq_comm]
   rw [ENNReal.tsum_eq_iSup_sum]
   conv =>
@@ -210,7 +241,7 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
     right
     right
     intro s
-    rw [finset_sum_iSup_nat (repeat_monotone body cond x)]
+    rw [finset_sum_iSup_nat (probUntilCut_monotone body cond x)]
   rw [iSup_comm]
   conv =>
     right
@@ -218,21 +249,33 @@ theorem prob_until_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : c
     intro j
     rw [← ENNReal.tsum_eq_iSup_sum]
 
+/--
+Closed form for evaluation of ``until``. ``until`` is:
+  - zero outside support of ``cond``
+  - ``body`` inside the support of ``cond``
+rescaled by the total mass outside the support of ``cond``.
+-/
 @[simp]
-theorem prob_until_apply (body : SLang T) (cond : T → Bool) (x : T) :
-  prob_until (body : SLang T) (cond : T → Bool) x =
+theorem probUntil_apply (body : SLang T) (cond : T → Bool) (x : T) :
+  probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   split
   . rename_i h
-    simp [h, prob_until_apply_sat]
+    simp [h, probUntil_apply_sat]
   . rename_i h
-    simp [h, prob_until_apply_unsat]
+    simp [h, probUntil_apply_unsat]
 
+/--
+When ``body`` is a proper PMF, ``until`` is
+  - zero outside the support of ``cond``
+  - ``body`` inside the support of ``cond``
+normalized into a PMF.
+-/
 @[simp]
-theorem prob_until_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
-  prob_until (body : SLang T) (cond : T → Bool) x =
+theorem probUntil_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm : ∑' x : T, body x = 1) :
+  probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (∑' x : T, if cond x then body x else 0)⁻¹ := by
-  rw [prob_until_apply body cond x]
+  rw [probUntil_apply body cond x]
   congr
   have A : ∀ x, body x = (if cond x then body x else 0) + (if cond x then 0 else body x) := by
     intro x

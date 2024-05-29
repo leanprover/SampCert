@@ -5,6 +5,12 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Abstract
 
+/-!
+# ``privNoisedCount`` Implementation
+
+This file defines a differentially private noising of an exact length query.
+-/
+
 noncomputable section
 
 namespace SLang
@@ -12,9 +18,15 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
-def CountingQuery (l : List T) : ℤ := List.length l
+/--
+Query to count the size of the input
+-/
+def exactCount (l : List T) : ℤ := List.length l
 
-def NoisedCountingQuery (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
-  dps.noise CountingQuery 1 ε₁ ε₂ l
+/--
+Noised counting mechanism from the DP system
+-/
+def privNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
+  dps.noise exactCount 1 ε₁ ε₂ l
 
 end SLang

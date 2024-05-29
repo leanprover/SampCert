@@ -9,6 +9,12 @@ import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
 
+/-!
+# ``privNoisedBoundedSum`` Properties
+
+This file proves abstract differential privacy for ``privNoisedBoundedSum``.
+-/
+
 open Classical Nat Int Real
 
 noncomputable section
@@ -17,8 +23,11 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
-theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) U := by
-  simp [sensitivity, BoundedSumQuery]
+/--
+Sensitivity of the bounded sum is equal to the bound.
+-/
+theorem exactBoundedSum_sensitivity (U : ℕ+) : sensitivity (exactBoundedSum U) U := by
+  simp [sensitivity, exactBoundedSum]
   intros l₁ l₂ H
   have A : ∀ n : ℕ, (@min ℤ instMin (n : ℤ) (U : ℤ) = n) ∨ (@min ℤ instMin n U = U) := by
     intro n
@@ -71,10 +80,13 @@ theorem BoundedSumQuerySensitivity (U : ℕ+) : sensitivity (BoundedSumQuery U) 
         rw [h, h']
         simp at *
 
+/--
+The noised bounded sum satisfies the DP property of the DP system.
+-/
 @[simp]
-theorem NoisedBoundedSumQueryDP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  dps.prop (NoisedBoundedSumQuery U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem privNoisedBoundedSum_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
+  dps.prop (privNoisedBoundedSum U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply dps.noise_prop
-  apply BoundedSumQuerySensitivity
+  apply exactBoundedSum_sensitivity
 
 end SLang

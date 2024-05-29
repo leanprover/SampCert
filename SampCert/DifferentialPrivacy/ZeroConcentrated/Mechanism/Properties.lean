@@ -3,9 +3,14 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Code
+
+/-!
+# ``privNoisedQuery`` Implementation
+
+This file proves differential privacy for ``privNoisedQuery``.
+-/
 
 noncomputable section
 
@@ -13,11 +18,14 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  DP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  simp [DP, NoisedQuery]
+/--
+The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
+-/
+theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
-  have A := @DiscreteGaussianGenSampleZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
+  have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
   apply le_trans A
   clear A
   replace bounded_sensitivity := bounded_sensitivity l₁ l₂ h2
@@ -65,9 +73,12 @@ theorem NoisedQueryDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_
     left
     simp
 
-theorem NoisedQuery_NonZeroNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonZeroNQ (NoisedQuery query Δ ε₁ ε₂) := by
-  simp [NonZeroNQ, NoisedQuery, DiscreteGaussianGenSample]
+/--
+All outputs of the zCDP mechanism have nonzero probability.
+-/
+theorem privNoisedQuery_NonZeroNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+  NonZeroNQ (privNoisedQuery query Δ ε₁ ε₂) := by
+  simp [NonZeroNQ, privNoisedQuery, DiscreteGaussianGenSample]
   intros l n
   exists (n - query l)
   simp
@@ -77,9 +88,12 @@ theorem NoisedQuery_NonZeroNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   simp at X
   trivial
 
-theorem NoisedQuery_NonTopNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonTopNQ (NoisedQuery query Δ ε₁ ε₂) := by
-  simp [NonTopNQ, NoisedQuery, DiscreteGaussianGenSample]
+/--
+All outputs of the zCDP mechanism have finite probability.
+-/
+theorem privNoisedQuery_NonTopNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+  NonTopNQ (privNoisedQuery query Δ ε₁ ε₂) := by
+  simp [NonTopNQ, privNoisedQuery, DiscreteGaussianGenSample]
   intro l n
   rw [ENNReal.tsum_eq_add_tsum_ite (n - query l)]
   simp
@@ -102,18 +116,21 @@ theorem NoisedQuery_NonTopNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
     rw [X]
   simp
 
-theorem discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
+lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by
   simp [discrete_gaussian]
   congr 1
   . simp [gauss_term_ℝ]
     congr 3
     ring_nf
-  . rw [SG_periodic h]
+  . rw [shifted_gauss_sum h]
 
-theorem NoisedQuery_NonTopSum (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonTopSum (NoisedQuery query Δ ε₁ ε₂) := by
-  simp [NonTopSum, NoisedQuery, DiscreteGaussianGenSample]
+/--
+The zCDP mechanism is normalizable.
+-/
+theorem privNoisedQuery_NonTopSum (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+  NonTopSum (privNoisedQuery query Δ ε₁ ε₂) := by
+  simp [NonTopSum, privNoisedQuery, DiscreteGaussianGenSample]
   intro l
   have X : ∀ n: ℤ, ∀ x : ℤ, (@ite ℝ≥0∞ (x = n - query l) (propDecidable (x = n - query l)) 0
     (@ite ℝ≥0∞ (n = x + query l) (n.instDecidableEq (x + query l))
@@ -153,9 +170,12 @@ theorem NoisedQuery_NonTopSum (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   . apply discrete_gaussian_nonneg A
   . apply discrete_gaussian_summable' A (query l)
 
-theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonTopRDNQ (NoisedQuery query Δ ε₁ ε₂) := by
-  simp [NonTopRDNQ, NoisedQuery, DiscreteGaussianGenSample]
+/--
+The Renyi divergence of the zCDP mechanism is finite on neighbouring inputs.
+-/
+theorem privNoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+  NonTopRDNQ (privNoisedQuery query Δ ε₁ ε₂) := by
+  simp [NonTopRDNQ, privNoisedQuery, DiscreteGaussianGenSample]
   intro α _ l₁ l₂ _
   have A : ∀ x_1 x : ℤ, (@ite ℝ≥0∞ (x_1 = x - query l₁) (propDecidable (x_1 = x - query l₁)) 0
   (@ite ℝ≥0∞ (x = x_1 + query l₁) (x.instDecidableEq (x_1 + query l₁))
@@ -231,11 +251,11 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
   rw [← ENNReal.ofReal_tsum_of_nonneg]
   . simp
   . intro n
-    have X := @RenyiSumSG_nonneg _ α P (query l₁) (query l₂) n
+    have X := @Renyi_sum_SG_nonneg _ α P (query l₁) (query l₂) n
     rw [discrete_gaussian_shift P]
     rw [discrete_gaussian_shift P]
     simp [X]
-  . have X := @SummableRenyiGauss _ P (query l₁) (query l₂)
+  . have X := @Renyi_Gauss_summable _ P (query l₁) (query l₂)
     conv =>
       right
       intro x
@@ -243,16 +263,19 @@ theorem NoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) 
       rw [discrete_gaussian_shift P]
     simp [X]
 
-theorem NoisedQueryzCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDP (NoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+/--
+The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
+-/
+theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [zCDP]
   repeat any_goals constructor
-  . apply NoisedQueryDP
+  . apply privNoisedQuery_zCDPBound
     exact bounded_sensitivity
-  . apply NoisedQuery_NonZeroNQ
-  . apply NoisedQuery_NonTopSum
-  . apply NoisedQuery_NonTopNQ
-  . apply NoisedQuery_NonTopRDNQ
+  . apply privNoisedQuery_NonZeroNQ
+  . apply privNoisedQuery_NonTopSum
+  . apply privNoisedQuery_NonTopNQ
+  . apply privNoisedQuery_NonTopRDNQ
 
 
 end SLang

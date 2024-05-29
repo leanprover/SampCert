@@ -9,15 +9,24 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
 
+/-!
+# zCDP System
+
+This file contains an instance of an abstract DP system associated to the discrete gaussian mechanisms.
+-/
+
 namespace SLang
 
 variable { T : Type }
 
-noncomputable instance zCDPSystem : DPSystem T where
+/--
+Instance of a DP system for zCDP, using the discrete Gaussian as a noising mechanism.
+-/
+noncomputable instance gaussian_zCDPSystem : DPSystem T where
   prop := zCDP
-  noise := NoisedQuery
-  noise_prop := NoisedQueryzCDP
-  compose_prop := zCDPCompose
-  postprocess_prop := zCDPPostProcess
+  noise := privNoisedQuery
+  noise_prop := privNoisedQuery_zCDP
+  compose_prop := privCompose_zCDP
+  postprocess_prop := privPostProcess_zCDP
 
 end SLang
