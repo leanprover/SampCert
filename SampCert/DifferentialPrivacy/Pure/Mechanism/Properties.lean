@@ -27,10 +27,10 @@ theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : �
       apply add_pos A Real.zero_lt_one
   . apply exp_pos
 
-theorem NoisedQuery_NonTopSumPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonTopSum (NoisedQueryPure query Δ ε₁ ε₂) := by
-  simp [NonTopSum, NoisedQueryPure]
-  sorry
+-- theorem NoisedQuery_NonTopSumPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
+--   NonTopSum (NoisedQueryPure query Δ ε₁ ε₂) := by
+--   simp [NonTopSum, NoisedQueryPure]
+
 
 theorem natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
@@ -128,8 +128,6 @@ theorem NoisedQueryPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (boun
   constructor
   . apply NoisedQueryPureDP'
     apply bounded_sensitivity
-  . constructor
-    . apply NoisedQuery_NonZeroNQPureDP
-    . apply NoisedQuery_NonTopSumPureDP
+  . apply NoisedQuery_NonZeroNQPureDP
 
 end SLang

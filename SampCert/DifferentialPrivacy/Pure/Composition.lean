@@ -17,8 +17,8 @@ namespace SLang
 theorem PureDPCompose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
   DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
-  rcases h1 with ⟨h1a, _, _⟩
-  rcases h2 with ⟨h2a, _, _⟩
+  rcases h1 with ⟨h1a, _⟩
+  rcases h2 with ⟨h2a, _⟩
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x y
@@ -62,12 +62,10 @@ theorem PureDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε�
   simp [PureDP] at *
   have hc := h
   have h'c := h'
-  rcases h with ⟨ _ , h2 , h3 ⟩
-  rcases h' with ⟨ _ , h'2, h'3 ⟩
+  rcases h with ⟨ _ , h2 ⟩
+  rcases h' with ⟨ _ , h'2 ⟩
   constructor
   . apply PureDPCompose' hc h'c
-  . constructor
-    . apply DPCompose_NonZeroNQ h2 h'2
-    . apply DPCompose_NonTopSum h3 h'3
+  . apply DPCompose_NonZeroNQ h2 h'2
 
 end SLang
