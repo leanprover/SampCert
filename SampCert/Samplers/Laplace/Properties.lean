@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -11,6 +10,12 @@ import SampCert.Samplers.BernoulliNegativeExponential.Basic
 import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
+
+/-!
+# ``DiscreteLaplaceSample`` Properties
+
+This file proves evaluation and normalization properties of ``DiscreteLaplaceSample``.
+-/
 
 noncomputable section
 
@@ -84,6 +89,7 @@ theorem DiscreteLaplaceSampleLoopIn1Aux_normalizes (t : PNat) :
     rw [A]
   clear A
   simp
+
 
 theorem DiscreteLaplaceSampleLoopIn1Aux_apply_true (t : PNat) (n : ℕ) :
   DiscreteLaplaceSampleLoopIn1Aux t (n, true)
@@ -164,7 +170,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply_pre (t : PNat) (n : ℕ) :
     left
     right
     intro a
-    rw [prob_until_apply_norm _ _ _ (DiscreteLaplaceSampleLoopIn1Aux_normalizes t)]
+    rw [probUntil_apply_norm _ _ _ (DiscreteLaplaceSampleLoopIn1Aux_normalizes t)]
   simp only [ENNReal.summable, forall_const, tsum_prod', ite_mul, zero_mul]
   rw [ENNReal.tsum_comm]
   simp only [tsum_bool, ↓reduceIte, zero_add, tsum_zero]
@@ -305,12 +311,12 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
 @[simp]
 theorem DiscreteLaplaceSampleLoopIn2_eq (num : Nat) (den : PNat) :
   DiscreteLaplaceSampleLoopIn2 (num : Nat) (den : PNat)
-    = geometric (BernoulliExpNegSample num den) := by
+    = probGeometric (BernoulliExpNegSample num den) := by
   unfold DiscreteLaplaceSampleLoopIn2
   unfold DiscreteLaplaceSampleLoopIn2Aux
-  unfold geometric
-  unfold loop_cond
-  unfold loop_body
+  unfold probGeometric
+  unfold geoLoopCond
+  unfold geoLoopBody
   rfl
 
 
@@ -476,7 +482,7 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
 
   simp only [add_zero]
 
-  have A : geometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
+  have A : probGeometric (BernoulliExpNegSample (↑den) num) 0 = 0 := by simp
   rw [A]
   simp only [ge_iff_le, _root_.zero_le, tsub_eq_zero_of_le, ↓reduceIte,
     cast_one, one_div, zero_mul, ite_self,  add_eq_zero, one_ne_zero,
@@ -493,7 +499,7 @@ theorem DiscreteLaplaceSampleLoop_normalizes (num : PNat) (den : PNat) :
   rw [A]
   clear A
   rw [mul_one]
-  apply geometric_normalizes'
+  apply probGeometric_normalizes'
   . have A := BernoulliExpNegSample_normalizes den num
     rw [tsum_bool] at A
     trivial
@@ -601,6 +607,9 @@ theorem laplace_normalizer_swap (num den : ℕ+) :
   rw [← exp_add]
   simp
 
+/--
+Closed form for the evaluation of the ``SLang`` Laplace sampler.
+-/
 @[simp]
 theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
   (DiscreteLaplaceSample num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
@@ -620,7 +629,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       left
       rw [ENNReal.tsum_eq_add_tsum_ite x]
 
-    simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
+    simp only [DiscreteLaplaceSampleLoop_normalizes, probUntil_apply_norm]
     simp (config := { contextual := true }) only [↓reduceIte, IsEmpty.forall_iff, decide_True,
       DiscreteLaplaceSampleLoop_apply, decide_eq_true_eq, Nat.cast_inj, ite_simpl_1, tsum_zero,
       add_zero, forall_true_left, decide_not, Bool.not_eq_true', decide_eq_false_iff_not, ite_not,
@@ -736,7 +745,7 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
       right
       rw [ENNReal.tsum_eq_add_tsum_ite n]
 
-    simp only [DiscreteLaplaceSampleLoop_normalizes, prob_until_apply_norm]
+    simp only [DiscreteLaplaceSampleLoop_normalizes, probUntil_apply_norm]
     subst h2
     have X : n ≠ 0 := by
       by_contra h
@@ -846,6 +855,9 @@ theorem DiscreteLaplaceSample_apply (num den : PNat) (x : ℤ) :
     . left
       simp only [ne_eq, ENNReal.inv_eq_top, cast_eq_zero, PNat.ne_zero, not_false_eq_true]
 
+/--
+``SLang`` Laplace sampler is a proper distribution.
+-/
 @[simp]
 theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
   ∑' x : ℤ, (DiscreteLaplaceSample num den) x = 1 := by
@@ -857,7 +869,7 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
     intro x
     right
     intro a
-    rw [prob_until_apply_norm _ _ _ A]
+    rw [probUntil_apply_norm _ _ _ A]
   simp only [ENNReal.tsum_prod']
 
   -- Commuting the integer and natural summand makes the proof simpler

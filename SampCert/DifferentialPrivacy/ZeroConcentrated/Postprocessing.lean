@@ -6,6 +6,12 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 
+/-!
+# Postprocessing
+
+This file proves zCDP for ``privPostProcess``.
+-/
+
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
@@ -22,7 +28,7 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-theorem Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
   have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
   revert X
@@ -46,6 +52,9 @@ theorem Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measur
   . rw [← hasFiniteIntegral_norm_iff]
     simp [X]
 
+/--
+Jensen's ineuquality for the exponential applied to Renyi's sum
+-/
 theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
 
@@ -120,7 +129,7 @@ theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : �
 
 def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
-theorem δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
+lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   unfold δ
@@ -208,13 +217,13 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
   apply toReal_strict_mono h1
   apply ENNReal.tsum_pos_int h1 h2
 
-theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
+theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
   (∑' (x : V),
       (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
         (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
   (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  simp [DP, RenyiDivergence] at h
+  simp [zCDPBound, RenyiDivergence] at h
 
   -- Rewrite as cascading expectations
   rw [@RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 (nn l₂) (nts l₂)]
@@ -540,12 +549,12 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
-  DP (PostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
-  simp [PostProcess, DP, RenyiDivergence]
+theorem privPostProcess_zCDPBound {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
+  zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
+  simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
-  simp [DP, RenyiDivergence] at h'
+  simp [zCDPBound, RenyiDivergence] at h'
   replace h' := h' α h1 l₁ l₂ h2
 
   -- Part 1, removing fluff
@@ -628,13 +637,9 @@ theorem DPPostProcess {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : DP nq 
         rw [lt_top_iff_ne_top] at Z
         contradiction
 
-
-
-
-
-theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :DP nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
-  NonTopRDNQ (PostProcess nq f) := by
-  simp [NonTopRDNQ, NonTopSum, PostProcess] at *
+theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
+  NonTopRDNQ (privPostProcess nq f) := by
+  simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
   intros α h1 l₁ l₂ h2
   have ntrdnq := nt
   replace nt := nt α h1 l₁ l₂ h2
@@ -644,18 +649,21 @@ theorem DPPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} 
   have B := Ne.lt_top' nt
   exact lt_of_le_of_lt A B
 
-theorem zCDPPostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
-  zCDP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
+/--
+Postprocessing preserves zCDP
+-/
+theorem privPostProcess_zCDP {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+  zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
   repeat any_goals constructor
-  . apply DPPostProcess h1 h2 h5 h4 h3
-  . apply DPPostProcess_NonZeroNQ h2 sur
-  . apply DPPostProcess_NonTopSum f h3
+  . apply privPostProcess_zCDPBound h1 h2 h5 h4 h3
+  . apply privPostProcess_NonZeroNQ h2 sur
+  . apply privPostProcess_NonTopSum f h3
   . simp [NonTopNQ]
     intro l
     apply ENNReal.ne_top_of_tsum_ne_top
-    apply DPPostProcess_NonTopSum f h3
-  . apply DPPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
+    apply privPostProcess_NonTopSum f h3
+  . apply privPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
 
 end SLang

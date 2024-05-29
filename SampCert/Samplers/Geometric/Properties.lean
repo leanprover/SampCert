@@ -3,9 +3,14 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Geometric.Code
+
+/-!
+# ``probGeometric`` properties
+
+This file proves normalization and evaluation properties of the ``probGeometric`` sampler.
+-/
 
 noncomputable section
 
@@ -19,12 +24,12 @@ variable (trial : SLang Bool)
 variable (trial_spec : trial false + trial true = 1)
 variable (trial_spec' : trial true < 1)
 
-theorem ite_test (a b : ℕ) (x y : ENNReal) :
+lemma ite_test (a b : ℕ) (x y : ENNReal) :
   @ite ENNReal (a = b) (propDecidable (a = b)) x y
    = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
   split ; any_goals { trivial }
 
-theorem trial_one_minus :
+lemma trial_one_minus :
   trial false = 1 - trial true := by
   by_contra h
   rw [← trial_spec] at h
@@ -34,7 +39,7 @@ theorem trial_one_minus :
     rw [h'] at trial_spec
     simp at trial_spec
 
-theorem trial_le_1 (i : ℕ) :
+lemma trial_le_1 (i : ℕ) :
   trial true ^ i ≤ 1 := by
   induction i
   . simp
@@ -53,6 +58,9 @@ theorem trial_le_1 (i : ℕ) :
       simp at B
     exact Left.mul_le_one IH A
 
+/--
+A geometric series from a trial result (namely, with ratio less than 1) is finite.
+-/
 theorem trial_sum_ne_top :
   (∑' (n : ℕ), trial true ^ n) ≠ ⊤ := by
   rw [ENNReal.tsum_geometric]
@@ -62,31 +70,38 @@ theorem trial_sum_ne_top :
   have A := not_le.mpr trial_spec'
   contradiction
 
-theorem trial_sum_ne_top' :
+lemma trial_sum_ne_top' :
   ∑' (n : ℕ), trial true ^ n * trial true ≠ ⊤ := by
   have A := trial_sum_ne_top trial trial_spec'
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
   simp [ite_test, tsum_shift'_1, pow_add] at A
   trivial
 
+/--
+The zero unrolling of ``probGeometric`` is the zero subdistribution.
+-/
 @[simp]
 theorem geometric_zero (st₁ st₂ : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) 0 st₁ st₂ = 0 := by
-  simp [prob_while_cut]
+  probWhileCut geoLoopCond (geoLoopBody trial) 0 st₁ st₂ = 0 := by
+  simp [probWhileCut]
 
-theorem ite_simpl (x a : ℕ) (v : ENNReal) :
+
+lemma ite_simpl (x a : ℕ) (v : ENNReal) :
   (@ite ENNReal (x = a) (propDecidable (x = a)) 0 (@ite ENNReal (x = a) (instDecidableEqNat x a) v 0)) = 0 := by
   split
   . simp
   . simp
 
+/--
+Inductive formula for an unrolling of ``probGeometric`` starting in a ``(true, -)`` state.
+-/
 theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (succ fuel) (true,n) st =
-  (trial false) * prob_while_cut loop_cond (loop_body trial) fuel (false, n + 1) st +
-    (trial true) * prob_while_cut loop_cond (loop_body trial) fuel (true, n + 1) st := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (succ fuel) (true,n) st =
+  (trial false) * probWhileCut geoLoopCond (geoLoopBody trial) fuel (false, n + 1) st +
+    (trial true) * probWhileCut geoLoopCond (geoLoopBody trial) fuel (true, n + 1) st := by
   cases st
   rename_i b m
-  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, probWhileFunctional, geoLoopCond, geoLoopBody, ite_apply, ENNReal.tsum_prod', tsum_bool]
   conv =>
     left
     . congr
@@ -102,16 +117,22 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
         rw [ite_simpl]
   simp
 
+/--
+Inductive formula for an unrolling of ``probGeometric`` starting in a ``(false, -)`` state.
+-/
 @[simp]
 theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (succ fuel) (false,n) st =
+  probWhileCut geoLoopCond (geoLoopBody trial) (succ fuel) (false,n) st =
   if st = (false,n) then 1 else 0 := by
   cases st
-  simp [prob_while_cut, WhileFunctional, loop_cond, loop_body, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, probWhileFunctional, geoLoopCond, geoLoopBody, ite_apply, ENNReal.tsum_prod', tsum_bool]
 
+/--
+Evaluation for an unrolling of ``probGeometric`` on a ``(false, -)`` state
+-/
 @[simp]
 theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
-  prob_while_cut loop_cond (loop_body trial) fuel st (false, n) = 0 := by
+  probWhileCut geoLoopCond (geoLoopBody trial) fuel st (false, n) = 0 := by
   revert st
   induction fuel
   . simp
@@ -144,9 +165,12 @@ theorem geometric_monotone_counter (fuel n : ℕ) (st : Bool × ℕ) (h1 : st �
       . simp
         exact le.step h2
 
+/--
+Evaluation for an unrolling of ``probGeometric`` starting in a ``(true, -)`` state and ending in a ``(false, -)`` state.
+-/
 @[simp]
 theorem geometric_progress (fuel n : ℕ) :
-  prob_while_cut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel + 1) = (trial true)^fuel * (trial false) := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (fuel + 2) (true,n) (false,n + fuel + 1) = (trial true)^fuel * (trial false) := by
   revert n
   induction fuel
   . intro n
@@ -166,8 +190,11 @@ theorem geometric_progress (fuel n : ℕ) :
       rw [mul_comm]
     rw [← _root_.pow_succ]
 
+/--
+Evaluation for a truncation of ``probGeometric``, starting in a ``(true, -)`` state and ending in a ``(false, -)`` state.
+-/
 theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
-  prob_while_cut loop_cond (loop_body trial) (n + 1) (true, 0) (false, n) = (trial true)^(n-1) * (trial false) := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (n + 1) (true, 0) (false, n) = (trial true)^(n-1) * (trial false) := by
   have prog := geometric_progress trial (n - 1) 0
   simp at prog
   have A : n - 1 + 1 = n := by exact succ_pred h
@@ -176,10 +203,13 @@ theorem geometric_progress' (n : ℕ) (h : ¬ n = 0) :
   rw [B] at prog
   trivial
 
+/--
+Unrollings of ``probGeometric`` ending in a ``false`` state do not change given more fuel.
+-/
 theorem geometric_preservation (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
-  prob_while_cut loop_cond (loop_body trial) (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
+  probWhileCut geoLoopCond (geoLoopBody trial) (1 + fuel + 2) (true,n) (false,n + fuel' + 1)
   =
-  prob_while_cut loop_cond (loop_body trial) (fuel + 2) (true,n) (false,n + fuel' + 1) := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (fuel + 2) (true,n) (false,n + fuel' + 1) := by
   revert fuel' n
   induction fuel
   . intro fuel' n h1
@@ -209,10 +239,13 @@ theorem geometric_preservation (fuel fuel' n : ℕ) (h1 : fuel ≥ fuel') :
       rw [IH']
       exact rfl
 
+/--
+Truncations of ``probGeometric`` ending in a ``false`` state do not change given more fuel.
+-/
 theorem geometric_preservation' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
-  prob_while_cut loop_cond (loop_body trial) (n + 2) (true,0) (false,m)
+  probWhileCut geoLoopCond (geoLoopBody trial) (n + 2) (true,0) (false,m)
   =
-  prob_while_cut loop_cond (loop_body trial) (n + 1) (true,0) (false,m) := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (n + 1) (true,0) (false,m) := by
   have prog := geometric_preservation trial (n - 1) (m - 1) 0
   have P : ¬ n = 0 := by
       by_contra
@@ -244,8 +277,11 @@ theorem geometric_preservation' (n m : ℕ) (h1 : ¬ m = 0) (h2 : n ≥ m) :
   apply prog
   exact Nat.sub_le_sub_right h2 1
 
+/--
+Closed form for terminating executions of truncated ``probGeometric``.
+-/
 theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
-  prob_while_cut loop_cond (loop_body trial) (extra + (n + 1)) (true,0) (false,n) = (trial true)^(n-1) * (trial false) := by
+  probWhileCut geoLoopCond (geoLoopBody trial) (extra + (n + 1)) (true,0) (false,n) = (trial true)^(n-1) * (trial false) := by
   revert n
   induction extra
   . simp
@@ -264,10 +300,13 @@ theorem geometric_characterization (n extra : ℕ) (h : ¬ n = 0) :
     . trivial
     . exact Nat.le_add_left n extra
 
+/--
+Closed form for the limit of terminiating executions of truncated ``probGeometric``.
+-/
 theorem geometric_pwc_sup (n : ℕ) :
-  ⨆ i, prob_while_cut loop_cond (loop_body trial) i (true, 0) (false, n) = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
+  ⨆ i, probWhileCut geoLoopCond (geoLoopBody trial) i (true, 0) (false, n) = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
   refine iSup_eq_of_tendsto ?hf ?_
-  . apply prob_while_cut_monotonic
+  . apply probWhileCut_monotonic
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat (n + 1))]
     split
     . rename_i h
@@ -284,18 +323,21 @@ theorem geometric_pwc_sup (n : ℕ) :
         rw [geometric_characterization trial _ _ h]
       rw [tendsto_const_nhds_iff]
 
+/--
+Subprobability of ``probGeometric`` truncation returning ``true`` is zero.
+-/
 @[simp]
 theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
-  prob_while_cut loop_cond (loop_body trial) fuel (b, k) (true,n) = 0 := by
+  probWhileCut geoLoopCond (geoLoopBody trial) fuel (b, k) (true,n) = 0 := by
   revert n b k
   induction fuel
   . intro n
     simp
   . rename_i fuel IH
     intro n k b
-    simp [prob_while_cut,WhileFunctional,loop_body,loop_cond]
-    unfold SLang.bind
-    unfold SLang.pure
+    simp [probWhileCut,probWhileFunctional,geoLoopBody,geoLoopCond]
+    unfold probBind
+    unfold probPure
     simp [ite_apply]
     split
     . rename_i h
@@ -306,7 +348,7 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
       subst h
       simp [IH]
 
-theorem if_simpl_geo (x n : ℕ) :
+lemma if_simpl_geo (x n : ℕ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 ((trial true ^ (x - 1) * trial false) * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
   split
   . simp
@@ -318,13 +360,16 @@ theorem if_simpl_geo (x n : ℕ) :
         contradiction
       . simp
 
+/--
+Closed form for evaluation of ``probGeometric``.
+-/
 @[simp]
-theorem geometric_apply (n : ℕ) :
-  geometric trial n = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
-  simp only [geometric, Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
+theorem probGeometric_apply (n : ℕ) :
+  probGeometric trial n = if n = 0 then 0 else (trial true)^(n-1) * (trial false) := by
+  simp only [probGeometric, Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
-  simp only [prob_while, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
+  simp only [probWhile, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
     geometric_returns_false, ciSup_const, zero_mul, tsum_zero, add_zero]
   simp only [ne_eq, Prod.mk.injEq, false_and, not_false_eq_true, geometric_pwc_sup, ite_mul,
     zero_mul]
@@ -338,10 +383,13 @@ theorem geometric_apply (n : ℕ) :
     rw [if_simpl_geo]
   simp only [tsum_zero, add_zero]
 
+/--
+``probGeometric`` is a proper distribution.
+-/
 @[simp]
-theorem geometric_normalizes :
-  (∑' n : ℕ, geometric trial n) = 1 := by
-  simp only [geometric_apply]
+theorem probGeometric_normalizes :
+  (∑' n : ℕ, probGeometric trial n) = 1 := by
+  simp only [probGeometric_apply]
   rw [tsum_shift'_1]
   simp only [add_tsub_cancel_right]
   rw [trial_one_minus trial trial_spec]
@@ -373,14 +421,18 @@ theorem geometric_normalizes :
     simp only [pow_one] at C
     trivial
 
-theorem geometric_normalizes' :
-  (∑' n : ℕ, geometric trial (n + 1)) = 1 := by
-  have A := geometric_normalizes trial trial_spec trial_spec'
+
+/--
+``probGeometric`` is a proper distribution on ``[1, ∞) ⊂ ℕ``.
+-/
+theorem probGeometric_normalizes' :
+  (∑' n : ℕ, probGeometric trial (n + 1)) = 1 := by
+  have A := probGeometric_normalizes trial trial_spec trial_spec'
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
-  simp only [geometric_apply, ↓reduceIte, zero_add] at A
+  simp only [probGeometric_apply, ↓reduceIte, zero_add] at A
   simp only [tsum_shift'_1, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
     add_tsub_cancel_right] at A
-  simp only [geometric_apply, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
+  simp only [probGeometric_apply, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
     add_tsub_cancel_right]
   trivial
 

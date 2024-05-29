@@ -9,7 +9,7 @@ noncomputable section
 
 namespace SLang
 
-def NoisedQueryPure (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
+def privNoisedQueryPure (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
   DiscreteLaplaceGenSample (Δ * ε₂) ε₁ (query l)
 
 end SLang

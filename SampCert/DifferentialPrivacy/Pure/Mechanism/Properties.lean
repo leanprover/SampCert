@@ -14,8 +14,8 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonZeroNQ (NoisedQueryPure query Δ ε₁ ε₂) := by
-  simp [NonZeroNQ, NoisedQueryPure]
+  NonZeroNQ (privNoisedQueryPure query Δ ε₁ ε₂) := by
+  simp [NonZeroNQ, privNoisedQueryPure]
   intro l n
   apply Real.mul_pos
   . rw [_root_.div_pos_iff]
@@ -26,11 +26,6 @@ theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : �
         apply exp_pos
       apply add_pos A Real.zero_lt_one
   . apply exp_pos
-
--- theorem NoisedQuery_NonTopSumPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
---   NonTopSum (NoisedQueryPure query Δ ε₁ ε₂) := by
---   simp [NonTopSum, NoisedQueryPure]
-
 
 theorem natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
@@ -52,12 +47,12 @@ theorem normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
   rw [h] at C
   contradiction
 
-theorem NoisedQueryPureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  DP (NoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem NoisedQuery_PureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  DP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x
-  simp [NoisedQueryPure]
+  simp [privNoisedQueryPure]
   rw [← ENNReal.ofReal_div_of_pos]
   . apply ofReal_le_ofReal
     rw [division_def]
@@ -122,11 +117,11 @@ theorem NoisedQueryPureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bou
           exact (add_lt_add_iff_right 1).mpr A
     . apply exp_pos
 
-theorem NoisedQueryPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  PureDP (NoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem NoisedQuery_PureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [PureDP]
   constructor
-  . apply NoisedQueryPureDP'
+  . apply NoisedQuery_PureDP'
     apply bounded_sensitivity
   . apply NoisedQuery_NonZeroNQPureDP
 

@@ -3,11 +3,16 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.SLang
 import SampCert.Foundations.Monad
 import SampCert.Foundations.Auto
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
+
+/-!
+# ``probWhile`` Properties
+
+This file proves evaluation and normalization results about ``probWhile``.
+-/
 
 noncomputable section
 
@@ -15,21 +20,24 @@ namespace SLang
 
 variable {T} [Preorder T]
 
-theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) :
-  Monotone (fun n : Nat => prob_while_cut cond body n init x) := by
+/--
+The ``probWhile`` program is monotonic in terms of the number of unrollings.
+-/
+theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) :
+  Monotone (fun n : Nat => probWhileCut cond body n init x) := by
   apply monotone_nat_of_le_succ
   intro n
   revert init
   induction n
   . intro init
-    simp [prob_while_cut]
+    simp [probWhileCut]
   . rename_i n IH
     intro init
-    simp [prob_while_cut,WhileFunctional]
+    simp [probWhileCut,probWhileFunctional]
     split
     . rename_i COND
-      unfold SLang.bind
-      unfold SLang.pure
+      unfold probBind
+      unfold SLang.probPure
       simp
       apply ENNReal.tsum_le_tsum
       intro a
@@ -37,14 +45,17 @@ theorem prob_while_cut_monotonic (cond : T → Bool) (body : T → SLang T) (ini
       exact IH a
     . simp
 
+/--
+The ``probWhile`` term evaluates to the pointwise limit of the ``probWhileCut`` term
+-/
 @[simp]
-theorem while_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) (v : ENNReal) :
-  Filter.Tendsto (fun i => prob_while_cut cond body i init x) Filter.atTop (nhds v) →
-  prob_while cond body init x = v := by
+theorem probWhile_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x : T) (v : ENNReal) :
+  Filter.Tendsto (fun i => probWhileCut cond body i init x) Filter.atTop (nhds v) →
+  probWhile cond body init x = v := by
   intro H
-  unfold prob_while
+  unfold probWhile
   apply iSup_eq_of_tendsto
-  . apply prob_while_cut_monotonic
+  . apply probWhileCut_monotonic
   . apply H
 
 end SLang

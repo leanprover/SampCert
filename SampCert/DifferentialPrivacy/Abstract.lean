@@ -7,6 +7,12 @@ import SampCert.SLang
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.Foundations.Basic
 
+/-!
+# Differential Privacy
+
+This file defines a notion of a differential private system.
+-/
+
 noncomputable section
 
 open Classical Nat Int Real ENNReal
@@ -22,48 +28,60 @@ namespace SLang
 abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
 
-def Compose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
+/--
+Product of mechanisms.
+
+Note that the second mechanism does not depend on the output of the first; this is in currently
+in contrast to the notions of composition found in the DP literature.
+-/
+def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
   let A ← nq1 l
   let B ← nq2 l
   return (A,B)
 
-def PostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
+/--
+Mechanism obtained by applying a post-processing function to a mechanism.
+-/
+def privPostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : SLang V := do
   let A ← nq l
   return pp A
 
+
+/--
+Abstract definition of a differentially private systemm.
+-/
 class DPSystem (T : Type) where
+  /--
+  Notion of differential privacy with a paramater (ε-DP, ε-zCDP, etc)
+  -/
   prop : Mechanism T Z → ℝ → Prop
+  /--
+  Noise mechanism (eg. Laplace, Discrete Gaussian, etc)
+  Paramaterized by a query, sensitivity, and the numerator/denominator ofa (rational) security paramater.
+  -/
   noise : Query T ℤ → ℕ+ → ℕ+ → ℕ+ → Mechanism T ℤ
+  /--
+  Adding noise to a query makes it differentially private.
+  -/
   noise_prop : ∀ q : List T → ℤ, ∀ Δ εn εd : ℕ+, sensitivity q Δ → prop (noise q Δ εn εd) (εn / εd)
+  /--
+  Notion of privacy composes by addition.
+  -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (Compose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  /--
+  Notion of privacy is invariant under post-processing.
+  -/
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
-   prop m (ε₁ / ε₂) → prop (PostProcess m pp) (ε₁ / ε₂)
-
-def ComposeRW (nq1 : Mechanism T U) (nq2 : Mechanism T V) :
-  Compose nq1 nq2 =
-  fun l => do
-    let A ← nq1 l
-    let B ← nq2 l
-    return (A,B) := by
-  ext l x
-  simp [Compose]
-
-def PostProcessRW (nq : Mechanism T U) (pp : U → V) :
-  PostProcess nq pp =
-  fun l => do
-    let A ← nq l
-    return pp A := by
-  ext l x
-  simp [PostProcess]
+   prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
 
 @[simp]
-theorem bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
-  (fun l => (p l).bind (fun a : U => (q l).bind fun b : V => h a b))
+lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → SLang A)  :
+  (fun l => (p l).probBind (fun a : U => (q l).probBind fun b : V => h a b))
     =
-  fun l => (Compose p q l).bind (fun z => h z.1 z.2) := by
+  fun l => (privCompose p q l).probBind (fun z => h z.1 z.2) := by
   ext l x
-  simp [ComposeRW, tsum_prod']
+  simp [privCompose, tsum_prod']
   apply tsum_congr
   intro b
   rw [← ENNReal.tsum_mul_left]
@@ -93,7 +111,7 @@ theorem bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V →
       subst h4
       contradiction
 
-theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
+lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
   (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
   have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
     intro x  y
@@ -149,13 +167,16 @@ theorem compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b 
     rw [C]
   simp
 
-theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
-  NonTopSum (Compose nq1 nq2) := by
+/--
+Composed queries are normalizable.
+-/
+theorem privCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
+  NonTopSum (privCompose nq1 nq2) := by
   simp [NonTopSum] at *
   intro l
   replace nt1 := nt1 l
   replace nt2 := nt2 l
-  simp [Compose]
+  simp [privCompose]
   rw [ENNReal.tsum_prod']
   conv =>
     right
@@ -183,13 +204,16 @@ theorem DPCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V
     cases H
     contradiction
 
-theorem DPCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (Compose nq1 nq2) := by
+/--
+All outputs of a composed query have nonzero probability.
+-/
+theorem privCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
+  NonZeroNQ (privCompose nq1 nq2) := by
   simp [NonZeroNQ] at *
   intro l a b
   replace nn1 := nn1 l a
   replace nn2 := nn2 l b
-  simp [Compose]
+  simp [privCompose]
   exists a
 
 theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum f a) (g : T → V) :
@@ -238,7 +262,7 @@ theorem fiberwisation (p : T → ENNReal) (f : T → V) :
     simp only [tsum_empty]
   . simp
 
-theorem condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
+lemma condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
   (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by
   have A := @tsum_split_ite U (fun a : U => x = f a) g (fun _ => 0)
   simp only [decide_eq_true_eq, tsum_zero, add_zero] at A
@@ -247,9 +271,21 @@ theorem condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
     simp
   rw [B]
 
-theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
-  NonTopSum (PostProcess nq f) := by
-  simp [NonTopSum, PostProcess] at *
+theorem privPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
+  NonZeroNQ (privPostProcess nq f) := by
+  simp [NonZeroNQ, Function.Surjective, privPostProcess] at *
+  intros l n
+  replace sur := sur n
+  cases sur
+  rename_i a h
+  exists a
+  constructor
+  . rw [h]
+  . apply nn
+
+theorem privPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
+  NonTopSum (privPostProcess nq f) := by
+  simp [NonTopSum, privPostProcess] at *
   intros l
   have nt := nt l
   rw [← ENNReal.tsum_fiberwise _ f] at nt
@@ -268,17 +304,5 @@ theorem DPPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : No
     intro x
     rw [← A]
   trivial
-
-theorem DPPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
-  NonZeroNQ (PostProcess nq f) := by
-  simp [NonZeroNQ, Function.Surjective, PostProcess] at *
-  intros l n
-  replace sur := sur n
-  cases sur
-  rename_i a h
-  exists a
-  constructor
-  . rw [h]
-  . apply nn
 
 end SLang

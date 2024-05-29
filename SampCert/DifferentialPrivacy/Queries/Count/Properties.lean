@@ -7,6 +7,12 @@ import SampCert.DifferentialPrivacy.Queries.Count.Code
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.DifferentialPrivacy.Abstract
 
+/-!
+# ``privNoisedCount`` Properties
+
+This file proves abstract differential privacy for ``privNoisedCount``.
+-/
+
 open Classical Nat Int Real
 
 noncomputable section
@@ -16,9 +22,12 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
-theorem CountingQuery1Sensitive :
-  @sensitivity T CountingQuery 1 := by
-  simp [CountingQuery, sensitivity]
+/--
+The counting query is 1-sensitive
+-/
+theorem exactCount_1_sensitive :
+  @sensitivity T exactCount 1 := by
+  simp [exactCount, sensitivity]
   intros l₁ l₂ H
   cases H
   . rename_i a b n h1 h2
@@ -31,10 +40,13 @@ theorem CountingQuery1Sensitive :
     subst h1 h2
     simp
 
+/--
+The noised counting query satisfies DP property
+-/
 @[simp]
-theorem NoisedCountingQueryDP (ε₁ ε₂ : ℕ+) :
-  dps.prop (NoisedCountingQuery ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+theorem privNoisedCount_DP (ε₁ ε₂ : ℕ+) :
+  dps.prop (privNoisedCount ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   apply dps.noise_prop
-  apply CountingQuery1Sensitive
+  apply exactCount_1_sensitive
 
 end SLang

@@ -3,8 +3,19 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Util.Gaussian.DiscreteGaussian
+
+/-!
+# Gauss Bound
+
+This file contains a proof that the sum of Gaussian terms with any mean (over the integers)
+is bounded above by the sum of mean-zero Gaussian terms.
+
+The argument transforms the series into a Fourier series, and eliminates the Fourier basis functions by
+bounding them above by their absolute value. This has the effect of shifting the mean to zero; since
+the sum of Fourier coefficients equals the sum of mean-zero Gaussian terms. The Poisson summation formula
+justifies the transformation between series of ``gauss_term_ℝ ...`` and ``𝓕 (gauss_term_ℂ ...)``.
+-/
 
 noncomputable section
 
@@ -14,6 +25,9 @@ open ContinuousMap Function
 
 attribute [local instance] Real.fact_zero_lt_one
 
+/--
+The sum of any gaussian function over ℤ is bounded above by the sum of the mean-zero gaussian function over ℤ.
+-/
 theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   (∑' (n : ℤ), ((gauss_term_ℝ σ μ) n)) ≤ ∑' (n : ℤ), ((gauss_term_ℝ σ 0) n) := by
   have A : (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = (∑' (n : ℤ), (gauss_term_ℝ σ 0) ((- μ) + n)) := by

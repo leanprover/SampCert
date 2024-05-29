@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -14,13 +13,19 @@ import SampCert.Util.UtilMathlib
 import SampCert.Samplers.Gaussian.Code
 import SampCert.Util.Gaussian.DiscreteGaussian
 
+/-!
+# ``DiscreteGaussianSample`` Properties
+
+This file proves evaluation and normalization properties of ``DiscreteGaussianSample``.
+-/
+
 noncomputable section
 
 open Classical PMF Nat Real
 
 namespace SLang
 
-theorem ite_simpl_gaussian_1 (num den t: ℕ+) (x a : ℤ) :
+lemma ite_simpl_gaussian_1 (num den t: ℕ+) (x a : ℤ) :
   @ite ENNReal (x = a) (propDecidable (x = a)) 0
   (if a = x then
     DiscreteLaplaceSample t 1 x *
@@ -34,7 +39,7 @@ theorem ite_simpl_gaussian_1 (num den t: ℕ+) (x a : ℤ) :
       contradiction
     . simp
 
-theorem ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
+lemma ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
   @ite ENNReal (x = a) (propDecidable (x = a)) 0
   (if a = x then
     DiscreteLaplaceSample t 1 x *
@@ -48,6 +53,9 @@ theorem ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
       contradiction
     . simp
 
+/--
+Gaussian sampling attempt is a proper distribution.
+-/
 @[simp]
 theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
   ∑' x, (DiscreteGaussianSampleLoop num den t) x = 1 := by
@@ -81,7 +89,7 @@ theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
   rw [DiscreteLaplaceSample_normalizes]
 
 @[simp]
-theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
+lemma ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0
   (@ite ENNReal (n = x) (n.instDecidableEq x)
   (ENNReal.ofReal (((t : ℝ)⁻¹.exp - 1) / ((t : ℝ)⁻¹.exp + 1) * (-(@abs ℝ DistribLattice.toLattice AddGroupWithOne.toAddGroup ↑x / (t : ℝ))).exp) *
@@ -95,6 +103,9 @@ theorem ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
     subst h
     contradiction
 
+/--
+Evaluation of the discrete Gaussian sample loop distribution when the termination flag is ``true``.
+-/
 @[simp]
 theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
   (DiscreteGaussianSampleLoop num den t) (n, true)
@@ -124,7 +135,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
     . apply exp_nonneg
     . simp only [zero_le_one]
 
-theorem if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
+lemma if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
   @ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (a * (@ite ENNReal (x = x_1) (propDecidable (x = (x_1, true).1))) 1 0) = 0 := by
   split
   . simp
@@ -134,7 +145,7 @@ theorem if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
       contradiction
     . simp
 
-theorem alg_auto (num den : ℕ+) (x : ℤ) :
+lemma alg_auto (num den : ℕ+) (x : ℤ) :
   ENNReal.ofReal (
   rexp (-((Int.natAbs x) / ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1))) *
     rexp (-((Int.natAbs (Int.sub (|x| * (@HDiv.hDiv ℤ ℤ ℤ instHDiv num den + 1) * den ^ 2) (num ^ 2))) ^ 2 /
@@ -226,14 +237,16 @@ theorem alg_auto (num den : ℕ+) (x : ℤ) :
 
   . simp [exp_nonneg]
 
-
-theorem alg_auto' (num den : ℕ+) (x : ℤ) :
+lemma alg_auto' (num den : ℕ+) (x : ℤ) :
   -((x : ℝ) ^ 2 * (den : ℝ) ^ 2 / ((2 : ℝ) * (num : ℝ) ^ 2)) = -(x : ℝ) ^ 2 / ((2 : ℝ) * ((num : ℝ) ^ 2 / (den : ℝ) ^ 2)) := by
   ring_nf ; simp ; ring_nf
 
-theorem Add1 (n : Nat) : 0 < n + 1 := by
+lemma Add1 (n : Nat) : 0 < n + 1 := by
   simp only [add_pos_iff, zero_lt_one, or_true]
 
+/--
+Closed form evaluation of the discrete Gaussian sampler
+-/
 @[simp]
 theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   (DiscreteGaussianSample num den) x =
@@ -249,7 +262,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
     right
     intro a
     left
-    rw [prob_until_apply_norm _ _ _ A]
+    rw [probUntil_apply_norm _ _ _ A]
   clear A
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
@@ -356,6 +369,9 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
   . left
     exact ENNReal.ofReal_ne_top
 
+/--
+Discrete Gaussian is a proper distribution
+-/
 @[simp]
 theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
   ∑' x : ℤ, (DiscreteGaussianSample num den) x = 1 := by

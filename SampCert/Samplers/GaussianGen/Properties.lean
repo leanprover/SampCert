@@ -3,19 +3,23 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Samplers.GaussianGen.Code
 import SampCert.Samplers.Gaussian.Properties
 import SampCert.Util.Gaussian.DiscreteGaussian
 import SampCert.Util.Gaussian.GaussPeriodicity
 
+/-!
+# ``DiscreteGaussianGenSample`` Properties
+
+This file proves evaluation and normalization properties of ``DiscreteGaussianGenSample``.
+-/
 noncomputable section
 
 open Classical PMF Nat Real
 
 namespace SLang
 
-theorem if_simple_GaussianGen (x_1 x μ : ℤ) :
+lemma if_simple_GaussianGen (x_1 x μ : ℤ) :
   (@ite ENNReal (x_1 = x - μ) (propDecidable (x_1 = x - μ)) 0
   (@ite ENNReal (x = x_1 + μ) (x.instDecidableEq (x_1 + μ))
   (ENNReal.ofReal (gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x_1 / ∑' (x : ℤ), gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x)) 0)) = 0 := by
@@ -27,6 +31,9 @@ theorem if_simple_GaussianGen (x_1 x μ : ℤ) :
       simp at h1
     . simp
 
+/--
+``SLang`` general discrete gaussian term evaluates according to the mathematical ``discrete_gaussian`` distribution.
+-/
 theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   (DiscreteGaussianGenSample num den μ) x =
   ENNReal.ofReal (discrete_gaussian ((num : ℝ) / (den : ℝ)) μ x) := by
@@ -44,6 +51,6 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   simp only [tsum_zero, add_zero]
   congr 2
   . simp [gauss_term_ℝ]
-  . rw [SG_periodic' A]
+  . rw [shifted_gauss_sum_0 A]
 
 end SLang

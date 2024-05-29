@@ -3,10 +3,15 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import Mathlib.Data.ENNReal.Basic
 import SampCert.Samplers.Uniform.Code
+
+/-!
+# ``UniformSample`` Properties
+
+This file proves normalization and evaluation properties of the ``UniformSample`` sampler.
+-/
 
 noncomputable section
 
@@ -14,17 +19,17 @@ open PMF Classical Finset Nat ENNReal
 
 namespace SLang
 
-theorem rw1_old (n : PNat) :
-   (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
-   = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
-  simp only [PNat.val_ofNat, reduceSucc, ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff',
-    OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
-    PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true, and_true, cast_eq_zero,
-    ENNReal.coe_div, pow_eq_zero_iff, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat, ENNReal.coe_mul,
-    coe_natCast]
+-- theorem rw1_old (n : PNat) :
+--    (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : ENNReal)
+--    = (((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ / ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)) : NNReal)  := by
+--   simp only [PNat.val_ofNat, reduceSucc, ne_eq, _root_.mul_eq_zero, inv_eq_zero, pow_eq_zero_iff',
+--     OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
+--     PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true, and_true, cast_eq_zero,
+--     ENNReal.coe_div, pow_eq_zero_iff, ENNReal.coe_inv, ENNReal.coe_pow, coe_ofNat, ENNReal.coe_mul,
+--     coe_natCast]
 
 theorem rw1 (n : PNat) :
-   ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : ENNReal)
+  ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : ENNReal)
    = ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ((2 ^ log 2 ((2 : PNat) * ↑n))⁻¹ * ↑↑n)⁻¹ : NNReal) := by
   simp only [PNat.val_ofNat, reduceSucc, mul_inv_rev, inv_inv, ENNReal.coe_mul, ne_eq,
     pow_eq_zero_iff', OfNat.ofNat_ne_zero, log_eq_zero_iff, gt_iff_lt, ofNat_pos,
@@ -44,8 +49,12 @@ theorem rw1 (n : PNat) :
 theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) := by
   simp
 
+/--
+The sample space of ``uniformP2 (2*n)`` is large enough to fit the sample
+space for ``uniform(n)``.
+-/
 @[simp]
-theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
+lemma double_large_enough (n : PNat) (x : Nat) (support : x < n) :
   x < 2 ^ (log 2 ↑(2 * n)) := by
   have A : ∀ m : ℕ, m < 2 ^ (log 2 ↑(2 * m)) := by
     intro m
@@ -59,18 +68,25 @@ theorem double_large_enough (n : PNat) (x : Nat) (support : x < n) :
       exact H1
   exact Nat.lt_trans support (A ↑n)
 
+/--
+Simplify a ``uniformPowerOfTwoSample`` when guarded to be within the support.
+
+Note that the support of ``uniformPowerOfTwoSample`` (namely ``[0, 2 ^ log 2 (2 * n))``) is
+larger than support restriction ``[0, n)`` imposed by the guard.
+-/
 @[simp]
-theorem rw_ite (n : PNat) (x : Nat) :
+lemma rw_ite (n : PNat) (x : Nat) :
   (if x < n then (UniformPowerOfTwoSample (2 * n)) x else 0)
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
-  rw [UniformPowerOfTwoSample_apply]
+  rw [probUniformP2_apply]
   simp only [PNat.mul_coe, one_div]
   apply double_large_enough
   trivial
   trivial
 
-theorem tsum_comp (n : PNat) :
+-- Inline?
+lemma tsum_comp (n : PNat) :
   (∑' (x : ↑{i : ℕ | decide (↑n ≤ i) = true}ᶜ), (fun i => UniformPowerOfTwoSample (2 * n) i) ↑x)
     = ∑' (i : ↑{i : ℕ| decide (↑n ≤ i) = false}), UniformPowerOfTwoSample (2 * n) ↑i := by
   apply tsum_congr_set_coe
@@ -78,13 +94,13 @@ theorem tsum_comp (n : PNat) :
   ext x
   simp
 
--- This should be proved more generally
-theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
+
+lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
   (1 - ∑' (i : ℕ), if ↑n ≤ i then UniformPowerOfTwoSample (2 * n) i else 0)
     = ∑' (i : ℕ), if i < ↑n then UniformPowerOfTwoSample (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then UniformPowerOfTwoSample (2 * n) i else 0) +
     (∑' (i : ℕ), if decide (↑n ≤ i) = false then UniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
-    have A := UniformPowerOfTwoSample_normalizes (2 * n)
+    have A := probUniformP2_normalizes (2 * n)
     have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => UniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
@@ -98,7 +114,7 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
     trivial
   apply ENNReal.sub_eq_of_eq_add_rev
   . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
-    rw [UniformPowerOfTwoSample_normalizes (2 * n)] at Y
+    rw [probUniformP2_normalizes (2 * n)] at Y
     simp at Y
     clear X
     by_contra
@@ -108,10 +124,13 @@ theorem UniformPowerOfTwoSample_autopilot (n : PNat) :
   . simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
     rw [X]
 
+/--
+Evaluation of the ``UniformSample`` distribution inside its support.
+-/
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, prob_until_apply,
+  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, probUntil_apply,
     decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SLang.pure_apply]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   simp only [support, ↓reduceIte, mul_one]
@@ -162,7 +181,7 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     right
     intro x
     rw [A]
-  rw [UniformPowerOfTwoSample_autopilot]
+  rw [uniformPowerOfTwoSample_autopilot]
   simp only [rw_ite, one_div, sum_simple]
   rw [rw1 n]
   rw [rw2 n]
@@ -172,12 +191,18 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     PNat.ne_zero, not_ofNat_le_one, or_self, not_false_eq_true, and_true,
     IsUnit.inv_mul_cancel_left, cast_eq_zero, ENNReal.coe_inv, coe_natCast]
 
+/--
+Evaluation of the ``UniformSample`` distribution outside of its support.
+-/
 @[simp]
 theorem UniformSample_apply_out (n : PNat) (x : Nat) (support : x ≥ n) :
   UniformSample n x = 0 := by
   simp [UniformSample, support]
 
-theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
+/--
+Sum of the ``UniformSample`` distribution over a subset of its support.
+-/
+lemma UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
   (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
   induction m
   . simp
@@ -191,13 +216,19 @@ theorem UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
     rw [UniformSample_apply ↑n m h]
     rw [ENNReal.div_add_div_same]
 
-theorem UniformSample_support_Sum' (n : PNat) :
+/--
+Sum of the ``UniformSample`` distribution inside its support.
+-/
+lemma UniformSample_support_Sum' (n : PNat) :
   (Finset.sum (range n) fun i => UniformSample n i) = 1 := by
   rw [UniformSample_support_Sum n n le.refl]
   apply ENNReal.div_self
   . simp
   . simp
 
+/--
+Sum over the whole space of ``UniformSample`` is ``1``.
+-/
 @[simp]
 theorem UniformSample_normalizes (n : PNat) :
   ∑' a : ℕ, UniformSample n a = 1 := by
@@ -205,6 +236,9 @@ theorem UniformSample_normalizes (n : PNat) :
   . simp [UniformSample_support_Sum']
   . exact ENNReal.summable
 
+/--
+``UniformSample`` is a proper distribution
+-/
 theorem UniformSample_HasSum_1  (n : PNat) :
   HasSum (UniformSample n) 1 := by
   have A : Summable (UniformSample n) := by exact ENNReal.summable
@@ -212,8 +246,14 @@ theorem UniformSample_HasSum_1  (n : PNat) :
   rw [UniformSample_normalizes n] at B
   trivial
 
+/--
+Conversion of ``UniformSample`` from a ``SLang`` term to a ``PMF``.
+-/
 noncomputable def UniformSample_PMF (n : PNat) : PMF ℕ := ⟨ UniformSample n , UniformSample_HasSum_1 n⟩
 
+/--
+Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when inside the support.
+-/
 theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   (if a < b then (UniformSample c) a else 0) = if a < b then 1 / (c : ENNReal) else 0 := by
   split
@@ -222,6 +262,9 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   . exact Nat.lt_of_lt_of_le i2 i1
   . trivial
 
+/--
+Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when outside the support.
+-/
 theorem UniformSample_apply' (n : PNat) (x : Nat) :
   (UniformSample n) x = if x < n then (1 : ENNReal) / n else 0 := by
   split

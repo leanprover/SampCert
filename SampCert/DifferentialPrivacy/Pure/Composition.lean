@@ -14,8 +14,8 @@ open Classical Set
 
 namespace SLang
 
-theorem PureDPCompose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  DP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
+  DP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
   rcases h1 with ⟨h1a, _⟩
   rcases h2 with ⟨h2a, _⟩
@@ -24,7 +24,7 @@ theorem PureDPCompose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ �
   intros l₁ l₂ neighbours x y
   replace h1a := h1a l₁ l₂ neighbours x
   replace h2a := h2a l₁ l₂ neighbours y
-  simp [Compose]
+  simp [privCompose]
   conv =>
     left
     congr
@@ -57,15 +57,15 @@ theorem PureDPCompose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ �
   . aesop
   . aesop
 
-theorem PureDPCompose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  PureDP (Compose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem PureDP_Compose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
+  PureDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
   have hc := h
   have h'c := h'
   rcases h with ⟨ _ , h2 ⟩
   rcases h' with ⟨ _ , h'2 ⟩
   constructor
-  . apply PureDPCompose' hc h'c
-  . apply DPCompose_NonZeroNQ h2 h'2
+  . apply PureDP_Compose' hc h'c
+  . apply privCompose_NonZeroNQ h2 h'2
 
 end SLang

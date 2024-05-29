@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -11,6 +10,12 @@ import SampCert.Samplers.BernoulliNegativeExponential.Code
 import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.NormedSpace.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exponential
+
+/-!
+# ``BernoulliNegExpSample`` Properties
+
+This file proves evaluation and normalization for ``BernoulliNegExpSample``.
+-/
 
 noncomputable section
 
@@ -20,20 +25,20 @@ namespace SLang
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_zero (num : ℕ) (den : ℕ+) (st st' : Bool × ℕ+) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) 0 st st' = 0 := by
-  simp [prob_while_cut]
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) 0 st st' = 0 := by
+  simp [probWhileCut]
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_returns_false (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (true, r) = 0 := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (true, r) = 0 := by
   revert st r
   induction fuel
-  . simp [prob_while_cut]
+  . simp [probWhileCut]
   . rename_i fuel IH
     intro st r
-    simp [prob_while_cut, WhileFunctional]
-    unfold SLang.bind
-    unfold SLang.pure
+    simp [probWhileCut, probWhileFunctional]
+    unfold probBind
+    unfold probPure
     simp [ite_apply]
     split
     . rename_i h
@@ -64,12 +69,12 @@ theorem BernoulliExpNegSampleUnitAux_ite_simpl (x r : ℕ+) (k : ENNReal) :
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (true, r) st =
-    (num / (r * den)) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (true, r + 1) st
-    + (1 - (num / (r * den))) * prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (true, r) st =
+    (num / (r * den)) * probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (true, r + 1) st
+    + (1 - (num / (r * den))) * probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel (false, r + 1) st := by
   cases st
   rename_i b' r'
-  simp [prob_while_cut, WhileFunctional, ite_apply, ENNReal.tsum_prod', tsum_bool, BernoulliExpNegSampleUnitLoop]
+  simp [probWhileCut, probWhileFunctional, ite_apply, ENNReal.tsum_prod', tsum_bool, BernoulliExpNegSampleUnitLoop]
   conv =>
     left
     congr
@@ -89,14 +94,14 @@ theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : 
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_succ_false (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (r : ℕ+) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (false, r) st =
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (succ fuel) (false, r) st =
   if st = (false,r) then 1 else 0 := by
   cases st
-  simp [prob_while_cut, WhileFunctional]
+  simp [probWhileCut, probWhileFunctional]
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_monotone_counter (num : ℕ) (den : ℕ+) (fuel : ℕ) (st : Bool × ℕ+) (n : ℕ+) (wf : num ≤ den)  (h1 : st ≠ (false,n)) (h2 : st.2 ≥ n) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (false, n) = 0 := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) fuel st (false, n) = 0 := by
   revert st
   induction fuel
   . simp
@@ -163,7 +168,7 @@ theorem nm2p2 (n : ℕ) (h : n > 1) :
 -- This min is suspicious: (min (fuel + 2) (fuel + k + 1) - 2)
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_progress (num : ℕ) (den : ℕ+) (fuel k : ℕ) (wf : num ≤ den) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range fuel, (num : ENNReal) / ((k + 1 + i) * den)) * (1 - ((num : ENNReal) / ((fuel + k + 1) * den))) := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel ) = (∏ i in range fuel, (num : ENNReal) / ((k + 1 + i) * den)) * (1 - ((num : ENNReal) / ((fuel + k + 1) * den))) := by
   revert k
   induction fuel
   . intro k
@@ -264,7 +269,7 @@ theorem adhoc' (n : ℕ) (h : n > 1) :
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_progress' (num : ℕ) (den : ℕ+) (n : ℕ) (wf : num ≤ den) (h : n > 1) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1 ) (false, ⟨ n , lt_of_succ_lt h ⟩ ) = (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1 ) (false, ⟨ n , lt_of_succ_lt h ⟩ ) = (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   have prog := BernoulliExpNegSampleUnitAux_progress num den (n - 2) 0 wf
   have A := nm2p2 n h
   rw [A] at prog
@@ -282,8 +287,8 @@ theorem BernoulliExpNegSampleUnitAux_progress' (num : ℕ) (den : ℕ+) (n : ℕ
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel fuel' k : ℕ) (wf : num ≤ den) (h1 : fuel ≥ fuel') :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (1 + fuel + 2) (true, plus_one k ) (false, plus_two k fuel')
-    = prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel') := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (1 + fuel + 2) (true, plus_one k ) (false, plus_two k fuel')
+    = probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (fuel + 2) (true, plus_one k ) (false, plus_two k fuel') := by
   revert fuel' k
   induction fuel
   . intro fuel' k h1
@@ -344,8 +349,8 @@ theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m : ℕ) (wf : num ≤ den) (h1 : m > 1) (h2 : n ≥ m) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (n + 1) (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩ )
-    = prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩) := by
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (n + 1) (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩ )
+    = probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) n (true, 1) (false, ⟨ m, zero_lt_of_lt h1 ⟩) := by
   have X : n - 2 ≥ m - 2 := by exact Nat.sub_le_sub_right h2 2
   have prog := BernoulliExpNegSampleUnitAux_preservation num den (n - 2) (m - 2) 0 wf X
   have A : 1 + (n - 2) + 2 = n + 1 := by
@@ -367,7 +372,7 @@ theorem BernoulliExpNegSampleUnitAux_preservation' (num : ℕ) (den : ℕ+) (n m
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (n extra : ℕ) (wf : num ≤ den) (h : n > 1) :
-  prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n, by exact zero_lt_of_lt h ⟩)
+  probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) (extra + n) (true, 1) (false, ⟨ n, by exact zero_lt_of_lt h ⟩)
     =  (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   revert n
   induction extra
@@ -394,10 +399,10 @@ theorem BernoulliExpNegSampleUnitAux_characterization (num : ℕ) (den : ℕ+) (
     . exact Nat.le_add_left n extra
 
 theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf : num ≤ den) :
-  ⨆ i, prob_while_cut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) i (true, 1) (false, n)
+  ⨆ i, probWhileCut (fun state => state.1) (BernoulliExpNegSampleUnitLoop num den wf) i (true, 1) (false, n)
     = if n = 1 then 0 else (∏ i in range (n - 2), (num : ENNReal) / ((1 + i) * den)) * (1 - ((num : ENNReal) / ((n - 1) * den))) := by
   apply iSup_eq_of_tendsto
-  . apply prob_while_cut_monotonic
+  . apply probWhileCut_monotonic
   . rw [Iff.symm (Filter.tendsto_add_atTop_iff_nat n)]
     split
     . rename_i h
@@ -431,7 +436,7 @@ theorem BernoulliExpNegSampleUnitAux_sup (num : ℕ) (den : ℕ+) (n : ℕ+) (wf
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_at_zero (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
   (BernoulliExpNegSampleUnitAux num den wf) 0 = 0 := by
-  simp only [BernoulliExpNegSampleUnitAux, Bind.bind, Pure.pure, SLang.bind_apply, prob_while,
+  simp only [BernoulliExpNegSampleUnitAux, Bind.bind, Pure.pure, SLang.bind_apply, probWhile,
     SLang.pure_apply, ENNReal.tsum_eq_zero, _root_.mul_eq_zero, ENNReal.iSup_eq_zero, Prod.forall,
     Bool.forall_bool, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
     BernoulliExpNegSampleUnitAux_returns_false, forall_const, true_or, and_true]
@@ -466,7 +471,7 @@ theorem BernoulliExpNegSampleUnitAux_apply (num : ℕ) (den : ℕ+) (n : ℕ+) (
   simp [BernoulliExpNegSampleUnitAux]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
-  simp [prob_while]
+  simp [probWhile]
   simp [BernoulliExpNegSampleUnitAux_sup]
   rw [ENNReal.tsum_eq_add_tsum_ite n]
   simp
@@ -1166,6 +1171,9 @@ theorem BernoulliExpNegSampleGenLoop_apply_false (iter : Nat) :
   rw [← A]
   simp
 
+/--
+Bernoulli negative exponential sampler is a proper distribution
+-/
 @[simp]
 theorem BernoulliExpNegSample_normalizes (num : Nat) (den : PNat) :
   (∑' b : Bool, (BernoulliExpNegSample num den) b) = 1 := by
@@ -1202,6 +1210,9 @@ theorem ENNReal_eq_to_Real_eq (a b : ENNReal) (h : a = b) :
   a.toReal = b.toReal := by
   exact congrArg ENNReal.toReal h
 
+/--
+Evaluation of Bernoulli negative exponential sampler at ``true``
+-/
 @[simp]
 theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
   (BernoulliExpNegSample num den) true = ENNReal.ofReal (Real.exp (- ((num : NNReal) / (den : NNReal)))) := by
@@ -1261,6 +1272,9 @@ theorem BernoulliExpNegSample_apply_true (num : Nat) (den : PNat):
         . exact ENNReal.ofReal_ne_top
       . apply Real.exp_nonneg
 
+/--
+Evaluation of Bernoulli negative exponential sampler at ``false``
+-/
 @[simp]
 theorem BernoulliExpNegSample_apply_false (num : Nat) (den : PNat) :
   (BernoulliExpNegSample num den) false = 1 - ENNReal.ofReal (Real.exp (- ((num : NNReal) / (den : NNReal)))) := by

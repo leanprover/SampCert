@@ -10,5 +10,5 @@ import SampCert.DifferentialPrivacy.Pure.System
 
 open SLang
 
-def BoundedMeanZCDP := @BoundedAvgQueryDP zCDPSystem
-def BoundedMeanPureDP := @BoundedAvgQueryDP PureDPSystem
+def combineConcentrated := @privNoisedBoundedMean_DP gaussian_zCDPSystem
+def combinePure := @privNoisedBoundedMean_DP PureDPSystem
