@@ -17,7 +17,7 @@ namespace SLang
 theorem PureDPPostProcess' {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureDP nq ((ε₁ : ℝ) / ε₂)) (f : U → V) :
   DP (PostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
-  rcases h with ⟨ha, hb, hc⟩
+  rcases h with ⟨ha, _, _⟩
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x

@@ -28,8 +28,8 @@ def DP (m : Mechanism T U) (ε : ℝ) : Prop :=
 
 def PureDP (m : Mechanism T U) (ε : ℝ) : Prop :=
   DP m ε
-  ∧ NonZeroNQ m
-  ∧ NonTopSum m
+ ∧ NonZeroNQ m
+ ∧ NonTopSum m
 
 def DP_singleton (m : Mechanism T U) (ε : ℝ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ x : U,
