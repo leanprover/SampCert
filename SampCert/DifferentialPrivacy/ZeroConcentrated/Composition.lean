@@ -73,66 +73,6 @@ theorem Renyi_noised_query_NZ {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 < 
   . exact h5
 
 /--
-Simplification lemma for products of noised queries.
--/
-lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
-  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
-  have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
-    intro x  y
-    split
-    . rename_i h
-      subst h
-      simp
-    . rename_i h
-      simp
-      intro h
-      contradiction
-  conv =>
-    left
-    right
-    intro a
-    right
-    rw [A]
-  rw [ENNReal.tsum_eq_add_tsum_ite b]
-  simp
-  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 l x * ∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0 else 0) = 0 := by
-    intro x
-    split
-    . simp
-    . split
-      . rename_i h1 h2
-        subst h2
-        contradiction
-      . simp
-  conv =>
-    left
-    right
-    right
-    intro x
-    rw [B]
-  simp
-  congr 1
-  rw [ENNReal.tsum_eq_add_tsum_ite c]
-  simp
-  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 l x else 0) = 0 := by
-    intro x
-    split
-    . simp
-    . split
-      . rename_i h1 h2
-        subst h2
-        contradiction
-      . simp
-  conv =>
-    left
-    right
-    right
-    intro X
-    rw [C]
-  simp
-
-
-/--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
@@ -202,18 +142,6 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
     . apply Renyi_noised_query_NZ h3 h4 Y nn2 nt2 nts2
 
 /--
-All outputs of a composed query have nonzero probability.
--/
-theorem privCompose_NonZeroNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (privCompose nq1 nq2) := by
-  simp [NonZeroNQ] at *
-  intro l a b
-  replace nn1 := nn1 l a
-  replace nn2 := nn2 l b
-  simp [privCompose]
-  exists a
-
-/--
 All outputs of a composed query have finite probability.
 -/
 theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
@@ -224,43 +152,6 @@ theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang 
   replace nt2 := nt2 l b
   simp [privCompose]
   rw [compose_sum_rw]
-  rw [mul_eq_top]
-  intro H
-  cases H
-  . rename_i H
-    cases H
-    contradiction
-  . rename_i H
-    cases H
-    contradiction
-
-/--
-Composed queries are normalizable.
--/
-theorem privCompose_NonTopSum {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : NonTopSum nq2) :
-  NonTopSum (privCompose nq1 nq2) := by
-  simp [NonTopSum] at *
-  intro l
-  replace nt1 := nt1 l
-  replace nt2 := nt2 l
-  simp [privCompose]
-  rw [ENNReal.tsum_prod']
-  conv =>
-    right
-    left
-    right
-    intro a
-    right
-    intro b
-    simp
-    rw [compose_sum_rw]
-  conv =>
-    right
-    left
-    right
-    intro a
-    rw [ENNReal.tsum_mul_left]
-  rw [ENNReal.tsum_mul_right]
   rw [mul_eq_top]
   intro H
   cases H
@@ -351,6 +242,5 @@ theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (
   . apply privCompose_NonTopSum h3 h'3
   . apply privCompose_NonTopNQ h4 h'4
   . apply privCompose_NonTopRDNQ h5 h'5 h4 h'4
-
 
 end SLang

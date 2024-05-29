@@ -883,17 +883,6 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
   simp only [decide_eq_true_eq, tsum_bool, IsEmpty.forall_iff, ↓reduceIte, forall_true_left,
     ite_not, ite_mul, zero_mul, SLang.pure_apply, mul_ite, mul_one, mul_zero, tsum_ite_eq]
 
-  -- conv =>
-  --   left
-  --   right
-  --   right
-  --   intro b
-  --   rw [ENNReal.tsum_eq_add_tsum_ite (- (b : ℤ))]
-
-  -- -- superb!
-  -- simp (config := { contextual := true }) only [reduceIte]
-  -- simp only [ite_self, tsum_zero, add_zero]
-
   have B : ∀ a, (@ite ENNReal (a = 0) (instDecidableEqNat a 0) 0
   (DiscreteLaplaceSampleLoop num den (true, a) *
     (∑' (b : ℕ), DiscreteLaplaceSampleLoop num den (false, b) +

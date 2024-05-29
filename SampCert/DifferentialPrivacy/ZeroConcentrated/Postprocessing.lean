@@ -28,15 +28,6 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-lemma condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
-  (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by
-  have A := @tsum_split_ite U (fun a : U => x = f a) g (fun _ => 0)
-  simp only [decide_eq_true_eq, tsum_zero, add_zero] at A
-  rw [A]
-  have B : ↑{i | decide (x = f i) = true} = ↑{a | x = f a} := by
-    simp
-  rw [B]
-
 lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
   have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
@@ -180,52 +171,6 @@ theorem RD1 (p q : T → ENNReal) (α : ℝ) (h : 1 < α) (RD : ∑' (x : T), p 
   ∑' (x : T), (p x / q x) ^ α * q x ≠ ⊤ := by
   rw [← RenyiDivergenceExpectation p q h nz nt]
   trivial
-
-theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum f a) (g : T → V) :
-    HasSum (fun c : V ↦ ∑' b : g ⁻¹' {c}, f b) a := by
-  let A := (Equiv.sigmaFiberEquiv g)
-  have B := @Equiv.hasSum_iff ENNReal T ((y : V) × { x // g x = y }) _ _ f a A
-  replace B := B.2 hf
-  have C := @HasSum.sigma ENNReal V _ _ _ _ (fun y : V => { x // g x = y }) (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) (fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) a B
-  apply C
-  intro b
-  have F := @Summable.hasSum_iff ENNReal _ _ _ (fun c => (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) { fst := b, snd := c }) ((fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) b) _
-  apply (F _).2
-  . rfl
-  . apply ENNReal.summable
-
-theorem ENNReal.tsum_fiberwise (p : T → ENNReal) (f : T → V) :
-  ∑' (x : V), ∑' (b : (f ⁻¹' {x})), p b
-    = ∑' i : T, p i := by
-  apply HasSum.tsum_eq
-  apply ENNReal.HasSum_fiberwise
-  apply Summable.hasSum
-  exact ENNReal.summable
-
-theorem fiberwisation (p : T → ENNReal) (f : T → V) :
- (∑' i : T, p i)
-    = ∑' (x : V), if {a : T | x = f a} = {} then 0 else ∑'(i : {a : T | x = f a}), p i := by
-  rw [← ENNReal.tsum_fiberwise p f]
-  have A : ∀ x, f ⁻¹' {x} = { a | x = f a } := by
-    intro x
-    simp [Set.preimage]
-    rw [Set.ext_iff]
-    simp
-    intro y
-    exact eq_comm
-  conv =>
-    left
-    right
-    intro x
-    rw [A]
-  clear A
-  apply tsum_congr
-  intro b
-  split
-  . rename_i h'
-    rw [h']
-    simp only [tsum_empty]
-  . simp
 
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
@@ -691,40 +636,6 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {ε₁ ε₂ : ℕ+}
           apply lt_of_le_of_lt X Y
         rw [lt_top_iff_ne_top] at Z
         contradiction
-
-theorem privPostProcess_NonZeroNQ {nq : List T → SLang U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
-  NonZeroNQ (privPostProcess nq f) := by
-  simp [NonZeroNQ, Function.Surjective, privPostProcess] at *
-  intros l n
-  replace sur := sur n
-  cases sur
-  rename_i a h
-  exists a
-  constructor
-  . rw [h]
-  . apply nn
-
-theorem privPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : NonTopSum nq) :
-  NonTopSum (privPostProcess nq f) := by
-  simp [NonTopSum, privPostProcess] at *
-  intros l
-  have nt := nt l
-  rw [← ENNReal.tsum_fiberwise _ f] at nt
-  conv =>
-    right
-    left
-    right
-    intro n
-    rw [condition_to_subset]
-  have A : ∀ x : V, f ⁻¹' {x} = {y | x = f y} := by
-    aesop
-  conv =>
-    right
-    left
-    right
-    intro x
-    rw [← A]
-  trivial
 
 theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
   NonTopRDNQ (privPostProcess nq f) := by

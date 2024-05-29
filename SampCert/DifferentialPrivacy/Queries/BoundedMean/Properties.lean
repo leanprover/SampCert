@@ -3,7 +3,6 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.Foundations.Basic
 import SampCert.DifferentialPrivacy.Queries.Count.Basic
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Basic
@@ -39,7 +38,6 @@ lemma budget_split (ε₁ ε₂ : ℕ+) :
   (ε₁ : ℝ) / (ε₂ : ℝ) = (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) + (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) := by
   field_simp
   ring_nf
-
 
 /--
 DP bound for noised mean.

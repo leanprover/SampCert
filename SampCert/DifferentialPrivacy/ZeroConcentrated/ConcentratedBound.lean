@@ -289,21 +289,6 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       . apply sg_sum_pos' h
       . apply sg_sum_pos' h
 
--- Dead code
--- theorem SG_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ : ℤ) :
---   (∑' x : ℤ, (gauss_term_ℝ σ μ) (x + τ)) = ∑' x : ℤ, (gauss_term_ℝ σ μ) x := by
---   have B := tsum_shift (fun x : ℤ => (gauss_term_ℝ σ μ) x) τ
---   rw [← B]
---   . apply tsum_congr
---     intro b
---     simp
---   . intro ν
---     conv =>
---       right
---       intro x
---       rw [SGShift]
---     apply summable_gauss_term' h
-
 lemma  sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rexp (-(x - μ) ^ 2 / (2 * ss)) ^ α * rexp (-(x - ν) ^ 2 / (2 * ss)) ^ (1 - α)
   = rexp (-((x - μ) ^ 2 * α + (x - ν) ^ 2 * (1 - α)) / (2 * ss)) := by

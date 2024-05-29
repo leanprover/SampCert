@@ -6,7 +6,9 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
+import SampCert.DifferentialPrivacy.Pure.System
 
 open SLang
 
-def combine := @privNoisedBoundedMean_DP gaussian_zCDPSystem
+def combineConcentrated := @privNoisedBoundedMean_DP gaussian_zCDPSystem
+def combinePure := @privNoisedBoundedMean_DP PureDPSystem
