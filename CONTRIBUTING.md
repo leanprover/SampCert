@@ -17,7 +17,7 @@ Barring the exceptions made for extraction, SLang programs should follow this na
 
 ## Tools
 
-SampCert uses [doc-gen4](https://github.com/leanprover/doc-gen4) to render its documentation. You can build a local copy using the command ``lake -R -Kenv=dev build SampCert:docs``.
+SampCert uses [doc-gen4](https://github.com/leanprover/doc-gen4) to render its documentation. You can build a local copy using the command ``lake -R -Kenv=doc build SampCert:docs``.
 
 SampCert also installs [import-graph](https://github.com/leanprover-community/import-graph). The command ``lake exe graph --to SampCert import_graph.pdf`` will render a dependency graph between SampCert files. 
 
