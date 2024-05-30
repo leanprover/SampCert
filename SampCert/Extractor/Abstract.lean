@@ -4,6 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
+-- class Capsid (T : Type) (M : Type -> Type) where
+--   CapsidM_inst : Monad M
+--   capsWhile :  (T → Bool) → (T → M T) → (init : T) → M T
+
+
 class Capsid (CapsM : Type u -> Type v) extends Monad CapsM where
   capsWhile : (cond : T → Bool) → (body : T → CapsM T) → T → CapsM T
 

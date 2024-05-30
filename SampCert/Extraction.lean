@@ -28,12 +28,25 @@ Additionally, the following names are protected:
  - ``UniformPowerOfTwoSample``
 -/
 
-instance : Capsid SLang where
+-- instance : Capsid SLang where
+--   capsWhile := probWhile
+
+instance SLang_Capsid : Capsid SLang where
   capsWhile := probWhile
 
 
+-- MARKUSDE: Can't figure out how to get it to synthesize a typeclass instance
+-- at export time, so I'll pass them in instead. Maybe a macro
 
--- attribute [export_dafny] UniformSample
+
+
+def UniformCapsid := (SLang_Capsid, UniformSample)
+
+attribute [export_dafny] UniformCapsid
+
+
+
+
 -- attribute [export_dafny] BernoulliSample
 -- attribute [export_dafny] BernoulliExpNegSampleUnitLoop
 -- attribute [export_dafny] BernoulliExpNegSampleUnitAux
