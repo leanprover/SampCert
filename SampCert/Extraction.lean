@@ -35,18 +35,15 @@ instance SLang_Capsid : Capsid SLang where
   capsWhile := probWhile
 
 
+def testSLang : SLang Nat := (return 5) >>= (fun x => x)
+
 -- MARKUSDE: Can't figure out how to get it to synthesize a typeclass instance
 -- at export time, so I'll pass them in instead. Maybe a macro
+def testCapsid := (SLang_Capsid, UniformSample)
+attribute [export_dafny] testCapsid
 
 
-
-def UniformCapsid := (SLang_Capsid, UniformSample)
-
-attribute [export_dafny] UniformCapsid
-
-
-
-
+-- attribute [export_dafny] UniformSample
 -- attribute [export_dafny] BernoulliSample
 -- attribute [export_dafny] BernoulliExpNegSampleUnitLoop
 -- attribute [export_dafny] BernoulliExpNegSampleUnitAux

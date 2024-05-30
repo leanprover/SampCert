@@ -9,6 +9,9 @@ import SampCert.Extractor.IR
 import SampCert.Extractor.Extension
 import SampCert.Extractor.Abstract
 
+import Mathlib.Data.Nat.Log
+import Mathlib.Data.PNat.Defs
+
 namespace Lean.ToDafny
 
 /--
@@ -20,6 +23,14 @@ def readCapsid (e : Expr) : MetaM (Option (Name × Expr)) :=
   | .app (.app (.const ``Prod [1, 0]) (.app (.const ``Capsid _) (.const t _))) f => do
     return (some (t, f))
   | _ => return none
+
+def readCapsidProg (e : Expr) : MetaM (Option (Name × Name)) :=
+  IO.println s!" - Reading Capsid Program {e}" >>= fun _ =>
+  match e with
+  | .app (.app _ (.const e1 _)) (.const e2 _) => return some (e1, e2)
+  | _ => do
+    IO.println s!"Capsid program read failure"
+    return none
 
 def IsWFMonadic (capsidM : Name) (e: Expr) : MetaM Bool :=
   IO.println s!" - Checking if {e} is WF monadic" >>= fun _ =>
@@ -63,6 +74,7 @@ partial def toDafnyTyp (capsidM : Name) (env : List String) (e : Expr) : MetaM T
   | .proj .. => throwError "toDafnyTyp: not supported -- projection {e}"
 
 partial def toDafnyExpr (capsidM : Name) (dname : String) (env : List String) (e : Expr) : MetaM Expression := do
+  IO.println s!"      + translate {e}"
   match e with
   | .bvar i => return .name (env[i]!)
   | .fvar .. => throwError "toDafnyExpr: not supported -- free variable {e}"
@@ -98,10 +110,10 @@ partial def toDafnyExpr (capsidM : Name) (dname : String) (env : List String) (e
       | ``LE.le => return .binop .leastequal (← toDafnyExpr capsidM dname env args[2]!) (← toDafnyExpr capsidM dname env args[3]!)
       | ``GT.gt => return .binop .greater (← toDafnyExpr capsidM dname env args[2]!) (← toDafnyExpr capsidM dname env args[3]!)
       | ``GE.ge => return .binop .greaterequal (← toDafnyExpr capsidM dname env args[2]!) (← toDafnyExpr capsidM dname env args[3]!)
-      -- | ``Nat.log => return .binop .log (← toDafnyExpr capsidM dname env args[0]!) (← toDafnyExpr capsidM dname env args[1]!)
+      | ``Nat.log => return .binop .log (← toDafnyExpr capsidM dname env args[0]!) (← toDafnyExpr capsidM dname env args[1]!)
       | ``decide => toDafnyExpr capsidM dname env args[0]!
-      -- | ``_root_.Rat.den => return .unop .denominator (← toDafnyExpr capsidM dname env args[0]!)
-      -- | ``_root_.Rat.num => return .unop .numerator (← toDafnyExpr capsidM dname env args[0]!)
+      | ``_root_.Rat.den => return .unop .denominator (← toDafnyExpr capsidM dname env args[0]!)
+      | ``_root_.Rat.num => return .unop .numerator (← toDafnyExpr capsidM dname env args[0]!)
       | ``Nat.cast => toDafnyExpr capsidM dname env args[2]!
       | ``Int.cast => toDafnyExpr capsidM dname env args[2]!
       | ``Prod.fst => return .proj (← toDafnyExpr capsidM dname env args[2]!) 1
@@ -111,7 +123,7 @@ partial def toDafnyExpr (capsidM : Name) (dname : String) (env : List String) (e
       -- | ``abs => return .unop .abs (← toDafnyExpr capsidM dname env args[2]!)
       | ``Int.natAbs => return .unop .abs (← toDafnyExpr capsidM dname env args[0]!)
       | ``OfScientific.ofScientific => toDafnyExpr capsidM dname env args[4]!
-      -- | ``PNat.val => toDafnyExpr capsidM dname env args[0]!
+      | ``PNat.val => toDafnyExpr capsidM dname env args[0]!
       | ``Subtype.mk => toDafnyExpr capsidM dname env args[2]!
       | ``Int.sub => return .binop .substraction (← toDafnyExpr capsidM dname env args[0]!) (← toDafnyExpr capsidM dname env args[1]!)
       | _ =>
@@ -167,9 +179,15 @@ partial def toDafnyExprTop (capsidM : Name) (dname : String) (num_args : Nat) (n
   | .const .. => throwError "toDafnyExprTop: not supported -- constant {e}"
   | .app .. =>
     e.withApp fun fn args =>
-      if let .const ``WellFounded.fix .. := fn
-      then toDafnyExprTop capsidM dname num_args names (args[4]!)
-      else throwError "toDafnyExprTop: not supported -- application {e}"
+      match fn with
+      | (.const ``WellFounded.fix ..) => toDafnyExprTop capsidM dname num_args names (args[4]!)
+      -- Very wrong
+      -- | (.const ``pure ..) => do
+      --   let to_translate := args[3]!
+      --   let de <- toDafnyExpr capsidM dname names to_translate
+      --   IO.println s!" - PURE: translated value {to_translate}"
+      --   return (names, de)
+      | _ =>  throwError "toDafnyExprTop: not supported -- application {e}"
   | .lam binderName _ body _ =>
     let sig_names := names ++ [binderName.toString]
     if num_args = List.length names + 1
@@ -209,11 +227,23 @@ def toDafnySLangDefIn (declName: Name) : MetaM MDef := do
         IO.println s!" - Capsid monad: {capsidM}"
         let isMonadic <- (IsWFMonadic capsidM progT)
         if !isMonadic then throwError "Program type {progT} is not monadic"
-
         let (inParamTyp, outParamTyp) ← toDafnyTypTop capsidM [] progT
-        let (inParam, body) ← toDafnyExprTop capsidM declName.toString (List.length inParamTyp) [] info.value!
-        let defn := MDef.mk (declName.toString) inParamTyp outParamTyp inParam body
-        return defn
+        let p <- readCapsidProg info.value!
+        match p with
+        | none => throwError "program is malformed (should be impossible if normalized)"
+        | some (capsid_instance_name, program_name) => do
+          IO.println s!" - Read Capsid instance name {capsid_instance_name}"
+          IO.println s!" - Read program value name {program_name}"
+
+          -- Now I need to get the program body from the program mane
+          let progInfo <- getConstInfoDefn program_name
+          IO.println s!" - Got program value {progInfo.value}"
+          let capsidInfo <- getConstInfoDefn capsid_instance_name
+          IO.println s!" - Got capsid value {capsidInfo.value}"
+
+          let (inParam, body) ← toDafnyExprTop capsidM declName.toString (List.length inParamTyp) [] (progInfo.value)
+          let defn := MDef.mk (declName.toString) inParamTyp outParamTyp inParam body
+          return defn
       | _ => throwError "Failed to read Capsid information (1)"
     | _ => throwError "Failed to read Capsid information (2)"
 
