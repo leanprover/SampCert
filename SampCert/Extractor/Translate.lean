@@ -7,13 +7,13 @@ Authors: Jean-Baptiste Tristan
 import Lean
 import SampCert.Extractor.IR
 import SampCert.Extractor.Extension
-import SampCert.SLang
+import SampCert.Extractor.Abstract
 
 namespace Lean.ToDafny
 
 def IsWFMonadic (e: Expr) : MetaM Bool :=
   match e with
-  | .app (.const ``SLang ..) _ => return true
+  | .app (.const ``MyAbstractLanguage.FOO ..) _ => return true
   | .app .. => return true -- Need to work out details of this one, related to translation of dependent types
   | .forallE _ _ range _ => IsWFMonadic range
   | _ => return false -- throwError "IsWFMonadic {e}"
@@ -70,7 +70,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``ite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[3]!) (← toDafnyExpr dname env args[4]!)
       | ``dite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[3]!)) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[4]!))
       | ``throwThe => return .throw (← toDafnyExpr dname env args[4]!)
-      | ``SLang.probWhile => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
+      | ``MyAbstractLanguage.while_ => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``SLang.probUntil => return .prob_until (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
       | ``OfNat.ofNat => toDafnyExpr dname env args[1]!
       | ``HAdd.hAdd => return .binop .addition (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
