@@ -13,7 +13,7 @@ namespace Lean.ToDafny
 
 def IsWFMonadic (e: Expr) : MetaM Bool :=
   match e with
-  | .app (.const ``MyAbstractLanguage.FOO ..) _ => return true
+  | .app (.const ``Capsid ..) _ => return true
   | .app .. => return true -- Need to work out details of this one, related to translation of dependent types
   | .forallE _ _ range _ => IsWFMonadic range
   | _ => return false -- throwError "IsWFMonadic {e}"
@@ -32,7 +32,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
   | .mvar .. => throwError "toDafnyTyp: not supported -- meta variable {e}"
   | .sort .. => throwError "toDafnyTyp: not supported -- sort {e}"
   | .const ``Nat .. => return .nat
-  | .const ``PNat .. => return .pos
+  -- | .const ``PNat .. => return .pos
   | .const ``Bool .. => return .bool
   | .const ``Int .. => return .int
   | .const .. => throwError "toDafnyTyp: not supported -- constant {e}"
@@ -40,7 +40,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
       if let .const name .. := fn then
       match name with
       | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
-      | ``SLang => return (← toDafnyTyp env args[0]!)
+      | ``Capsid => return (← toDafnyTyp env args[0]!)
       | _ => return .dependent (← toDafnyExpr "dummycalledfromtoDafnyTyp" env e)
       else throwError "toDafnyExpr: OOL {fn} {args}"
     )
@@ -70,8 +70,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``ite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[3]!) (← toDafnyExpr dname env args[4]!)
       | ``dite => return .ite (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[3]!)) (← toDafnyExpr dname ("dummy" :: env) (chopLambda args[4]!))
       | ``throwThe => return .throw (← toDafnyExpr dname env args[4]!)
-      | ``MyAbstractLanguage.while_ => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
-      | ``SLang.probUntil => return .prob_until (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!)
+      | ``Capsid.capsWhile => return .prob_while (← toDafnyExpr dname env args[1]!) (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``OfNat.ofNat => toDafnyExpr dname env args[1]!
       | ``HAdd.hAdd => return .binop .addition (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
       | ``HSub.hSub => return .binop .substraction (← toDafnyExpr dname env args[4]!) (← toDafnyExpr dname env args[5]!)
@@ -88,20 +87,20 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``LE.le => return .binop .leastequal (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``GT.gt => return .binop .greater (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``GE.ge => return .binop .greaterequal (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
-      | ``Nat.log => return .binop .log (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
+      -- | ``Nat.log => return .binop .log (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
       | ``decide => toDafnyExpr dname env args[0]!
-      | ``_root_.Rat.den => return .unop .denominator (← toDafnyExpr dname env args[0]!)
-      | ``_root_.Rat.num => return .unop .numerator (← toDafnyExpr dname env args[0]!)
+      -- | ``_root_.Rat.den => return .unop .denominator (← toDafnyExpr dname env args[0]!)
+      -- | ``_root_.Rat.num => return .unop .numerator (← toDafnyExpr dname env args[0]!)
       | ``Nat.cast => toDafnyExpr dname env args[2]!
       | ``Int.cast => toDafnyExpr dname env args[2]!
       | ``Prod.fst => return .proj (← toDafnyExpr dname env args[2]!) 1
       | ``Prod.snd => return .proj (← toDafnyExpr dname env args[2]!) 2
       | ``Prod.mk => return .pair (← toDafnyExpr dname env args[2]!) (← toDafnyExpr dname env args[3]!)
       | ``Neg.neg => return .unop .minus (← toDafnyExpr dname env args[2]!)
-      | ``abs => return .unop .abs (← toDafnyExpr dname env args[2]!)
+      -- | ``abs => return .unop .abs (← toDafnyExpr dname env args[2]!)
       | ``Int.natAbs => return .unop .abs (← toDafnyExpr dname env args[0]!)
       | ``OfScientific.ofScientific => toDafnyExpr dname env args[4]!
-      | ``PNat.val => toDafnyExpr dname env args[0]!
+      -- | ``PNat.val => toDafnyExpr dname env args[0]!
       | ``Subtype.mk => toDafnyExpr dname env args[2]!
       | ``Int.sub => return .binop .substraction (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
       | _ =>
@@ -138,7 +137,7 @@ end
 def toDafnyTypTop (env : List String) (e: Expr) : MetaM ((List Typ) × Typ) := do
   match e with
   | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
-  | (.app (.const ``SLang ..) arg) => return ([],← toDafnyTyp [] arg)
+  | (.app (.const ``Capsid ..) arg) => return ([],← toDafnyTyp [] arg)
   | .forallE binder domain range _ =>
     let nenv := binder.toString :: env
     let r ← toDafnyTypTop nenv range

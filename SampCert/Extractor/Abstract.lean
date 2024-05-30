@@ -4,10 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 
-import Mathlib.Order.SetNotation
-
 class Capsid (CapsM : Type u -> Type v) extends Monad CapsM where
   capsWhile : (cond : T → Bool) → (body : T → CapsM T) → T → CapsM T
+
 
 section capsid_wf
   variable {CapsM : Type u -> Type v} [C : Capsid CapsM]
