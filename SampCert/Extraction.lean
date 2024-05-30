@@ -37,9 +37,11 @@ instance SLang_Capsid : Capsid SLang where
 
 def testSLang : SLang Nat := (return 5) >>= (fun x => x)
 
--- MARKUSDE: Can't figure out how to get it to synthesize a typeclass instance
--- at export time, so I'll pass them in instead. Maybe a macro
-def testCapsid := (SLang_Capsid, UniformSample)
+-- Get a Capsid instance from typeclass inference
+def encapsulate {T U : Type*} [HC : Capsid M] (f : T -> M U) : (Capsid M × (T -> M U)) := (HC, f)
+
+-- MARKUSDE: Push encapsulate into the attribute?
+def testCapsid := encapsulate UniformSample
 attribute [export_dafny] testCapsid
 
 
