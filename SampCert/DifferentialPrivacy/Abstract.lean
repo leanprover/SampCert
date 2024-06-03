@@ -28,11 +28,17 @@ namespace SLang
 abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
 
-/--
-Product of mechanisms.
 
-Note that the second mechanism does not depend on the output of the first; this is in currently
-in contrast to the notions of composition found in the DP literature.
+/--
+General (value-dependent) composition of mechanisms
+-/
+def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : SLang V := do
+  let A <- nq1 l
+  let B <- nq2 A l
+  return B
+
+/--
+Composition of independent mechanisms
 -/
 def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : SLang (U × V) := do
   let A ← nq1 l
