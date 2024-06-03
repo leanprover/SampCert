@@ -155,6 +155,11 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
     apply bounded_quotient
     apply h3
 
+    -- Nonzero side condition
+    rw [NonZeroNQ] at *
+    sorry
+
+
   · -- Composition is nonzero at all elements
     simp [NonZeroNQ]
     intros l n
