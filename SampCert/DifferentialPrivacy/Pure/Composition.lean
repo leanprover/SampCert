@@ -13,20 +13,36 @@ noncomputable section
 open Classical Set
 
 
+-- set_option pp.notation false
 -- FIXME: move
 /--
 Mediant inequality
 -/
-lemma tsum_mediant (f g : U -> ENNReal) : (∑' (u : U), f u) / (∑' (u : U), g u) ≤ sSup (range (fun (u : U) => f u / g u)) :=
+
+
+lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hgT : ∀ u, g u ≠ ⊤):
+  (∑' (u : U), f u) / (∑' (u : U), g u) ≤ ⨆ u, f u / g u := by
+  let b := ⨆ u, f u / g u
+  have Hb : ∀ (u : U), f u ≤ b * g u := by
+    simp [b]
+    intro u
+    refine (ENNReal.div_le_iff_le_mul ?hb0 ?hbt).mp ?a
+    · left; apply hg0
+    · left; apply hgT -- I want to delete this one if possible
+    · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
+  have Hs : (∑' (u : U), g u) ≤ b * (∑' (u : U), f u) := sorry -- pointwise bound, using Hb
+  -- by rearrange Hs
   sorry
 
-lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) :
+
+lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) :
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ b := by
   apply le_trans
   · apply tsum_mediant
-  · simp -- wow, what a simplification
+    · apply hg0
+    · sorry -- Can get this as an extra hypothesis if necessary... g should not be ∞ anywhere (though it's a little annoying that this isn't intrinsic... maybe try to eliminate this downstream?)
+  · simp
     assumption
-
 namespace SLang
 
 theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
@@ -87,13 +103,10 @@ theorem PureDP_Compose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε
   . apply PureDP_Compose' hc h'c
   . apply privCompose_NonZeroNQ h2 h'2
 
-
--- set_option pp.notation false
-
 theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u : U, PureDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   PureDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
-  rcases h1 with ⟨h1a, _⟩
+  rcases h1 with ⟨h1a, h1nz⟩
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   apply And.intro
@@ -121,37 +134,30 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
       have h2a' := h2' a
 
       rw [Real.exp_add]
-      -- How to focus individual goals in lean?
+      -- How to focus individual goals in lean? This is a mess
       rw [ENNReal.ofReal_mul]; all_goals (try apply Real.exp_nonneg)
 
-      -- Some inequality pushing I beg lean to let me Search
-      sorry
+      -- What a mess
+      apply (@le_trans' _ _ _ ( nq1 l₁ a / nq1 l₂ a  * ENNReal.ofReal (↑↑ε₃ / ↑↑ε₄ : ℝ).exp))
+      · sorry
+      · apply (@le_trans' _ _ _ ( nq1 l₁ a / nq1 l₂ a  * nq2 a l₁ x / nq2 a l₂ x))
+        · sorry
+        · sorry
 
     -- Put a name to the summands (why is this so hard)
     let f := (fun (a : U) => nq1 l₁ a * nq2 a l₁ x)
     let g := (fun (a : U) => nq1 l₂ a * nq2 a l₂ x)
-    have hf :  (∑' (a : U), nq1 l₁ a * nq2 a l₁ x) = (∑' (a : U), f a) := sorry
-    have hg :  (∑' (a : U), nq1 l₂ a * nq2 a l₂ x) = (∑' (a : U), g a) := sorry
+    have hf :  (∑' (a : U), nq1 l₁ a * nq2 a l₁ x) = (∑' (a : U), f a) := by congr
+    have hg :  (∑' (a : U), nq1 l₂ a * nq2 a l₂ x) = (∑' (a : U), g a) := by congr
     rw [hf, hg]
 
-    -- Mediant lemma
+    -- Conclude by Mediant lemma
     apply bounded_quotient
-
-    -- Split the exponential by the sum
-    rw [Real.exp_add]
-    -- How to focus individual goals in lean?
-    rw [ENNReal.ofReal_mul]; all_goals (try apply Real.exp_nonneg)
-
-    -- Apply the inequalities from above
-    intro u
-    have h1a' := h1a u
-    have h2a' := h2' u
-    simp [f, g]
-
-    -- Push around inequalities
-    sorry
+    apply h3
 
   · -- Composition is nonzero at all elements
+    simp [NonZeroNQ]
+    intros l n
     sorry
 
 
