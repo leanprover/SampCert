@@ -21,50 +21,58 @@ Mediant inequality
 -/
 lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0):
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ ⨆ u, f u / g u := by
-  cases (Classical.em (U -> False))
-  · rename_i Hu_empty
-    let (HU : IsEmpty U) := { false := Hu_empty }
-    rw [iSup_of_empty]
-    rw [tsum_empty]
-    rw [tsum_empty]
+
+  -- We need this to discharge side conditions in this proof, but we can get away with
+  -- some classical reasoning instead
+  cases (Classical.em (∀ u , g u ≠ ⊤))
+  case inr =>
+    rename_i Hk
+    -- rcases Hk with ⟨ ucont, Hcont ⟩
+    have hgtop : ∃ u, g u = ⊤ := by apply (Decidable.not_forall_not.mp Hk)
+    have sumtop : ∑' (u : U) , g u = ⊤ := by exact ENNReal.tsum_eq_top_of_eq_top hgtop
+    rw [sumtop]
     simp
-  · rename_i Hu
-    simp at Hu
-    rcases Hu with ⟨ u0 ⟩
-    apply (ENNReal.div_le_iff_le_mul _ _).mpr
-    · rw [← ENNReal.tsum_mul_left]
-      apply ENNReal.tsum_le_tsum
-      intro u
-      apply (ENNReal.div_le_iff_le_mul _ _).mp
-      · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
-      · left; apply hg0
-      · -- Can this side condition can follow from the nonempty property?
-        right
+  case inl =>
+    rename_i assumption_g
+    cases (isEmpty_or_nonempty U)
+    · rename_i HU
+      rw [iSup_of_empty]
+      rw [tsum_empty]
+      rw [tsum_empty]
+      simp
+    · rename_i Hu
+      simp at Hu
+      rcases Hu with ⟨ u0 ⟩
+      apply (ENNReal.div_le_iff_le_mul _ _).mpr
+      · rw [← ENNReal.tsum_mul_left]
+        apply ENNReal.tsum_le_tsum
+        intro u
+        apply (ENNReal.div_le_iff_le_mul _ _).mp
+        · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
+        · left; apply hg0
+        · right
+          apply ne_of_gt
+          apply (LT.lt.trans_le ?g1 ?g2)
+          case g2 =>
+            apply le_iSup
+            apply u
+          refine (ENNReal.div_pos (hf0 u) ?g1.hb)
+          apply assumption_g
+      · left
         apply ne_of_gt
-        apply (LT.lt.trans_le ?g1 ?g2)
-        case g2 =>
+        apply (LT.lt.trans_le ?z1 ?z2)
+        case z2 =>
+          apply ENNReal.le_tsum
+          apply u0
+        exact pos_iff_ne_zero.mpr (hg0 u0)
+      · right
+        apply ne_of_gt
+        apply (LT.lt.trans_le ?z3 ?z4)
+        case z4 =>
           apply le_iSup
-          apply u
-        refine (ENNReal.div_pos (hf0 u) ?g1.hb)
-        -- It would seem that we need g u ≠ ⊤ in either left or right case
-        -- since ∞^-1 = 0
-        sorry
-    · left
-      apply ne_of_gt
-      apply (LT.lt.trans_le ?z1 ?z2)
-      case z2 =>
-        apply ENNReal.le_tsum
-        apply u0
-      exact pos_iff_ne_zero.mpr (hg0 u0)
-    · right
-      apply ne_of_gt
-      apply (LT.lt.trans_le ?z3 ?z4)
-      case z4 =>
-        apply le_iSup
-        apply u0
-      refine (ENNReal.div_pos (hf0 u0) ?z6)
-      -- Either case for this side condition needs g to not be top too
-      sorry
+          apply u0
+        refine (ENNReal.div_pos (hf0 u0) ?z6)
+        apply assumption_g
 
 
 lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0) :
@@ -131,8 +139,7 @@ theorem PureDP_Compose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε
   . apply PureDP_Compose' hc h'c
   . apply privCompose_NonZeroNQ h2 h'2
 
--- set_option pp.notation false
-theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u : U, PureDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+theorem PureDP_ComposeAdaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u : U, PureDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   PureDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
   rcases h1 with ⟨h1a, h1nz⟩
@@ -147,9 +154,8 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
       replace h2 := h2 u
       rw [event_eq_singleton] at h2
       simp [DP_singleton] at h2
-      rcases h2 with ⟨h2a, h2nz⟩
-      apply h2a
-      apply neighbours
+      rcases h2 with ⟨h2a, _⟩
+      exact h2a l₁ l₂ neighbours x
 
     simp [privComposeAdaptive]
 
@@ -189,7 +195,6 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
     have hg :  (∑' (a : U), nq1 l₂ a * nq2 a l₂ x) = (∑' (a : U), g a) := by congr
     rw [hf, hg]
 
-    -- Conclude by Mediant lemma
     apply bounded_quotient
     apply h3
     all_goals (intro u; rcases (h2 u) with ⟨ _ , h2nz ⟩)
@@ -203,20 +208,16 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
 
     simp only [privComposeAdaptive, bind, pure, bind_pure, bind_apply]
 
-    cases (Classical.em (U -> False))
+    cases (isEmpty_or_nonempty U)
     · rename_i Hu_empty
-      -- let (HU : IsEmpty U) := { false := Hu_empty }
-      -- rw [tsum_empty]
-      -- simp
-      -- Conclusion is false.
-      -- Can I get a contradiction out of either NonZeroNQ or do I have to strengthen
-      -- U to be nonempty?
       exfalso
-      simp [NonZeroNQ] at h1nz
+      -- Because ``SLang U`` values are functions out of U, we can't get a contradiction out of
+      -- "run nq1 to get a value of type U" like we would in an operational approach.
+      --
+      -- We should restrict U to be nonempty.
       sorry
 
-    · -- Nonempty: series is bounded below by value at u0 (which is positive)
-      rename_i Hu
+    · rename_i Hu
       simp at Hu
       rcases Hu with ⟨ u0 ⟩
       rcases h2 u0 with ⟨ _ , h2nz ⟩
@@ -228,4 +229,6 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
       apply ENNReal.mul_pos
       · apply h1nz
       · apply h2nz
+
+
 end SLang
