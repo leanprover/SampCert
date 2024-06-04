@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
+import SampCert.DifferentialPrivacy.ZeroConcentrated.AdaptiveComposition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
 
 /-!
