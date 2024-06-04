@@ -46,16 +46,12 @@ theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ 
   simp [PureDP] at *
   rcases h1 with ⟨h1a, _⟩
   rcases h2 with ⟨h2a, _⟩
-  -- Suffices to bound at each point in the resulting pmf
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
-  -- For all neighbouring DB's and output points
   intros l₁ l₂ neighbours x y
   replace h1a := h1a l₁ l₂ neighbours x
   replace h2a := h2a l₁ l₂ neighbours y
-  -- Open the implementation
   simp [privCompose]
-  -- Rearrange nested sum to double sum
   conv =>
     left
     congr
@@ -107,13 +103,9 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   apply And.intro
-  · -- Composition satisfies DP bound
-
-    -- For all neighbours...
-    intros l₁ l₂ neighbours x
+  · intros l₁ l₂ neighbours x
     replace h1a := h1a l₁ l₂ neighbours
 
-    -- Simplify under the ∀ in h2
     have h2' : ∀ (u : U), (nq2 u l₁ x) / (nq2 u l₂ x) <= ENNReal.ofReal (((↑↑ε₃ : ℝ ) / ↑↑ε₄).exp) := by
       intro u
       replace h2 := h2 u
