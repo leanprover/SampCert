@@ -13,36 +13,32 @@ noncomputable section
 open Classical Set
 
 
--- set_option pp.notation false
--- FIXME: move
+
+-- Solving the side conditions needs to be done separately depending on if u is inhabited or not
 /--
 Mediant inequality
 -/
-
-
-lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hgT : ∀ u, g u ≠ ⊤):
+lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0):
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ ⨆ u, f u / g u := by
-  let b := ⨆ u, f u / g u
-  have Hb : ∀ (u : U), f u ≤ b * g u := by
-    simp [b]
+  apply (ENNReal.div_le_iff_le_mul _ _).mpr
+  · rw [← ENNReal.tsum_mul_left]
+    apply ENNReal.tsum_le_tsum
     intro u
-    refine (ENNReal.div_le_iff_le_mul ?hb0 ?hbt).mp ?a
-    · left; apply hg0
-    · left; apply hgT -- I want to delete this one if possible
+    apply (ENNReal.div_le_iff_le_mul _ _).mp
     · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
-  have Hs : (∑' (u : U), g u) ≤ b * (∑' (u : U), f u) := sorry -- pointwise bound, using Hb
-  -- by rearrange Hs
-  sorry
+    · left; apply hg0
+    · sorry
+  · sorry
+  · sorry
 
-
-lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) :
+lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0) :
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ b := by
   apply le_trans
-  · apply tsum_mediant
-    · apply hg0
-    · sorry -- Can get this as an extra hypothesis if necessary... g should not be ∞ anywhere (though it's a little annoying that this isn't intrinsic... maybe try to eliminate this downstream?)
+  · refine (tsum_mediant _ _ hg0 hf0)
   · simp
     assumption
+
+
 namespace SLang
 
 theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
@@ -103,6 +99,7 @@ theorem PureDP_Compose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε
   . apply PureDP_Compose' hc h'c
   . apply privCompose_NonZeroNQ h2 h'2
 
+-- set_option pp.notation false
 theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u : U, PureDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   PureDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
@@ -122,27 +119,39 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
       replace h2 := h2 u
       rw [event_eq_singleton] at h2
       simp [DP_singleton] at h2
-      rcases h2 with ⟨h2a, _⟩
+      rcases h2 with ⟨h2a, h2nz⟩
       apply h2a
       apply neighbours
 
     simp [privComposeAdaptive]
 
-    have h3 : ∀ (a : U), nq1 l₁ a * nq2 a l₁ x / (nq1 l₂ a * nq2 a l₂ x) ≤ ENNReal.ofReal (↑↑ε₁ / ↑↑ε₂ + ↑↑ε₃ / ↑↑ε₄ : ℝ).exp := by
+    have h3 : ∀ (a : U), nq1 l₁ a * nq2 a l₁ x / (nq1 l₂ a * nq2 a l₂ x) ≤ ENNReal.ofReal (↑↑ε₁ / ↑↑ε₂ + ↑↑ε₃ / ↑↑ε₄ : ℝ).exp :=  by
       intro a
-      have h1a' := h1a a
-      have h2a' := h2' a
-
+      -- Split the expontntial
       rw [Real.exp_add]
-      -- How to focus individual goals in lean? This is a mess
-      rw [ENNReal.ofReal_mul]; all_goals (try apply Real.exp_nonneg)
+      rw [ENNReal.ofReal_mul] <;> try apply Real.exp_nonneg -- How to focus individual goals in lean? This is a mess
 
-      -- What a mess
-      apply (@le_trans' _ _ _ ( nq1 l₁ a / nq1 l₂ a  * ENNReal.ofReal (↑↑ε₃ / ↑↑ε₄ : ℝ).exp))
-      · sorry
-      · apply (@le_trans' _ _ _ ( nq1 l₁ a / nq1 l₂ a  * nq2 a l₁ x / nq2 a l₂ x))
-        · sorry
-        · sorry
+      -- Push around inequalities
+      rw [ENNReal.div_eq_inv_mul]
+      rw [ENNReal.mul_inv]
+      · rw [<- mul_assoc]
+        rw [mul_right_comm]
+        conv =>
+          lhs
+          arg 1
+          rw [mul_assoc]
+        rw [mul_right_comm]
+        rw [← ENNReal.div_eq_inv_mul]
+        rw [← ENNReal.div_eq_inv_mul]
+        exact mul_le_mul' (h1a a) (h2' a)
+      · left
+        apply h1nz
+      · right
+        rcases (h2 a) with ⟨ _ , h2nz ⟩
+        apply h2nz
+
+    -- apply? -- gives me this but it times out. odd.
+    -- refine (bounded_quotient (fun u => nq1 l₁ u * nq2 u l₁ x) (fun u => nq1 l₂ u * nq2 u l₂ x) (ENNReal.ofReal (↑↑ε₁ / ↑↑ε₂ + ↑↑ε₃ / ↑↑ε₄ : ℝ).exp) h3 ?intro.left.hg0 ?intro.left.hf0)
 
     -- Put a name to the summands (why is this so hard)
     let f := (fun (a : U) => nq1 l₁ a * nq2 a l₁ x)
@@ -154,15 +163,19 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
     -- Conclude by Mediant lemma
     apply bounded_quotient
     apply h3
-
-    -- Nonzero side condition
-    rw [NonZeroNQ] at *
-    sorry
-
+    all_goals (intro u; rcases (h2 u) with ⟨ _ , h2nz ⟩)
+    all_goals (simp only [f, g])
+    · exact mul_ne_zero (h1nz l₂ u) (h2nz l₂ x)
+    · exact mul_ne_zero (h1nz l₁ u) (h2nz l₁ x)
 
   · -- Composition is nonzero at all elements
-    simp [NonZeroNQ]
+    simp only [NonZeroNQ]
     intros l n
+
+    simp? only [privComposeAdaptive, bind, pure, bind_pure, bind_apply]
+    -- Interesting: This relies on U being nonempty again
+
+    -- ne_eq, ENNReal.tsum_eq_zero]
     sorry
 
 
