@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
+import Mathlib.Logic.IsEmpty
 
 noncomputable section
 
@@ -20,16 +21,51 @@ Mediant inequality
 -/
 lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0):
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ ⨆ u, f u / g u := by
-  apply (ENNReal.div_le_iff_le_mul _ _).mpr
-  · rw [← ENNReal.tsum_mul_left]
-    apply ENNReal.tsum_le_tsum
-    intro u
-    apply (ENNReal.div_le_iff_le_mul _ _).mp
-    · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
-    · left; apply hg0
-    · sorry
-  · sorry
-  · sorry
+  cases (Classical.em (U -> False))
+  · rename_i Hu_empty
+    let (HU : IsEmpty U) := { false := Hu_empty }
+    rw [iSup_of_empty]
+    rw [tsum_empty]
+    rw [tsum_empty]
+    simp
+  · rename_i Hu
+    simp at Hu
+    rcases Hu with ⟨ u0 ⟩
+    apply (ENNReal.div_le_iff_le_mul _ _).mpr
+    · rw [← ENNReal.tsum_mul_left]
+      apply ENNReal.tsum_le_tsum
+      intro u
+      apply (ENNReal.div_le_iff_le_mul _ _).mp
+      · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
+      · left; apply hg0
+      · -- Can this side condition can follow from the nonempty property?
+        right
+        apply ne_of_gt
+        apply (LT.lt.trans_le ?g1 ?g2)
+        case g2 =>
+          apply le_iSup
+          apply u
+        refine (ENNReal.div_pos (hf0 u) ?g1.hb)
+        -- It would seem that we need g u ≠ ⊤ in either left or right case
+        -- since ∞^-1 = 0
+        sorry
+    · left
+      apply ne_of_gt
+      apply (LT.lt.trans_le ?z1 ?z2)
+      case z2 =>
+        apply ENNReal.le_tsum
+        apply u0
+      exact pos_iff_ne_zero.mpr (hg0 u0)
+    · right
+      apply ne_of_gt
+      apply (LT.lt.trans_le ?z3 ?z4)
+      case z4 =>
+        apply le_iSup
+        apply u0
+      refine (ENNReal.div_pos (hf0 u0) ?z6)
+      -- Either case for this side condition needs g to not be top too
+      sorry
+
 
 lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0) :
   (∑' (u : U), f u) / (∑' (u : U), g u) ≤ b := by
@@ -121,7 +157,8 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
       intro a
       -- Split the expontntial
       rw [Real.exp_add]
-      rw [ENNReal.ofReal_mul] <;> try apply Real.exp_nonneg -- How to focus individual goals in lean? This is a mess
+      rw [ENNReal.ofReal_mul ?g0]
+      case g0 => apply Real.exp_nonneg
 
       -- Push around inequalities
       rw [ENNReal.div_eq_inv_mul]
@@ -164,11 +201,31 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → SLang U) (nq2 : U -> List T �
     simp only [NonZeroNQ]
     intros l n
 
-    simp? only [privComposeAdaptive, bind, pure, bind_pure, bind_apply]
-    -- Interesting: This relies on U being nonempty again
+    simp only [privComposeAdaptive, bind, pure, bind_pure, bind_apply]
 
-    -- ne_eq, ENNReal.tsum_eq_zero]
-    sorry
+    cases (Classical.em (U -> False))
+    · rename_i Hu_empty
+      -- let (HU : IsEmpty U) := { false := Hu_empty }
+      -- rw [tsum_empty]
+      -- simp
+      -- Conclusion is false.
+      -- Can I get a contradiction out of either NonZeroNQ or do I have to strengthen
+      -- U to be nonempty?
+      exfalso
+      simp [NonZeroNQ] at h1nz
+      sorry
 
-
+    · -- Nonempty: series is bounded below by value at u0 (which is positive)
+      rename_i Hu
+      simp at Hu
+      rcases Hu with ⟨ u0 ⟩
+      rcases h2 u0 with ⟨ _ , h2nz ⟩
+      apply ne_of_gt
+      apply (LT.lt.trans_le ?g1 ?g2)
+      case g2 =>
+        apply ENNReal.le_tsum
+        apply u0
+      apply ENNReal.mul_pos
+      · apply h1nz
+      · apply h2nz
 end SLang
