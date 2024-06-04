@@ -23,10 +23,19 @@ variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
 /--
+The Renyi divergence is monotonic in its sum
+-/
+lemma renyi_mono_sum (x y : ENNReal) {α : ℝ} (h : 1 < α) : Real.log (((ENNReal.ofReal α - 1) * x).toReal) ≤ Real.log (((ENNReal.ofReal α - 1) * y).toReal) -> (x ≤ y) :=
+  sorry
+
+
+/--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : ∀ u, NonZeroNQ (nq2 u)) (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nts1 : NonTopNQ nq1) (nts2 : ∀ u, NonTopNQ (nq2 u)) :
   zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  rw [zCDPBound]
+
   sorry
 
 /--
@@ -48,13 +57,20 @@ All outputs of a adaptive composed query have finite probability.
 -/
 theorem privComposeAdaptive_NonTopNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : ∀ u, NonTopNQ (nq2 u)) :
   NonTopNQ (privComposeAdaptive nq1 nq2) := by
+  simp [NonTopNQ] at *
+  simp [privComposeAdaptive]
   admit
 
 /--
 Adaptive composed query is a proper distribution
 -/
-theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : ∀ u, NonTopNQ (nq2 u)) :
+theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u)) :
   NonTopSum (privComposeAdaptive nq1 nq2) := by
+  rw [NonTopSum] at *
+  simp only [privComposeAdaptive, Bind.bind, pure, bind_pure, bind_apply]
+  intro l
+  -- forall n, a, nq1 l a * nq2 a l n ≤ (nq1 l a + nq2 a l n )^2
+  -- Bound the series above by ∑' (n : V) (a : U), (nq1 l a + nq2 a l n )^2
   admit
 
 
@@ -62,7 +78,7 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
 /--
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
-theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
+theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
   NonTopRDNQ (privComposeAdaptive nq1 nq2) := by admit
   -- simp [NonTopRDNQ] at *
   -- intro α h1 l₁ l₂ h2

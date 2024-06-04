@@ -215,7 +215,8 @@ theorem PureDP_ComposeAdaptive (nq1 : List T → SLang U) (nq2 : U -> List T →
     --   --
     --   -- We should restrict U to be nonempty.
     --   sorry
-    -- · rename_i Hu
+    -- ·
+
     rcases Hu with ⟨ u0 ⟩
     rcases h2 u0 with ⟨ _ , h2nz ⟩
     apply ne_of_gt

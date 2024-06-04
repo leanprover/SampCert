@@ -24,7 +24,7 @@ noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ℝ :=
   (α - 1)⁻¹ * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal
 
 /--
-Closed form of the series in the definition of hte Renyi divergence.
+Closed form of the series in the definition of the Renyi divergence.
 -/
 theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (h1 : ∀ x : T, q x ≠ 0) (h2 : ∀ x : T, q x ≠ ⊤) :
   (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x : T, (p x / q x)^α  * (q x) := by
@@ -39,7 +39,7 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
   . apply h2 x
 
 /--
-Closed form for the Renti Divergence.
+Closed form for the Renyi Divergence.
 -/
 theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (h1 : ∀ x : T, q x ≠ 0) (h2 : ∀ x : T, q x ≠ ⊤) :
   (α - 1)⁻¹ * Real.log ((∑' x : T, (p x)^α  * (q x)^(1 - α))).toReal = (α - 1)⁻¹ * Real.log (∑' x : T, (p x / q x)^α  * (q x)).toReal := by

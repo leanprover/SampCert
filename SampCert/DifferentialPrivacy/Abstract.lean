@@ -28,14 +28,37 @@ namespace SLang
 abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
 
-
 /--
 General (value-dependent) composition of mechanisms
+-/
+def privComposeAdaptive' (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : SLang (U × V) := do
+  let A <- nq1 l
+  let B <- nq2 A l
+  return (A, B)
+
+/--
+Chain rule relating the adaptive composition definitions
+
+The joint distribution decomposes into the conditional and marginal (ie, nq1 l) distributions
+-/
+lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
+  ∀ (u : U), ∀ (v : V), privComposeAdaptive' nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
+  intros u v
+  simp [privComposeAdaptive']
+  -- Add an ite to the outer sum and simplify
+  admit
+
+/--
+Conditional composition of mechanisms
 -/
 def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : SLang V := do
   let A <- nq1 l
   let B <- nq2 A l
   return B
+
+
+
+
 
 /--
 Composition of independent mechanisms
