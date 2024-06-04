@@ -13,7 +13,7 @@ noncomputable section
 
 open Classical Set
 
-
+variable [Hu : Nonempty U]
 
 -- Solving the side conditions needs to be done separately depending on if u is inhabited or not
 /--
@@ -34,45 +34,44 @@ lemma tsum_mediant (f g : U -> ENNReal) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f
     simp
   case inl =>
     rename_i assumption_g
-    cases (isEmpty_or_nonempty U)
-    · rename_i HU
-      rw [iSup_of_empty]
-      rw [tsum_empty]
-      rw [tsum_empty]
-      simp
-    · rename_i Hu
-      simp at Hu
-      rcases Hu with ⟨ u0 ⟩
-      apply (ENNReal.div_le_iff_le_mul _ _).mpr
-      · rw [← ENNReal.tsum_mul_left]
-        apply ENNReal.tsum_le_tsum
-        intro u
-        apply (ENNReal.div_le_iff_le_mul _ _).mp
-        · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
-        · left; apply hg0
-        · right
-          apply ne_of_gt
-          apply (LT.lt.trans_le ?g1 ?g2)
-          case g2 =>
-            apply le_iSup
-            apply u
-          refine (ENNReal.div_pos (hf0 u) ?g1.hb)
-          apply assumption_g
-      · left
-        apply ne_of_gt
-        apply (LT.lt.trans_le ?z1 ?z2)
-        case z2 =>
-          apply ENNReal.le_tsum
-          apply u0
-        exact pos_iff_ne_zero.mpr (hg0 u0)
+    -- cases (isEmpty_or_nonempty U)
+    -- · rename_i HU
+    --   rw [iSup_of_empty]
+    --   rw [tsum_empty]
+    --   rw [tsum_empty]
+    --   simp
+    -- · rename_i Hu
+    rcases Hu with ⟨ u0 ⟩
+    apply (ENNReal.div_le_iff_le_mul _ _).mpr
+    · rw [← ENNReal.tsum_mul_left]
+      apply ENNReal.tsum_le_tsum
+      intro u
+      apply (ENNReal.div_le_iff_le_mul _ _).mp
+      · refine (le_iSup (fun u => HDiv.hDiv (f u) (g u)) u)
+      · left; apply hg0
       · right
         apply ne_of_gt
-        apply (LT.lt.trans_le ?z3 ?z4)
-        case z4 =>
+        apply (LT.lt.trans_le ?g1 ?g2)
+        case g2 =>
           apply le_iSup
-          apply u0
-        refine (ENNReal.div_pos (hf0 u0) ?z6)
+          apply u
+        refine (ENNReal.div_pos (hf0 u) ?g1.hb)
         apply assumption_g
+    · left
+      apply ne_of_gt
+      apply (LT.lt.trans_le ?z1 ?z2)
+      case z2 =>
+        apply ENNReal.le_tsum
+        apply u0
+      exact pos_iff_ne_zero.mpr (hg0 u0)
+    · right
+      apply ne_of_gt
+      apply (LT.lt.trans_le ?z3 ?z4)
+      case z4 =>
+        apply le_iSup
+        apply u0
+      refine (ENNReal.div_pos (hf0 u0) ?z6)
+      apply assumption_g
 
 
 lemma bounded_quotient (f g : U -> ENNReal) (b : ENNReal) (h_bound : ∀ (u : U), f u / g u ≤ b) (hg0 : ∀ u, g u ≠ 0) (hf0 : ∀ u, f u ≠ 0) :
@@ -208,27 +207,25 @@ theorem PureDP_ComposeAdaptive (nq1 : List T → SLang U) (nq2 : U -> List T →
 
     simp only [privComposeAdaptive, bind, pure, bind_pure, bind_apply]
 
-    cases (isEmpty_or_nonempty U)
-    · rename_i Hu_empty
-      exfalso
-      -- Because ``SLang U`` values are functions out of U, we can't get a contradiction out of
-      -- "run nq1 to get a value of type U" like we would in an operational approach.
-      --
-      -- We should restrict U to be nonempty.
-      sorry
-
-    · rename_i Hu
-      simp at Hu
-      rcases Hu with ⟨ u0 ⟩
-      rcases h2 u0 with ⟨ _ , h2nz ⟩
-      apply ne_of_gt
-      apply (LT.lt.trans_le ?g1 ?g2)
-      case g2 =>
-        apply ENNReal.le_tsum
-        apply u0
-      apply ENNReal.mul_pos
-      · apply h1nz
-      · apply h2nz
+    -- cases (isEmpty_or_nonempty U)
+    -- · rename_i Hu_empty
+    --   exfalso
+    --   -- Because ``SLang U`` values are functions out of U, we can't get a contradiction out of
+    --   -- "run nq1 to get a value of type U" like we would in an operational approach.
+    --   --
+    --   -- We should restrict U to be nonempty.
+    --   sorry
+    -- · rename_i Hu
+    rcases Hu with ⟨ u0 ⟩
+    rcases h2 u0 with ⟨ _ , h2nz ⟩
+    apply ne_of_gt
+    apply (LT.lt.trans_le ?g1 ?g2)
+    case g2 =>
+      apply ENNReal.le_tsum
+      apply u0
+    apply ENNReal.mul_pos
+    · apply h1nz
+    · apply h2nz
 
 
 end SLang
