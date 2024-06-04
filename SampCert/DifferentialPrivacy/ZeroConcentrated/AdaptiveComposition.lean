@@ -19,8 +19,8 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 variable { T U V : Type }
-variable [Inhabited U]
-variable [Inhabited V]
+variable [HU : Inhabited U]
+variable [HV : Inhabited V]
 
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
@@ -34,7 +34,14 @@ Adaptive composed query distribution is nowhere zero
 -/
 theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonZeroNQ nq1) (nt2 : ∀ u, NonZeroNQ (nq2 u)) :
   NonZeroNQ (privComposeAdaptive nq1 nq2) := by
-  admit
+  simp [NonZeroNQ] at *
+  simp [privComposeAdaptive]
+  intros l n
+  rcases HU with ⟨ u0 ⟩
+  exists u0
+  apply And.intro
+  · apply nt1
+  · apply nt2
 
 /--
 All outputs of a adaptive composed query have finite probability.
