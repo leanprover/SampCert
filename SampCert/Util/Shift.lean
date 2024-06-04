@@ -13,9 +13,13 @@ import Mathlib.Topology.Algebra.InfiniteSum.NatInt
 This file contains lemmas about invariance of sums under integer shifts.
 -/
 
-variable {M : Type*} [AddCommGroup M] [UniformSpace M] [T2Space M] [UniformAddGroup M] [CompleteSpace M] {m m' : M}
+variable {M : Type*} {m m' : M}
 
 open Summable
+
+section A
+
+variable [AddCommGroup M] [UniformSpace M] [T2Space M] [UniformAddGroup M]
 
 /--
 A series is right-ℕ-shift-invariant provided its shifted positive and negative parts are summable.
@@ -116,6 +120,12 @@ theorem tsum_shift₂ (f : ℤ → M) (μ : ℕ)
   . exact (h2 μ)
   . exact (h3 μ)
 
+end A
+
+section B
+
+variable [AddCommGroup M] [UniformSpace M] [T2Space M] [UniformAddGroup M] [CompleteSpace M]
+
 /--
 A series is invariant under integer shifts provided its shifted positive and negative parts are summable.
 -/
@@ -157,3 +167,5 @@ theorem tsum_shift (f : ℤ → M) (μ : ℤ)
     apply tsum_congr
     intro b
     congr
+
+end B
