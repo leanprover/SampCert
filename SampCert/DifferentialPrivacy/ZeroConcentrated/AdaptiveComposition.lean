@@ -22,55 +22,67 @@ variable { T U V : Type }
 variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
+
+
 /--
-The Renyi divergence is monotonic in its sum
+Bound on Renyi divergence on adaptively composed queries
 -/
-lemma renyi_mono_sum (x y : ENNReal) {α : ℝ} (h : 1 < α) : Real.log (((ENNReal.ofReal α - 1) * x).toReal) ≤ Real.log (((ENNReal.ofReal α - 1) * y).toReal) -> (x ≤ y) :=
-  sorry
+lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) :
+ RenyiDivergence (privComposeAdaptive' nq1 nq2 l₁) (privComposeAdaptive' nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
+ apply RenyiDivergence_mono_sum
+ -- rw [<- RenyiDivergence_exp]
+ sorry
+ sorry
+ sorry
 
 
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : ∀ u, NonZeroNQ (nq2 u)) (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nts1 : NonTopNQ nq1) (nts2 : ∀ u, NonTopNQ (nq2 u)) :
-  zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  zCDPBound (privComposeAdaptive' nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   rw [zCDPBound]
+  intro α Hα l₁ l₂ Hneighbours
+  -- Loose
+  apply (@LE.le.trans _ _ _ (1/2 * (↑↑ε₁ / ↑↑ε₂)^2 * α + 1/2 * (↑↑ε₃ / ↑↑ε₄)^2 * α) _ _ ?case_sq)
+  case case_sq =>
+    -- Binomial bound
+    sorry
 
-  sorry
+  -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
+  rw [zCDPBound] at h1
+  have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
+  have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ 1 / 2 * (↑↑ε₃ / ↑↑ε₄) ^ 2 * α) :=
+    ciSup_le fun x => h2 x α Hα l₁ l₂ Hneighbours
+  apply (@LE.le.trans _ _ _ (RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) _ _ ?case_alg)
+  case case_alg => linarith
+  apply (primComposeAdaptive_renyi_bound _ Hα)
 
 /--
 Adaptive composed query distribution is nowhere zero
 -/
 theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonZeroNQ nq1) (nt2 : ∀ u, NonZeroNQ (nq2 u)) :
-  NonZeroNQ (privComposeAdaptive nq1 nq2) := by
+  NonZeroNQ (privComposeAdaptive' nq1 nq2) := by
   simp [NonZeroNQ] at *
-  simp [privComposeAdaptive]
-  intros l n
-  rcases HU with ⟨ u0 ⟩
-  exists u0
-  apply And.intro
-  · apply nt1
-  · apply nt2
+  simp [privComposeAdaptive']
+  sorry
 
 /--
 All outputs of a adaptive composed query have finite probability.
 -/
 theorem privComposeAdaptive_NonTopNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : ∀ u, NonTopNQ (nq2 u)) :
-  NonTopNQ (privComposeAdaptive nq1 nq2) := by
+  NonTopNQ (privComposeAdaptive' nq1 nq2) := by
   simp [NonTopNQ] at *
-  simp [privComposeAdaptive]
   admit
 
 /--
 Adaptive composed query is a proper distribution
 -/
 theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u)) :
-  NonTopSum (privComposeAdaptive nq1 nq2) := by
+  NonTopSum (privComposeAdaptive' nq1 nq2) := by
   rw [NonTopSum] at *
-  simp only [privComposeAdaptive, Bind.bind, pure, bind_pure, bind_apply]
+  simp only [privComposeAdaptive', Bind.bind, pure, bind_pure, bind_apply]
   intro l
-  -- forall n, a, nq1 l a * nq2 a l n ≤ (nq1 l a + nq2 a l n )^2
-  -- Bound the series above by ∑' (n : V) (a : U), (nq1 l a + nq2 a l n )^2
   admit
 
 
@@ -79,7 +91,7 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
 theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
-  NonTopRDNQ (privComposeAdaptive nq1 nq2) := by admit
+  NonTopRDNQ (privComposeAdaptive' nq1 nq2) := by admit
   -- simp [NonTopRDNQ] at *
   -- intro α h1 l₁ l₂ h2
   -- replace nt1 := nt1 α h1 l₁ l₂ h2
@@ -145,7 +157,7 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
 ``privComposeAdaptive`` satisfies zCDP
 -/
 theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-  zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  zCDP (privComposeAdaptive' nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   rcases h with ⟨ _ , _ , _ , _ , _ ⟩
   repeat any_goals constructor

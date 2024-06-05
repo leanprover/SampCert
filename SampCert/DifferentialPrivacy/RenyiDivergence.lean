@@ -52,3 +52,14 @@ theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α
     . apply le_of_lt (lt_trans Real.zero_lt_one h )
   . apply h1 x
   . apply h2 x
+
+
+/--
+The Renyi divergence is monotonic in the value of its sum.
+-/
+lemma RenyiDivergence_mono_sum (x y : ℝ) {α : ℝ} (h : 1 < α) : Real.log ((α - 1) * x) ≤ Real.log ((α - 1) * y) -> (x ≤ y) :=
+  sorry
+
+lemma RenyiDivergence_exp {p q : T → ENNReal} (α : ℝ) (h : 1 < α) :
+  Real.log ((α - 1) * RenyiDivergence f g α) = (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal := by
+  sorry
