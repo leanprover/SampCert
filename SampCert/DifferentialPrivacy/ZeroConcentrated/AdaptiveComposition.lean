@@ -105,7 +105,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   zCDPBound (privComposeAdaptive' nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
-  -- Loose
+  -- Loose step
   apply (@LE.le.trans _ _ _ (1/2 * (↑↑ε₁ / ↑↑ε₂)^2 * α + 1/2 * (↑↑ε₃ / ↑↑ε₄)^2 * α) _ _ ?case_sq)
   case case_sq =>
     -- Binomial bound
@@ -146,7 +146,6 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
   simp only [privComposeAdaptive', Bind.bind, pure, bind_pure, bind_apply]
   intro l
   admit
-
 
 
 /--
@@ -221,12 +220,11 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
 theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDP (privComposeAdaptive' nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  rcases h with ⟨ _ , _ , _ , _ , _ ⟩
   repeat any_goals constructor
-  · admit
-  · admit
-  · admit
-  · admit
-  · admit
+  · apply privComposeAdaptive_zCDPBound <;> aesop
+  · apply privComposeAdaptive_NonZeroNQ <;> aesop
+  · apply privComposeAdaptive_NonTopSum <;> aesop
+  · apply privComposeAdaptive_NonTopNQ <;> aesop
+  · apply privComposeAdaptive_NonTopRDNQ <;> aesop
 
 end SLang
