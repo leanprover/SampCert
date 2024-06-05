@@ -75,6 +75,7 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
   rw [tsum_ite_eq]
   exact MulOneClass.mul_one (nq2 u l v)
 
+
 /--
 Conditional composition of mechanisms
 -/
