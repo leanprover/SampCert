@@ -36,6 +36,9 @@ def privComposeAdaptive' (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : L
   let B <- nq2 A l
   return (A, B)
 
+
+-- set_option pp.notation false
+
 /--
 Chain rule relating the adaptive composition definitions
 
@@ -45,8 +48,32 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
   ∀ (u : U), ∀ (v : V), privComposeAdaptive' nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
   intros u v
   simp [privComposeAdaptive']
-  -- Add an ite to the outer sum and simplify
-  admit
+  -- How to simplify cases without explicit ite? this is silly
+  have hrw1 : ∀ (a : U), nq1 l a * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0 := by
+    intro a
+    split
+    · simp
+    · aesop
+  have hrw2 : ∀ (a : U), (if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0) = (nq1 l u * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 u l a_1 else 0)) := by
+    intro a
+    split
+    · aesop
+    · aesop
+  rw [tsum_congr hrw1]
+  rw [tsum_congr hrw2]
+  clear hrw1 hrw2
+  rw [ENNReal.tsum_mul_left]
+  congr 1
+  rw [<- ENNReal.tsum_prod]
+  have hrw3 : ∀ (p : U × V), (if u = p.1 ∧ v = p.2 then nq2 u l p.2 else 0) = nq2 u l v * (if p = (u, v) then 1 else 0) := by
+    intro p
+    split
+    · aesop
+    · aesop
+  rw [tsum_congr hrw3]
+  rw [ENNReal.tsum_mul_left]
+  rw [tsum_ite_eq]
+  exact MulOneClass.mul_one (nq2 u l v)
 
 /--
 Conditional composition of mechanisms
