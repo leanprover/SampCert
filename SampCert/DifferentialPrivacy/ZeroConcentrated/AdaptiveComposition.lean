@@ -23,8 +23,6 @@ variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
 
-
-
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
@@ -42,7 +40,10 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα]
   rw [mul_comm]
   rw [<- (ENNReal.toReal_ofReal_mul _ _ ?h)]
-  case h => sorry
+  case h =>
+    refine Real.iSup_nonneg ?hf
+    intro i
+    exact exp_nonneg ((α - 1) * RenyiDivergence (nq2 i l₁) (nq2 i l₂) α)
   rw [mul_comm]
   rw [← ENNReal.tsum_mul_right]
 
@@ -50,7 +51,15 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   case goal2 =>
     -- Can I do this without summability?
     apply toReal_mono'
-    · sorry
+    · apply tsum_le_tsum
+      · intro i
+        refine (ENNReal.mul_le_mul_left ?h.h.h0 ?h.h.hinf).mpr ?h.h.a
+        · sorry
+        · sorry
+        · apply ENNReal.ofReal_le_ofReal
+          sorry
+      · sorry
+      · sorry
     · sorry
 
   -- After this point the argument is tight
@@ -110,7 +119,6 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   case case_sq =>
     -- Binomial bound
     sorry
-
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
   rw [zCDPBound] at h1
   have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
@@ -127,7 +135,7 @@ theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> Lis
   NonZeroNQ (privComposeAdaptive' nq1 nq2) := by
   simp [NonZeroNQ] at *
   simp [privComposeAdaptive']
-  sorry
+  aesop
 
 /--
 All outputs of a adaptive composed query have finite probability.
@@ -135,7 +143,11 @@ All outputs of a adaptive composed query have finite probability.
 theorem privComposeAdaptive_NonTopNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : ∀ u, NonTopNQ (nq2 u)) :
   NonTopNQ (privComposeAdaptive' nq1 nq2) := by
   simp [NonTopNQ] at *
-  admit
+  intros l u v
+  rw [privComposeChainRule]
+  apply ENNReal.mul_ne_top
+  · aesop
+  · aesop
 
 /--
 Adaptive composed query is a proper distribution
@@ -143,8 +155,7 @@ Adaptive composed query is a proper distribution
 theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u)) :
   NonTopSum (privComposeAdaptive' nq1 nq2) := by
   rw [NonTopSum] at *
-  simp only [privComposeAdaptive', Bind.bind, pure, bind_pure, bind_apply]
-  intro l
+  -- Chain rule won't help here
   admit
 
 
@@ -152,7 +163,9 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
 theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
-  NonTopRDNQ (privComposeAdaptive' nq1 nq2) := by admit
+  NonTopRDNQ (privComposeAdaptive' nq1 nq2) := by
+  rw [NonTopRDNQ] at *
+  admit
   -- simp [NonTopRDNQ] at *
   -- intro α h1 l₁ l₂ h2
   -- replace nt1 := nt1 α h1 l₁ l₂ h2
