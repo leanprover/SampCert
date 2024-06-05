@@ -24,17 +24,79 @@ variable [HV : Inhabited V]
 
 
 
+
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
 lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) :
  RenyiDivergence (privComposeAdaptive' nq1 nq2 l₁) (privComposeAdaptive' nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
- apply RenyiDivergence_mono_sum
- -- rw [<- RenyiDivergence_exp]
- sorry
- sorry
- sorry
+  apply (RenyiDivergence_mono_sum _ _ α Hα)
+  rw [RenyiDivergence_exp (privComposeAdaptive' nq1 nq2 l₁)  (privComposeAdaptive' nq1 nq2 l₂) Hα]
+  rw [left_distrib]
+  rw [Real.exp_add]
 
+  have hmono_1 : rexp ((α - 1) * ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) = ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
+    sorry
+  rw [hmono_1]
+  clear hmono_1
+  rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα]
+  rw [mul_comm]
+  rw [<- (ENNReal.toReal_ofReal_mul _ _ ?h)]
+  case h => sorry
+  rw [mul_comm]
+  rw [← ENNReal.tsum_mul_right]
+
+  apply (@LE.le.trans _ _ _ ((∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α) * ENNReal.ofReal (rexp ((α - 1) * RenyiDivergence (nq2 i l₁) (nq2 i l₂) α))).toReal) _ _ ?goal2)
+  case goal2 =>
+    -- Can I do this without summability?
+    apply toReal_mono'
+    · sorry
+    · sorry
+
+  -- After this point the argument is tight
+  apply Eq.le
+  conv =>
+    rhs
+    congr
+    congr
+    intro i
+    rw [RenyiDivergence_exp (nq2 i l₁) (nq2 i l₂) Hα]
+
+  conv =>
+    lhs
+    congr
+    congr
+    intro
+    rw [privComposeChainRule]
+    rw [privComposeChainRule]
+
+  have test : ∀ i, ENNReal.ofReal (∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α)).toReal = ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
+    intro i
+    apply ofReal_toReal
+    -- Need a summability thing here... try to avoid this lemma if possible
+    sorry
+  conv =>
+    rhs
+    congr
+    congr
+    intro
+    rw [test]
+    rw [← ENNReal.tsum_mul_left]
+  clear test
+
+  rw [<- ENNReal.tsum_prod]
+  congr
+  apply funext
+  intro p
+  rcases p with ⟨ u , v ⟩
+  simp
+  rw [ENNReal.mul_rpow_of_nonneg _ _ ?sc1]
+  case sc1 =>
+    sorry
+  rw [ENNReal.mul_rpow_of_nonneg _ _ ?sc2]
+  case sc2 =>
+    sorry
+  rw [mul_mul_mul_comm]
 
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
