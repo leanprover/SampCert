@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.Pure.Mechanism.Basic
 import SampCert.DifferentialPrivacy.Pure.Composition
+import SampCert.DifferentialPrivacy.Pure.AdaptiveComposition
 import SampCert.DifferentialPrivacy.Pure.Postprocessing
 
 namespace SLang
