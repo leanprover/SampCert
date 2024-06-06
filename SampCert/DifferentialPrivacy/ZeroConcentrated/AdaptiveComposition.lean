@@ -23,18 +23,30 @@ variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
 
+-- Maybe would be better as ENNReal
+lemma iSup_smul_l (a : ℝ) (f : U -> ℝ) : a * ⨆ u, f u = ⨆ u, a * f u := by
+  rw [iSup, iSup]
+  sorry
+
+lemma iSup_exp (f : U -> ℝ) : ⨆ u, rexp (f u) = rexp (⨆ u, f u) := by
+  sorry
+
+-- rexp ((α - 1) * ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) =
+--     ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
+
+
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
 lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) :
- RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
+  RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
   apply (RenyiDivergence_mono_sum _ _ α Hα)
   rw [RenyiDivergence_exp (privComposeAdaptive nq1 nq2 l₁)  (privComposeAdaptive nq1 nq2 l₂) Hα]
   rw [left_distrib]
   rw [Real.exp_add]
 
   have hmono_1 : rexp ((α - 1) * ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) = ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
-    sorry
+    rw [iSup_smul_l, iSup_exp]
   rw [hmono_1]
   clear hmono_1
   rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα]
@@ -118,7 +130,23 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   apply (@LE.le.trans _ _ _ (1/2 * (↑↑ε₁ / ↑↑ε₂)^2 * α + 1/2 * (↑↑ε₃ / ↑↑ε₄)^2 * α) _ _ ?case_sq)
   case case_sq =>
     -- Binomial bound
-    sorry
+    rw [add_sq]
+    rw [<- right_distrib]
+    apply (mul_le_mul_of_nonneg_right _ ?goal1)
+    case goal1 => linarith
+    rw [<- left_distrib]
+    apply (mul_le_mul_of_nonneg_left _ ?goal1)
+    case goal1 => linarith
+    apply add_le_add_right
+    have hrw : (↑↑ε₁ / ↑↑ε₂ : ℝ) ^ 2 = (↑↑ε₁ / ↑↑ε₂) ^ 2 + 0 := by linarith
+    conv =>
+      lhs
+      rw [hrw]
+    clear hrw
+    apply add_le_add_left
+    have h : 0 <= (↑↑ε₁ / ↑↑ε₂) * (↑↑ε₃ / ↑↑ε₄ : ℝ) := by
+      apply mul_nonneg <;> apply div_nonneg <;> linarith
+    linarith
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
   rw [zCDPBound] at h1
   have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
