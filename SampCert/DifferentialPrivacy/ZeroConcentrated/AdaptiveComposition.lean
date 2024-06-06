@@ -22,37 +22,62 @@ variable { T U V : Type }
 variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
-
+-- set_option pp.all true
 -- Maybe would be better as ENNReal?
-lemma iSup_smul_l (a : ℝ) (f : U -> ℝ) : a * ⨆ u, f u = ⨆ u, a * f u := by
-  rw [iSup, iSup]
-  sorry
+lemma iSup_smul_l (a : ℝ) (Ha : 0 <= a) (f : U -> ℝ) : a * ⨆ u, f u = ⨆ u, a * f u := by
+  refine (mul_iSup_of_nonneg ?ha fun i => f i)
+  apply Ha
 
-lemma iSup_exp (f : U -> ℝ) : ⨆ u, rexp (f u) = rexp (⨆ u, f u) := by
-  sorry
-
--- rexp ((α - 1) * ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) =
---     ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
+-- #check @sSupHomClass (ℝ -> ℝ) ℝ ℝ _ _ funlike_inst
+-- #check map_sSup
 
 
-lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ ⊤ -> z ^ β ≠ ⊤ := by
-  sorry
+def funlike_inst : FunLike (ℝ → ℝ) ℝ ℝ := by
+  constructor
+  case coe =>
+    intro f
+    apply f
+  case coe_injective' =>
+    exact fun ⦃a₁ a₂⦄ a => a
+
+-- set_option pp.all true
+lemma iSup_exp (f : U -> ℝ) : ⨆ u, Real.exp (f u) = Real.exp (⨆ u, f u) := by
+  symm
+  apply (@map_iSup (ℝ -> ℝ) ℝ ℝ U funlike_inst _ _ ?SHC rexp f)
+  · -- sSupHomClass
+    -- refine { map_sSup := ?SHC.map_sSup : @sSupHomClass (ℝ -> ℝ) ℝ ℝ _ _ _ funlike_inst}
+    -- May be circular
+    sorry
+
+lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
+  intro z β Hz0 HzT
+  intro W
+  have h : z = 0 ∧ β < 0 ∨ z = ⊤ ∧ 0 < β := by
+    apply rpow_eq_top_iff.mp
+    apply W
+  cases h
+  · aesop
+  · aesop
+
 
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
-lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) (HNT1 : NonTopNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (HN : Neighbour l₁ l₂):
+lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) (HNT1 : NonTopNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (HN : Neighbour l₁ l₂) (HNZ1 : NonZeroNQ nq1) (HNZ2 : ∀ u, NonZeroNQ (nq2 u)):
   RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
   apply (RenyiDivergence_mono_sum _ _ α Hα)
   rw [RenyiDivergence_exp (privComposeAdaptive nq1 nq2 l₁)  (privComposeAdaptive nq1 nq2 l₂) Hα]
   rw [left_distrib]
   rw [Real.exp_add]
 
+  rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα]
+
   have hmono_1 : rexp ((α - 1) * ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) = ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
     rw [iSup_smul_l, iSup_exp]
+    linarith
   rw [hmono_1]
   clear hmono_1
-  rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα]
+
   rw [mul_comm]
   rw [<- (ENNReal.toReal_ofReal_mul _ _ ?h)]
   case h =>
@@ -74,17 +99,25 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
     apply (tsum_le_tsum _ ENNReal.summable ENNReal.summable)
     intro i
     refine (ENNReal.mul_le_mul_left ?h.h.h0 ?h.h.hinf).mpr ?h.h.a
-    · -- Easy
-      sorry
+    · apply mul_ne_zero_iff.mpr
+      apply And.intro
+      · sorry
+      · sorry
     · apply ENNReal.mul_ne_top
       · apply exp_non_top
-        apply HNT1
+        · apply HNZ1
+        · apply HNT1
+          linarith
       · apply exp_non_top
-        apply HNT1
-    · apply ENNReal.ofReal_le_ofReal -- I don't see any way to make use of the ENNReal here
-      -- Can I cancel out the usage of hmono_1? (this step undoes it)
-      sorry
-
+        · apply HNZ1
+        · apply HNT1
+          linarith
+    · apply ENNReal.ofReal_le_ofReal
+      rw [iSup_exp]
+      rw [<- iSup_smul_l]
+      · -- Should be easy
+        sorry
+      · linarith
 
   -- After this point the argument is tight
   apply Eq.le
@@ -113,18 +146,22 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
         apply ENNReal.mul_ne_top
         · apply ENNReal.mul_ne_top
           · apply exp_non_top
-            apply HNT1
+            · apply HNZ1
+            · apply HNT1
           · apply exp_non_top
-            apply HNT1
+            · apply HNZ1
+            · apply HNT1
         · apply HNTRDNQ2
           apply Hα
           apply HN
       · apply ENNReal.toReal_nonneg
     · apply ENNReal.mul_ne_top
       · apply exp_non_top
-        apply HNT1
+        · apply HNZ1
+        · apply HNT1
       · apply exp_non_top
-        apply HNT1
+        · apply HNZ1
+        · apply HNT1
 
   conv =>
     rhs
