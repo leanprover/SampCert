@@ -23,7 +23,7 @@ variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
 
--- Maybe would be better as ENNReal
+-- Maybe would be better as ENNReal?
 lemma iSup_smul_l (a : ℝ) (f : U -> ℝ) : a * ⨆ u, f u = ⨆ u, a * f u := by
   rw [iSup, iSup]
   sorry
@@ -35,10 +35,13 @@ lemma iSup_exp (f : U -> ℝ) : ⨆ u, rexp (f u) = rexp (⨆ u, f u) := by
 --     ⨆ u, rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
 
 
+lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ ⊤ -> z ^ β ≠ ⊤ := by
+  sorry
+
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
-lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) :
+lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) (HNT1 : NonTopNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (HN : Neighbour l₁ l₂):
   RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
   apply (RenyiDivergence_mono_sum _ _ α Hα)
   rw [RenyiDivergence_exp (privComposeAdaptive nq1 nq2 l₁)  (privComposeAdaptive nq1 nq2 l₂) Hα]
@@ -59,26 +62,34 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   rw [mul_comm]
   rw [← ENNReal.tsum_mul_right]
 
-  apply (@LE.le.trans _ _ _ ((∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α) * ENNReal.ofReal (rexp ((α - 1) * RenyiDivergence (nq2 i l₁) (nq2 i l₂) α))).toReal) _ _ ?goal2)
+  apply (toReal_mono' _ ?goal2)
   case goal2 =>
-    -- Can I do this without summability?
-    apply toReal_mono'
-    · apply tsum_le_tsum
-      · intro i
-        refine (ENNReal.mul_le_mul_left ?h.h.h0 ?h.h.hinf).mpr ?h.h.a
-        · sorry
-        · sorry
-        · apply ENNReal.ofReal_le_ofReal
-          sorry
-      · sorry
-      · sorry
-    · sorry
+    intro H
+    -- ??
+    sorry
+
+
+  apply (@LE.le.trans _ _ _ ((∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α) * ENNReal.ofReal (rexp ((α - 1) * RenyiDivergence (nq2 i l₁) (nq2 i l₂) α)))) _ _ ?goal2)
+  case goal2 =>
+    apply (tsum_le_tsum _ ENNReal.summable ENNReal.summable)
+    intro i
+    refine (ENNReal.mul_le_mul_left ?h.h.h0 ?h.h.hinf).mpr ?h.h.a
+    · -- Easy
+      sorry
+    · apply ENNReal.mul_ne_top
+      · apply exp_non_top
+        apply HNT1
+      · apply exp_non_top
+        apply HNT1
+    · apply ENNReal.ofReal_le_ofReal -- I don't see any way to make use of the ENNReal here
+      -- Can I cancel out the usage of hmono_1? (this step undoes it)
+      sorry
+
 
   -- After this point the argument is tight
   apply Eq.le
   conv =>
     rhs
-    congr
     congr
     intro i
     rw [RenyiDivergence_exp (nq2 i l₁) (nq2 i l₂) Hα]
@@ -86,24 +97,40 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   conv =>
     lhs
     congr
-    congr
     intro
     rw [privComposeChainRule]
     rw [privComposeChainRule]
 
-  have test : ∀ i, ENNReal.ofReal (∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α)).toReal = ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
-    intro i
-    apply ofReal_toReal
-    -- Need a summability thing here... try to avoid this lemma if possible
-    sorry
   conv =>
     rhs
     congr
-    congr
-    intro
-    rw [test]
-    rw [← ENNReal.tsum_mul_left]
-  clear test
+    intro x
+    rw [<- (@ENNReal.ofReal_toReal (nq1 l₁ x ^ α * nq1 l₂ x ^ (1 - α)) ?goal2)]
+    · rw [<- ENNReal.ofReal_mul]
+      · rw [<- ENNReal.toReal_mul]
+        rw [(@ENNReal.ofReal_toReal (nq1 l₁ x ^ α * nq1 l₂ x ^ (1 - α) * ∑' (x_1 : V), nq2 x l₁ x_1 ^ α * nq2 x l₂ x_1 ^ (1 - α)) ?goal4)]
+        rfl
+        apply ENNReal.mul_ne_top
+        · apply ENNReal.mul_ne_top
+          · apply exp_non_top
+            apply HNT1
+          · apply exp_non_top
+            apply HNT1
+        · apply HNTRDNQ2
+          apply Hα
+          apply HN
+      · apply ENNReal.toReal_nonneg
+    · apply ENNReal.mul_ne_top
+      · apply exp_non_top
+        apply HNT1
+      · apply exp_non_top
+        apply HNT1
+
+  conv =>
+    rhs
+    arg 1
+    intro x
+    rw [<- ENNReal.tsum_mul_left]
 
   rw [<- ENNReal.tsum_prod]
   congr
@@ -112,8 +139,7 @@ lemma primComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   rcases p with ⟨ u , v ⟩
   simp
   rw [ENNReal.mul_rpow_of_nonneg _ _ ?sc1]
-  case sc1 =>
-    sorry
+  case sc1 => linarith
   rw [ENNReal.mul_rpow_of_nonneg _ _ ?sc2]
   case sc2 =>
     sorry
@@ -154,7 +180,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
     ciSup_le fun x => h2 x α Hα l₁ l₂ Hneighbours
   apply (@LE.le.trans _ _ _ (RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) _ _ ?case_alg)
   case case_alg => linarith
-  apply (primComposeAdaptive_renyi_bound _ Hα)
+  apply (primComposeAdaptive_renyi_bound _ Hα _ _) <;> aesop
 
 /--
 Adaptive composed query distribution is nowhere zero
