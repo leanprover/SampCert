@@ -64,19 +64,3 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   apply le_of_mul_le_mul_left
   · exact exp_le_exp.mp H
   · linarith
-
-lemma RenyiDivergence_exp (p q : T → ENNReal) {α : ℝ} (h : 1 < α) :
-  Real.exp ((α - 1) * RenyiDivergence p q α) = (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal := by
-  simp only [RenyiDivergence]
-  rw [<- mul_assoc]
-  have test : (α - 1) * (α - 1)⁻¹ = 1 := by
-    refine mul_inv_cancel ?h
-    linarith
-  rw [test]
-  clear test
-  simp
-  rw [Real.exp_log]
-  apply ENNReal.toReal_pos_iff.mpr
-  apply And.intro
-  · sorry
-  · sorry
