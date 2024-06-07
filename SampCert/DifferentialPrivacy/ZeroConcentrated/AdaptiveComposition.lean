@@ -36,7 +36,9 @@ lemma RDBound_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+} (
   intro u
   apply le_ciSup_of_le ?right.H u ?right.h
   case right.h => linarith
+  apply bddAbove_def.mpr
   sorry
+  -- No... NonTopRDNQ does not suffice, you need an actual uniform bound on the sum of nq2
 
 def RDBounded (nq2 : U -> List T -> SLang V) : Prop :=
   ∀ (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂), ∃ (b : ℝ), RDBound nq2 α Hα l₁ l₂ HN b
@@ -252,8 +254,44 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
           · aesop
           · apply nn1
         aesop
-    · -- rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα ?H1 ?H2]
-      sorry
+    · refine ((ENNReal.toReal_le_toReal ?g1 ?g2).mp ?g3)
+      case g1 => exact nt2 a α h1 l₁ l₂ h2
+      case g2 => exact Ne.symm top_ne_ofReal
+      case g3 =>
+
+        have GH1 : ∀ i, 0 < ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
+          intro i
+          rcases HV with ⟨ v0 ⟩
+          have Hle : nq2 i l₁ v0 ^ α * nq2 i l₂ v0 ^ (1 - α) <= ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := ENNReal.le_tsum v0
+          apply (LE.le.trans_lt' Hle)
+          clear Hle
+          sorry
+          -- apply ENNReal.mul_pos
+          -- · have Hlt : (0 < nq2 i l₁ v0 ^ α) := by
+          --        apply ENNReal.rpow_pos
+          --        · have H1 : 0 <= nq2 i l₁ v0 := by sorry
+          --          have H2 : 0 ≠ nq2 i l₁ v0 := by sorry
+          --          sorry
+          --        · exact nn2 i l₁ v0
+          --   intro Hk
+          --   rw [Hk] in Hlt
+          --   aesop
+          -- · have Hlt : (0 < nq2 i l₂ v0 ^ (1 - α)) := by
+          --        apply ENNReal.rpow_pos
+          --        · sorry
+          --        · exact nn2 i l₂ v0
+          --   intro Hk
+          --   sorry
+
+        have GH2 : ∀ i, ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) < ⊤ := by
+          exact fun i => ne_top_lt_top (∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α)) (nt2 i α h1 l₁ l₂ h2)
+
+        rw [<- RenyiDivergence_exp (nq2 a l₁) (nq2 a l₂) h1 ?H1 ?H2]
+        case H1 => apply GH1
+        case H2 => apply GH2
+        rw [ENNReal.toReal_ofReal]
+        · sorry
+        · apply (exp_nonneg ((α - 1) * b))
 
   rw [ENNReal.tsum_mul_right]
   apply ne_top_lt_top
