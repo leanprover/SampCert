@@ -22,10 +22,7 @@ variable { T U V : Type }
 variable [HU : Inhabited U]
 variable [HV : Inhabited V]
 
-
--- def NQBounded (nq2 : U -> List T -> SLang V) (b : ENNReal) : Prop :=
---   ∃ b, ∀ u, ∀ l, ∀ v, nq2 u l v <= b < ⊤
-
+set_option linter.unusedVariables false
 
 -- Morally, b = ⨆ (u : U), RenyiDivergence .... However, iSup itself does not remember that the supremum
 -- exists, setting the value to zero if not.
@@ -93,6 +90,9 @@ lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x
 lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
   exact fun a => Ne.lt_top' (id (Ne.symm a))
 
+lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
+  exact fun a => LT.lt.ne_top a
+
 /--
 All outputs of a adaptive composed query have finite probability.
 -/
@@ -110,7 +110,8 @@ theorem privComposeAdaptive_NonTopNQ {nq1 : List T → SLang U} {nq2 : U -> List
 Adaptive composed query is a proper distribution
 -/
 theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V}
-  (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u)) :
+  (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u))
+  (Hubound : RDBounded nq2) :
   NonTopSum (privComposeAdaptive nq1 nq2) := by
   simp [NonTopSum] at *
   intro l
@@ -132,27 +133,36 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
     intro a
     rw [ENNReal.tsum_mul_left]
 
-  -- Might need the second query to be bounded above
-
   sorry
-  -- rw [ENNReal.tsum_mul_right]
-  -- rw [mul_eq_top]
-  -- intro H
-  -- cases H
-  -- . rename_i H
-  --   cases H
-  --   contradiction
-  -- . rename_i H
-  --   cases H
-  --   contradiction
 
+  -- rcases (Hubound α Hα l₁ l₂ HN) with ⟨ b , Hubound ⟩
+  -- apply lt_top_ne_top
+  -- apply (@LE.le.trans_lt _ _ _ (∑' (a : U), nq1 l a * ENNReal.ofReal b) _ ?goal1)
+  -- case goal1 =>
+  --   apply ENNReal.tsum_le_tsum
+  --   intro a
+  --   -- b is not right here... I think I need nq2 to be uniformly bounded?
+  --   sorry
+
+  -- rw [ENNReal.tsum_mul_right]
+  -- apply ne_top_lt_top
+  -- intro Hcont
+  -- rw [mul_eq_top] at Hcont
+  -- cases Hcont
+  -- · rename_i h
+  --   rcases h with ⟨ h0 , h1 ⟩
+  --   aesop
+  -- · rename_i h
+  --   rcases h with ⟨ h0 , h1 ⟩
+  --   aesop
 
 
 /--
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
 theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V}
-  (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
+  (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u))
+  (Hubound : RDBounded nq2) :
   NonTopRDNQ (privComposeAdaptive nq1 nq2) := by
   rw [NonTopRDNQ] at *
   intro α h1 l₁ l₂ h2
@@ -203,18 +213,30 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
     rw [ENNReal.tsum_mul_left]
   -- Might not be true, terms in the second sum are pointwise bounded but not uniformly bounded
 
-  -- intro H
-  -- rw [mul_eq_top] at H
-  -- cases H
-  -- . rename_i h3
-  --   cases h3
-  --   rename_i h4 h5
-  --   contradiction
-  -- . rename_i h3
-  --   cases h3
-  --   rename_i h4 h5
-  --   contradiction
-  sorry
+  rcases (Hubound α h1 l₁ l₂ h2) with ⟨ b , Hubound ⟩
+
+  apply lt_top_ne_top
+  apply (@LE.le.trans_lt _ _ _ (∑' (x : U), nq1 l₁ x ^ α * nq1 l₂ x ^ (1 - α) * ENNReal.ofReal (rexp ((α - 1) * b))) _ ?goal1)
+
+  case goal1 =>
+    apply ENNReal.tsum_le_tsum
+    intro a
+    refine (ENNReal.mul_le_mul_left ?h.h0 ?h.hinf).mpr ?h.a
+    · sorry
+    · sorry
+    · sorry
+
+  rw [ENNReal.tsum_mul_right]
+  apply ne_top_lt_top
+  intro H
+  rw [mul_eq_top] at H
+  cases H
+  . rename_i h3
+    rcases h3 with ⟨ h30, h31 ⟩
+    aesop
+  . rename_i h3
+    rcases h3 with ⟨ h30, h31 ⟩
+    aesop
 
 
 /--
@@ -224,7 +246,8 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   (HNT1 : NonTopNQ nq1) (HNTRDNQ1 : NonTopRDNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u))
   (HN : Neighbour l₁ l₂) (HNZ1 : NonZeroNQ nq1) (HNZ2 : ∀ u, NonZeroNQ (nq2 u)) (HNT2 : ∀ u, NonTopNQ (nq2 u))
   (b : ℝ)
-  (Hubound : RDBound nq2 α Hα l₁ l₂ HN b) :
+  (Hubound : RDBound nq2 α Hα l₁ l₂ HN b)
+  (Hubound2 : RDBounded nq2) :
   RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤
     RenyiDivergence (nq1 l₁) (nq1 l₂) α + b := by
   apply (RenyiDivergence_mono_sum _ _ α Hα)
@@ -251,7 +274,14 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
         apply privComposeAdaptive_NonTopNQ <;> aesop
   case H2 =>
     apply ne_top_lt_top
-    apply privComposeAdaptive_NonTopRDNQ <;> aesop
+    apply privComposeAdaptive_NonTopRDNQ
+    · apply HNTRDNQ1
+    · apply HNTRDNQ2
+    · apply HNT1
+    · apply HNT2
+    · apply Hubound2
+    · apply Hα
+    · apply HN
 
   rw [left_distrib]
   rw [Real.exp_add]
@@ -468,6 +498,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   · aesop
   · aesop
   · apply RDBound_ofZCDPBound <;> aesop
+  · apply RDBounded_ofZCDPBound <;> aesop
   · aesop
   · aesop
   · aesop
@@ -481,8 +512,17 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
   repeat any_goals constructor
   · apply privComposeAdaptive_zCDPBound <;> aesop
   · apply privComposeAdaptive_NonZeroNQ <;> aesop
-  · apply privComposeAdaptive_NonTopSum <;> aesop
+  · apply privComposeAdaptive_NonTopSum
+    · aesop
+    · aesop
+    · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
+      · aesop
   · apply privComposeAdaptive_NonTopNQ <;> aesop
-  · apply privComposeAdaptive_NonTopRDNQ <;> aesop
-
+  · apply privComposeAdaptive_NonTopRDNQ
+    · aesop
+    · aesop
+    · aesop
+    · aesop
+    · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
+      · aesop
 end SLang
