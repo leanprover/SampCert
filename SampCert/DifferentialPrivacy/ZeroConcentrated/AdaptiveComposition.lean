@@ -27,25 +27,21 @@ set_option linter.unusedVariables false
 -- Morally, b = ⨆ (u : U), RenyiDivergence .... However, iSup itself does not remember that the supremum
 -- exists, setting the value to zero if not.
 def RDBound (nq2 : U -> List T -> SLang V) (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂) (b : ℝ) : Prop :=
-  ∀ u, (0 < RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) ∧ (RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ b)
+  ∀ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ b
 
 lemma RDBound_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+} (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂)
-  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) : RDBound nq2 α Hα l₁ l₂ HN (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
+  (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+  RDBound nq2 α Hα l₁ l₂ HN (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
   rw [RDBound]
   intro u
-  apply And.intro
-  · rw [RenyiDivergence]
-    apply Real.mul_pos
-    · apply inv_pos.mpr
-      linarith
-    · sorry
-  · refine le_ciSup_of_le ?right.H ?right.c ?right.h
-    sorry
+  apply le_ciSup_of_le ?right.H u ?right.h
+  case right.h => linarith
+  sorry
 
 def RDBounded (nq2 : U -> List T -> SLang V) : Prop :=
   ∀ (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂), ∃ (b : ℝ), RDBound nq2 α Hα l₁ l₂ HN b
 
-lemma RDBounded_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+}  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+lemma RDBounded_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+}  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄))  (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) :
   RDBounded nq2 := by
   intro α Hα l₁ l₂ HN
   exists (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
@@ -347,13 +343,13 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
   have hexp_b : ∀ u, (rexp ((α - 1) * RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) <= rexp ((α - 1) * b)) := by
     rw [RDBound] at Hubound
     intro u
-    rcases (Hubound u) with ⟨ hb1 , hb2 ⟩
+    let hb2 := (Hubound u)
     apply Real.exp_le_exp_of_le
     aesop
 
   rw [mul_comm]
-  rw [<- (ENNReal.toReal_ofReal_mul _ _ ?h)]
-  case h =>
+  rw [<- (ENNReal.toReal_ofReal_mul _ _ ?h1)]
+  case h1 =>
     exact exp_nonneg ((α - 1) * b)
   rw [mul_comm]
   rw [← ENNReal.tsum_mul_right]
@@ -563,5 +559,6 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
     · aesop
     · aesop
     · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
+      · aesop
       · aesop
 end SLang
