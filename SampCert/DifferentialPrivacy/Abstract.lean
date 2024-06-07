@@ -155,6 +155,10 @@ lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → S
       subst h4
       contradiction
 
+
+
+
+
 lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
   (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
   have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
@@ -210,6 +214,9 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
     intro X
     rw [C]
   simp
+
+lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (b : U) (c : V) (l : List T) :
+  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if x = a ∧ y = a_1 then nq2 a l a_1 else 0) = nq1 l x * nq2 x l y := sorry
 
 /--
 Composed queries are normalizable.

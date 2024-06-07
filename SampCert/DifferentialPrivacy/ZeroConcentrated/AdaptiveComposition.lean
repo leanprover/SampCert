@@ -77,13 +77,32 @@ lemma RenyiDivergence_exp (p q : SLang T) {α : ℝ} (h : 1 < α) (H1 : 0 < ∑'
 
 
 /--
+Adaptive composed query distribution is nowhere zero
+-/
+theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonZeroNQ nq1) (nt2 : ∀ u, NonZeroNQ (nq2 u)) :
+  NonZeroNQ (privComposeAdaptive nq1 nq2) := by
+  simp [NonZeroNQ] at *
+  simp [privComposeAdaptive]
+  aesop
+
+
+/--
 Bound on Renyi divergence on adaptively composed queries
 -/
 lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (α : ℝ) (Hα : 1 < α) (HNT1 : NonTopNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (HN : Neighbour l₁ l₂) (HNZ1 : NonZeroNQ nq1) (HNZ2 : ∀ u, NonZeroNQ (nq2 u)) :
   RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤ RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α := by
   apply (RenyiDivergence_mono_sum _ _ α Hα)
   rw [RenyiDivergence_exp (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) Hα ?H1 ?H2]
-  case H1 => sorry
+  case H1 =>
+    rcases HV with ⟨ v0 ⟩
+    rcases HU with ⟨ u0 ⟩
+    have Hle : (privComposeAdaptive nq1 nq2 l₁ (u0, v0) ^ α * privComposeAdaptive nq1 nq2 l₂ (u0, v0) ^ (1 - α)) ≤ (∑' (x : U × V), privComposeAdaptive nq1 nq2 l₁ x ^ α * privComposeAdaptive nq1 nq2 l₂ x ^ (1 - α)) := by
+      exact ENNReal.le_tsum (u0, v0)
+    apply (LE.le.trans_lt' Hle)
+    clear Hle
+    apply ENNReal.mul_pos
+    · sorry
+    · sorry
   case H2 => sorry
   rw [left_distrib]
   rw [Real.exp_add]
@@ -136,10 +155,21 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
       · -- Should be easy
         sorry
       · linarith
-
-  have GH1 : ∀ i, 0 < ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := sorry
-  have GH2 : ∀ i, ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) < ⊤ := sorry
-
+  have GH1 : ∀ i, 0 < ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
+    intro i
+    rcases HV with ⟨ v0 ⟩
+    have Hle : nq2 i l₁ v0 ^ α * nq2 i l₂ v0 ^ (1 - α) <= ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := ENNReal.le_tsum v0
+    apply (LE.le.trans_lt' Hle)
+    clear Hle
+    apply ENNReal.mul_pos
+    · have Hlt : (0 < nq2 i l₁ v0 ^ α) := by
+        apply ENNReal.rpow_pos
+        · sorry
+        · sorry
+      sorry
+    · sorry
+  have GH2 : ∀ i, ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) < ⊤ := by
+    sorry
 
   -- After this point the argument is tight
   apply Eq.le
@@ -244,14 +274,6 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   case case_alg => linarith
   apply (privComposeAdaptive_renyi_bound _ Hα _ _) <;> aesop
 
-/--
-Adaptive composed query distribution is nowhere zero
--/
-theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonZeroNQ nq1) (nt2 : ∀ u, NonZeroNQ (nq2 u)) :
-  NonZeroNQ (privComposeAdaptive nq1 nq2) := by
-  simp [NonZeroNQ] at *
-  simp [privComposeAdaptive]
-  aesop
 
 /--
 All outputs of a adaptive composed query have finite probability.
@@ -270,9 +292,37 @@ Adaptive composed query is a proper distribution
 -/
 theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u)) :
   NonTopSum (privComposeAdaptive nq1 nq2) := by
-  rw [NonTopSum] at *
-  -- Chain rule won't help here
+  simp [NonTopSum] at *
+  intro l
+  simp [privComposeAdaptive]
+  rw [ENNReal.tsum_prod']
+  conv =>
+    right
+    left
+    right
+    intro a
+    right
+    intro b
+    simp
+    rw [(compose_sum_rw_adaptive _ _ a b)]
+  conv =>
+    right
+    left
+    right
+    intro a
+    rw [ENNReal.tsum_mul_left]
   admit
+  -- rw [ENNReal.tsum_mul_right]
+  -- rw [mul_eq_top]
+  -- intro H
+  -- cases H
+  -- . rename_i H
+  --   cases H
+  --   contradiction
+  -- . rename_i H
+  --   cases H
+  --   contradiction
+
 
 
 /--
@@ -281,56 +331,56 @@ Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) :
   NonTopRDNQ (privComposeAdaptive nq1 nq2) := by
   rw [NonTopRDNQ] at *
-  admit
-  -- simp [NonTopRDNQ] at *
-  -- intro α h1 l₁ l₂ h2
+  intro α h1 l₁ l₂ h2
   -- replace nt1 := nt1 α h1 l₁ l₂ h2
   -- replace nt2 := nt2 α h1 l₁ l₂ h2
-  -- simp [privCompose]
-  -- rw [ENNReal.tsum_prod']
-  -- simp
-  -- conv =>
-  --   right
-  --   left
-  --   right
-  --   intro x
-  --   right
-  --   intro y
-  --   congr
-  --   . left
-  --     rw [compose_sum_rw]
-  --   . left
-  --     rw [compose_sum_rw]
-  -- conv =>
-  --   right
-  --   left
-  --   right
-  --   intro x
-  --   right
-  --   intro y
-  --   rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
-  --   rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 l₂ y)]
-  --   rw [mul_assoc]
-  --   right
-  --   rw [mul_comm]
-  --   rw [mul_assoc]
-  --   right
-  --   rw [mul_comm]
-  -- conv =>
-  --   right
-  --   left
-  --   right
-  --   intro x
-  --   right
-  --   intro y
-  --   rw [← mul_assoc]
-  -- conv =>
-  --   right
-  --   left
-  --   right
-  --   intro x
-  --   rw [ENNReal.tsum_mul_left]
-  -- rw [ENNReal.tsum_mul_right]
+  simp [privComposeAdaptive]
+  rw [ENNReal.tsum_prod']
+  simp
+
+  conv =>
+    right
+    left
+    right
+    intro x
+    right
+    intro y
+    congr
+    . left
+      rw [(compose_sum_rw_adaptive _ _ x y)]
+    . left
+      rw [(compose_sum_rw_adaptive _ _ x y)]
+  conv =>
+    right
+    left
+    right
+    intro x
+    right
+    intro y
+    rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
+    rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 x l₂ y)]
+    rw [mul_assoc]
+    right
+    rw [mul_comm]
+    rw [mul_assoc]
+    right
+    rw [mul_comm]
+  conv =>
+    right
+    left
+    right
+    intro x
+    right
+    intro y
+    rw [← mul_assoc]
+  conv =>
+    right
+    left
+    right
+    intro x
+    rw [ENNReal.tsum_mul_left]
+  -- Might not be true, terms in the second sum are pointwise bounded but not uniformly bounded
+
   -- intro H
   -- rw [mul_eq_top] at H
   -- cases H
@@ -342,6 +392,7 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
   --   cases h3
   --   rename_i h4 h5
   --   contradiction
+  admit
 
 /--
 ``privComposeAdaptive`` satisfies zCDP
