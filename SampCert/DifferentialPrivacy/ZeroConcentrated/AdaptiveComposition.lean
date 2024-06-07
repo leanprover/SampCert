@@ -111,7 +111,7 @@ Adaptive composed query is a proper distribution
 -/
 theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V}
   (nt1 : NonTopSum nq1) (nt2 : ∀ u, NonTopSum (nq2 u))
-  (Hubound : RDBounded nq2) :
+  (Hubound : ∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : V), nq2 u l v ≤ ENNReal.ofReal z) :
   NonTopSum (privComposeAdaptive nq1 nq2) := by
   simp [NonTopSum] at *
   intro l
@@ -133,28 +133,26 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
     intro a
     rw [ENNReal.tsum_mul_left]
 
-  sorry
-
-  -- rcases (Hubound α Hα l₁ l₂ HN) with ⟨ b , Hubound ⟩
-  -- apply lt_top_ne_top
-  -- apply (@LE.le.trans_lt _ _ _ (∑' (a : U), nq1 l a * ENNReal.ofReal b) _ ?goal1)
-  -- case goal1 =>
-  --   apply ENNReal.tsum_le_tsum
-  --   intro a
-  --   -- b is not right here... I think I need nq2 to be uniformly bounded?
-  --   sorry
-
-  -- rw [ENNReal.tsum_mul_right]
-  -- apply ne_top_lt_top
-  -- intro Hcont
-  -- rw [mul_eq_top] at Hcont
-  -- cases Hcont
-  -- · rename_i h
-  --   rcases h with ⟨ h0 , h1 ⟩
-  --   aesop
-  -- · rename_i h
-  --   rcases h with ⟨ h0 , h1 ⟩
-  --   aesop
+  rcases Hubound with ⟨ z , Hubound ⟩
+  apply lt_top_ne_top
+  apply (@LE.le.trans_lt _ _ _ (∑' (a : U), nq1 l a * ENNReal.ofReal z) _ ?goal1)
+  case goal1 =>
+    apply ENNReal.tsum_le_tsum
+    intro a
+    apply mul_le_mul_of_nonneg_left
+    · aesop
+    · aesop
+  rw [ENNReal.tsum_mul_right]
+  apply ne_top_lt_top
+  intro Hcont
+  rw [mul_eq_top] at Hcont
+  cases Hcont
+  · rename_i h
+    rcases h with ⟨ h0 , h1 ⟩
+    aesop
+  · rename_i h
+    rcases h with ⟨ h0 , h1 ⟩
+    aesop
 
 
 /--
@@ -538,7 +536,8 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄))
+  (Hubound_nq2 : ∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : V), nq2 u l v ≤ ENNReal.ofReal z) :
   zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   repeat any_goals constructor
@@ -547,8 +546,9 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
   · apply privComposeAdaptive_NonTopSum
     · aesop
     · aesop
-    · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
-      · aesop
+    · apply Hubound_nq2  -- Is there any way out of this? Only used in one place
+    -- · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
+    --   · aesop
   · apply privComposeAdaptive_NonTopNQ <;> aesop
   · apply privComposeAdaptive_NonTopRDNQ
     · aesop
