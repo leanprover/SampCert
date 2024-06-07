@@ -34,8 +34,13 @@ lemma RDBound_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+} (
   rw [RDBound]
   intro u
   apply And.intro
-  · sorry
-  · sorry
+  · rw [RenyiDivergence]
+    apply Real.mul_pos
+    · apply inv_pos.mpr
+      linarith
+    · sorry
+  · refine le_ciSup_of_le ?right.H ?right.c ?right.h
+    sorry
 
 def RDBounded (nq2 : U -> List T -> SLang V) : Prop :=
   ∀ (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂), ∃ (b : ℝ), RDBound nq2 α Hα l₁ l₂ HN b
