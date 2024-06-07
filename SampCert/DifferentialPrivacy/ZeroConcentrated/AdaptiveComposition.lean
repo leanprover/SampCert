@@ -50,30 +50,6 @@ lemma RDBounded_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+}
   apply RDBound_ofZCDPBound <;> aesop
 
 
--- set_option pp.all true
--- Maybe would be better as ENNReal?
-lemma iSup_smul_l (a : ℝ) (Ha : 0 <= a) (f : U -> ℝ) : a * ⨆ u, f u = ⨆ u, a * f u := by
-  refine (mul_iSup_of_nonneg ?ha fun i => f i)
-  apply Ha
-
-
--- def funlike_inst : FunLike (ℝ → ℝ) ℝ ℝ := by
---   constructor
---   case coe =>
---     intro f
---     apply f
---   case coe_injective' =>
---     exact fun ⦃a₁ a₂⦄ a => a
-
--- set_option pp.all true
-lemma iSup_exp (f : U -> ℝ) : ⨆ u, Real.exp (f u) = Real.exp (⨆ u, f u) := by
-  sorry
-  -- apply (@map_iSup (ℝ -> ℝ) ℝ ℝ U funlike_inst _ _ ?SHC rexp f)
-  -- · -- sSupHomClass
-  --   -- refine { map_sSup := ?SHC.map_sSup : @sSupHomClass (ℝ -> ℝ) ℝ ℝ _ _ _ funlike_inst}
-  --   -- May be circular
-  --   sorry
-
 lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
   intro z β Hz0 HzT
   intro W
@@ -110,10 +86,12 @@ theorem privComposeAdaptive_NonZeroNQ {nq1 : List T → SLang U} {nq2 : U -> Lis
   simp [privComposeAdaptive]
   aesop
 
-lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x = ⊤ ∨ ¬ y < 0) -> x ^ y ≠ 0 := by
-  sorry
+lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x = ⊤ ∨ ¬ y < 0) -> x ^ y ≠ 0 := by
+  have H1 := (@ENNReal.rpow_eq_zero_iff x y)
+  aesop
 
-lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := sorry
+lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
+  exact fun a => Ne.lt_top' (id (Ne.symm a))
 
 /--
 All outputs of a adaptive composed query have finite probability.
