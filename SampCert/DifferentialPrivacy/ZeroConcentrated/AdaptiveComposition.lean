@@ -161,7 +161,7 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
 theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V}
-  (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u))
+  (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nn1 : NonTopNQ nq1) (nn2 : ∀ u, NonTopNQ (nq2 u)) (nz1 : NonZeroNQ nq1) (nz2 : ∀ u, NonZeroNQ (nq2 u))
   (Hubound : RDBounded nq2) :
   NonTopRDNQ (privComposeAdaptive nq1 nq2) := by
   rw [NonTopRDNQ] at *
@@ -222,9 +222,39 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
     apply ENNReal.tsum_le_tsum
     intro a
     refine (ENNReal.mul_le_mul_left ?h.h0 ?h.hinf).mpr ?h.a
-    · sorry
-    · sorry
-    · sorry
+    · apply mul_ne_zero_iff.mpr
+      apply And.intro
+      · refine rpow_ne_zero_iff (nq1 l₁ a) α ?h.h0.left.a
+        apply And.intro
+        · left
+          aesop
+        · left
+          aesop
+      · refine rpow_ne_zero_iff (nq1 l₂ a) (1 - α) ?h.h0.right.a
+        apply And.intro
+        · left
+          aesop
+        · left
+          aesop
+    · intro H
+      rw [mul_eq_top] at H
+      cases H
+      · rename_i Hk
+        rcases Hk with ⟨ hk1, hk2 ⟩
+        have Hcont : nq1 l₂ a ^ (1-α) ≠ ⊤ := by
+          apply exp_non_top
+          · aesop
+          · aesop
+        aesop
+      · rename_i Hk
+        rcases Hk with ⟨ hk1, hk2 ⟩
+        have Hcont : nq1 l₁ a ^ (α) ≠ ⊤ := by
+          apply exp_non_top
+          · aesop
+          · apply nn1
+        aesop
+    · -- rw [RenyiDivergence_exp (nq1 l₁) (nq1 l₂) Hα ?H1 ?H2]
+      sorry
 
   rw [ENNReal.tsum_mul_right]
   apply ne_top_lt_top
@@ -279,6 +309,8 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
     · apply HNTRDNQ2
     · apply HNT1
     · apply HNT2
+    · apply HNZ1
+    · apply HNZ2
     · apply Hubound2
     · apply Hα
     · apply HN
@@ -519,6 +551,8 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
       · aesop
   · apply privComposeAdaptive_NonTopNQ <;> aesop
   · apply privComposeAdaptive_NonTopRDNQ
+    · aesop
+    · aesop
     · aesop
     · aesop
     · aesop
