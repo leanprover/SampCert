@@ -37,18 +37,8 @@ def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : Li
   return (A, B)
 
 
--- set_option pp.notation false
-
-/--
-Chain rule relating the adaptive composition definitions
-
-The joint distribution decomposes into the conditional and marginal (ie, nq1 l) distributions
--/
-lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
-  ∀ (u : U), ∀ (v : V), privComposeAdaptive nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
-  intros u v
-  simp [privComposeAdaptive]
-  -- How to simplify cases without explicit ite? this is silly
+lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (u : U) (v : V) (l : List T) :
+  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = nq1 l u * nq2 u l v := by
   have hrw1 : ∀ (a : U), nq1 l a * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0 := by
     intro a
     split
@@ -74,6 +64,18 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
   rw [ENNReal.tsum_mul_left]
   rw [tsum_ite_eq]
   exact MulOneClass.mul_one (nq2 u l v)
+
+
+/--
+Chain rule relating the adaptive composition definitions
+
+The joint distribution decomposes into the conditional and marginal (ie, nq1 l) distributions
+-/
+lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
+  ∀ (u : U), ∀ (v : V), privComposeAdaptive nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
+  intros u v
+  rw [<- compose_sum_rw_adaptive]
+  simp [privComposeAdaptive]
 
 /--
 Composition of independent mechanisms
@@ -224,9 +226,6 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
     rw [C]
   simp
 
---
-lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (b : U) (c : V) (l : List T) :
-  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if x = a ∧ y = a_1 then nq2 a l a_1 else 0) = nq1 l x * nq2 x l y := sorry
 
 /--
 Composed queries are normalizable.
