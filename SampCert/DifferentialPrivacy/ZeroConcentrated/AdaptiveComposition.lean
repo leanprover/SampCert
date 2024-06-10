@@ -29,25 +29,25 @@ set_option linter.unusedVariables false
 def RDBound (nq2 : U -> List T -> SLang V) (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂) (b : ℝ) : Prop :=
   ∀ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ b
 
-lemma RDBound_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+} (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂)
-  (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-  RDBound nq2 α Hα l₁ l₂ HN (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
-  rw [RDBound]
-  intro u
-  apply le_ciSup_of_le ?right.H u ?right.h
-  case right.h => linarith
-  apply bddAbove_def.mpr
-  sorry
-  -- No... NonTopRDNQ does not suffice, you need an actual uniform bound on the sum of nq2
+-- lemma RDBound_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+} (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂)
+--   (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+--   RDBound nq2 α Hα l₁ l₂ HN (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
+--   rw [RDBound]
+--   intro u
+--   apply le_ciSup_of_le ?right.H u ?right.h
+--   case right.h => linarith
+--   apply bddAbove_def.mpr
+--   sorry
+--   -- No... NonTopRDNQ does not suffice, you need an actual uniform bound on the sum of nq2
 
 def RDBounded (nq2 : U -> List T -> SLang V) : Prop :=
   ∀ (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T) (HN : Neighbour l₁ l₂), ∃ (b : ℝ), RDBound nq2 α Hα l₁ l₂ HN b
 
-lemma RDBounded_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+}  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄))  (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) :
-  RDBounded nq2 := by
-  intro α Hα l₁ l₂ HN
-  exists (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
-  apply RDBound_ofZCDPBound <;> aesop
+-- lemma RDBounded_ofZCDPBound {nq2 : U -> List T → SLang V} {ε₃ ε₄ : ℕ+}  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄))  (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u)) :
+--   RDBounded nq2 := by
+--   intro α Hα l₁ l₂ HN
+--   exists (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)
+--   apply RDBound_ofZCDPBound <;> aesop
 
 
 lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
@@ -157,7 +157,6 @@ theorem privComposeAdaptive_NonTopSum {nq1 : List T → SLang U} {nq2 : U -> Lis
     rcases h with ⟨ h0 , h1 ⟩
     aesop
 
-
 /--
 Renyi divergence beteeen adaptive composed queries on neighbours are finite.
 -/
@@ -170,7 +169,6 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
   simp [privComposeAdaptive]
   rw [ENNReal.tsum_prod']
   simp
-
   conv =>
     right
     left
@@ -262,26 +260,35 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
         have GH1 : ∀ i, 0 < ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
           intro i
           rcases HV with ⟨ v0 ⟩
-          have Hle : nq2 i l₁ v0 ^ α * nq2 i l₂ v0 ^ (1 - α) <= ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := ENNReal.le_tsum v0
+          have Hle : nq2 i l₁ v0 ^ α * nq2 i l₂ v0 ^ (1 - α) <= ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by apply ENNReal.le_tsum v0
           apply (LE.le.trans_lt' Hle)
           clear Hle
-          sorry
-          -- apply ENNReal.mul_pos
-          -- · have Hlt : (0 < nq2 i l₁ v0 ^ α) := by
-          --        apply ENNReal.rpow_pos
-          --        · have H1 : 0 <= nq2 i l₁ v0 := by sorry
-          --          have H2 : 0 ≠ nq2 i l₁ v0 := by sorry
-          --          sorry
-          --        · exact nn2 i l₁ v0
-          --   intro Hk
-          --   rw [Hk] in Hlt
-          --   aesop
-          -- · have Hlt : (0 < nq2 i l₂ v0 ^ (1 - α)) := by
-          --        apply ENNReal.rpow_pos
-          --        · sorry
-          --        · exact nn2 i l₂ v0
-          --   intro Hk
-          --   sorry
+          apply ENNReal.mul_pos
+          · have Hlt : (0 < nq2 i l₁ v0 ^ α) := by
+              apply ENNReal.rpow_pos
+              · have H1 : 0 <= nq2 i l₁ v0 := by simp
+                have H2 : 0 ≠ nq2 i l₁ v0 := by
+                  exact fun a => nz2 i l₁ v0 (id (Eq.symm a))
+                apply LE.le.lt_or_eq at H1
+                cases H1
+                · assumption
+                · contradiction
+              · exact nn2 i l₁ v0
+            intro Hk
+            rw [Hk] at Hlt
+            apply (lt_self_iff_false 0).mp Hlt
+          · intro Hk
+            have Hlt : (0 < nq2 i l₂ v0 ^ (1 - α)) := by
+                 apply ENNReal.rpow_pos
+                 · have H1 : 0 <= nq2 i l₂ v0 := by simp
+                   have H2 : 0 ≠ nq2 i l₂ v0 := by exact fun a => nz2 i l₂ v0 (id (Eq.symm a))
+                   apply LE.le.lt_or_eq at H1
+                   cases H1
+                   · assumption
+                   · contradiction
+                 · exact nn2 i l₂ v0
+            rw [Hk] at Hlt
+            apply (lt_self_iff_false 0).mp Hlt
 
         have GH2 : ∀ i, ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) < ⊤ := by
           exact fun i => ne_top_lt_top (∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α)) (nt2 i α h1 l₁ l₂ h2)
@@ -290,7 +297,11 @@ theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> Li
         case H1 => apply GH1
         case H2 => apply GH2
         rw [ENNReal.toReal_ofReal]
-        · sorry
+        · apply Real.exp_le_exp_of_le
+          rw [RDBound] at Hubound
+          apply mul_le_mul_of_nonneg_left
+          · apply Hubound
+          · linarith
         · apply (exp_nonneg ((α - 1) * b))
 
   rw [ENNReal.tsum_mul_right]
@@ -529,7 +540,8 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → SLang U} {nq2 : U -> Lis
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
-theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : ∀ u, NonZeroNQ (nq2 u)) (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nts1 : NonTopNQ nq1) (nts2 : ∀ u, NonTopNQ (nq2 u)) :
+theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : ∀ u, NonZeroNQ (nq2 u)) (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u)) (nts1 : NonTopNQ nq1) (nts2 : ∀ u, NonTopNQ (nq2 u)) (HB : RDBounded nq2) (HB' : ∀ α Hα l₁ l₂ HN, RDBound nq2 α Hα l₁ l₂ HN (⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)) :
+
   zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
@@ -566,8 +578,8 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
   · aesop
   · aesop
   · aesop
-  · apply RDBound_ofZCDPBound <;> aesop
-  · apply RDBounded_ofZCDPBound <;> aesop
+  · apply HB'
+  · apply HB
   · aesop
   · aesop
   · aesop
@@ -576,7 +588,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → SLang U} {nq2 : U -> Lis
 ``privComposeAdaptive`` satisfies zCDP
 -/
 theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄))
-  (Hubound_nq2 : ∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : V), nq2 u l v ≤ ENNReal.ofReal z) :
+  (Hubound_nq2 : ∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : V), nq2 u l v ≤ ENNReal.ofReal z) (HB : RDBounded nq2) (HB' : ∀ α Hα l₁ l₂ HN, RDBound nq2 α Hα l₁ l₂ HN (⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)):
   zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   repeat any_goals constructor
@@ -585,9 +597,7 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
   · apply privComposeAdaptive_NonTopSum
     · aesop
     · aesop
-    · apply Hubound_nq2  -- Is there any way out of this? Only used in one place
-    -- · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
-    --   · aesop
+    · apply Hubound_nq2
   · apply privComposeAdaptive_NonTopNQ <;> aesop
   · apply privComposeAdaptive_NonTopRDNQ
     · aesop
@@ -596,7 +606,5 @@ theorem privComposeAdaptive_zCDP (nq1 : List T → SLang U) (nq2 : U -> List T �
     · aesop
     · aesop
     · aesop
-    · apply (@RDBounded_ofZCDPBound _ _ _ nq2 ε₃ ε₄)
-      · aesop
-      · aesop
+    · aesop
 end SLang
