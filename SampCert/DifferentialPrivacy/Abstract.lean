@@ -101,7 +101,7 @@ class DPSystem (T : Type) where
   prop : Mechanism T Z → ℝ → Prop
   /--
   Noise mechanism (eg. Laplace, Discrete Gaussian, etc)
-  Paramaterized by a query, sensitivity, and the numerator/denominator ofa (rational) security paramater.
+  Paramaterized by a query, sensitivity, and a rational security paramater.
   -/
   noise : Query T ℤ → ℕ+ → ℕ+ → ℕ+ → Mechanism T ℤ
   /--
@@ -113,6 +113,15 @@ class DPSystem (T : Type) where
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  /--
+  Uniformity conditions for adaptive composition
+  -/
+  adaptive_unif_prop {U : Type} : (U -> Mechanism T Z) -> Prop
+  /--
+  Notion of privacy composes by addition
+  -/
+  adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
+    prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> adaptive_unif_prop m₂ → prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
   Notion of privacy is invariant under post-processing.
   -/
@@ -215,6 +224,7 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
     rw [C]
   simp
 
+--
 lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (b : U) (c : V) (l : List T) :
   (∑' (a : U), nq1 l a * ∑' (a_1 : V), if x = a ∧ y = a_1 then nq2 a l a_1 else 0) = nq1 l x * nq2 x l y := sorry
 

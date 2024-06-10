@@ -19,6 +19,12 @@ noncomputable instance PureDPSystem : DPSystem T where
   noise := privNoisedQueryPure
   noise_prop := NoisedQuery_PureDP
   compose_prop := PureDP_Compose
+  adaptive_unif_prop := fun _ => True
+  adaptive_compose_prop := fun {U V}
+    [MeasurableSpace U] [Countable U] [DiscreteMeasurableSpace U] [Inhabited U]
+    [MeasurableSpace V] [Countable V] [DiscreteMeasurableSpace V] [Inhabited V]
+    m₁ m₂ ε₁ ε₂ ε₃ ε₄ a a_1 _ =>
+    PureDP_ComposeAdaptive' m₁ m₂ ε₁ ε₂ ε₃ ε₄ a a_1
   postprocess_prop := PureDP_PostProcess
 
 end SLang
