@@ -177,16 +177,20 @@ Construct an empty histagram
 def emptyHistogram : Histogram T num_bins B :=
   Histogram.mk (Vector.replicate num_bins 0)
 
-/--
-Increment the count of one element in a histogram
--/
-def tickHistogram  (h : Histogram T num_bins B) (t : T) : Histogram T num_bins B :=
-  let t_bin := B.bin t
-  let t_count := Vector.get h.count t_bin + 1
-  { h with count := Vector.set h.count t_bin t_count }
+-- /-
+-- Increment the count of one element in a histogram
+-- -/
+-- def tickHistogram  (h : Histogram T num_bins B) (t : T) : Histogram T num_bins B :=
+--   let t_bin := B.bin t
+--   let t_count := Vector.get h.count t_bin + 1
+--   { h with count := Vector.set h.count t_bin t_count }
+
+
+-- Prove that this is 1-sensitive
 
 def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
   List.length (List.filter (fun v => B.bin v = b) l)
+
 
 -- /-
 -- Compute an exact histogram from a list of elements
@@ -196,11 +200,17 @@ def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
 --   -- This version is probably easier to extract from (and definitely easier to prove with)
 --   { count := Vector.ofFn (exactBinCount num_bins B l) }
 
+
+-- Rewrite this to be easier to prove with, probably.
+-- Want to use regular composition lemma
+
 /--
 Histogram with noise added to each count
 -/
 def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T num_bins B) := do
   let count <- Vector.mOfFn (fun (b : Fin num_bins) => dps.noise (exactBinCount num_bins B b) 1 ε₁ ε₂ l)
   return { count }
+
+
 
 end SLang

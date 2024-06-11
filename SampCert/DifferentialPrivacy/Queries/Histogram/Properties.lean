@@ -22,19 +22,50 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
--- /-
--- The counting query is 1-sensitive
--- -/
--- theorem exactCount_1_sensitive :
---   @sensitivity T exactCount 1 := by
+variable (num_bins : ℕ)
+variable (B : Bins T num_bins)
+
+-- def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
+--   List.length (List.filter (fun v => B.bin v = b) l)
 
 /-
-The noised counting query satisfies DP property
+exactBinCount is 1-sensitive
 -/
--- @[simp]
--- theorem privNoisedCount_DP (ε₁ ε₂ : ℕ+) :
---   dps.prop (privNoisedCount ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
---   apply dps.noise_prop
---   apply exactCount_1_sensitive
+theorem exactBinCount_sensitivity (b : Fin num_bins) : sensitivity (exactBinCount num_bins B b) 1 := by
+  rw [sensitivity]
+  intros l₁ l₂ HN
+  cases HN
+  · rename_i l₁' l₂' v' Hl₁ Hl₂
+    rw [ Hl₁, Hl₂ ]
+    rw [exactBinCount, exactBinCount]
+    simp [List.filter_cons]
+    aesop
+  · rename_i l₁' v' l₂' Hl₁ Hl₂
+    rw [ Hl₁, Hl₂ ]
+    rw [exactBinCount, exactBinCount]
+    simp [List.filter_cons]
+    aesop
+  · rename_i l₁' v₁' l₂' v₂' Hl₁ Hl₂
+    rw [ Hl₁, Hl₂ ]
+    rw [exactBinCount, exactBinCount]
+    simp [List.filter_cons]
+    -- There has to be a better way
+    cases (Classical.em (B.bin v₁' = b)) <;> cases (Classical.em (B.bin v₂' = b))
+    all_goals (rename_i Hrw1 Hrw2)
+    all_goals (simp [Hrw1, Hrw2])
+
+
+/-
+The histogram satisfies the DP property.
+-/
+
+-- Proof: It's a composition of B independent, 1-sensitive, ε/B-DP queries
+
+
+/-
+Getting the max threhsoldeded bin satisfies the DP property
+-/
+
+-- Proof: Postcomposition
 
 end SLang
