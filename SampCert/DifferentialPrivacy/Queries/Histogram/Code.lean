@@ -33,7 +33,7 @@ def Long : Type := { x : ℤ | LongMIN <= x ∧ x <= LongMAX }
 
 
 /--
-Function to categorize values of type T into ``num_bins`` distinct bins.
+Function to categorize values of type T into ``i.succ`` distinct bins.
 -/
 structure Bins (T : Type) (num_bins : ℕ) where
   bin : T -> Fin num_bins
@@ -122,7 +122,13 @@ lemma logLongBins_wf : logLongBins_def t < logLongBins_bins := by
     · apply Nat.sub_lt
       · omega
       · -- apply Nat.sub_lt_left_of_lt_add
-        sorry
+        refine Nat.log_pos_iff.mpr ?a.a
+        apply And.intro
+        · apply Nat.le_sub_of_add_le
+          simp
+          -- Uh oh is this true?
+          sorry
+        · linarith
     · omega
     --
   case inr.inr =>
@@ -141,6 +147,7 @@ lemma logLongBins_wf : logLongBins_def t < logLongBins_bins := by
       cases A
       · simp only []
         -- rw [Int.ofNat] at B2
+        -- Uh oh is this true either?
         sorry
       · simp
 
@@ -152,12 +159,12 @@ def logLongBins : Bins Long logLongBins_bins :=
 
 
 /--
-A histogram with a fixed binning method.
+A histogram with a fixed binning method and ``i+1`` bins
 
 Counts in the histogram are permitted to be negative.
 -/
-structure Histogram (T : Type) (num_bins : ℕ) (B : Bins T num_bins) where
-  count : Vector ℤ num_bins
+structure Histogram (T : Type) (i : ℕ) (B : Bins T i.succ) where
+  count : Vector ℤ i.succ
 
 /-!
 ## Private Histograms
@@ -167,20 +174,21 @@ noncomputable section
 namespace SLang
 
 variable {T : Type}
-variable (num_bins : ℕ)
-variable (B : Bins T num_bins)
+variable (i : ℕ)
+-- number of bins is i.succ
+variable (B : Bins T i.succ)
 variable [dps : DPSystem T]
 
 /--
 Construct an empty histagram
 -/
-def emptyHistogram : Histogram T num_bins B :=
-  Histogram.mk (Vector.replicate num_bins 0)
+def emptyHistogram : Histogram T i B :=
+  Histogram.mk (Vector.replicate i.succ 0)
 
 -- /-
 -- Increment the count of one element in a histogram
 -- -/
--- def tickHistogram  (h : Histogram T num_bins B) (t : T) : Histogram T num_bins B :=
+-- def tickHistogram  (h : Histogram T i.succ B) (t : T) : Histogram T i.succ B :=
 --   let t_bin := B.bin t
 --   let t_count := Vector.get h.count t_bin + 1
 --   { h with count := Vector.set h.count t_bin t_count }
@@ -188,29 +196,88 @@ def emptyHistogram : Histogram T num_bins B :=
 
 -- Prove that this is 1-sensitive
 
-def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
+def exactBinCount (b : Fin i.succ) (l : List T) : ℤ :=
   List.length (List.filter (fun v => B.bin v = b) l)
 
 
 -- /-
 -- Compute an exact histogram from a list of elements
 -- -/
--- def exactHistogram (l : List T) : (Histogram T num_bins B) :=
---   -- List.foldl (tickHistogram num_bins B) (emptyHistogram num_bins B) l
+-- def exactHistogram (l : List T) : (Histogram T i.succ B) :=
+--   -- List.foldl (tickHistogram i.succ B) (emptyHistogram i.succ B) l
 --   -- This version is probably easier to extract from (and definitely easier to prove with)
---   { count := Vector.ofFn (exactBinCount num_bins B l) }
+--   { count := Vector.ofFn (fun b => exactBinCount i.succ B b l) }
 
 
 -- Rewrite this to be easier to prove with, probably.
 -- Want to use regular composition lemma
 
-/--
+-- #check privCompose
+
+-- def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (h : SLang (Histogram T i.succ B)) (n : Fin i.succ) : SLang (Histogram T i.succ B) :=
+--   match n.val with
+--   | Nat.zero => h
+--   | Nat.succ n' => do
+--     let hᵥ <- h
+--     let (vₑ : ℤ) := hᵥ.count.get n
+--
+--     sorry
+
+def privNoisedBinCount (ε₁ ε₂ : ℕ+) (b : Fin i.succ) : Mechanism T ℤ :=
+  (fun l => dps.noise (exactBinCount i B b) 1 ε₁ ε₂ l)               -- ε₂ * i.succ probably
+
+def setCount (h : Histogram T i B) (b : Fin i.succ) (v : ℤ) : Histogram T i B :=
+  { h with count := h.count.set b v }
+
+-- def privNoisedHistogram (ε₁ ε₂ : ℕ+) (n : Fin i.succ) (l : List T) : SLang (Histogram T i.succ B) :=
+--   (Nat.recOn (motive := fun (x : ℕ) => (x < i.succ) -> SLang (Histogram T i.succ B))
+--     n.val
+--     (fun _ => probPure (emptyHistogram i.succ B))
+--     (fun n' IH Hn' => do
+--       let (Hn'' : n' < i.succ) := Nat.lt_of_succ_lt Hn'
+--       let (vₙ , h') <- privCompose (privNoisedBinCount i.succ B ε₁ ε₂ n) (fun _ => IH Hn'') l
+--       probPure (setCount i.succ B h' n vₙ)))
+--   n.isLt
+
+-- Invariant: This is ``n * (ε₁ / (ε₂ * i.succ)``-DP
+def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < i.succ) (l : List T) : SLang (Histogram T i B) :=
+  match n with
+  | Nat.zero => probPure (emptyHistogram i B)
+  | Nat.succ n' => do
+    let n_fin := Fin.mk (n'.succ) Hn
+    let (vₙ , h') <- privCompose
+                       (privNoisedBinCount i B ε₁ ε₂ n_fin)
+                       (fun l => privNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn) l)
+                       l
+    probPure (setCount i B h' n_fin vₙ)
+
+/-
 Histogram with noise added to each count
 -/
-def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T num_bins B) := do
-  let count <- Vector.mOfFn (fun (b : Fin num_bins) => dps.noise (exactBinCount num_bins B b) 1 ε₁ ε₂ l)
-  return { count }
+def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T i B) :=
+  privNoisedHistogramAux i B ε₁ ε₂ i (Nat.lt.base i) l
 
+
+-- def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T i.succ B) := do
+--   let count <- Vector.mOfFn (fun (b : Fin i.succ) => dps.noise (exactBinCount i.succ B b) 1 ε₁ ε₂ l)
+--   return { count }
+
+
+/-
+Compute the maximum bin above threshold
+-/
+
+def exactMaxBinAboveThresholdAux (τ : ℤ) (n : ℕ) (Hn : n < i.succ) (h : Histogram T i B) : Option (Fin (i.succ)) :=
+  match n with
+  | Nat.zero => none
+  | Nat.succ n' =>
+    let n_fin := (Fin.mk n'.succ Hn)
+    if (h.count.get n_fin > τ)
+      then some n_fin
+      else exactMaxBinAboveThresholdAux τ n' (Nat.lt_of_succ_lt Hn) h
+
+def exactMaxBinAboveThreshold (ε₁ ε₂ : ℕ+) (τ : ℤ) : Mechanism T (Option (Fin (i.succ))) :=
+  privPostProcess (privNoisedHistogram i B ε₁ ε₂) (exactMaxBinAboveThresholdAux i B τ i (Nat.lt.base i))
 
 
 end SLang

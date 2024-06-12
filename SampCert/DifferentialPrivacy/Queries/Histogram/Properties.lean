@@ -22,8 +22,8 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
-variable (num_bins : ℕ)
-variable (B : Bins T num_bins)
+variable (i : ℕ)
+variable (B : Bins T i.succ)
 
 -- def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
 --   List.length (List.filter (fun v => B.bin v = b) l)
@@ -31,7 +31,7 @@ variable (B : Bins T num_bins)
 /-
 exactBinCount is 1-sensitive
 -/
-theorem exactBinCount_sensitivity (b : Fin num_bins) : sensitivity (exactBinCount num_bins B b) 1 := by
+theorem exactBinCount_sensitivity (b : Fin i.succ) : sensitivity (exactBinCount i B b) 1 := by
   rw [sensitivity]
   intros l₁ l₂ HN
   cases HN
