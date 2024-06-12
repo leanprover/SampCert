@@ -55,26 +55,30 @@ theorem exactBinCount_sensitivity (b : Fin numBins) : sensitivity (exactBinCount
     all_goals (simp [Hrw1, Hrw2])
 
 /--
-Noised counts satisfy (ε₁/(ε₂*numBins))-DP
+DP bound for a noised bin count
 -/
 lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
-  dps.prop (privNoisedBinCount numBins B ε₁ ε₂ b) (ε₁ / (ε₂ * numBins)) := by
+  dps.prop (privNoisedBinCount numBins B ε₁ ε₂ b) (ε₁ / ((ε₂ * numBins : PNat))) := by
+  unfold privNoisedBinCount
+  apply dps.noise_prop
+  apply exactBinCount_sensitivity
+
+/--
+DP bound for intermediate steps in the histogram calculation.
+-/
+lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
+  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n * (ε₁ / (ε₂ * numBins : PNat))) := by
   sorry
 
 /--
-The histogram satisfies the DP property.
+DP bound for a noised histogram
 -/
-lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
-  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n * (ε₁ / (ε₂ * numBins))) := by
-  sorry
--- Proof: It's a composition of B independent, 1-sensitive, ε/B-DP queries
-
 lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
   sorry
 
-/-
-Getting the max threhsoldeded bin satisfies the DP property
+/--
+DP bound for the thresholding maximum
 -/
 lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
   dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by

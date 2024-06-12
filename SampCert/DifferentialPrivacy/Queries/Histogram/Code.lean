@@ -234,7 +234,7 @@ def exactBinCount (b : Fin numBins) (l : List T) : ℤ :=
 --     sorry
 
 def privNoisedBinCount (ε₁ ε₂ : ℕ+) (b : Fin numBins) : Mechanism T ℤ :=
-  (fun l => dps.noise (exactBinCount numBins B b) 1 ε₁ (ε₂ * numBins) l)
+  (dps.noise (exactBinCount numBins B b) 1 ε₁ (ε₂ * numBins))
 
 def setCount (h : Histogram T numBins B) (b : Fin numBins) (v : ℤ) : Histogram T numBins B :=
   { h with count := h.count.set b v }
