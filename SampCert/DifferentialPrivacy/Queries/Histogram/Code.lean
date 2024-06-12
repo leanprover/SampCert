@@ -221,85 +221,44 @@ namespace SLang
 
 variable [dps : DPSystem T]
 
--- /-
--- Increment the count of one element in a histogram
--- -/
--- def tickHistogram  (h : Histogram T i.succ B) (t : T) : Histogram T i.succ B :=
---   let t_bin := B.bin t
---   let t_count := Vector.get h.count t_bin + 1
---   { h with count := Vector.set h.count t_bin t_count }
-
-
--- Prove that this is 1-sensitive
-
+/--
+Compute the exact number of elements inside a histogram bin
+-/
 def exactBinCount (b : Fin numBins) (l : List T) : ℤ :=
   List.length (List.filter (fun v => B.bin v = b) l)
 
-
--- /-
--- Compute an exact histogram from a list of elements
--- -/
--- def exactHistogram (l : List T) : (Histogram T i.succ B) :=
---   -- List.foldl (tickHistogram i.succ B) (emptyHistogram i.succ B) l
---   -- This version is probably easier to extract from (and definitely easier to prove with)
---   { count := Vector.ofFn (fun b => exactBinCount i.succ B b l) }
-
-
--- Rewrite this to be easier to prove with, probably.
--- Want to use regular composition lemma
-
--- #check privCompose
-
--- def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (h : SLang (Histogram T i.succ B)) (n : Fin i.succ) : SLang (Histogram T i.succ B) :=
---   match n.val with
---   | Nat.zero => h
---   | Nat.succ n' => do
---     let hᵥ <- h
---     let (vₑ : ℤ) := hᵥ.count.get n
---
---     sorry
-
+/--
+Compute a noised count of the number of list elements inside a particular histogram bin
+-/
 def privNoisedBinCount (ε₁ ε₂ : ℕ+) (b : Fin numBins) : Mechanism T ℤ :=
   (dps.noise (exactBinCount numBins B b) 1 ε₁ (ε₂ * numBins))
 
+/--
+Modify a count inside a Histogram
+-/
 def setCount (h : Histogram T numBins B) (b : Fin numBins) (v : ℤ) : Histogram T numBins B :=
   { h with count := h.count.set b v }
 
--- def privNoisedHistogram (ε₁ ε₂ : ℕ+) (n : Fin i.succ) (l : List T) : SLang (Histogram T i.succ B) :=
---   (Nat.recOn (motive := fun (x : ℕ) => (x < i.succ) -> SLang (Histogram T i.succ B))
---     n.val
---     (fun _ => probPure (emptyHistogram i.succ B))
---     (fun n' IH Hn' => do
---       let (Hn'' : n' < i.succ) := Nat.lt_of_succ_lt Hn'
---       let (vₙ , h') <- privCompose (privNoisedBinCount i.succ B ε₁ ε₂ n) (fun _ => IH Hn'') l
---       probPure (setCount i.succ B h' n vₙ)))
---   n.isLt
-
--- Invariant: Result  is ``n.succ * (ε₁ / (ε₂ * numBins)``-DP
-def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) (l : List T) : SLang (Histogram T numBins B) := do
-  let (mechRec : Mechanism T (Histogram T numBins B)) :=
+def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) : Mechanism T (Histogram T numBins B) :=
+  let mechRec :=
     match n with
     | Nat.zero => (fun _ => probPure (emptyHistogram numBins B))
-    | Nat.succ n' => sorry
-  let (vₙ , h') <- privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) mechRec l
-  probPure (setCount numBins B h' n vₙ)
+    | Nat.succ n' => privNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn)
+  privPostProcess
+    (privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) mechRec)
+    (fun z => match z with | (vₙ , h') => (setCount numBins B h' n vₙ))
 
-/-
+
+/--
 Histogram with noise added to each count
 -/
 def privNoisedHistogram (ε₁ ε₂ : ℕ+) : Mechanism T (Histogram T numBins B) :=
   privNoisedHistogramAux numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins)
 
 
--- def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T i.succ B) := do
---   let count <- Vector.mOfFn (fun (b : Fin i.succ) => dps.noise (exactBinCount i.succ B b) 1 ε₁ ε₂ l)
---   return { count }
-
-
-/-
+/--
 Compute the maximum bin above threshold
 -/
-
 def exactMaxBinAboveThresholdAux (τ : ℤ) (n : ℕ) (Hn : n < numBins) (h : Histogram T numBins B) : Option (Fin numBins) :=
   match n with
   | Nat.zero => none
@@ -309,10 +268,12 @@ def exactMaxBinAboveThresholdAux (τ : ℤ) (n : ℕ) (Hn : n < numBins) (h : Hi
       then some n_fin
       else exactMaxBinAboveThresholdAux τ n' (Nat.lt_of_succ_lt Hn) h
 
+/--
+Compute the noisy maximum histogram bin whose value exeeds τ
+-/
 def privMaxBinAboveThreshold (ε₁ ε₂ : ℕ+) (τ : ℤ) : Mechanism T (Option (Fin numBins)) :=
   privPostProcess
     (privNoisedHistogram numBins B ε₁ ε₂)
     (exactMaxBinAboveThresholdAux numBins B τ (predBins numBins) (predBins_lt_numBins numBins))
-
 
 end SLang

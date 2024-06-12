@@ -68,7 +68,31 @@ DP bound for intermediate steps in the histogram calculation.
 -/
 lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
   dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε₁ / (ε₂ * numBins : PNat))) := by
-  sorry
+  induction n
+  · unfold privNoisedHistogramAux
+    simp only [Nat.cast_zero, succ_eq_add_one, zero_add, Nat.cast_one, Nat.cast_mul, one_mul]
+    apply dps.postprocess_prop
+    · sorry
+    sorry
+  · rename_i n IH
+    unfold privNoisedHistogramAux
+    simp only []
+    have nₚ : PNat := ⟨ n + 1, by aesop ⟩
+    refine (privPostProcess_ext ?succ.surj
+           (privCompose (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
+           (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn)))
+           ((nₚ + 1) * ε₁) (ε₂ * numBins)
+           (↑(n + 1).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins))) ?succ.a1 ?succ.εEq)
+    case succ.εEq => sorry
+    case succ.surj => sorry
+
+    refine (privCompose_ext (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
+            (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn))
+            (1 : PNat) (ε₂ * numBins) (nₚ * ε₁) (ε₂ * numBins)
+            (↑↑((nₚ + 1) * ε₁) / ↑↑(ε₂ * numBins))  ?succ.a1.DPCount ?succ.a1.DPrec ?succ.a1.εEq)
+    case succ.a1.εEq => sorry
+    case succ.a1.DPCount => sorry
+    case succ.a1.DPrec => sorry
 
 /--
 DP bound for a noised histogram
