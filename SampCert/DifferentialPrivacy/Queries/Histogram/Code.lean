@@ -158,20 +158,11 @@ def logLongBins : Bins Long logLongBins_bins :=
   Bins.mk (fun t => (Fin.mk (logLongBins_def t) logLongBins_wf))
 
 
-/--
-A histogram with a fixed binning method and ``i+1`` bins
-
-Counts in the histogram are permitted to be negative.
--/
-structure Histogram (T : Type) (num_bins : ℕ+) (B : Bins T num_bins) where
-  count : Vector ℤ num_bins
-
 /-!
 ## Private Histograms
 -/
-noncomputable section
 
-namespace SLang
+noncomputable section
 
 variable (numBins : ℕ+)
 
@@ -185,15 +176,50 @@ def predBins_lt_numBins : predBins numBins < numBins := by
   apply Nat.sub_one_lt_of_le Hv
   exact Nat.le_refl v
 
+
+/--
+A histogram with a fixed binning method and ``i+1`` bins
+
+Counts in the histogram are permitted to be negative.
+-/
+structure Histogram (T : Type) (num_bins : ℕ+) (B : Bins T num_bins) where
+  count : Vector ℤ num_bins
+
 variable {T : Type}
 variable (B : Bins T numBins)
-variable [dps : DPSystem T]
 
 /--
 Construct an empty histagram
 -/
 def emptyHistogram : Histogram T numBins B :=
   Histogram.mk (Vector.replicate numBins 0)
+
+
+-- Is there any way to get the discrete measure space for free?
+instance : MeasurableSpace (Histogram T numBins B) where
+  MeasurableSet' _ := True
+  measurableSet_empty := by simp
+  measurableSet_compl := by simp
+  measurableSet_iUnion := by simp
+
+-- There's probably an easier way to do this?
+instance : Countable (Histogram T numBins B) where
+  exists_injective_nat' := by
+    have X : Countable (Vector ℤ numBins) := by
+      sorry
+    have Y : ∃ f : Vector ℤ numBins -> ℕ, Function.Injective f := by
+      sorry
+    sorry
+
+instance : Inhabited (Histogram T numBins B) where
+  default := emptyHistogram numBins B
+
+instance : DiscreteMeasurableSpace (Histogram T numBins B) where
+  forall_measurableSet := by simp
+
+namespace SLang
+
+variable [dps : DPSystem T]
 
 -- /-
 -- Increment the count of one element in a histogram

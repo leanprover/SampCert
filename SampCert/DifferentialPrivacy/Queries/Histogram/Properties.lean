@@ -85,7 +85,7 @@ lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
     -- Doable
     sorry
   rw [H]
-  apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (SLang.predBins numBins) (SLang.predBins_lt_numBins numBins))
+  apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
 
 
 /--
@@ -94,7 +94,8 @@ DP bound for the thresholding maximum
 lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
   dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by
   rw [privMaxBinAboveThreshold]
-  -- apply dps.postprocess_prop
-  sorry
+  apply dps.postprocess_prop
+  · sorry
+  · apply privNoisedHistogram_DP
 
 end SLang
