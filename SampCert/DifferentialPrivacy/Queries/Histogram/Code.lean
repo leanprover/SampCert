@@ -234,7 +234,7 @@ def exactBinCount (b : Fin numBins) (l : List T) : ℤ :=
 --     sorry
 
 def privNoisedBinCount (ε₁ ε₂ : ℕ+) (b : Fin numBins) : Mechanism T ℤ :=
-  (fun l => dps.noise (exactBinCount numBins B b) 1 ε₁ ε₂ l)
+  (fun l => dps.noise (exactBinCount numBins B b) 1 ε₁ (ε₂ * numBins) l)
 
 def setCount (h : Histogram T numBins B) (b : Fin numBins) (v : ℤ) : Histogram T numBins B :=
   { h with count := h.count.set b v }
@@ -287,7 +287,7 @@ def exactMaxBinAboveThresholdAux (τ : ℤ) (n : ℕ) (Hn : n < numBins) (h : Hi
       then some n_fin
       else exactMaxBinAboveThresholdAux τ n' (Nat.lt_of_succ_lt Hn) h
 
-def exactMaxBinAboveThreshold (ε₁ ε₂ : ℕ+) (τ : ℤ) : Mechanism T (Option (Fin numBins)) :=
+def privMaxBinAboveThreshold (ε₁ ε₂ : ℕ+) (τ : ℤ) : Mechanism T (Option (Fin numBins)) :=
   privPostProcess
     (privNoisedHistogram numBins B ε₁ ε₂)
     (exactMaxBinAboveThresholdAux numBins B τ (predBins numBins) (predBins_lt_numBins numBins))

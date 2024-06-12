@@ -22,8 +22,8 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPSystem T]
 
-variable (num_bins : ℕ+)
-variable (B : Bins T num_bins)
+variable (numBins : ℕ+)
+variable (B : Bins T numBins)
 
 -- def exactBinCount (b : Fin num_bins) (l : List T) : ℤ :=
 --   List.length (List.filter (fun v => B.bin v = b) l)
@@ -31,7 +31,7 @@ variable (B : Bins T num_bins)
 /-
 exactBinCount is 1-sensitive
 -/
-theorem exactBinCount_sensitivity (b : Fin num_bins) : sensitivity (exactBinCount num_bins B b) 1 := by
+theorem exactBinCount_sensitivity (b : Fin numBins) : sensitivity (exactBinCount numBins B b) 1 := by
   rw [sensitivity]
   intros l₁ l₂ HN
   cases HN
@@ -54,18 +54,30 @@ theorem exactBinCount_sensitivity (b : Fin num_bins) : sensitivity (exactBinCoun
     all_goals (rename_i Hrw1 Hrw2)
     all_goals (simp [Hrw1, Hrw2])
 
+/--
+Noised counts satisfy (ε₁/(ε₂*numBins))-DP
+-/
+lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
+  dps.prop (privNoisedBinCount numBins B ε₁ ε₂ b) (ε₁ / (ε₂ * numBins)) := by
+  sorry
 
-/-
+/--
 The histogram satisfies the DP property.
 -/
-
+lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
+  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n * (ε₁ / (ε₂ * numBins))) := by
+  sorry
 -- Proof: It's a composition of B independent, 1-sensitive, ε/B-DP queries
 
+lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
+  dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
+  sorry
 
 /-
 Getting the max threhsoldeded bin satisfies the DP property
 -/
-
--- Proof: Postcomposition
+lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
+  dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by
+  sorry
 
 end SLang
