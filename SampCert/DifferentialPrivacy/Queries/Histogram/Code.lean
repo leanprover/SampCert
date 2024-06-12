@@ -249,24 +249,20 @@ def setCount (h : Histogram T numBins B) (b : Fin numBins) (v : ℤ) : Histogram
 --       probPure (setCount i.succ B h' n vₙ)))
 --   n.isLt
 
--- Invariant: This is ``n * (ε₁ / (ε₂ * i.succ)``-DP
-def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) (l : List T) : SLang (Histogram T numBins B) :=
-  match n with
-  | Nat.zero => probPure (emptyHistogram numBins B)
-  | Nat.succ n' => do
-    let n_fin := Fin.mk (n'.succ) Hn
-    let (vₙ , h') <- privCompose
-                       (privNoisedBinCount numBins B ε₁ ε₂ n_fin)
-                       (fun l => privNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn) l)
-                       l
-    probPure (setCount numBins B h' n_fin vₙ)
-
+-- Invariant: Result  is ``n.succ * (ε₁ / (ε₂ * numBins)``-DP
+def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) (l : List T) : SLang (Histogram T numBins B) := do
+  let (mechRec : Mechanism T (Histogram T numBins B)) :=
+    match n with
+    | Nat.zero => (fun _ => probPure (emptyHistogram numBins B))
+    | Nat.succ n' => sorry
+  let (vₙ , h') <- privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) mechRec l
+  probPure (setCount numBins B h' n vₙ)
 
 /-
 Histogram with noise added to each count
 -/
-def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T numBins B) :=
-  privNoisedHistogramAux numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins) l
+def privNoisedHistogram (ε₁ ε₂ : ℕ+) : Mechanism T (Histogram T numBins B) :=
+  privNoisedHistogramAux numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins)
 
 
 -- def privNoisedHistogram (ε₁ ε₂ : ℕ+) (l : List T) : SLang (Histogram T i.succ B) := do

@@ -67,7 +67,7 @@ lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
 DP bound for intermediate steps in the histogram calculation.
 -/
 lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
-  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n * (ε₁ / (ε₂ * numBins : PNat))) := by
+  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε₁ / (ε₂ * numBins : PNat))) := by
   sorry
 
 /--
@@ -75,13 +75,26 @@ DP bound for a noised histogram
 -/
 lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
-  sorry
+  unfold privNoisedHistogram
+  have H : (↑↑ ε₁ / ↑↑ ε₂ : ℝ) = ↑(predBins numBins).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins)) := by
+    rw [cast_succ]
+    rw [predBins]
+    rw [PNat.natPred]
+    simp
+    rw [div_mul_eq_div_div]
+    -- Doable
+    sorry
+  rw [H]
+  apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (SLang.predBins numBins) (SLang.predBins_lt_numBins numBins))
+
 
 /--
 DP bound for the thresholding maximum
 -/
 lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
   dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by
+  rw [privMaxBinAboveThreshold]
+  -- apply dps.postprocess_prop
   sorry
 
 end SLang
