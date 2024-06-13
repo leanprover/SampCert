@@ -72,27 +72,78 @@ lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins
   · unfold privNoisedHistogramAux
     simp only [Nat.cast_zero, succ_eq_add_one, zero_add, Nat.cast_one, Nat.cast_mul, one_mul]
     apply dps.postprocess_prop
-    · sorry
+    · unfold Function.Surjective
+      intro h
+      exists (h.count.get (Fin.mk 0 Hn), h)
+      simp
+      rw [setCount]
+      cases h
+      simp
+      apply Vector.ext
+      intro m
+      rw [Vector.get_set_eq_if]
+      split
+      · rename_i Hm
+        rw [<- Hm]
+        congr
+        simp
+        exact Eq.symm (Nat.mod_eq_of_lt Hn)
+      · rfl
+    -- Should be able to prove abstractly that the constant function is DP
+    -- Maybe follows from value dependent composition?
     sorry
   · rename_i n IH
     unfold privNoisedHistogramAux
     simp only []
-    have nₚ : PNat := ⟨ n + 1, by aesop ⟩
+    have Hn_pos : 0 < n + 1 := by aesop
     refine (privPostProcess_ext ?succ.surj
            (privCompose (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
            (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn)))
-           ((nₚ + 1) * ε₁) (ε₂ * numBins)
+           ((⟨ n + 1, Hn_pos ⟩ + 1) * ε₁) (ε₂ * numBins)
            (↑(n + 1).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins))) ?succ.a1 ?succ.εEq)
-    case succ.εEq => sorry
-    case succ.surj => sorry
+    case succ.εEq =>
+      simp
+      sorry
+      -- exact Eq.symm (mul_div_assoc (↑n + 1 + 1) (↑↑ε₁) (↑↑ε₂ * ↑↑numBins))
+    case succ.surj =>
+      unfold Function.Surjective
+      intro h
+      exists (h.count.get (Fin.mk (n + 1) Hn), h)
+      simp
+      rw [setCount]
+      cases h
+      rename_i count
+      simp
+      apply Vector.ext
+      intro m
+      rw [Vector.get_set_eq_if]
+      split
+      · rename_i Hm
+        rw [<- Hm]
+        congr
+        simp
+        exact Eq.symm (Nat.mod_eq_of_lt Hn)
+      · rfl
 
     refine (privCompose_ext (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
             (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn))
-            (1 : PNat) (ε₂ * numBins) (nₚ * ε₁) (ε₂ * numBins)
-            (↑↑((nₚ + 1) * ε₁) / ↑↑(ε₂ * numBins))  ?succ.a1.DPCount ?succ.a1.DPrec ?succ.a1.εEq)
-    case succ.a1.εEq => sorry
+            ε₁ (ε₂ * numBins) (⟨ n + 1, Hn_pos ⟩ * ε₁) (ε₂ * numBins)
+            (↑↑((⟨ n + 1, Hn_pos ⟩ + 1 : PNat) * ε₁) / ↑↑(ε₂ * numBins)) ?succ.a1.DPCount ?succ.a1.DPrec ?succ.a1.εEq)
+    case succ.a1.εEq =>
+      rw [div_add_div_same]
+      simp
+      congr
+      -- have Hrw : ε₁ = 1 * (ε₁ : ℝ) := by exact?
+      conv =>
+        rhs
+        arg 1
+        rw [one_mul]
+
+
+      sorry
     case succ.a1.DPCount => sorry
     case succ.a1.DPrec => sorry
+
 
 /--
 DP bound for a noised histogram
