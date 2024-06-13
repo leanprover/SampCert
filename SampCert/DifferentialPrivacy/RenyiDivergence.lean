@@ -6,6 +6,7 @@ Authors: Jean-Baptiste Tristan
 import Mathlib.Topology.Algebra.InfiniteSum.Ring
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
+import SampCert.Util.Log
 
 /-! Renyi Divergence
 
@@ -27,7 +28,7 @@ noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ℝ :=
 Closed form of the series in the definition of hte Renyi divergence.
 -/
 theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (h1 : ∀ x : T, q x ≠ 0) (h2 : ∀ x : T, q x ≠ ⊤) :
-  (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x : T, (p x / q x)^α  * (q x) := by
+  (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^α  * (q x) := by
   congr 4
   ext x
   rw [ENNReal.rpow_sub]
