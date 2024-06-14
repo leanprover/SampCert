@@ -20,7 +20,8 @@ open Real ENNReal PMF
 variable {T : Type}
 
 noncomputable def RenyiDivergence_def (p q : PMF T) (α : ℝ) : EReal :=
-  (α - 1)⁻¹ * elog (∑' x : T, (p x)^α  * (q x)^(1 - α))
+  (α - 1)⁻¹  * (ENNReal.ofEReal (elog (∑' x : T, (p x)^α  * (q x)^(1 - α))))
+
 
 theorem RenyiDivergence_def_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ RenyiDivergence_def p q α) := by
   -- See paper
@@ -29,6 +30,51 @@ theorem RenyiDivergence_def_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ RenyiDiverg
 theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
   -- See paper
   sorry
+
+lemma RenyiDivergence_def_log_sum_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
+  -- Follows from RenyiDivergence_def_nonneg
+  sorry
+
+/--
+The Renyi divergence is monotonic in the value of its sum.
+-/
+lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp ((α - 1) * x)) ≤ (Real.exp ((α - 1) * y)) -> (x ≤ y) := by
+  intro H
+  apply le_of_mul_le_mul_left
+  · exact exp_le_exp.mp H
+  · linarith
+
+/--
+Equation for the Renyi divergence series in terms of the Renyi Divergence
+-/
+lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
+  (h : 1 < α)
+  (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
+  (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) :
+  eexp (((α - 1)) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
+  simp only [RenyiDivergence_def]
+  rw [<- mul_assoc]
+  have Hinvert : ((↑α - 1) * ↑(α - 1)⁻¹ : EReal) = 1 := by
+    clear H1
+    clear H2
+    have Hsub : ((↑α - 1) : EReal) = (α - 1 : ℝ) := by simp
+    rw [Hsub]
+    have Hundo_coe (r1 r2 : ℝ) : (r1 : EReal) * (r2 : EReal) = ((r1 * r2 : ℝ) : EReal) := by
+      rw [EReal.coe_mul]
+    rw [Hundo_coe]
+    have Hinv : (α - 1) * (α - 1)⁻¹ = 1 := by
+      apply mul_inv_cancel
+      linarith
+    rw [Hinv]
+    simp
+  rw [Hinvert]
+  clear Hinvert
+  simp
+  rw [toEReal_ofENNReal_nonneg ?Helog_nn]
+  case Helog_nn =>
+    apply RenyiDivergence_def_log_sum_nonneg
+  apply elog_eexp
+
 
 /--
 The Renyi divergence.
@@ -72,36 +118,3 @@ Closed form for the Renyi Divergence.
 --     . apply le_of_lt (lt_trans Real.zero_lt_one h )
 --   . apply h1 x
 --   . apply h2 x
-
-
-/--
-The Renyi divergence is monotonic in the value of its sum.
--/
-lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp ((α - 1) * x)) ≤ (Real.exp ((α - 1) * y)) -> (x ≤ y) := by
-  intro H
-  apply le_of_mul_le_mul_left
-  · exact exp_le_exp.mp H
-  · linarith
-
-/--
-Equation for the Renyi divergence series in terms of the Renyi Divergence
--/
-lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
-  (h : 1 < α)
-  (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
-  (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) :
-  eexp ((α - 1) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
-  sorry
-  /-
-  simp only [RenyiDivergence]
-  rw [<- mul_assoc]
-  have test : (α - 1) * (α - 1)⁻¹ = 1 := by
-    refine mul_inv_cancel ?h
-    linarith
-  rw [test]
-  clear test
-  simp
-  rw [Real.exp_log]
-  apply ENNReal.toReal_pos_iff.mpr
-  tauto
-  -/
