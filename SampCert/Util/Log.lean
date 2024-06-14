@@ -31,7 +31,7 @@ noncomputable def ofEReal (e : EReal) : ENNReal :=
   | some none => none
   | some (some r) => ENNReal.ofReal r
 
-instance : Coe EReal ENNReal := ⟨ofEReal⟩
+-- instance : Coe EReal ENNReal := ⟨ofEReal⟩
 
 /--
 The extended logarithm
@@ -174,5 +174,11 @@ lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w =
 
 lemma ofEReal_le_mono : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
+
+@[simp]
+lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := sorry
+
+@[simp]
+lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry
 
 end ENNReal
