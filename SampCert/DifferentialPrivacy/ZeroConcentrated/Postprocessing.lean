@@ -28,104 +28,104 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
-  MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
-  have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
-  revert X
-  conv =>
-    left
-    left
-    intro x
-    rw [← norm_rpow_of_nonneg (nn x)]
-  intro X
-  simp [Integrable] at *
-  constructor
-  . cases X
-    rename_i left right
-    rw [@aestronglyMeasurable_iff_aemeasurable]
-    apply AEMeasurable.pow_const
-    simp [Memℒp] at mem
-    cases mem
-    rename_i left' right'
-    rw [aestronglyMeasurable_iff_aemeasurable] at left'
-    simp [left']
-  . rw [← hasFiniteIntegral_norm_iff]
-    simp [X]
-
-/--
-Jensen's ineuquality for the exponential applied to Renyi's sum
--/
-theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
-  ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
-
-  conv =>
-    left
-    left
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  conv =>
-    right
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  rw [← PMF.integral_eq_tsum]
-  rw [← PMF.integral_eq_tsum]
-
-  have A := @convexOn_rpow α (le_of_lt h)
-  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
-    apply ContinuousOn.rpow
-    . exact continuousOn_id' (Set.Ici 0)
-    . exact continuousOn_const
-    . intro x h'
-      simp at h'
-      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
-      cases OR
-      . rename_i h''
-        subst h''
-        right
-        apply lt_trans zero_lt_one h
-      . rename_i h''
-        left
-        by_contra
-        rename_i h3
-        subst h3
-        simp at h''
-  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
-    exact isClosed_Ici
-  have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
-  simp at D
-  apply D
-  . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
-  . rw [Function.comp_def]
-    have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
+-- lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+--   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
+--   have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
+--   revert X
+--   conv =>
+--     left
+--     left
+--     intro x
+--     rw [← norm_rpow_of_nonneg (nn x)]
+--   intro X
+--   simp [Integrable] at *
+--   constructor
+--   . cases X
+--     rename_i left right
+--     rw [@aestronglyMeasurable_iff_aemeasurable]
+--     apply AEMeasurable.pow_const
+--     simp [Memℒp] at mem
+--     cases mem
+--     rename_i left' right'
+--     rw [aestronglyMeasurable_iff_aemeasurable] at left'
+--     simp [left']
+--   . rw [← hasFiniteIntegral_norm_iff]
+--     simp [X]
+--
+-- /--
+-- Jensen's ineuquality for the exponential applied to Renyi's sum
+-- -/
+-- theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+--   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
+--
+--   conv =>
+--     left
+--     left
+--     right
+--     intro x
+--     rw [mul_comm]
+--     rw [← smul_eq_mul]
+--   conv =>
+--     right
+--     right
+--     intro x
+--     rw [mul_comm]
+--     rw [← smul_eq_mul]
+--   rw [← PMF.integral_eq_tsum]
+--   rw [← PMF.integral_eq_tsum]
+--
+--   have A := @convexOn_rpow α (le_of_lt h)
+--   have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
+--     apply ContinuousOn.rpow
+--     . exact continuousOn_id' (Set.Ici 0)
+--     . exact continuousOn_const
+--     . intro x h'
+--       simp at h'
+--       have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
+--       cases OR
+--       . rename_i h''
+--         subst h''
+--         right
+--         apply lt_trans zero_lt_one h
+--       . rename_i h''
+--         left
+--         by_contra
+--         rename_i h3
+--         subst h3
+--         simp at h''
+--   have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
+--     exact isClosed_Ici
+--   have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
+--   simp at D
+--   apply D
+--   . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
+--   . apply MeasureTheory.Memℒp.integrable _ mem
+--     rw [one_le_ofReal]
+--     apply le_of_lt h
+--   . rw [Function.comp_def]
+--     have X : ENNReal.ofReal α ≠ 0 := by
+--       simp
+--       apply lt_trans zero_lt_one h
+--     have Y : ENNReal.ofReal α ≠ ⊤ := by
+--       simp
+--     have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+--     rw [toReal_ofReal] at Z
+--     . exact Z
+--     . apply le_of_lt
+--       apply lt_trans zero_lt_one h
+--   . have X : ENNReal.ofReal α ≠ 0 := by
+--       simp
+--       apply lt_trans zero_lt_one h
+--     have Y : ENNReal.ofReal α ≠ ⊤ := by
+--       simp
+--     have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+--     rw [toReal_ofReal] at Z
+--     . exact Z
+--     . apply le_of_lt
+--       apply lt_trans zero_lt_one h
+--   . apply MeasureTheory.Memℒp.integrable _ mem
+--     rw [one_le_ofReal]
+--     apply le_of_lt h
 
 def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 

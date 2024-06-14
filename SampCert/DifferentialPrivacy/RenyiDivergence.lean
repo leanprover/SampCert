@@ -8,6 +8,8 @@ import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
 import Mathlib.Analysis.SpecialFunctions.Pow.NNReal
 import SampCert.Util.Log
 import Mathlib.Probability.ProbabilityMassFunction.Basic
+import Mathlib.Probability.ProbabilityMassFunction.Integrals
+import Mathlib.Analysis.Convex.Integral
 
 /-! Renyi Divergence
 
@@ -15,14 +17,13 @@ This file defines the Renyi divergence and equations for evaluating its expectat
 -/
 
 
-open Real ENNReal PMF
+open Real ENNReal PMF Nat Int MeasureTheory Measure PMF
+open Classical
 
 variable {T : Type}
 
 /--
 Definition of the Renyi divergence as an EReal.
-
-
 -/
 noncomputable def RenyiDivergence_def (p q : PMF T) (α : ℝ) : EReal :=
   (α - 1)⁻¹  * (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))
@@ -55,19 +56,19 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
   simp
 
 -- FIXME: where is this in mathlib?
-def AbsolutelyContinuous (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
+-- Need to say that p and q are the PMF's of a measure space (how do I use their typeclasses to do that?)
+-- PMF.toMeasure
+-- Then get AbsCts from AbsolutelyContinuous
+def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
 
 /--
 Closed form of the series in the definition of the Renyi divergence.
 -/
-theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsolutelyContinuous p q) :
+theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^α  * (q x) := by
   congr 4
   ext x
-  rw [AbsolutelyContinuous] at H
-  -- have HK : (q x ≠ 0 ∨ p x = 0) := by
-  --   apply Decidable.not_or_of_imp
-  --   apply H
+  rw [AbsCts] at H
   generalize Hvq : q x = vq
   cases vq <;> simp
   · -- q x = ⊤
@@ -123,13 +124,136 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_eq_zero]
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_ne_top]
 
+
+
+/-!
+## Jensen's inequality
+-/
+section Jensen
+
+variable {T : Type}
+variable [t1 : MeasurableSpace T]
+variable [t2 : MeasurableSingletonClass T]
+
+variable {U V : Type}
+variable [m2 : MeasurableSpace U]
+variable [count : Countable U]
+variable [disc : DiscreteMeasurableSpace U]
+variable [Inhabited U]
+
+lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+  MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
+  have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
+  revert X
+  conv =>
+    left
+    left
+    intro x
+    rw [← norm_rpow_of_nonneg (nn x)]
+  intro X
+  simp [Integrable] at *
+  constructor
+  . cases X
+    rename_i left right
+    rw [@aestronglyMeasurable_iff_aemeasurable]
+    apply AEMeasurable.pow_const
+    simp [Memℒp] at mem
+    cases mem
+    rename_i left' right'
+    rw [aestronglyMeasurable_iff_aemeasurable] at left'
+    simp [left']
+  . rw [← hasFiniteIntegral_norm_iff]
+    simp [X]
+
+-- FIXME: get rid of toReal's
+/--
+Jensen's ineuquality for the exponential applied to Renyi's sum
+-/
+theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+  ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
+  conv =>
+    left
+    left
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  conv =>
+    right
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  rw [← PMF.integral_eq_tsum]
+  rw [← PMF.integral_eq_tsum]
+
+  have A := @convexOn_rpow α (le_of_lt h)
+  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
+    apply ContinuousOn.rpow
+    . exact continuousOn_id' (Set.Ici 0)
+    . exact continuousOn_const
+    . intro x h'
+      simp at h'
+      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
+      cases OR
+      . rename_i h''
+        subst h''
+        right
+        apply lt_trans zero_lt_one h
+      . rename_i h''
+        left
+        by_contra
+        rename_i h3
+        subst h3
+        simp at h''
+  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
+    exact isClosed_Ici
+  have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
+  simp at D
+  apply D
+  . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
+  . apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+  . rw [Function.comp_def]
+    have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  . have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  . apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+
+
+
+end Jensen
+
+
+
+
 -- FIXME
 /--
 The Renyi divergence is monotonic in the value of its sum.
 -/
 lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp ((α - 1) * x)) ≤ (Real.exp ((α - 1) * y)) -> (x ≤ y) := by
   intro H
-  apply le_of_mul_le_mul_left
+  apply _root_.le_of_mul_le_mul_left
   · exact exp_le_exp.mp H
   · linarith
 
