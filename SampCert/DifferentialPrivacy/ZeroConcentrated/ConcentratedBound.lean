@@ -574,7 +574,7 @@ Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussi
 -/
 theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
   RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
-  (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * ((num : ℝ) / (den : ℝ))^2))) := by
+  (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ENNReal) / (2 * ((num : ℝ) / (den : ℝ))^2))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
   conv =>

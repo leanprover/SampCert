@@ -23,6 +23,17 @@ open ENNReal EReal Real
 namespace ENNReal
 
 /--
+Coerce a EReal to an ENNReal by truncation
+-/
+noncomputable def ofEReal (e : EReal) : ENNReal :=
+  match e with
+  | none => some 0
+  | some none => none
+  | some (some r) => ENNReal.ofReal r
+
+instance : Coe EReal ENNReal := ⟨ofEReal⟩
+
+/--
 The extended logarithm
 -/
 def elog (x : ENNReal) : EReal :=
@@ -41,6 +52,7 @@ def eexp (y : EReal) : ENNReal :=
   | none => 0
   | (some none) => ⊤
   | (some (some r)) => ENNReal.ofReal (Real.exp r)
+
 
 variable {x y : ENNReal}
 variable {w z : EReal}
@@ -140,7 +152,6 @@ lemma elog_injective : elog x = elog y -> x = y := by
     sorry
 
 lemma eexp_mono_lt : (w < z) <-> eexp w < eexp z := by
-
   sorry
 
 lemma eexp_mono_le : (w <= z) <-> eexp w <= eexp z := by sorry
@@ -152,5 +163,16 @@ lemma elog_mono_le : (x <= y) <-> elog x <= elog y := by sorry
 -- iff for log positive
 
 -- Special values
+
+-- Need to write compat lemmas for ofEReal
+-- Not sure which ones we'll need but
+
+
+-- Specialized lemmas for ofEReal when its argument is nonnegative (so no truncation happens)
+lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w = ofEReal z) :=
+  sorry
+
+lemma ofEReal_le_mono : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
+  sorry
 
 end ENNReal
