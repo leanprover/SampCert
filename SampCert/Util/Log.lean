@@ -27,8 +27,8 @@ Coerce a EReal to an ENNReal by truncation
 -/
 noncomputable def ofEReal (e : EReal) : ENNReal :=
   match e with
-  | none => some 0
-  | some none => none
+  | ⊥ => some 0
+  | ⊤ => ⊤
   | some (some r) => ENNReal.ofReal r
 
 -- instance : Coe EReal ENNReal := ⟨ofEReal⟩
@@ -38,7 +38,7 @@ The extended logarithm
 -/
 def elog (x : ENNReal) : EReal :=
   match x with
-  | none => ⊤
+  | ⊤ => ⊤
   | some r => if r = 0 then ⊥ else Real.log r
 
 /--
@@ -49,9 +49,9 @@ want the exponent to be of type ``EReal``.
 -/
 def eexp (y : EReal) : ENNReal :=
   match y with
-  | none => 0
-  | (some none) => ⊤
-  | (some (some r)) => ENNReal.ofReal (Real.exp r)
+  | ⊥ => 0
+  | ⊤ => ⊤
+  | some (some r) => ENNReal.ofReal (Real.exp r)
 
 
 variable {x y : ENNReal}
@@ -70,19 +70,21 @@ lemma elog_of_pos_real (H : 0 < r) : elog (ENNReal.ofReal r) = Real.log r := by
     · sorry
 
 @[simp]
-lemma elog_zero : elog (ENNReal.ofReal 0) = ⊥ := by sorry
+lemma elog_zero : elog (ENNReal.ofReal 0) = ⊥ := by simp [elog]
 
 @[simp]
-lemma elog_top : elog ⊤ = ⊤ := by sorry
+lemma elog_top : elog ⊤ = ⊤ := by simp [elog]
 
 @[simp]
-lemma eexp_bot : eexp ⊥ = 0 := by sorry
+lemma eexp_bot : eexp ⊥ = 0 := by simp [eexp]
 
 @[simp]
-lemma eexp_top : eexp ⊤ = ⊤ := by sorry
+lemma eexp_top : eexp ⊤ = ⊤ := by simp [eexp]
 
 @[simp]
-lemma eexp_pos_real (H : 0 < r) : eexp r = ENNReal.ofReal (Real.log r) := by sorry
+lemma eexp_pos_real (H : 0 < r) : eexp r = ENNReal.ofReal (Real.exp r) := by
+  simp [ENNReal.ofReal, eexp, elog]
+  rfl
 
 @[simp]
 lemma elog_eexp : eexp (elog x) = x := by
@@ -113,7 +115,22 @@ lemma elog_eexp : eexp (elog x) = x := by
 
 @[simp]
 lemma eexp_elog : (elog (eexp w)) = w := by
-  sorry
+  cases w
+  · simp [eexp, elog]
+    rfl
+  · simp [eexp, elog]
+    rename_i v'
+    cases v'
+    · simp
+      rfl
+    · simp
+      rename_i v''
+      simp [ENNReal.ofReal]
+      split
+      · -- exp is nonnegative
+        sorry
+      · sorry
+
 
 @[simp]
 lemma elog_mul : elog x * elog y = elog (x + y) := by sorry -- checked truth table
