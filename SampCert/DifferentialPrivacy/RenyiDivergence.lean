@@ -165,11 +165,10 @@ lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure 
   . rw [← hasFiniteIntegral_norm_iff]
     simp [X]
 
--- FIXME: get rid of toReal's
 /--
 Jensen's ineuquality for the exponential applied to Renyi's sum
 -/
-theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
   conv =>
     left
@@ -240,9 +239,79 @@ theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : �
     rw [one_le_ofReal]
     apply le_of_lt h
 
-
-
 end Jensen
+
+-- MARKUSDE: move
+noncomputable def Renyi_Jensen_f (p : T -> ENNReal) (q : PMF T) : T -> ℝ := (fun z => ((p z / q z)).toReal)
+
+-- Except for one case, we can rewrite the ENNReal-valued inequality into the form Jenen's inequality expects.
+lemma Renyi_Jensen_rw (p : T → ENNReal) (q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
+  (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
+
+lemma Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p : T → ENNReal) (q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+  (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
+  cases (Classical.em (∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)))
+  · -- Typical case
+    rename_i Hspecial
+    conv =>
+      rhs
+      arg 1
+      intro x
+      rw [Renyi_Jensen_rw p q h H Hspecial]
+
+    rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
+    case Hnonneg =>
+      -- Comes from PMF
+      sorry
+    case Hsummable =>
+      -- Summability
+      sorry
+
+    apply (le_trans ?G1 ?G2)
+    case G2 =>
+      apply (ofReal_le_ofReal ?Hle)
+      case Hle =>
+        apply Renyi_Jensen_real
+        · apply h
+        · -- Comes from PMF
+          sorry
+        · -- Also summability
+          sorry
+    case G1 =>
+      -- We need the latter fn to be summable
+      sorry
+  · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
+    rename_i Hspecial
+    simp at *
+    rcases Hspecial with ⟨ x0, ⟨ H1, H2 , H3 ⟩⟩
+    have HT1 : (∑' (x : T), p x / q x * q x) ^ α = ⊤ := by
+      apply rpow_eq_top_iff.mpr
+      right
+      apply And.intro
+      · apply ENNReal.tsum_eq_top_of_eq_top
+        exists x0
+        apply mul_eq_top.mpr
+        right
+        apply And.intro
+        · apply div_eq_top.mpr
+          simp_all
+        · simp_all
+      · linarith
+    have HT2 : ∑' (x : T), (p x / q x) ^ α * q x = ⊤ := by
+      apply ENNReal.tsum_eq_top_of_eq_top
+      exists x0
+      apply mul_eq_top.mpr
+      right
+      apply And.intro
+      · apply rpow_eq_top_iff.mpr
+        right
+        apply And.intro
+        · simp_all
+          exact top_div_of_ne_top H3
+        · simp_all
+          linarith
+      · simp_all
+    rw [HT1, HT2]
 
 
 
