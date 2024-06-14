@@ -23,6 +23,7 @@ The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/�
 -/
 theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  /-
   simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
   have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
@@ -72,6 +73,8 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
     rw [_root_.mul_pos_iff]
     left
     simp
+  -/
+  sorry
 
 /--
 All outputs of the zCDP mechanism have nonzero probability.

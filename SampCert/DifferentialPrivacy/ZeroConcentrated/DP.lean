@@ -33,7 +33,7 @@ satisfying this bound are ``ε``-DP).
 -/
 def zCDPBound (q : List T → SLang U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
-  RenyiDivergence (q l₁) (q l₂) α ≤ (1/2) * ε ^ 2 * α
+  RenyiDivergence (q l₁) (q l₂) α ≤ ENNReal.ofReal ((1/2) * ε ^ 2 * α)
 
 def NonTopNQ (nq : List T → SLang U) :=
   ∀ l : List T, ∀ n : U, nq l n ≠ ⊤

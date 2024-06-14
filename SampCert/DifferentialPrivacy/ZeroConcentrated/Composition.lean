@@ -77,6 +77,7 @@ Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
   zCDPBound (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  /-
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   have X := h1
@@ -140,6 +141,8 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
       . apply lt_trans zero_lt_one h3
     . apply Renyi_noised_query_NZ h3 h4 X nn1 nt1 nts1
     . apply Renyi_noised_query_NZ h3 h4 Y nn2 nt2 nts2
+  -/
+  sorry
 
 /--
 All outputs of a composed query have finite probability.

@@ -21,8 +21,8 @@ variable {T : Type}
 /--
 The Renyi divergence.
 -/
-noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ℝ :=
-  (α - 1)⁻¹ * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α)).toReal
+noncomputable def RenyiDivergence (p q : T → ENNReal) (α : ℝ) : ENNReal := sorry
+  -- (α - 1)⁻¹ * elog (∑' x : T, (p x)^α  * (q x)^(1 - α))
 
 /--
 Closed form of the series in the definition of hte Renyi divergence.
