@@ -82,6 +82,10 @@ lemma eexp_bot : eexp ⊥ = 0 := by simp [eexp]
 lemma eexp_top : eexp ⊤ = ⊤ := by simp [eexp]
 
 @[simp]
+lemma eexp_zero : eexp 0 = 1 := by simp [eexp]
+
+
+@[simp]
 lemma eexp_ofReal : eexp r = ENNReal.ofReal (Real.exp r) := by
   simp [ENNReal.ofReal, eexp, elog]
   rfl
@@ -190,11 +194,16 @@ lemma elog_mono_le : (x <= y) <-> elog x <= elog y := by sorry
 lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w = ofEReal z) :=
   sorry
 
-lemma ofEReal_le_mono : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
+lemma ofEReal_le_mono : (0 ≤ w) -> w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
+
+
+@[simp]
+lemma ofEReal_mul (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w * z) = ofEReal w * ofEReal z := sorry
 
 @[simp]
 lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := sorry
+
 
 @[simp]
 lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry

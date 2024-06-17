@@ -46,36 +46,9 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
     · linarith
   simp [H2]
 
-
--- lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
---   (h : 1 < α)
---   (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
---   (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) :
---   eexp (((α - 1)) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
---   simp only [RenyiDivergence_def]
---   rw [<- mul_assoc]
---   have Hinvert : ((↑α - 1) * ↑(α - 1)⁻¹ : EReal) = 1 := by
---     clear H1
---     clear H2
---     have Hsub : ((↑α - 1) : EReal) = (α - 1 : ℝ) := by simp
---     rw [Hsub]
---     have Hundo_coe (r1 r2 : ℝ) : (r1 : EReal) * (r2 : EReal) = ((r1 * r2 : ℝ) : EReal) := by
---       rw [EReal.coe_mul]
---     rw [Hundo_coe]
---     have Hinv : (α - 1) * (α - 1)⁻¹ = 1 := by
---       apply mul_inv_cancel
---       linarith
---     rw [Hinv]
---     simp
---   rw [Hinvert]
---   clear Hinvert
---   simp
-
-
--- FIXME: where is this in mathlib?
--- Need to say that p and q are the PMF's of a measure space (how do I use their typeclasses to do that?)
--- PMF.toMeasure
--- Then get AbsCts from AbsolutelyContinuous
+/--
+Simplified consequence of absolute continuity (remove me?)
+-/
 def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
 
 /--
@@ -464,10 +437,31 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   · exact exp_le_exp.mp H
   · linarith
 
-theorem RenyiDivergence_def_nonneg (p q : PMF T) {α : ℝ} (Hα : 1 < α): (0 ≤ RenyiDivergence_def p q α) := by
+#check True
+
+theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) (Hpq : AbsCts p q) {α : ℝ} (Hα : 1 < α) :
+  (0 ≤ RenyiDivergence_def p q α) := by
   have H1 : eexp (((α - 1)) * 0)  ≤ eexp ((α - 1) * RenyiDivergence_def p q α) := by
     rw [RenyiDivergence_def_exp p q Hα]
-    sorry
+    rw [RenyiDivergenceExpectation p q Hα Hpq]
+    simp
+    apply (le_trans ?G1 (Renyi_Jensen_ENNReal p q Hα Hpq))
+    have Hone : (∑' (x : T), p x / q x * q x) = 1 := by
+      -- This argument is also necessary to finish the Jensen's inequality proof (filter out the q x = 0 elements)
+      sorry
+    have Hle : (∑' (x : T), p x / q x * q x) ≤ (∑' (x : T), p x / q x * q x) ^ α := by
+      apply ENNReal.le_rpow_self_of_one_le
+      · rw [Hone]
+      · linarith
+    apply le_trans ?X Hle
+    rw [Hone]
+    linarith
+  apply eexp_mono_le.mpr at H1
+  have HX : (0 < (α.toEReal - 1)) := by sorry
+  have HX1 : (ofEReal ((↑α - 1) * 0) ≤ ofEReal ((↑α - 1) * RenyiDivergence_def p q α)) := by
+    exact ofEReal_le_mono.mp fun a => H1
+  rw [ofEReal_mul] at HX1
+  -- Circular side condition? Why is cancelling EReals so hard? Make a lemma with the iff cases in Log
   sorry
 
 theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
