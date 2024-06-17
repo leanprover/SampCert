@@ -267,82 +267,138 @@ noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q
 lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
   (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
 
-theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+-- set_option pp.all true
+
+#check Or.elim (Classical.em ?P) ?G1 ?G2
+
+theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
-  cases (Classical.em (∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)))
-  · -- Typical case
-    rename_i Hspecial
-    conv =>
-      rhs
-      arg 1
-      intro x
-      rw [Renyi_Jensen_rw p q h H Hspecial]
-
-    rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
-    case Hnonneg =>
-      intro t
-      apply mul_nonneg
-      · refine rpow_nonneg ?ha.hx α
-        simp [Renyi_Jensen_f]
-      · exact toReal_nonneg
-    case Hsummable =>
-      -- Summability
-      -- Derivable from PMF for p?
+  have Hdiscr : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
+  cases (Classical.em (∑' (a : T), (p a / q a) ^ α * q a ≠ ⊤))
+  · rename_i Hnts
+    cases (Classical.em (∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)))
+    · -- Typical case
+      rename_i Hspecial
       conv =>
-        congr
+        rhs
+        arg 1
         intro x
-        rw [Renyi_Jensen_f]
-      -- If this is not summable, then the RHS sum is infinity, and it's trivial by a classical cases?
-      -- Is that true?
-      sorry
+        rw [Renyi_Jensen_rw p q h H Hspecial]
 
-    apply (le_trans ?G1 ?G2)
-    case G2 =>
-      apply (ofReal_le_ofReal ?Hle)
-      case Hle =>
-        apply Renyi_Jensen_real
-        · apply h
-        · simp [Renyi_Jensen_f]
-        · rw [Memℒp]
-          -- The seminorm condition related to summability
+      rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
+      case Hnonneg =>
+        intro t
+        apply mul_nonneg
+        · refine rpow_nonneg ?ha.hx α
+          simp [Renyi_Jensen_f]
+        · exact toReal_nonneg
+      case Hsummable =>
+        -- Summability
+        -- Derivable from PMF for p?
+        conv =>
+          congr
+          intro x
+          rw [Renyi_Jensen_f]
+        -- If this is not summable, then the RHS sum is infinity, and it's trivial by a classical cases?
+        -- Is that true?
+        sorry
 
-          sorry
-    case G1 =>
-      -- We need the latter fn to be summable
-      sorry
-  · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
-    rename_i Hspecial
-    simp at *
-    rcases Hspecial with ⟨ x0, ⟨ H1, H2 , H3 ⟩⟩
-    have HT1 : (∑' (x : T), p x / q x * q x) ^ α = ⊤ := by
-      apply rpow_eq_top_iff.mpr
-      right
-      apply And.intro
-      · apply ENNReal.tsum_eq_top_of_eq_top
+      have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a :=
+        sorry
+      have HRJf_nt (a : T) : p a / q a ≠ ⊤ := by
+        sorry -- This one might need some more cases?
+      have Hsum_indicator (a : T) : ∑' (i : T), q i * Set.indicator {a} (fun x => 1) i = q a :=
+        sorry
+
+      apply (le_trans ?G1 ?G2)
+      case G2 =>
+        apply (ofReal_le_ofReal ?Hle)
+        case Hle =>
+          apply Renyi_Jensen_real
+          · apply h
+          · simp [Renyi_Jensen_f]
+          · simp [Memℒp]
+            constructor
+            . apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
+              apply Measurable.stronglyMeasurable
+              apply Measurable.ennreal_toReal
+              conv =>
+                right
+                intro x
+                rw [division_def]
+              apply Measurable.mul
+              . apply measurable_discrete
+              . apply Measurable.inv
+                apply measurable_discrete
+            · simp [snorm]
+              split
+              · simp
+              · rename_i Hα
+                simp [snorm']
+                rw [MeasureTheory.lintegral_countable']
+                rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
+                apply rpow_lt_top_of_nonneg
+                · simp
+                  apply le_of_not_ge Hα
+                · conv =>
+                    lhs
+                    arg 1
+                    intro a
+                    arg 1
+                    arg 1
+                    rw [<- Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
+                    rw [Renyi_Jensen_f]
+                    rw [<- ENNReal.ofReal.eq_1]
+                    rw [ENNReal.ofReal_toReal (HRJf_nt a)]
+                    rfl
+                  conv =>
+                    lhs
+                    arg 1
+                    intro a
+                    rhs
+                    simp [toMeasure]
+                    simp [PMF.toOuterMeasure]
+                    rw [Hsum_indicator]
+                  apply Hnts
+      case G1 =>
+        -- We need the latter fn to be summable
+        sorry
+    · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
+      rename_i Hspecial
+      simp at *
+      rcases Hspecial with ⟨ x0, ⟨ H1, H2 , H3 ⟩⟩
+      have HT1 : (∑' (x : T), p x / q x * q x) ^ α = ⊤ := by
+        apply rpow_eq_top_iff.mpr
+        right
+        apply And.intro
+        · apply ENNReal.tsum_eq_top_of_eq_top
+          exists x0
+          apply mul_eq_top.mpr
+          right
+          apply And.intro
+          · apply div_eq_top.mpr
+            simp_all
+          · simp_all
+        · linarith
+      have HT2 : ∑' (x : T), (p x / q x) ^ α * q x = ⊤ := by
+        apply ENNReal.tsum_eq_top_of_eq_top
         exists x0
         apply mul_eq_top.mpr
         right
         apply And.intro
-        · apply div_eq_top.mpr
-          simp_all
+        · apply rpow_eq_top_iff.mpr
+          right
+          apply And.intro
+          · simp_all
+            exact top_div_of_ne_top H3
+          · simp_all
+            linarith
         · simp_all
-      · linarith
-    have HT2 : ∑' (x : T), (p x / q x) ^ α * q x = ⊤ := by
-      apply ENNReal.tsum_eq_top_of_eq_top
-      exists x0
-      apply mul_eq_top.mpr
-      right
-      apply And.intro
-      · apply rpow_eq_top_iff.mpr
-        right
-        apply And.intro
-        · simp_all
-          exact top_div_of_ne_top H3
-        · simp_all
-          linarith
-      · simp_all
-    rw [HT1, HT2]
-
+      rw [HT1, HT2]
+  · rename_i HStop
+    simp at *
+    rw [HStop]
+    exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
 
 -- FIXME
 /--
