@@ -31,29 +31,45 @@ noncomputable def RenyiDivergence_def (p q : PMF T) (α : ℝ) : EReal :=
 /--
 Equation for the Renyi divergence series in terms of the Renyi Divergence
 -/
-lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
-  (h : 1 < α)
-  (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
-  (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) :
+lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
   eexp (((α - 1)) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
-  simp only [RenyiDivergence_def]
+  rw [RenyiDivergence_def]
   rw [<- mul_assoc]
-  have Hinvert : ((↑α - 1) * ↑(α - 1)⁻¹ : EReal) = 1 := by
-    clear H1
-    clear H2
-    have Hsub : ((↑α - 1) : EReal) = (α - 1 : ℝ) := by simp
-    rw [Hsub]
-    have Hundo_coe (r1 r2 : ℝ) : (r1 : EReal) * (r2 : EReal) = ((r1 * r2 : ℝ) : EReal) := by
-      rw [EReal.coe_mul]
-    rw [Hundo_coe]
-    have Hinv : (α - 1) * (α - 1)⁻¹ = 1 := by
-      apply mul_inv_cancel
-      linarith
-    rw [Hinv]
-    simp
-  rw [Hinvert]
-  clear Hinvert
-  simp
+  have H1 : (α.toEReal - OfNat.ofNat 1) =  (α - OfNat.ofNat 1).toEReal := by
+    rw [EReal.coe_sub]
+    congr
+  have H2 : ((α.toEReal - OfNat.ofNat 1) * (α - OfNat.ofNat 1)⁻¹.toEReal = 1) := by
+    rw [H1]
+    rw [← EReal.coe_mul]
+    rw [mul_inv_cancel]
+    · simp
+    · linarith
+  simp [H2]
+
+
+-- lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
+--   (h : 1 < α)
+--   (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
+--   (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) :
+--   eexp (((α - 1)) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
+--   simp only [RenyiDivergence_def]
+--   rw [<- mul_assoc]
+--   have Hinvert : ((↑α - 1) * ↑(α - 1)⁻¹ : EReal) = 1 := by
+--     clear H1
+--     clear H2
+--     have Hsub : ((↑α - 1) : EReal) = (α - 1 : ℝ) := by simp
+--     rw [Hsub]
+--     have Hundo_coe (r1 r2 : ℝ) : (r1 : EReal) * (r2 : EReal) = ((r1 * r2 : ℝ) : EReal) := by
+--       rw [EReal.coe_mul]
+--     rw [Hundo_coe]
+--     have Hinv : (α - 1) * (α - 1)⁻¹ = 1 := by
+--       apply mul_inv_cancel
+--       linarith
+--     rw [Hinv]
+--     simp
+--   rw [Hinvert]
+--   clear Hinvert
+--   simp
 
 
 -- FIXME: where is this in mathlib?
@@ -448,8 +464,10 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   · exact exp_le_exp.mp H
   · linarith
 
-theorem RenyiDivergence_def_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ RenyiDivergence_def p q α) := by
-  -- See paper
+theorem RenyiDivergence_def_nonneg (p q : PMF T) {α : ℝ} (Hα : 1 < α): (0 ≤ RenyiDivergence_def p q α) := by
+  have H1 : eexp (((α - 1)) * 0)  ≤ eexp ((α - 1) * RenyiDivergence_def p q α) := by
+    rw [RenyiDivergence_def_exp p q Hα]
+    sorry
   sorry
 
 theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
