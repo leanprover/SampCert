@@ -267,10 +267,6 @@ noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q
 lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
   (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
 
--- set_option pp.all true
-
-#check Or.elim (Classical.em ?P) ?G1 ?G2
-
 theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
   have Hdiscr : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
@@ -284,7 +280,6 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
         arg 1
         intro x
         rw [Renyi_Jensen_rw p q h H Hspecial]
-
       rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
       case Hnonneg =>
         intro t
@@ -293,23 +288,44 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
           simp [Renyi_Jensen_f]
         · exact toReal_nonneg
       case Hsummable =>
-        -- Summability
-        -- Derivable from PMF for p?
         conv =>
           congr
           intro x
           rw [Renyi_Jensen_f]
-        -- If this is not summable, then the RHS sum is infinity, and it's trivial by a classical cases?
-        -- Is that true?
-        sorry
-
-      have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a :=
-        sorry
+        conv =>
+          arg 1
+          intro x
+          lhs
+          rw [ENNReal.toReal_rpow]
+        conv =>
+          arg 1
+          intro x
+          rw [<- ENNReal.toReal_mul]
+        apply ENNReal.summable_toReal
+        assumption
+      have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a := by apply toReal_nonneg
       have HRJf_nt (a : T) : p a / q a ≠ ⊤ := by
-        sorry -- This one might need some more cases?
-      have Hsum_indicator (a : T) : ∑' (i : T), q i * Set.indicator {a} (fun x => 1) i = q a :=
-        sorry
-
+        intro HK
+        have HK' : (p a ≠ 0 ∧ q a = 0 ∨ p a = ⊤ ∧ q a ≠ ⊤) := by exact div_eq_top.mp HK
+        cases HK'
+        · rename_i HK'
+          rcases HK' with ⟨ HK1 , HK2 ⟩
+          rw [AbsCts] at H
+          simp_all only [ne_eq, not_and, Decidable.not_not, ENNReal.zero_div, zero_ne_top]
+        · rename_i HK'
+          rcases HK' with ⟨ HK1 , HK2 ⟩
+          apply (Hspecial a)
+          simp_all
+          -- We need to eliminate the possibility that (q a = 0)
+          -- All summads with q a = 0 will have value 0, so they should be removable.
+          sorry
+      have Hsum_indicator (a : T) : ∑' (i : T), q i * Set.indicator {a} (fun x => 1) i = q a := by
+        have Hfun : (fun (i : T) => q i * Set.indicator {a} (fun x => 1) i) = (fun (i : T) => if i = a then q a else 0) := by
+          funext i
+          rw [Set.indicator]
+          split <;> simp <;> split <;> simp_all
+        rw [Hfun]
+        exact tsum_ite_eq a (q a)
       apply (le_trans ?G1 ?G2)
       case G2 =>
         apply (ofReal_le_ofReal ?Hle)
@@ -361,8 +377,30 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
                     rw [Hsum_indicator]
                   apply Hnts
       case G1 =>
-        -- We need the latter fn to be summable
-        sorry
+        -- We need the latter fn to be summable or else it becomes zero and the inequality does not hold
+        rw [<- ENNReal.ofReal_rpow_of_nonneg ?Harg ?Hα]
+        case Harg =>
+          apply tsum_nonneg
+          intro i
+          apply mul_nonneg
+          · apply HRJf_nonneg
+          · exact toReal_nonneg
+        case Hα => linarith
+        apply (ENNReal.rpow_le_rpow _ ?Hα')
+        case Hα' => linarith
+        conv =>
+          rhs
+          arg 1
+          arg 1
+          intro a
+          rw [Renyi_Jensen_f]
+          rw [<- ENNReal.toReal_mul]
+        rw [<- ENNReal.tsum_toReal_eq]
+        · rw [ENNReal.ofReal_toReal]
+          -- Could do another case at the top if not derivable
+          sorry
+        · -- Derivable from Hnts
+          sorry
     · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
       rename_i Hspecial
       simp at *
