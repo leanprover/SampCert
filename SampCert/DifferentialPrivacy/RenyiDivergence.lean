@@ -55,11 +55,31 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ}
   clear Hinvert
   simp
 
+
 -- FIXME: where is this in mathlib?
 -- Need to say that p and q are the PMF's of a measure space (how do I use their typeclasses to do that?)
 -- PMF.toMeasure
 -- Then get AbsCts from AbsolutelyContinuous
 def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
+
+/--
+Specialize the definitation of AbsolutelyContinuous when singletons are measurable
+-/
+lemma PMF_AbsCts [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) (H : AbsolutelyContinuous (PMF.toMeasure p) (PMF.toMeasure q)) : AbsCts p q := by
+  rw [AbsolutelyContinuous] at H
+  rw [AbsCts]
+  intro x Hx
+  have Hxm : q.toMeasure { x } = 0 := by
+    rw [toMeasure]
+    simp
+    apply (toOuterMeasure_apply_eq_zero_iff q {x}).mpr
+    exact Set.disjoint_singleton_right.mpr fun a => a Hx
+  have H := H Hxm
+  rw [toMeasure] at H
+  simp at *
+  have Hp : Disjoint p.support {x} := (toOuterMeasure_apply_eq_zero_iff p {x}).mp H
+  simp at Hp
+  assumption
 
 /--
 Closed form of the series in the definition of the Renyi divergence.
@@ -123,7 +143,6 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
             . apply le_of_lt (lt_trans Real.zero_lt_one h )
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_eq_zero]
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_ne_top]
-
 
 
 /-!
@@ -261,7 +280,6 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p
 
     rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
     case Hnonneg =>
-      -- Comes from PMF
       intro t
       apply mul_nonneg
       · refine rpow_nonneg ?ha.hx α
@@ -269,6 +287,13 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p
       · exact toReal_nonneg
     case Hsummable =>
       -- Summability
+      -- Derivable from PMF for p?
+      conv =>
+        congr
+        intro x
+        rw [Renyi_Jensen_f]
+      -- If this is not summable, then the RHS sum is infinity, and it's trivial by a classical cases?
+      -- Is that true?
       sorry
 
     apply (le_trans ?G1 ?G2)
@@ -277,9 +302,10 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p
       case Hle =>
         apply Renyi_Jensen_real
         · apply h
-        · -- Comes from PMF
-          simp [Renyi_Jensen_f]
-        · -- Also summability
+        · simp [Renyi_Jensen_f]
+        · rw [Memℒp]
+          -- The seminorm condition related to summability
+
           sorry
     case G1 =>
       -- We need the latter fn to be summable
