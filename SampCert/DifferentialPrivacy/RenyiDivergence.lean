@@ -242,13 +242,13 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
 end Jensen
 
 -- MARKUSDE: move
-noncomputable def Renyi_Jensen_f (p : T -> ENNReal) (q : PMF T) : T -> ℝ := (fun z => ((p z / q z)).toReal)
+noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q z)).toReal)
 
 -- Except for one case, we can rewrite the ENNReal-valued inequality into the form Jenen's inequality expects.
-lemma Renyi_Jensen_rw (p : T → ENNReal) (q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
+lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
   (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
 
-lemma Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p : T → ENNReal) (q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
   cases (Classical.em (∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)))
   · -- Typical case
@@ -262,7 +262,11 @@ lemma Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p :
     rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable]
     case Hnonneg =>
       -- Comes from PMF
-      sorry
+      intro t
+      apply mul_nonneg
+      · refine rpow_nonneg ?ha.hx α
+        simp [Renyi_Jensen_f]
+      · exact toReal_nonneg
     case Hsummable =>
       -- Summability
       sorry
@@ -274,7 +278,7 @@ lemma Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p :
         apply Renyi_Jensen_real
         · apply h
         · -- Comes from PMF
-          sorry
+          simp [Renyi_Jensen_f]
         · -- Also summability
           sorry
     case G1 =>
@@ -312,8 +316,6 @@ lemma Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] (p :
           linarith
       · simp_all
     rw [HT1, HT2]
-
-
 
 
 -- FIXME

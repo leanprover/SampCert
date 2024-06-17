@@ -82,7 +82,7 @@ lemma eexp_bot : eexp ⊥ = 0 := by simp [eexp]
 lemma eexp_top : eexp ⊤ = ⊤ := by simp [eexp]
 
 @[simp]
-lemma eexp_pos_real (H : 0 < r) : eexp r = ENNReal.ofReal (Real.exp r) := by
+lemma eexp_ofReal : eexp r = ENNReal.ofReal (Real.exp r) := by
   simp [ENNReal.ofReal, eexp, elog]
   rfl
 
@@ -98,8 +98,7 @@ lemma elog_eexp : eexp (elog x) = x := by
       rw [h]
     · rename_i _ H
       simp
-      rw [eexp]
-      rw [NNReal.toReal, Real.toEReal]
+      rw [NNReal.toReal]
       simp
       rw [Real.exp_log]
       rw [ofReal_coe_nnreal]
@@ -133,7 +132,9 @@ lemma eexp_elog : (elog (eexp w)) = w := by
 
 
 @[simp]
-lemma elog_mul : elog x * elog y = elog (x + y) := by sorry -- checked truth table
+lemma elog_mul : elog x * elog y = elog (x + y) := by
+
+  sorry -- checked truth table
 
 @[simp]
 lemma eexp_add : eexp w * eexp z = eexp (w + z) := by sorry -- checked truth table

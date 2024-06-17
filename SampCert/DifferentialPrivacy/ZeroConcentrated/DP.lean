@@ -31,7 +31,7 @@ Inequality defining ``(ε^2)/2``-zCDP.
 All ``ε``-DP mechanisms satisfy this bound (though not all mechanisms
 satisfying this bound are ``ε``-DP).
 -/
-def zCDPBound (q : List T → SLang U) (ε : ℝ) : Prop :=
+def zCDPBound (q : List T → PMF U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
   RenyiDivergence (q l₁) (q l₂) α ≤ ENNReal.ofReal ((1/2) * ε ^ 2 * α)
 
@@ -48,9 +48,9 @@ def NonTopRDNQ (nq : List T → SLang U) : Prop :=
 /--
 The mechanism ``q`` is ``(ε^2)/2``-zCDP
 -/
-def zCDP (q : List T → SLang U) (ε : ℝ) : Prop :=
+def zCDP (q : List T → PMF U) (ε : ℝ) : Prop :=
     zCDPBound q ε
-  ∧ NonZeroNQ q
-  ∧ NonTopSum q
-  ∧ NonTopNQ q
-  ∧ NonTopRDNQ q
+  -- ∧ NonZeroNQ q
+  -- ∧ NonTopSum q
+  -- ∧ NonTopNQ q
+  -- ∧ NonTopRDNQ q

@@ -53,4 +53,10 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   . simp [gauss_term_ℝ]
   . rw [shifted_gauss_sum_0 A]
 
+
+/--
+``SLang`` program is a proper distribution.
+-/
+def DiscreteGaussianGenPMF (num : PNat) (den : PNat) (μ : ℤ) : PMF ℤ := ⟨ DiscreteGaussianGenSample num den μ , sorry ⟩
+
 end SLang

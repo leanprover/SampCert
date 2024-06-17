@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import Mathlib.NumberTheory.ModularForms.JacobiTheta.TwoVariable
+import Mathlib.Probability.ProbabilityMassFunction.Basic
 
 /-!
 # Discrete Guassian Definitions
@@ -334,3 +335,17 @@ theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   rw [tsum_div_const]
   rw [div_eq_one_iff_eq]
   apply sum_gauss_term_ne_zero h
+
+
+
+/--
+The discrete Gaussian as a PMF
+-/
+def discrete_gaussian_pmf {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) : PMF ℤ :=
+  ⟨ (fun n => ENNReal.ofReal (discrete_gaussian σ μ n)),
+    by
+      let Hsummable := Summable.hasSum (discrete_gaussian_summable' h μ)
+      rw [discrete_gaussian_normalizes h μ] at Hsummable
+      -- Might be a lemma to do this already
+      sorry
+  ⟩

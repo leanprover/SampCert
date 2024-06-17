@@ -530,8 +530,8 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
 Upper bound on Renyi divergence between discrete Gaussians.
 -/
 theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
-  RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
-                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
+  RenyiDivergence (discrete_gaussian_pmf h μ)
+                  (discrete_gaussian_pmf h ν)
                   α ≤ (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * σ^2))) := by
   /-
   have A : RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
@@ -573,8 +573,9 @@ namespace SLang
 Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussian sampler.
 -/
 theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
-  RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
-  (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ENNReal) / (2 * ((num : ℝ) / (den : ℝ))^2))) := by
+  RenyiDivergence ((DiscreteGaussianGenPMF num den μ)) (DiscreteGaussianGenPMF num den ν) α ≤
+  (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
+  /-
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
   conv =>
@@ -586,5 +587,7 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
       rw [DiscreteGaussianGenSample_apply]
     . skip
   apply Renyi_Gauss_divergence_bound' A h
+  -/
+  sorry
 
 end SLang
