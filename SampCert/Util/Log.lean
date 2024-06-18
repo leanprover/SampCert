@@ -208,4 +208,45 @@ lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w :
 @[simp]
 lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry
 
+
+-- ENNReal inequalities
+-- These are needed to prove the extensded version of Jensen's inequality
+lemma mul_mul_inv_le_mul_cancel : (x * y) * y⁻¹ ≤ x := by
+  cases x
+  · simp_all
+  rename_i x'
+  cases (Classical.em (x' = 0))
+  · simp_all
+  rename_i Hx'
+  cases y
+  · simp_all
+  rename_i y'
+  cases (Classical.em (y' = 0))
+  · simp_all
+  rename_i Hy'
+  simp
+  rw [← coe_inv Hy']
+  rw [← coe_mul]
+  rw [← coe_mul]
+  rw [mul_inv_cancel_right₀ Hy' x']
+
+lemma mul_mul_inv_eq_mul_cancel (H : y = 0 -> x = 0) (H2 : ¬(x ≠ 0 ∧ y = ⊤)) : (x * y) * y⁻¹ = x := by
+  cases x
+  · simp_all
+  rename_i x'
+  cases (Classical.em (x' = 0))
+  · simp_all
+  rename_i Hx'
+  cases y
+  · simp_all
+  rename_i y'
+  cases (Classical.em (y' = 0))
+  · simp_all
+  rename_i Hy'
+  simp
+  rw [← coe_inv Hy']
+  rw [← coe_mul]
+  rw [← coe_mul]
+  rw [mul_inv_cancel_right₀ Hy' x']
+
 end ENNReal

@@ -20,6 +20,40 @@ This file defines the Renyi divergence and equations for evaluating its expectat
 open Real ENNReal PMF Nat Int MeasureTheory Measure PMF
 open Classical
 
+/--
+Simplified consequence of absolute continuity (remove me?)
+-/
+def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
+
+/--
+Specialize the definitation of AbsolutelyContinuous when singletons are measurable
+-/
+lemma PMF_AbsCts [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) (H : AbsolutelyContinuous (PMF.toMeasure p) (PMF.toMeasure q)) : AbsCts p q := by
+  rw [AbsolutelyContinuous] at H
+  rw [AbsCts]
+  intro x Hx
+  have Hxm : q.toMeasure { x } = 0 := by
+    rw [toMeasure]
+    simp
+    apply (toOuterMeasure_apply_eq_zero_iff q {x}).mpr
+    exact Set.disjoint_singleton_right.mpr fun a => a Hx
+  have H := H Hxm
+  rw [toMeasure] at H
+  simp at *
+  have Hp : Disjoint p.support {x} := (toOuterMeasure_apply_eq_zero_iff p {x}).mp H
+  simp at Hp
+  assumption
+
+lemma PMF_mul_mul_inv_eq_mul_cancel (p q : PMF T) (HA : AbsCts p q) (a : T) : (p a  * q a) / q a = p a := by
+  apply mul_mul_inv_eq_mul_cancel
+  · rw [AbsCts] at HA
+    intro
+    simp_all
+  · simp
+    have HK : (q a ≠ ⊤) := apply_ne_top q a
+    simp_all only [ne_eq, not_false_eq_true]
+    simp
+
 variable {T : Type}
 
 /--
@@ -46,29 +80,6 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
     · linarith
   simp [H2]
 
-/--
-Simplified consequence of absolute continuity (remove me?)
--/
-def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
-
-/--
-Specialize the definitation of AbsolutelyContinuous when singletons are measurable
--/
-lemma PMF_AbsCts [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) (H : AbsolutelyContinuous (PMF.toMeasure p) (PMF.toMeasure q)) : AbsCts p q := by
-  rw [AbsolutelyContinuous] at H
-  rw [AbsCts]
-  intro x Hx
-  have Hxm : q.toMeasure { x } = 0 := by
-    rw [toMeasure]
-    simp
-    apply (toOuterMeasure_apply_eq_zero_iff q {x}).mpr
-    exact Set.disjoint_singleton_right.mpr fun a => a Hx
-  have H := H Hxm
-  rw [toMeasure] at H
-  simp at *
-  have Hp : Disjoint p.support {x} := (toOuterMeasure_apply_eq_zero_iff p {x}).mp H
-  simp at Hp
-  assumption
 
 /--
 Closed form of the series in the definition of the Renyi divergence.
@@ -437,8 +448,6 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   apply _root_.le_of_mul_le_mul_left
   · exact exp_le_exp.mp H
   · linarith
-
-#check True
 
 theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) (Hpq : AbsCts p q) {α : ℝ} (Hα : 1 < α) :
   (0 ≤ RenyiDivergence_def p q α) := by
