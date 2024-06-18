@@ -455,14 +455,13 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
       · linarith
     apply le_trans ?X Hle
     rw [Hone]
-    linarith
   apply eexp_mono_le.mpr at H1
   have HX : (0 < (α.toEReal - 1)) := by sorry
   have HX1 : (ofEReal ((↑α - 1) * 0) ≤ ofEReal ((↑α - 1) * RenyiDivergence_def p q α)) := by
     exact ofEReal_le_mono.mp fun a => H1
   rw [ofEReal_mul] at HX1
   -- Circular side condition? Why is cancelling EReals so hard? Make a lemma with the iff cases in Log
-  sorry
+  all_goals sorry
 
 theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
   -- See paper
@@ -471,8 +470,6 @@ theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = Renyi
 lemma RenyiDivergence_def_log_sum_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
   -- Follows from RenyiDivergence_def_nonneg
   sorry
-
-
 
 /--
 The Renyi divergence.
