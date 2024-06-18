@@ -18,11 +18,15 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
+lemma privNoisedQuery_norm (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  ∀ l, HasSum (privNoisedQuery query Δ ε₁ ε₂ l) 1 := sorry
+
+
 /--
 The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) (privNoisedQuery_norm query Δ ε₁ ε₂ bounded_sensitivity) ((ε₁ : ℝ) / ε₂) := by
   /-
   simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
@@ -270,15 +274,15 @@ theorem privNoisedQuery_NonTopRDNQ (query : List T → ℤ) (Δ ε₁ ε₂ : �
 The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  zCDP (privNoisedQuery query Δ ε₁ ε₂) (privNoisedQuery_norm query Δ ε₁ ε₂ bounded_sensitivity) ((ε₁ : ℝ) / ε₂) := by
   simp [zCDP]
   repeat any_goals constructor
   . apply privNoisedQuery_zCDPBound
     exact bounded_sensitivity
-  . apply privNoisedQuery_NonZeroNQ
-  . apply privNoisedQuery_NonTopSum
-  . apply privNoisedQuery_NonTopNQ
-  . apply privNoisedQuery_NonTopRDNQ
+  -- . apply privNoisedQuery_NonZeroNQ
+  -- . apply privNoisedQuery_NonTopSum
+  -- . apply privNoisedQuery_NonTopNQ
+  -- . apply privNoisedQuery_NonTopRDNQ
 
 
 end SLang
