@@ -554,10 +554,8 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-lemma pushforward_pmf_norm (nq : List T → SLang U) (HNorm : ∀ l, HasSum (nq l) 1) (f : U -> V) : (∀ l, HasSum (privPostProcess nq f l) 1) :=
-  sorry
 
-theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
+theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq)
   (f : U → V) :
   zCDPBound (privPostProcess nq f) (pushforward_pmf_norm nq HNorm f) ((ε₁ : ℝ) / ε₂) := by
@@ -668,8 +666,8 @@ theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, Has
 Postprocessing preserves zCDP
 -/
 theorem privPostProcess_zCDP {f : U → V} (sur : Function.Surjective f)
-  (nq : List T → SLang U) (HNorm : ∀ l, HasSum (nq l) 1) (ε₁ ε₂ : ℕ+) (h : zCDP nq HNorm ((ε₁ : ℝ) / ε₂)) :
-  zCDP (privPostProcess nq f) (pushforward_pmf_norm nq HNorm f) (((ε₁ : ℝ) / ε₂)) := by
+  (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+  zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [zCDP] at *
   sorry
   -- cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5

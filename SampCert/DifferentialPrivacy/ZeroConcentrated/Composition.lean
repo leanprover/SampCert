@@ -37,7 +37,7 @@ lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
 /--
 The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
 -/
-theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {α ε : ℝ}
+theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : NormalMechanism nq} {α ε : ℝ}
   (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq HNorm ε)
   (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
   (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
@@ -73,8 +73,6 @@ theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (
         replace nts := nts l₂ default
         contradiction
   . exact h5
-
-lemma compose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : ∀ l, HasSum (nq1 l) 1) (HNorm2 : ∀ l, HasSum (nq2 l) 1) : ∀ l, HasSum (privCompose nq1 nq2 l) 1 := sorry
 
 
 /--
@@ -240,8 +238,8 @@ theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLan
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : ∀ l, HasSum (nq1 l) 1) (HNorm2 : ∀ l, HasSum (nq2 l) 1) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) :
-  zCDP (privCompose nq1 nq2) (compose_norm nq1 nq2 HNorm1 HNorm2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
+  zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   sorry
   -- cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5

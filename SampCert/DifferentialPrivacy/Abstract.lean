@@ -23,10 +23,17 @@ def NonZeroNQ (nq : List T → SLang U) :=
 def NonTopSum (nq : List T → SLang U) :=
   ∀ l : List T, ∑' n : U, nq l n ≠ ⊤
 
+def NormalMechanism (q : List T -> SLang U) : Prop :=
+  ∀ l, HasSum (q l) 1
+
 namespace SLang
 
 abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → SLang U
+
+
+-- FIXME: Move composition of normal mechanism here
+
 
 /--
 Product of mechanisms.
@@ -304,5 +311,13 @@ theorem privPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : 
     intro x
     rw [← A]
   trivial
+
+
+-- FIXME: Rename too
+
+lemma compose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : NormalMechanism nq1) (HNorm2 : NormalMechanism nq2) : NormalMechanism (privCompose nq1 nq2) := sorry
+
+lemma pushforward_pmf_norm (nq : List T → SLang U) (HNorm : NormalMechanism nq1) (f : U -> V) :  NormalMechanism (privPostProcess nq f) :=
+  sorry
 
 end SLang
