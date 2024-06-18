@@ -265,7 +265,31 @@ noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q
 
 -- Except for one case, we can rewrite the ENNReal-valued inequality into the form Jenen's inequality expects.
 lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
-  (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
+  (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := by
+  simp [Renyi_Jensen_f]
+  rw [ENNReal.toReal_rpow]
+  rw [<- ENNReal.toReal_mul]
+  rw [ENNReal.ofReal_toReal]
+  apply mul_ne_top
+  · apply rpow_ne_top_of_nonneg
+    · linarith
+    · intro HK
+      apply ENNReal.div_eq_top.mp at HK
+      simp at HK
+      rw [AbsCts] at H
+      cases HK
+      · rename_i HK
+        rcases HK with ⟨ HK1, HK2 ⟩
+        simp_all
+      · rename_i HK
+        rcases HK with ⟨ HK1, HK2 ⟩
+        simp_all
+        apply HK2
+        apply (Hspecial)
+        · apply HK1
+        · intro Hcont1
+          simp_all
+  · exact apply_ne_top q x
 
 
 -- FIXME: might be able to simplify this argument with the new rewrite lemmas
@@ -454,7 +478,7 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
 /--
 Jensen's inquality applied to ENNReals
 -/
-theorem Renyi_Jensen_ENNReal[MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
   sorry
 
@@ -478,8 +502,12 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     simp
     apply (le_trans ?G1 (Renyi_Jensen_ENNReal p q Hα Hpq))
     have Hone : (∑' (x : T), p x / q x * q x) = 1 := by
-      -- This argument is also necessary to finish the Jensen's inequality proof (filter out the q x = 0 elements)
-      sorry
+      conv =>
+        arg 1
+        arg 1
+        intro x
+        rw [PMF_mul_mul_inv_eq_mul_cancel p q Hpq]
+      exact tsum_coe p
     have Hle : (∑' (x : T), p x / q x * q x) ≤ (∑' (x : T), p x / q x * q x) ^ α := by
       apply ENNReal.le_rpow_self_of_one_le
       · rw [Hone]
