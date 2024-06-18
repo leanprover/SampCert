@@ -44,7 +44,7 @@ lemma PMF_AbsCts [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) 
   simp at Hp
   assumption
 
-lemma PMF_mul_mul_inv_eq_mul_cancel (p q : PMF T) (HA : AbsCts p q) (a : T) : (p a  * q a) / q a = p a := by
+lemma PMF_mul_mul_inv_eq_mul_cancel (p q : PMF T) (HA : AbsCts p q) (a : T) : (p a  / q a) * q a = p a := by
   apply mul_mul_inv_eq_mul_cancel
   · rw [AbsCts] at HA
     intro
@@ -267,7 +267,13 @@ noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q
 lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
   (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := sorry
 
-theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+
+-- FIXME: might be able to simplify this argument with the new rewrite lemmas
+/--
+Jensen's inquality applied to ENNReals, in the case that q is nonzero
+-/
+lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0):
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
   have Hdiscr : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   cases (Classical.em (∑' (a : T), (p a / q a) ^ α * q a ≠ ⊤))
@@ -313,12 +319,9 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
           rw [AbsCts] at H
           simp_all only [ne_eq, not_and, Decidable.not_not, ENNReal.zero_div, zero_ne_top]
         · rename_i HK'
-          rcases HK' with ⟨ HK1 , HK2 ⟩
+          rcases HK' with ⟨ HK1 , _ ⟩
           apply (Hspecial a)
           simp_all
-          -- We need to eliminate the possibility that (q a = 0)
-          -- All summads with q a = 0 will have value 0, so they should be removable.
-          sorry
       have Hsum_indicator (a : T) : ∑' (i : T), q i * Set.indicator {a} (fun x => 1) i = q a := by
         have Hfun : (fun (i : T) => q i * Set.indicator {a} (fun x => 1) i) = (fun (i : T) => if i = a then q a else 0) := by
           funext i
@@ -399,9 +402,18 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
         · rw [ENNReal.ofReal_toReal]
           -- Could do another case at the top if not derivable
           -- Want to bound above my ∑'
-          sorry
+          conv =>
+            arg 1
+            arg 1
+            intro a
+            rw [PMF_mul_mul_inv_eq_mul_cancel p q H]
+          exact tsum_coe_ne_top p
         · -- Bound above by p a
-          sorry
+          intro a
+          conv =>
+            arg 1
+            rw [PMF_mul_mul_inv_eq_mul_cancel p q H]
+          exact apply_ne_top p a
     · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
       rename_i Hspecial
       simp at *
@@ -438,6 +450,15 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
     simp at *
     rw [HStop]
     exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
+
+/--
+Jensen's inquality applied to ENNReals
+-/
+theorem Renyi_Jensen_ENNReal[MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+  (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
+  sorry
+
+
 
 -- FIXME
 /--
