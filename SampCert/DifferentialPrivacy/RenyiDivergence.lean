@@ -297,7 +297,7 @@ lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hs
 Jensen's inquality applied to ENNReals, in the case that q is nonzero
 -/
 lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
-  (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0):
+  (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
   have Hdiscr : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   cases (Classical.em (∑' (a : T), (p a / q a) ^ α * q a ≠ ⊤))
@@ -332,6 +332,7 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
           intro x
           rw [<- ENNReal.toReal_mul]
         apply ENNReal.summable_toReal
+
         assumption
       have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a := by apply toReal_nonneg
       have HRJf_nt (a : T) : p a / q a ≠ ⊤ := by
@@ -475,13 +476,80 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
     rw [HStop]
     exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
 
+
+/--
+Restriction of the PMF f to the support of q
+-/
+def reducedPMF_def (f q : PMF T) (x : { t : T // ¬q t = 0 }) : ENNReal := f x.val
+
+-- Should be provable
+lemma acts_refl (q : PMF T) : AbsCts q q  := by
+  rw [AbsCts]
+  simp
+
+
+lemma reducedPMF_norm_acts (p q : PMF T) (H : AbsCts p q) : HasSum (reducedPMF_def p q) 1 := by
+  have H1 : Summable (reducedPMF_def p q) := by exact ENNReal.summable
+  have H2 := Summable.hasSum H1
+  have H3 : (∑' (b : { t // q t ≠ 0 }), reducedPMF_def p q b) = 1 := by
+    -- Provable?
+    sorry
+  rw [<- H3]
+  apply H2
+
+noncomputable def reducedPMF {p q : PMF T} (H : AbsCts p q): PMF { t : T // ¬q t = 0 } :=
+  ⟨ reducedPMF_def p q, reducedPMF_norm_acts p q H ⟩
+
+lemma reducedPMF_pos {q : PMF T} (H : AbsCts q q) (a : T) (Ha : ¬q a = 0): (reducedPMF H) ⟨a, Ha⟩ ≠ 0 := by
+  simp
+  rw [reducedPMF]
+  unfold reducedPMF_def
+  rw [DFunLike.coe]
+  rw [PMF.instFunLike]
+  simp
+  apply Ha
+
 /--
 Jensen's inquality applied to ENNReals
 -/
-theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (Hac : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
-  sorry
 
+  have K1 : Function.support (fun x : T => (p x / q x) * q x) ⊆ { t : T | q t ≠ 0 } := sorry
+  have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := sorry
+  rw [<- tsum_subtype_eq_of_support_subset K1]
+  rw [<- tsum_subtype_eq_of_support_subset K2]
+  simp
+
+  have Hq : AbsCts q q := acts_refl q
+
+  have B1 (x : { x // ¬q x = 0 }) : p ↑x / q ↑x * q ↑x = reducedPMF Hac x / reducedPMF Hq x * reducedPMF Hq x := by congr
+  have B2 (x : { x // ¬q x = 0 }) : (p ↑x / q ↑x)^α * q ↑x = (reducedPMF Hac x / reducedPMF Hq x)^α * reducedPMF Hq x := by congr
+  conv =>
+    congr
+    · arg 1
+      arg 1
+      intro x
+      rw [B1 x]
+    · arg 1
+      intro x
+      rw [B2 x]
+
+  clear B1
+  clear B2
+  clear K1
+  clear K2
+
+  apply Renyi_Jensen_ENNReal_reduct
+  · apply h
+  · rw [AbsCts]
+    simp
+    intro a Ha Hcont
+    exfalso
+    apply (reducedPMF_pos Hq a Ha Hcont)
+  · intro t
+    rcases t with ⟨ a , Ha ⟩
+    apply (reducedPMF_pos Hq a Ha)
 
 
 -- FIXME
