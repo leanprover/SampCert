@@ -387,6 +387,7 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
         rw [<- ENNReal.tsum_toReal_eq]
         · rw [ENNReal.ofReal_toReal]
           -- Could do another case at the top if not derivable
+          -- Want to rewrite to ∑(a : T), p a
           sorry
         · -- Derivable from Hnts
           sorry

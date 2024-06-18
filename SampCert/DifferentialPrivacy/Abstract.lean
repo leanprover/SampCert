@@ -312,12 +312,24 @@ theorem privPostProcess_NonTopSum {nq : List T → SLang U} (f : U → V) (nt : 
     rw [← A]
   trivial
 
+-- Provable using stuff in the adaptive composition PR, wait merge that stuff later
+lemma privCompose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : NormalMechanism nq1) (HNorm2 : NormalMechanism nq2) : NormalMechanism (privCompose nq1 nq2) := by
+  rw [NormalMechanism] at *
+  intro l
+  have HNorm1' := HasSum.tsum_eq (HNorm1 l)
+  have HNorm2' := HasSum.tsum_eq (HNorm2 l)
+  have HR : (∑' (x : U × V), privCompose nq1 nq2 l x = 1) := sorry
+  rw [<- HR]
+  apply Summable.hasSum
+  exact ENNReal.summable
 
--- FIXME: Rename too
-
-lemma compose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : NormalMechanism nq1) (HNorm2 : NormalMechanism nq2) : NormalMechanism (privCompose nq1 nq2) := sorry
-
-lemma pushforward_pmf_norm (nq : List T → SLang U) (HNorm : NormalMechanism nq1) (f : U -> V) :  NormalMechanism (privPostProcess nq f) :=
-  sorry
+lemma privPostProcess_norm (nq : List T → SLang U) (HNorm : NormalMechanism nq) (f : U -> V) :  NormalMechanism (privPostProcess nq f) := by
+  rw [NormalMechanism] at *
+  intro l
+  have HNorm' := HasSum.tsum_eq (HNorm l)
+  have HR : (∑' (b : V), privPostProcess nq f l b = 1) := sorry
+  rw [<- HR]
+  apply Summable.hasSum
+  exact ENNReal.summable
 
 end SLang
