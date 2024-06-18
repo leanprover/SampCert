@@ -37,7 +37,9 @@ lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
 /--
 The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
 -/
-theorem Renyi_noised_query_NZ {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq ε) (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
+theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {α ε : ℝ}
+  (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq HNorm ε)
+  (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
   (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
   simp [zCDPBound] at h3
   replace h3 := h3 α h1 l₁ l₂ h2
@@ -72,11 +74,15 @@ theorem Renyi_noised_query_NZ {nq : List T → SLang U} {α ε : ℝ} (h1 : 1 < 
         contradiction
   . exact h5
 
+lemma compose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : ∀ l, HasSum (nq1 l) 1) (HNorm2 : ∀ l, HasSum (nq2 l) 1) : ∀ l, HasSum (privCompose nq1 nq2 l) 1 := sorry
+
+
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
-theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
-  zCDPBound (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {HNorm1 : ∀ l, HasSum (nq1 l) 1} {HNorm2 : ∀ l, HasSum (nq2 l) 1} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
+  (h1 : zCDPBound nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nts1 : NonTopNQ nq1) (nts2 : NonTopNQ nq2) :
+  zCDPBound (privCompose nq1 nq2) (compose_norm nq1 nq2 HNorm1 HNorm2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   /-
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
@@ -234,16 +240,17 @@ theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLan
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HNorm1 : ∀ l, HasSum (nq1 l) 1) (HNorm2 : ∀ l, HasSum (nq2 l) 1) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) :
+  zCDP (privCompose nq1 nq2) (compose_norm nq1 nq2 HNorm1 HNorm2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
-  cases h' ; rename_i h'1 h'2 ; cases h'2 ; rename_i h'2 h'3 ; cases h'3 ; rename_i h'3 h'4 ; cases h'4 ; rename_i h'4 h'5
-  repeat any_goals constructor
-  . apply privCompose_zCDPBound h1 h'1 h2 h'2 h5 h'5 h4 h'4
-  . apply privCompose_NonZeroNQ h2 h'2
-  . apply privCompose_NonTopSum h3 h'3
-  . apply privCompose_NonTopNQ h4 h'4
-  . apply privCompose_NonTopRDNQ h5 h'5 h4 h'4
+  sorry
+  -- cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
+  -- cases h' ; rename_i h'1 h'2 ; cases h'2 ; rename_i h'2 h'3 ; cases h'3 ; rename_i h'3 h'4 ; cases h'4 ; rename_i h'4 h'5
+  -- repeat any_goals constructor
+  -- . apply privCompose_zCDPBound h1 h'1 h2 h'2 h5 h'5 h4 h'4
+  -- . apply privCompose_NonZeroNQ h2 h'2
+  -- . apply privCompose_NonTopSum h3 h'3
+  -- . apply privCompose_NonTopNQ h4 h'4
+  -- . apply privCompose_NonTopRDNQ h5 h'5 h4 h'4
 
 end SLang
