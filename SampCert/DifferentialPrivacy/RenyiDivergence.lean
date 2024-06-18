@@ -387,9 +387,9 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
         rw [<- ENNReal.tsum_toReal_eq]
         · rw [ENNReal.ofReal_toReal]
           -- Could do another case at the top if not derivable
-          -- Want to rewrite to ∑(a : T), p a
+          -- Want to bound above my ∑'
           sorry
-        · -- Derivable from Hnts
+        · -- Bound above by p a
           sorry
     · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
       rename_i Hspecial
