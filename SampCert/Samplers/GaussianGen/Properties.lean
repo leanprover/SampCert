@@ -53,10 +53,31 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   . simp [gauss_term_ℝ]
   . rw [shifted_gauss_sum_0 A]
 
+theorem DiscreteGaussianGen_sum (num : PNat) (den : PNat) (μ : ℤ) : HasSum (DiscreteGaussianGenSample num den μ) 1 := by
+  rw [Summable.hasSum_iff ENNReal.summable]
+  conv =>
+    lhs
+    arg 1
+    intro b
+    rw [DiscreteGaussianGenSample_apply]
+
+  have Hnz : (num / den : ℝ) ≠ 0 := by simp
+  have Hcoe : (OfNat.ofNat 1 = ENNReal.ofReal (OfNat.ofNat 1)) := by simp
+  rw [Hcoe]
+  rw [<- (discrete_gaussian_normalizes Hnz μ)]
+  symm
+  apply (ENNReal.ofReal_tsum_of_nonneg ?hf_nonneg ?hf)
+  · exact fun n => discrete_gaussian_nonneg Hnz (↑μ) n
+  · apply discrete_gaussian_summable'
+    apply Hnz
 
 /--
 ``SLang`` program is a proper distribution.
 -/
-def DiscreteGaussianGenPMF (num : PNat) (den : PNat) (μ : ℤ) : PMF ℤ := ⟨ DiscreteGaussianGenSample num den μ , sorry ⟩
+def DiscreteGaussianGenPMF (num : PNat) (den : PNat) (μ : ℤ) : PMF ℤ :=
+  ⟨ DiscreteGaussianGenSample num den μ , DiscreteGaussianGen_sum num den μ ⟩
+
+
+
 
 end SLang

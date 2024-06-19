@@ -85,7 +85,6 @@ lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
 
 /--
 Alternative definition for the Renyi Divergence.
-FIXME: is there any reason to not get rid of this?
 -/
 noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
@@ -533,39 +532,41 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
   RenyiDivergence (discrete_gaussian_pmf h μ)
                   (discrete_gaussian_pmf h ν)
                   α ≤ (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * σ^2))) := by
-  /-
-  have A : RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
-                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
-                  α  = RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
-                  (fun (x : ℤ) => discrete_gaussian σ ν x)
-                  α  := by
+  have A : RenyiDivergence (discrete_gaussian_pmf h μ) (discrete_gaussian_pmf h ν) α =
+           ENNReal.ofReal (RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x) (fun (x : ℤ) => discrete_gaussian σ ν x) α) := by
     unfold RenyiDivergence
+    unfold RenyiDivergence_def
     unfold RenyiDivergence'
     congr
     simp
-    have A₁ : ∀ x : ℤ, 0 ≤ discrete_gaussian σ μ x ^ α := by
-      intro x
-      apply Real.rpow_nonneg
-      apply discrete_gaussian_nonneg h μ x
-    conv =>
-      left
-      right
-      right
-      intro x
-      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h μ x)]
-      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h ν x)]
-      rw [← ENNReal.ofReal_mul (A₁ x)]
-    rw [← ENNReal.ofReal_tsum_of_nonneg]
-    . simp
-      apply tsum_nonneg
-      intro i
-      apply Renyi_sum_SG_nonneg h
-    . apply Renyi_sum_SG_nonneg h
-    . apply Renyi_Gauss_summable h
+    unfold discrete_gaussian_pmf
+    sorry
+  --   congr
+  --   simp
+  --   have A₁ : ∀ x : ℤ, 0 ≤ discrete_gaussian σ μ x ^ α := by
+  --     intro x
+  --     apply Real.rpow_nonneg
+  --     apply discrete_gaussian_nonneg h μ x
+  --   conv =>
+  --     left
+  --     right
+  --     right
+  --     intro x
+  --     rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h μ x)]
+  --     rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h ν x)]
+  --     rw [← ENNReal.ofReal_mul (A₁ x)]
+  --   rw [← ENNReal.ofReal_tsum_of_nonneg]
+  --   . simp
+  --     apply tsum_nonneg
+  --     intro i
+  --     apply Renyi_sum_SG_nonneg h
+  --   . apply Renyi_sum_SG_nonneg h
+  --   . apply Renyi_Gauss_summable h
   rw [A]
-  apply Renyi_divergence_bound_pre h h'
-  -/
-  sorry
+  rw [<- ENNReal.ofReal_mul]
+  apply ENNReal.ofReal_le_ofReal
+  apply Renyi_divergence_bound_pre h h' μ ν
+  linarith
 
 namespace SLang
 
@@ -575,19 +576,19 @@ Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussi
 theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
   RenyiDivergence ((DiscreteGaussianGenPMF num den μ)) (DiscreteGaussianGenPMF num den ν) α ≤
   (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
-  /-
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
   conv =>
     left
     congr
-    . intro x
-      rw [DiscreteGaussianGenSample_apply]
-    . intro x
-      rw [DiscreteGaussianGenSample_apply]
+    . rw [DiscreteGaussianGenPMF]
+      -- rw [DiscreteGaussianGenSample_apply]
+    . rw [DiscreteGaussianGenPMF]
+      -- rw [DiscreteGaussianGenSample_apply]
     . skip
-  apply Renyi_Gauss_divergence_bound' A h
-  -/
+
   sorry
+  -- apply Renyi_Gauss_divergence_bound' A h
+  -- sorry
 
 end SLang
