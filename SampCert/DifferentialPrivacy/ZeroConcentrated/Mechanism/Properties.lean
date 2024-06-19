@@ -19,7 +19,11 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 lemma privNoisedQuery_norm (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  NormalMechanism (privNoisedQuery query Δ ε₁ ε₂) := sorry
+  NormalMechanism (privNoisedQuery query Δ ε₁ ε₂) := by
+  rw [NormalMechanism]
+  intro l
+  rw [privNoisedQuery]
+  exact DiscreteGaussianGen_sum (Δ * ε₂) ε₁ (query l)
 
 set_option pp.coercions false
 
