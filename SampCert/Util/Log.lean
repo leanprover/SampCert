@@ -252,9 +252,8 @@ lemma mul_mul_inv_eq_mul_cancel (H : y = 0 -> x = 0) (H2 : ¬(x ≠ 0 ∧ y = �
   rw [mul_right_comm]
   rw [mul_inv_cancel_right₀ Hy' x']
 
-
 -- Could be shortened
-lemma ereal_smul_l (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w ≤ s * z) : w ≤ z := by
+lemma ereal_smul_le_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w ≤ s * z) : w ≤ z := by
   have defTop : some none = (⊤ : EReal) := by simp [Top.top]
   have defBot : none = (⊥ : EReal) := by simp [Bot.bot]
 
@@ -327,5 +326,7 @@ lemma ereal_smul_l (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w ≤ s * 
   apply le_of_mul_le_mul_left H
   exact EReal.coe_pos.mp Hr1
 
+lemma ereal_smul_eq_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = s * z) : w = z := by
+  sorry
 
 end ENNReal

@@ -483,7 +483,7 @@ Restriction of the PMF f to the support of q
 def reducedPMF_def (f q : PMF T) (x : { t : T // ¬q t = 0 }) : ENNReal := f x.val
 
 -- Should be provable
-lemma acts_refl (q : PMF T) : AbsCts q q  := by
+lemma AbsCts_refl (q : PMF T) : AbsCts q q  := by
   rw [AbsCts]
   simp
 
@@ -533,7 +533,7 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
   rw [<- tsum_subtype_eq_of_support_subset K2]
   simp
 
-  have Hq : AbsCts q q := acts_refl q
+  have Hq : AbsCts q q := AbsCts_refl q
 
   have B1 (x : { x // ¬q x = 0 }) : p ↑x / q ↑x * q ↑x = reducedPMF Hac x / reducedPMF Hq x * reducedPMF Hq x := by congr
   have B2 (x : { x // ¬q x = 0 }) : (p ↑x / q ↑x)^α * q ↑x = (reducedPMF Hac x / reducedPMF Hq x)^α * reducedPMF Hq x := by congr
@@ -576,8 +576,6 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   · exact exp_le_exp.mp H
   · linarith
 
-set_option pp.coercions false
-
 theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) (Hpq : AbsCts p q) {α : ℝ} (Hα : 1 < α) :
   (0 ≤ RenyiDivergence_def p q α) := by
   have H1 : eexp (((α - 1)) * 0)  ≤ eexp ((α - 1) * RenyiDivergence_def p q α) := by
@@ -602,7 +600,7 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
   have Hone : (OfNat.ofNat 1 = Real.toEReal (1 : ℝ)) := by simp
   have Hzero : (OfNat.ofNat 0 = Real.toEReal (0 : ℝ)) := by simp
 
-  apply ereal_smul_l (α.toEReal - OfNat.ofNat 1)
+  apply ereal_smul_le_left (α.toEReal - OfNat.ofNat 1)
   · rw [Hone]
     rw [<- EReal.coe_sub]
     rw [Hzero]
@@ -613,8 +611,56 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     exact EReal.coe_lt_top (α - OfNat.ofNat 1)
   · assumption
 
-theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
-  -- See paper
+set_option pp.coercions false
+
+lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = RenyiDivergence_def p p α) := by
+  have H1 : 1 = eexp ((α - 1) * RenyiDivergence_def p p α) := by
+    rw [RenyiDivergence_def_exp p p Hα]
+    rw [RenyiDivergenceExpectation p p Hα (AbsCts_refl p)]
+    have HRW (x : T) : ((p.val x) / (p.val x)) ^α * p.val x = p.val x := by
+      cases (Classical.em (p x = 0))
+      · rename_i Hz
+        simp [DFunLike.coe] at Hz
+        simp [Hz]
+      · rename_i Hnz
+        rw [((@div_eq_one_iff (p.val x) (p.val x) ?GNZ) ?GNT).mpr rfl]
+        case GNZ =>
+          simp [DFunLike.coe] at Hnz
+          simp
+          apply Hnz
+        case GNT =>
+          have HltTop := PMF.apply_lt_top p x
+          apply LT.lt.ne_top HltTop
+        simp
+    conv =>
+      rhs
+      arg 1
+      intro x
+      simp [DFunLike.coe]
+      rw [HRW]
+    rcases p with ⟨ p' , Hp' ⟩
+    exact Eq.symm (HasSum.tsum_eq Hp')
+
+  have Hone : (OfNat.ofNat 1 = Real.toEReal (1 : ℝ)) := by simp
+  have Hzero : (OfNat.ofNat 0 = Real.toEReal (0 : ℝ)) := by simp
+  apply ereal_smul_eq_left (α.toEReal - OfNat.ofNat 1)
+  · rw [Hone]
+    rw [<- EReal.coe_sub]
+    rw [Hzero]
+    apply EReal.coe_lt_coe_iff.mpr
+    exact sub_pos.mpr Hα
+  · rw [Hone]
+    rw [<- EReal.coe_sub]
+    exact EReal.coe_lt_top (α - OfNat.ofNat 1)
+  apply eexp_injective
+  rw [<- H1]
+  simp
+
+lemma RenyiDivergence_zero_eq (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hpq : AbsCts p q) (HR : 0 = RenyiDivergence_def p q α) : p = q:= by
+  have HR' : 1 = eexp (((α - 1)) * RenyiDivergence_def p q α) := by simp [<- HR]
+  rw [RenyiDivergence_def_exp p q Hα] at HR'
+  rw [RenyiDivergenceExpectation p q Hα Hpq] at HR'
+  -- Is this true?
   sorry
 
 lemma RenyiDivergence_def_log_sum_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
