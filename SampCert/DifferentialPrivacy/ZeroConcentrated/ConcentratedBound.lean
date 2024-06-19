@@ -526,8 +526,6 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
   apply summable_gauss_term' h
 
 
-set_option pp.coercions false
--- set_option pp.notation false
 /--
 Upper bound on Renyi divergence between discrete Gaussians.
 -/
@@ -603,17 +601,47 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
   (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  have Hpmf (w : ℤ) : (discrete_gaussian_pmf A w = DiscreteGaussianGenPMF num den w) := by
+    simp [discrete_gaussian_pmf]
+    simp [DiscreteGaussianGenPMF]
+    congr
+    apply funext
+    intro z
+    rw [← DiscreteGaussianGenSample_apply]
   conv =>
     left
     congr
-    . rw [DiscreteGaussianGenPMF]
-      -- rw [DiscreteGaussianGenSample_apply]
-    . rw [DiscreteGaussianGenPMF]
-      -- rw [DiscreteGaussianGenSample_apply]
+    . rw [<- Hpmf]
+    . rw [<- Hpmf]
     . skip
-
-  sorry
-  -- apply Renyi_Gauss_divergence_bound' A h
-  -- sorry
+  apply le_trans
+  · apply (Renyi_Gauss_divergence_bound')
+    apply h
+  · have X : (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) = ENNReal.ofReal (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) := by
+      simp
+      rw [ENNReal.ofReal_mul ?Hnn]
+      case Hnn => simp
+      congr
+      · simp
+      · rw [ENNReal.ofReal_div_of_pos ?Hpos]
+        case Hpos => simp
+        repeat rw [sq]
+        rw [ENNReal.ofReal_mul ?Hnn1]
+        case Hnn1 => simp
+        rw [ENNReal.ofReal_mul ?Hnn2]
+        case Hnn2 => simp
+        simp
+        repeat rw [ENNReal.div_eq_inv_mul]
+        rw [mul_mul_mul_comm]
+        congr
+        rw [ENNReal.mul_inv]
+        · right
+          simp
+        · left
+          simp
+    rw [X]
+    rw [ENNReal.ofReal_div_of_pos]
+    congr
+    simp
 
 end SLang
