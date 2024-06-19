@@ -338,11 +338,14 @@ theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
 
 
 def discrete_gaussian_normal {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) : HasSum (fun z : ℤ => ENNReal.ofReal (discrete_gaussian σ μ z)) 1 := by
-  let HR := discrete_gaussian_normalizes h μ
-  have HS := Summable.hasSum (discrete_gaussian_summable' h μ)
-  simp at HR
-  rw [HR] at HS
-  sorry
+  rw [Summable.hasSum_iff ENNReal.summable]
+  rw [<- ENNReal.ofReal_tsum_of_nonneg]
+  case hf_nonneg =>
+    exact fun n => discrete_gaussian_nonneg h μ n
+  case hf =>
+    apply discrete_gaussian_summable'
+    apply h
+  simp [discrete_gaussian_normalizes h μ]
 
 /--
 The discrete Gaussian as a PMF when evaluated over ℤ
