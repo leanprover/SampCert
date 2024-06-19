@@ -525,6 +525,9 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
   apply Summable.mul_right
   apply summable_gauss_term' h
 
+
+set_option pp.coercions false
+-- set_option pp.notation false
 /--
 Upper bound on Renyi divergence between discrete Gaussians.
 -/
@@ -532,6 +535,7 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
   RenyiDivergence (discrete_gaussian_pmf h μ)
                   (discrete_gaussian_pmf h ν)
                   α ≤ (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * σ^2))) := by
+  -- Fixable
   have A : RenyiDivergence (discrete_gaussian_pmf h μ) (discrete_gaussian_pmf h ν) α =
            ENNReal.ofReal (RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x) (fun (x : ℤ) => discrete_gaussian σ ν x) α) := by
     unfold RenyiDivergence
@@ -540,28 +544,49 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
     congr
     simp
     unfold discrete_gaussian_pmf
-    sorry
-  --   congr
-  --   simp
-  --   have A₁ : ∀ x : ℤ, 0 ≤ discrete_gaussian σ μ x ^ α := by
-  --     intro x
-  --     apply Real.rpow_nonneg
-  --     apply discrete_gaussian_nonneg h μ x
-  --   conv =>
-  --     left
-  --     right
-  --     right
-  --     intro x
-  --     rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h μ x)]
-  --     rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h ν x)]
-  --     rw [← ENNReal.ofReal_mul (A₁ x)]
-  --   rw [← ENNReal.ofReal_tsum_of_nonneg]
-  --   . simp
-  --     apply tsum_nonneg
-  --     intro i
-  --     apply Renyi_sum_SG_nonneg h
-  --   . apply Renyi_sum_SG_nonneg h
-  --   . apply Renyi_Gauss_summable h
+
+    have Hdg_pos (x : ℤ) (w : ℝ) : OfNat.ofNat 0 < discrete_gaussian σ w x.cast := by sorry
+    have Hdg_pow_pos (x : ℤ) w : OfNat.ofNat 0 ≤ discrete_gaussian σ w x.cast ^ α := by sorry
+
+    conv =>
+      lhs
+      arg 1
+      arg 2
+      arg 1
+      arg 1
+      intro x
+      simp [DFunLike.coe]
+      rw [ENNReal.ofReal_rpow_of_pos (Hdg_pos x μ.cast)]
+      rw [ENNReal.ofReal_rpow_of_pos (Hdg_pos x ν.cast)]
+      rw [<- ENNReal.ofReal_mul (Hdg_pow_pos x μ.cast)]
+    rw [<- ENNReal.ofEReal_ofReal_toENNReal]
+    simp
+    congr
+    -- Here is where I would do the classical I talk about below
+    cases (Classical.em (0 = ∑' (x : ℤ), discrete_gaussian σ μ.cast x.cast ^ α * discrete_gaussian σ ν.cast x.cast ^ (1 - α)))
+    · rename_i Hzero
+      rw [<- Hzero]
+      simp
+      rw [<- ENNReal.ofReal_tsum_of_nonneg]
+      · rw [<- Hzero]
+        simp
+        -- Sadly this is not true (ultimately because they set Real.log 0 = 0)
+        -- Fixable: This series should only ever be zero when μ = ν, if the paper is right.
+        -- We also should prove that μ ≠ ν <->  (discretVe_gaussian_pmf h μ) ≠ (discretVe_gaussian_pmf h ν)
+        -- In the outermost proof, that case is trivial.
+        sorry
+      · exact fun n => Renyi_sum_SG_nonneg h μ ν n
+      · exact Renyi_Gauss_summable h μ ν α
+    · rename_i Hnz
+      rw [<- ENNReal.elog_ENNReal_ofReal_of_pos]
+      · rw [ENNReal.ofReal_tsum_of_nonneg ?Hnn]
+        · exact Renyi_Gauss_summable h μ ν α
+        · intro n
+          exact Renyi_sum_SG_nonneg h μ ν n
+      apply lt_of_le_of_ne
+      · sorry
+      · sorry
+      -- I could to add a classical case to finish this, assuming the
   rw [A]
   rw [<- ENNReal.ofReal_mul]
   apply ENNReal.ofReal_le_ofReal

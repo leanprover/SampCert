@@ -208,6 +208,21 @@ lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w :
 @[simp]
 lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry
 
+lemma ofEReal_ofReal_toENNReal : ENNReal.ofEReal (Real.toEReal r) = ENNReal.ofReal r := by
+  simp [ofEReal, Real.toEReal, ENNReal.ofReal]
+
+set_option pp.coercions false
+
+lemma elog_ENNReal_ofReal_of_pos (x : ℝ) (H : 0 < x): (ENNReal.ofReal x).elog = x.log.toEReal := by
+  simp [ENNReal.ofReal, ENNReal.elog, ENNReal.toEReal]
+  rw [ite_eq_iff']
+  apply And.intro
+  · intro
+    exfalso
+    linarith
+  · intro H
+    simp at H
+    rw [max_eq_left_of_lt H]
 
 
 -- ENNReal inequalities
