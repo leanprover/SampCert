@@ -209,6 +209,7 @@ lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w :
 lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry
 
 
+
 -- ENNReal inequalities
 -- These are needed to prove the extensded version of Jensen's inequality
 lemma mul_mul_inv_le_mul_cancel : (x * y⁻¹) * y ≤ x := by
@@ -250,5 +251,81 @@ lemma mul_mul_inv_eq_mul_cancel (H : y = 0 -> x = 0) (H2 : ¬(x ≠ 0 ∧ y = �
   rw [← coe_mul]
   rw [mul_right_comm]
   rw [mul_inv_cancel_right₀ Hy' x']
+
+
+-- Could be shortened
+lemma ereal_smul_l (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w ≤ s * z) : w ≤ z := by
+  have defTop : some none = (⊤ : EReal) := by simp [Top.top]
+  have defBot : none = (⊥ : EReal) := by simp [Bot.bot]
+
+  cases s
+  · exfalso
+    rw [defBot] at Hr1
+    simp_all only [not_lt_bot]
+  rename_i s_nnr
+  cases s_nnr
+  · rw [defTop] at Hr2
+    exfalso
+    simp_all only [EReal.zero_lt_top, lt_self_iff_false]
+  rename_i s_R
+  have Hsr : some (some s_R) = Real.toEReal s_R := by simp [Real.toEReal]
+  rw [Hsr] at H
+  rw [Hsr] at Hr1
+  rw [Hsr] at Hr2
+  clear Hsr
+
+  cases w
+  · apply left_eq_inf.mp
+    rfl
+  rename_i w_nnr
+  cases w_nnr
+  · simp [defTop] at H
+    rw [EReal.mul_top_of_pos Hr1] at H
+    have X1 : z = ⊤ := by
+      cases z
+      · exfalso
+        simp at H
+        rw [defBot] at H
+        rw [EReal.mul_bot_of_pos] at H
+        · cases H
+        · apply Hr1
+      rename_i z_nnr
+      cases z_nnr
+      · simp [Top.top]
+      exfalso
+      apply top_le_iff.mp at H
+      rename_i z_R
+      have Hzr : some (some z_R) = Real.toEReal z_R := by simp [Real.toEReal]
+      rw [Hzr] at H
+      rw [<- EReal.coe_mul] at H
+      cases H
+    rw [defTop, X1]
+  rename_i w_R
+  cases z
+  · simp [defBot] at H
+    rw [EReal.mul_bot_of_pos] at H
+    apply le_bot_iff.mp at H
+    · rw [defBot]
+      have Hwr : some (some w_R) = Real.toEReal w_R := by simp [Real.toEReal]
+      rw [Hwr] at H
+      rw [<- EReal.coe_mul] at H
+      cases H
+    · apply Hr1
+  rename_i z_nnr
+  cases z_nnr
+  · exact right_eq_inf.mp rfl
+  rename_i z_R
+  have Hwr : some (some w_R) = Real.toEReal w_R := by simp [Real.toEReal]
+  have Hzr : some (some z_R) = Real.toEReal z_R := by simp [Real.toEReal]
+  rw [Hwr, Hzr] at H
+  rw [Hwr, Hzr]
+  clear Hwr
+  clear Hzr
+  apply EReal.coe_le_coe_iff.mpr
+  repeat rw [<- EReal.coe_mul] at H
+  apply EReal.coe_le_coe_iff.mp at H
+  apply le_of_mul_le_mul_left H
+  exact EReal.coe_pos.mp Hr1
+
 
 end ENNReal

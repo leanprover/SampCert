@@ -487,13 +487,25 @@ lemma acts_refl (q : PMF T) : AbsCts q q  := by
   rw [AbsCts]
   simp
 
-
 lemma reducedPMF_norm_acts (p q : PMF T) (H : AbsCts p q) : HasSum (reducedPMF_def p q) 1 := by
   have H1 : Summable (reducedPMF_def p q) := by exact ENNReal.summable
   have H2 := Summable.hasSum H1
   have H3 : (∑' (b : { t // q t ≠ 0 }), reducedPMF_def p q b) = 1 := by
-    -- Provable?
-    sorry
+    have K1 : Function.support (fun x => p x) ⊆ { t : T | q t ≠ 0 } := by
+      rw [Function.support]
+      simp
+      intro a Hp Hcont
+      rw [AbsCts] at H
+      apply Hp
+      apply H
+      apply Hcont
+    have S1 : ∑' (x : ↑{t | q t ≠ 0}), p ↑x = ∑' (x : T), p x := by
+      apply tsum_subtype_eq_of_support_subset K1
+    have T1 : ∑' (x : T), p x = 1 := by exact tsum_coe p
+    rw [<- T1]
+    rw [<- S1]
+    simp
+    rfl
   rw [<- H3]
   apply H2
 
@@ -515,8 +527,8 @@ Jensen's inquality applied to ENNReals
 theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (Hac : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
 
-  have K1 : Function.support (fun x : T => (p x / q x) * q x) ⊆ { t : T | q t ≠ 0 } := sorry
-  have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := sorry
+  have K1 : Function.support (fun x : T => (p x / q x) * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
+  have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
   rw [<- tsum_subtype_eq_of_support_subset K1]
   rw [<- tsum_subtype_eq_of_support_subset K2]
   simp
@@ -552,6 +564,8 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
     apply (reducedPMF_pos Hq a Ha)
 
 
+
+
 -- FIXME
 /--
 The Renyi divergence is monotonic in the value of its sum.
@@ -561,6 +575,8 @@ lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp (
   apply _root_.le_of_mul_le_mul_left
   · exact exp_le_exp.mp H
   · linarith
+
+set_option pp.coercions false
 
 theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) (Hpq : AbsCts p q) {α : ℝ} (Hα : 1 < α) :
   (0 ≤ RenyiDivergence_def p q α) := by
@@ -583,12 +599,19 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     apply le_trans ?X Hle
     rw [Hone]
   apply eexp_mono_le.mpr at H1
-  have HX : (0 < (α.toEReal - 1)) := by sorry
-  have HX1 : (ofEReal ((↑α - 1) * 0) ≤ ofEReal ((↑α - 1) * RenyiDivergence_def p q α)) := by
-    exact ofEReal_le_mono.mp fun a => H1
-  rw [ofEReal_mul] at HX1
-  -- Circular side condition? Why is cancelling EReals so hard? Make a lemma with the iff cases in Log
-  all_goals sorry
+  have Hone : (OfNat.ofNat 1 = Real.toEReal (1 : ℝ)) := by simp
+  have Hzero : (OfNat.ofNat 0 = Real.toEReal (0 : ℝ)) := by simp
+
+  apply ereal_smul_l (α.toEReal - OfNat.ofNat 1)
+  · rw [Hone]
+    rw [<- EReal.coe_sub]
+    rw [Hzero]
+    apply EReal.coe_lt_coe_iff.mpr
+    exact sub_pos.mpr Hα
+  · rw [Hone]
+    rw [<- EReal.coe_sub]
+    exact EReal.coe_lt_top (α - OfNat.ofNat 1)
+  · assumption
 
 theorem RenyiDivergence_def_zero (p q : PMF T) (α : ℝ) : p = q <-> (0 = RenyiDivergence_def p q α) := by
   -- See paper
