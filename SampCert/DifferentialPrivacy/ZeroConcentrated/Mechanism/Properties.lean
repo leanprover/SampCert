@@ -21,24 +21,106 @@ namespace SLang
 lemma privNoisedQuery_norm (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   NormalMechanism (privNoisedQuery query Δ ε₁ ε₂) := sorry
 
+set_option pp.coercions false
+
 /--
 The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   zCDPBound (privNoisedQuery query Δ ε₁ ε₂) (privNoisedQuery_norm query Δ ε₁ ε₂ bounded_sensitivity) ((ε₁ : ℝ) / ε₂) := by
-  /-
   simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
   have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
   apply le_trans A
   clear A
+
+  -- Pull out the ENNReal.ofReal, reducing it to a Real case
+  -- Simplify this argument, it is a mess
+  rw [ENNReal.div_eq_inv_mul]
+  have L : (OfNat.ofNat 2 * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat 2)⁻¹ = ENNReal.ofReal ((OfNat.ofNat 2 * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat 2)⁻¹ ) := by
+    simp
+    rw [← div_pow]
+    conv =>
+      rhs
+      arg 1
+      rw [mul_comm]
+    rw [ENNReal.mul_inv]
+    · rw [ENNReal.ofReal_mul ?G1]
+      case G1 =>
+        simp
+      congr
+      · rw [ENNReal.ofReal_inv_of_pos]
+        congr
+        simp
+        exact zero_lt_two
+      · rw [ENNReal.inv_pow]
+        rw [ENNReal.ofReal_pow ?G]
+        case G =>
+          apply div_nonneg
+          · simp
+          · simp
+        congr
+        repeat rewrite [ENNReal.div_eq_inv_mul]
+        rw [ENNReal.mul_inv ?G1 ?G2]
+        case G1 =>
+          left
+          simp
+        case G2 =>
+          left
+          simp
+        simp
+        rw [div_eq_mul_inv]
+        rw [ENNReal.ofReal_mul]
+        · simp
+          congr
+          rw [ENNReal.mul_inv]
+          · rw [ENNReal.ofReal_mul]
+            · rw [mul_comm]
+              congr
+              · rw [ENNReal.ofReal_inv_of_pos]
+                · congr
+                  simp
+                · simp
+              · rw [ENNReal.ofReal_inv_of_pos]
+                · congr
+                  simp
+                · simp
+            · simp
+          · left ; simp
+          · left ; simp
+        · simp
+    · left ; simp
+    · left ; simp
+  rw [L]
+  have H1 : OfNat.ofNat 0 ≤ ((OfNat.ofNat (OfNat.ofNat 2) * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat (OfNat.ofNat 2))⁻¹ : ℝ) := by
+    simp
+    apply div_nonneg
+    · simp
+    · simp
+  have H2 : OfNat.ofNat 0 ≤ α := by linarith
+  conv =>
+    lhs
+    arg 2
+    rw [<- ENNReal.ofReal_mul]
+    · skip
+    . apply H1
+  conv =>
+    lhs
+    rw [<- ENNReal.ofReal_mul]
+    · skip
+    · apply H2
+  clear H1
+  clear H2
+  apply ofReal_le_ofReal_iff'.mpr
+
+
   replace bounded_sensitivity := bounded_sensitivity l₁ l₂ h2
   ring_nf
   simp
   conv =>
     left
     left
-    right
+    left
     rw [mul_pow]
   conv =>
     left
@@ -46,38 +128,42 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
     right
     rw [mul_comm]
     rw [← mul_assoc]
-  conv =>
-    left
-    rw [mul_assoc]
-    right
-    rw [← mul_assoc]
-    left
-    rw [mul_comm]
+
+  -- Almost would be easier just to redo it... from here, the main reduction has already been finished
+
+  -- conv =>
+  --   left
+  --   rw [mul_assoc]
+  --   right
+  --   rw [← mul_assoc]
+  --   left
+  --   rw [mul_comm]
   rw [← mul_assoc]
   rw [← mul_assoc]
-  rw [← mul_assoc]
-  simp only [inv_pow]
+  -- rw [← mul_assoc]
+  -- simp only [inv_pow]
   rw [mul_inv_le_iff']
   . have A : (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) ≤ (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) := le_refl (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹)
     have B : 0 ≤ (α * ↑↑ε₁ ^ 2 * (↑↑ε₂ ^ 2)⁻¹) := by
       simp
       apply @le_trans ℝ _ 0 1 α (zero_le_one' ℝ) (le_of_lt h1)
-    apply mul_le_mul A _ _ B
-    . apply sq_le_sq.mpr
-      simp only [abs_cast]
-      rw [← Int.cast_sub]
-      rw [← Int.cast_abs]
-      apply Int.cast_le.mpr
-      rw [← Int.natCast_natAbs]
-      apply Int.ofNat_le.mpr
-      trivial
-    . apply sq_nonneg
-  . rw [pow_two]
-    rw [_root_.mul_pos_iff]
-    left
-    simp
-  -/
-  sorry
+    sorry
+    -- apply mul_le_mul
+    -- apply mul_le_mul A _ _ B
+    -- . apply sq_le_sq.mpr
+    --   simp only [abs_cast]
+    --   rw [← Int.cast_sub]
+    --   rw [← Int.cast_abs]
+    --   apply Int.cast_le.mpr
+    --   rw [← Int.natCast_natAbs]
+    --   apply Int.ofNat_le.mpr
+    --   trivial
+    -- . apply sq_nonneg
+  . sorry
+    -- rw [pow_two]
+    -- rw [_root_.mul_pos_iff]
+    -- left
+    -- simp
 
 /--
 All outputs of the zCDP mechanism have nonzero probability.
