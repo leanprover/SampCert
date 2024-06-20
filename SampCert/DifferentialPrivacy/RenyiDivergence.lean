@@ -1132,16 +1132,6 @@ theorem RenyiDivergence_def_eq_0_iff [MeasurableSpace T] [MeasurableSingletonCla
     apply Hα
 
 
-lemma RenyiDivergence_zero_eq (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hpq : AbsCts p q) (HR : 0 = RenyiDivergence_def p q α) : p = q:= by
-  have HR' : 1 = eexp (((α - 1)) * RenyiDivergence_def p q α) := by simp [<- HR]
-  rw [RenyiDivergence_def_exp p q Hα] at HR'
-  rw [RenyiDivergenceExpectation p q Hα Hpq] at HR'
-  have Hlhs : (∑' (x : T), (p x / q x) * q x)^α = 1:= sorry
-  rw [<- Hlhs] at HR'
-
-  -- Is this true?
-  sorry
-
 lemma RenyiDivergence_def_log_sum_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
   -- Follows from RenyiDivergence_def_nonneg
   sorry
@@ -1155,7 +1145,6 @@ noncomputable def RenyiDivergence (p q : PMF T) (α : ℝ) : ENNReal :=
 -- MARKUSDE: We evaluate through the ENNReal.ofEReal using ``RenyiDivergence_def_nonneg``, these are some special cases
 theorem RenyiDivergence_aux_zero (p q : PMF T) (α : ℝ) : p = q <-> RenyiDivergence p q α = 0
   := sorry
-
 
 
 -- Unused
