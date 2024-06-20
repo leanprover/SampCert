@@ -533,7 +533,6 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
   RenyiDivergence (discrete_gaussian_pmf h μ)
                   (discrete_gaussian_pmf h ν)
                   α ≤ (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * σ^2))) := by
-  -- Fixable
   have A : RenyiDivergence (discrete_gaussian_pmf h μ) (discrete_gaussian_pmf h ν) α =
            ENNReal.ofReal (RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x) (fun (x : ℤ) => discrete_gaussian σ ν x) α) := by
     unfold RenyiDivergence
@@ -543,8 +542,11 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
     simp
     unfold discrete_gaussian_pmf
 
-    have Hdg_pos (x : ℤ) (w : ℝ) : OfNat.ofNat 0 < discrete_gaussian σ w x.cast := by sorry
-    have Hdg_pow_pos (x : ℤ) w : OfNat.ofNat 0 ≤ discrete_gaussian σ w x.cast ^ α := by sorry
+    have Hdg_pos (x : ℤ) (w : ℝ) : OfNat.ofNat 0 < discrete_gaussian σ w x.cast := by
+      exact discrete_gaussian_pos h w x
+    have Hdg_pow_pos (x : ℤ) w : OfNat.ofNat 0 ≤ discrete_gaussian σ w x.cast ^ α := by
+      apply rpow_nonneg
+      exact discrete_gaussian_nonneg h w x
 
     conv =>
       lhs
@@ -560,19 +562,33 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
     rw [<- ENNReal.ofEReal_ofReal_toENNReal]
     simp
     congr
-    -- Here is where I would do the classical I talk about below
     cases (Classical.em (0 = ∑' (x : ℤ), discrete_gaussian σ μ.cast x.cast ^ α * discrete_gaussian σ ν.cast x.cast ^ (1 - α)))
     · rename_i Hzero
       rw [<- Hzero]
       simp
       rw [<- ENNReal.ofReal_tsum_of_nonneg]
       · rw [<- Hzero]
-        simp
-        -- Sadly this is not true (ultimately because they set Real.log 0 = 0)
-        -- Fixable: This series should only ever be zero when μ = ν, if the paper is right.
-        -- We also should prove that μ ≠ ν <->  (discretVe_gaussian_pmf h μ) ≠ (discretVe_gaussian_pmf h ν)
-        -- In the outermost proof, that case is trivial.
-        sorry
+        exfalso
+        symm at Hzero
+        have Hzero' : (ENNReal.ofReal (∑' (x : ℤ), discrete_gaussian σ ↑μ ↑x ^ α * discrete_gaussian σ ↑ν ↑x ^ (1 - α)) = 0) := by
+          simp [Hzero]
+        rw [ENNReal.ofReal_tsum_of_nonneg ?G1 ?G2] at Hzero'
+        case G1 => exact fun n => Renyi_sum_SG_nonneg h μ ν n
+        case G2 => exact Renyi_Gauss_summable h μ ν α
+        apply ENNReal.tsum_eq_zero.mp at Hzero'
+        have Hzero'' := Hzero' (0 : ℤ)
+        simp at Hzero''
+        have C : (0 < discrete_gaussian σ (↑μ) 0 ^ α * discrete_gaussian σ (↑ν) 0 ^ (1 - α)) := by
+          apply Real.mul_pos
+          · apply Real.rpow_pos_of_pos
+            have A := discrete_gaussian_pos h μ (0 : ℤ)
+            simp at A
+            apply A
+          · apply Real.rpow_pos_of_pos
+            have A := discrete_gaussian_pos h ν (0 : ℤ)
+            simp at A
+            apply A
+        linarith
       · exact fun n => Renyi_sum_SG_nonneg h μ ν n
       · exact Renyi_Gauss_summable h μ ν α
     · rename_i Hnz
@@ -582,9 +598,10 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
         · intro n
           exact Renyi_sum_SG_nonneg h μ ν n
       apply lt_of_le_of_ne
-      · sorry
-      · sorry
-      -- I could to add a classical case to finish this, assuming the
+      · apply tsum_nonneg
+        intro i
+        exact Renyi_sum_SG_nonneg h μ ν i
+      · apply Hnz
   rw [A]
   rw [<- ENNReal.ofReal_mul]
   apply ENNReal.ofReal_le_ofReal
