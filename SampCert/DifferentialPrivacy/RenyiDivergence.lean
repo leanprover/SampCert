@@ -153,6 +153,7 @@ section Jensen
 variable {T : Type}
 variable [t1 : MeasurableSpace T]
 variable [t2 : MeasurableSingletonClass T]
+variable [tcount : Countable T] -- New
 
 variable {U V : Type}
 variable [m2 : MeasurableSpace U]
@@ -257,6 +258,146 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
   . apply MeasureTheory.Memℒp.integrable _ mem
     rw [one_le_ofReal]
     apply le_of_lt h
+
+-- set_option pp.notation false
+-- set_option pp.coercions false
+-- set_option pp.all true
+-- set_option pp.universes false
+
+/--
+Jensen's strict ineuquality for the exponential applied to Renyi's sum
+-/
+theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) (HT_nz : ∀ t : T, q t ≠ 0):
+  ((∑' x : T, (f x) * (q x).toReal)) ^ α < (∑' x : T, (f x) ^ α * (q x).toReal) ∨ (∀ x : T, f x = ∑' (x : T), (q x).toReal * f x) := by
+  conv =>
+    left
+    left
+    left
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  conv =>
+    left
+    right
+    right
+    intro x
+    rw [mul_comm]
+    rw [← smul_eq_mul]
+  rw [← PMF.integral_eq_tsum]
+  rw [← PMF.integral_eq_tsum]
+
+  have A := strictConvexOn_rpow h
+
+  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
+    apply ContinuousOn.rpow
+    . exact continuousOn_id' (Set.Ici 0)
+    . exact continuousOn_const
+    . intro x h'
+      simp at h'
+      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
+      cases OR
+      . rename_i h''
+        subst h''
+        right
+        apply lt_trans zero_lt_one h
+      . rename_i h''
+        left
+        by_contra
+        rename_i h3
+        subst h3
+        simp at h''
+  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
+    exact isClosed_Ici
+  have D := @StrictConvexOn.ae_eq_const_or_map_average_lt  T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) ((PMF.toMeasure.isProbabilityMeasure q).toIsFiniteMeasure) A B C ?G1 ?G2 ?G3
+  case G1 =>
+    exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
+  case G2 =>
+    apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+  case G3 =>
+    rw [Function.comp_def]
+    have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  simp at D
+  · cases D
+    · rename_i HR
+      right
+      simp at HR
+      -- Because T is discrete, almost-everywhere equality should become equality
+      have HR' := @Filter.EventuallyEq.eventually _ _ (q.toMeasure.ae) f (Function.const T (⨍ (x : T), f x ∂q.toMeasure)) HR
+      simp [Filter.Eventually] at HR'
+      -- The measure of the compliment of the set in HR' is zero
+      simp [MeasureTheory.Measure.ae] at HR'
+      rw [PMF.toMeasure_apply _ _ ?Hmeas] at HR'
+      case Hmeas =>
+        apply (@measurableSet_discrete _ _ ?DM)
+        apply MeasurableSingletonClass.toDiscreteMeasurableSpace
+      -- Sum is zero iff all elements are zero
+      apply ENNReal.tsum_eq_zero.mp at HR'
+      -- Indicator is zero when proposition is not true
+      intro x
+      have HR' := HR' x
+      simp at HR'
+      cases (Classical.em (f x = ⨍ (x : T), f x ∂q.toMeasure))
+      · rename_i Heqx
+        -- Rewrite the average
+        rw [MeasureTheory.average] at Heqx
+        rw [MeasureTheory.integral_countable'] at Heqx
+        · simp at Heqx
+          conv at Heqx =>
+            rhs
+            arg 1
+            intro x
+            rw [PMF.toMeasure_apply_singleton]
+            · skip
+            · apply measurableSet_singleton
+          -- Interesting.... is this sum not just 1?
+          simp at *
+          apply Heqx
+        · simp
+          apply MeasureTheory.Memℒp.integrable _ mem
+          sorry -- true
+      · -- At type T, q x is never zero
+        rename_i Hnex
+        exfalso
+        apply (HT_nz x)
+        apply HR'
+        apply Hnex
+    · rename_i HR
+      left
+      rw [<- MeasureTheory.integral_average]
+      rw [<- MeasureTheory.integral_average]
+      simp
+      rw [<- MeasureTheory.integral_average]
+      rw [<- MeasureTheory.integral_average]
+      simp
+      apply HR
+  . have X : ENNReal.ofReal α ≠ 0 := by
+      simp
+      apply lt_trans zero_lt_one h
+    have Y : ENNReal.ofReal α ≠ ⊤ := by
+      simp
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    rw [toReal_ofReal] at Z
+    . exact Z
+    . apply le_of_lt
+      apply lt_trans zero_lt_one h
+  . apply MeasureTheory.Memℒp.integrable _ mem
+    rw [one_le_ofReal]
+    apply le_of_lt h
+
+
+
 
 end Jensen
 
@@ -656,10 +797,23 @@ lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = Ren
   rw [<- H1]
   simp
 
+
+-- lemma Jensens_equality_converse_ENNReal (f g h : ENNReal -> ENNReal) (H : h (∑'(x : T), f x * g x) ≤ ∑'(x : T), h (f x) * g x) :
+--   (∃ a b : ENNReal, ∀ x : ENNReal, h x = a * x + b) := by
+--   sorry
+
+
+
+
+
+
 lemma RenyiDivergence_zero_eq (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hpq : AbsCts p q) (HR : 0 = RenyiDivergence_def p q α) : p = q:= by
   have HR' : 1 = eexp (((α - 1)) * RenyiDivergence_def p q α) := by simp [<- HR]
   rw [RenyiDivergence_def_exp p q Hα] at HR'
   rw [RenyiDivergenceExpectation p q Hα Hpq] at HR'
+  have Hlhs : (∑' (x : T), (p x / q x) * q x)^α = 1:= sorry
+  rw [<- Hlhs] at HR'
+
   -- Is this true?
   sorry
 

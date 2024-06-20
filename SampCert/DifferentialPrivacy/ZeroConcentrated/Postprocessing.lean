@@ -559,7 +559,6 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq)
   (f : U → V) :
   zCDPBound (privPostProcess nq f) (privPostProcess_norm nq HNorm f) ((ε₁ : ℝ) / ε₂) := by
-  /-
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
@@ -571,6 +570,10 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
   apply le_trans _ h'
   clear h'
 
+
+  sorry
+
+  /-
   -- remove the α scaling
   have A : 0 ≤ (α - 1)⁻¹ := by
     simp
@@ -645,8 +648,8 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
           apply lt_of_le_of_lt X Y
         rw [lt_top_iff_ne_top] at Z
         contradiction
-  -/
   sorry
+  -/
 
 theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
   (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
