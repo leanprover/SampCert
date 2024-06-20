@@ -259,10 +259,6 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
     rw [one_le_ofReal]
     apply le_of_lt h
 
--- set_option pp.notation false
--- set_option pp.coercions false
--- set_option pp.all true
--- set_option pp.universes false
 
 /--
 Jensen's strict ineuquality for the exponential applied to Renyi's sum
@@ -586,7 +582,7 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
     · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
       rename_i Hspecial
       simp at *
-      rcases Hspecial with ⟨ x0, ⟨ H1, H2 , H3 ⟩⟩
+      rcases Hspecial with ⟨ x0, ⟨ H1, _, H3 ⟩⟩
       have HT1 : (∑' (x : T), p x / q x * q x) ^ α = ⊤ := by
         apply rpow_eq_top_iff.mpr
         right
@@ -621,7 +617,6 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
     exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
 
 
--- set_option pp.all true
 
 -- Lift the properties of Renyi_Jensen_strict_real to ENNReal
 -- q is still nonnegative
@@ -949,10 +944,70 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
     rcases t with ⟨ a , Ha ⟩
     apply (reducedPMF_pos Hq a Ha)
 
+set_option pp.coercions false
+
+lemma  Renyi_Jensen_ENNReal_converse [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q)
+  (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
+  (p = q) := by
+
+  have K1 : Function.support (fun x : T => (p x / q x) * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
+  have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
+  rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
+  rw [<- tsum_subtype_eq_of_support_subset K2] at Hsumeq
+  simp at Hsumeq
+
+  have Hq : AbsCts q q := AbsCts_refl q
+
+  have B1 (x : { x // ¬q x = 0 }) : p ↑x / q ↑x * q ↑x = reducedPMF H x / reducedPMF Hq x * reducedPMF Hq x := by congr
+  have B2 (x : { x // ¬q x = 0 }) : (p ↑x / q ↑x)^α * q ↑x = (reducedPMF H x / reducedPMF Hq x)^α * reducedPMF Hq x := by congr
+
+  conv at Hsumeq =>
+    congr
+    · arg 1
+      arg 1
+      intro x
+      rw [B1 x]
+    · arg 1
+      intro x
+      rw [B2 x]
+
+  clear B1
+  clear B2
+  clear K1
+  clear K2
+
+  have Hreduced : (reducedPMF H = reducedPMF Hq) := by
+    apply (Renyi_Jensen_ENNReal_converse_reduct (reducedPMF H) (reducedPMF Hq) h)
+    · intro t Ht
+      exfalso
+      rcases t with ⟨ a , Ha ⟩
+      apply (reducedPMF_pos Hq a Ha)
+      apply Ht
+    · intro t
+      rcases t with ⟨ a , Ha ⟩
+      apply (reducedPMF_pos Hq a Ha)
+    · apply Hsumeq
+
+  apply PMF.ext
+  intro x
+  cases (Classical.em (q x = 0))
+  · rename_i Hqz
+    rw [Hqz]
+    apply H
+    apply Hqz
+  · rename_i Hqnz
+    have Hreduced' : reducedPMF H ⟨ x , Hqnz ⟩ = reducedPMF Hq ⟨ x , Hqnz ⟩ := by
+      exact congrFun (congrArg DFunLike.coe Hreduced) ⟨ x , Hqnz ⟩
+    repeat rw [DFunLike.coe] at Hreduced'
+    repeat rw [PMF.instFunLike] at Hreduced'
+    repeat rw [reducedPMF] at Hreduced'
+    unfold reducedPMF_def at Hreduced'
+    simp at Hreduced'
+    assumption
 
 
-
--- FIXME
+-- FIXME (or not ?)
 /--
 The Renyi divergence is monotonic in the value of its sum.
 -/
@@ -997,8 +1052,6 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     exact EReal.coe_lt_top (α - OfNat.ofNat 1)
   · assumption
 
-set_option pp.coercions false
-
 lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = RenyiDivergence_def p p α) := by
   have H1 : 1 = eexp ((α - 1) * RenyiDivergence_def p p α) := by
     rw [RenyiDivergence_def_exp p p Hα]
@@ -1042,10 +1095,41 @@ lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = Ren
   rw [<- H1]
   simp
 
-
-
-
-
+/--
+Renyi divergence attains equality if and only if the distributions are equal
+-/
+theorem RenyiDivergence_def_eq_0_iff [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hcts : AbsCts p q) :
+  (RenyiDivergence_def p q α = 0) <-> (p = q) := by
+  apply Iff.intro
+  · intro Hrdeq
+    apply Renyi_Jensen_ENNReal_converse
+    · apply Hα
+    · apply Hcts
+    · have H1 : eexp (((α - 1)) * 0) = eexp ((α - 1) * RenyiDivergence_def p q α) := by rw [Hrdeq]
+      simp at H1
+      rw [RenyiDivergence_def_exp p q Hα] at H1
+      rw [RenyiDivergenceExpectation p q Hα Hcts] at H1
+      rw [<- H1]
+      clear H1
+      have CG1 (x : T) : DFunLike.coe q x = OfNat.ofNat 0 → DFunLike.coe p x = OfNat.ofNat 0 := by apply Hcts
+      have CG2 (x : T) : ¬(DFunLike.coe p x ≠ OfNat.ofNat 0 ∧ DFunLike.coe q x = ⊤) := by
+        simp
+        intro
+        apply PMF.apply_ne_top
+      conv =>
+        lhs
+        arg 1
+        arg 1
+        intro x
+        rw [division_def]
+        rw [mul_mul_inv_eq_mul_cancel (CG1 x) (CG2 x)]
+      simp
+  · intro Hpq
+    rw [Hpq]
+    symm
+    apply RenyiDivergence_refl_zero
+    apply Hα
 
 
 lemma RenyiDivergence_zero_eq (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hpq : AbsCts p q) (HR : 0 = RenyiDivergence_def p q α) : p = q:= by
