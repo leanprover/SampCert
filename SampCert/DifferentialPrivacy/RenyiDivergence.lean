@@ -366,7 +366,11 @@ theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 <
           apply Heqx
         · simp
           apply MeasureTheory.Memℒp.integrable _ mem
-          sorry -- true
+          have X : (1 : ENNReal) = ENNReal.ofReal (1 : ℝ) := by simp
+          rw [X]
+          apply ofReal_le_ofReal_iff'.mpr
+          left
+          linarith
       · -- At type T, q x is never zero
         rename_i Hnex
         exfalso
@@ -473,7 +477,6 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
           intro x
           rw [<- ENNReal.toReal_mul]
         apply ENNReal.summable_toReal
-
         assumption
       have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a := by apply toReal_nonneg
       have HRJf_nt (a : T) : p a / q a ≠ ⊤ := by
@@ -617,6 +620,248 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
     rw [HStop]
     exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
 
+
+-- set_option pp.all true
+
+-- Lift the properties of Renyi_Jensen_strict_real to ENNReal
+-- q is still nonnegative
+lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0)
+  (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
+  (p = q) := by
+  have Hdiscr : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
+  cases (Classical.em (∑' (a : T), (p a / q a) ^ α * q a ≠ ⊤))
+  · -- Preliminary stuff, basically the same as the forward case
+    rename_i Hnts
+    cases (Classical.em (∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)))
+    · rename_i Hspecial
+      conv at Hsumeq =>
+        rhs
+        arg 1
+        intro x
+        rw [Renyi_Jensen_rw p q h H Hspecial]
+      rw [<- ENNReal.ofReal_tsum_of_nonneg ?Hnonneg ?Hsummable] at Hsumeq
+      case Hnonneg =>
+        intro t
+        apply mul_nonneg
+        · refine rpow_nonneg ?ha.hx α
+          simp [Renyi_Jensen_f]
+        · exact toReal_nonneg
+      case Hsummable =>
+        conv =>
+          congr
+          intro x
+          rw [Renyi_Jensen_f]
+        conv =>
+          arg 1
+          intro x
+          lhs
+          rw [ENNReal.toReal_rpow]
+        conv =>
+          arg 1
+          intro x
+          rw [<- ENNReal.toReal_mul]
+        apply ENNReal.summable_toReal
+        assumption
+      have HRJf_nonneg (a : T) : 0 <= Renyi_Jensen_f p q a := by apply toReal_nonneg
+      have HRJf_nt (a : T) : p a / q a ≠ ⊤ := by
+        intro HK
+        have HK' : (p a ≠ 0 ∧ q a = 0 ∨ p a = ⊤ ∧ q a ≠ ⊤) := by exact div_eq_top.mp HK
+        cases HK'
+        · rename_i HK'
+          rcases HK' with ⟨ HK1 , HK2 ⟩
+          rw [AbsCts] at H
+          simp_all only [ne_eq, not_and, Decidable.not_not, ENNReal.zero_div, zero_ne_top]
+        · rename_i HK'
+          rcases HK' with ⟨ HK1 , _ ⟩
+          apply (Hspecial a)
+          simp_all
+      have Hsum_indicator (a : T) : ∑' (i : T), q i * Set.indicator {a} (fun x => 1) i = q a := by
+        have Hfun : (fun (i : T) => q i * Set.indicator {a} (fun x => 1) i) = (fun (i : T) => if i = a then q a else 0) := by
+          funext i
+          rw [Set.indicator]
+          split <;> simp <;> split <;> simp_all
+        rw [Hfun]
+        exact tsum_ite_eq a (q a)
+
+      -- Apply the converse lemma
+      have Hieq := Renyi_Jensen_strict_real (Renyi_Jensen_f p q) q α h HRJf_nonneg ?GLp Hq
+      case GLp =>
+        -- ℒp bound (same as forward proof)
+        simp [Memℒp]
+        constructor
+        . apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
+          apply Measurable.stronglyMeasurable
+          apply Measurable.ennreal_toReal
+          conv =>
+            right
+            intro x
+            rw [division_def]
+          apply Measurable.mul
+          . apply measurable_discrete
+          . apply Measurable.inv
+            apply measurable_discrete
+        · simp [snorm]
+          split
+          · simp
+          · rename_i Hα
+            simp [snorm']
+            rw [MeasureTheory.lintegral_countable']
+            rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
+            apply rpow_lt_top_of_nonneg
+            · simp
+              apply le_of_not_ge Hα
+            · conv =>
+                lhs
+                arg 1
+                intro a
+                arg 1
+                arg 1
+                rw [<- Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
+                rw [Renyi_Jensen_f]
+                rw [<- ENNReal.ofReal.eq_1]
+                rw [ENNReal.ofReal_toReal (HRJf_nt a)]
+                rfl
+              conv =>
+                lhs
+                arg 1
+                intro a
+                rhs
+                simp [toMeasure]
+                simp [PMF.toOuterMeasure]
+                rw [Hsum_indicator]
+              apply Hnts
+      cases Hieq
+      · rename_i Hk
+        exfalso
+        have CG1 (z : T) : q z = 0 → p z = 0 := by apply H
+        have CG2 (z : T) :  ¬(p z ≠ 0 ∧ q z = ⊤) := by
+          simp
+          intro
+          apply PMF.apply_ne_top
+        conv at Hk =>
+          lhs
+          arg 1
+          arg 1
+          intro z
+          rw [Renyi_Jensen_f]
+          rw [<- ENNReal.toReal_mul]
+          arg 1
+          rw [division_def]
+          rw [mul_mul_inv_eq_mul_cancel (CG1 z) (CG2 z)]
+        clear CG1
+        clear CG2
+
+        -- Convert the LHS of Hsumeq to the ℝ-valued summand, and then contradict
+        conv at Hsumeq =>
+          lhs
+          arg 1
+          arg 1
+          intro x
+          rw [division_def]
+          rw [mul_assoc]
+          rw [ENNReal.inv_mul_cancel]
+          · skip
+          · apply Hq
+          · apply PMF.apply_ne_top
+        simp at *
+        rw [<- ENNReal.tsum_toReal_eq ?G1] at Hk
+        case G1 =>
+          intro
+          apply PMF.apply_ne_top
+        simp at *
+        have Hone' : (1 : ENNReal).toReal = (1 : ℝ) := by simp
+        rw [<- Hone'] at Hk
+        rw [Hsumeq] at Hk
+        clear Hone'
+        rw [ENNReal.toReal_ofReal ?G1] at Hk
+        case G1 =>
+          apply tsum_nonneg
+          intro i
+          apply mul_nonneg
+          · apply rpow_nonneg
+            apply HRJf_nonneg
+          · exact toReal_nonneg
+        linarith
+      · rename_i Hext
+        -- RHS of Hext is 1, LHS is p/q
+        apply PMF.ext
+        intro x
+        have Hext' := Hext x
+        rw [Renyi_Jensen_f] at Hext'
+        have CG1 (z : T) : q z = 0 → p z = 0 := by apply H
+        have CG2 (z : T) :  ¬(p z ≠ 0 ∧ q z = ⊤) := by
+          simp
+          intro
+          apply PMF.apply_ne_top
+        conv at Hext' =>
+          rhs
+          arg 1
+          intro z
+          rw [Renyi_Jensen_f]
+          rw [<- ENNReal.toReal_mul]
+          arg 1
+          rw [mul_comm]
+          rw [division_def]
+          rw [mul_mul_inv_eq_mul_cancel (CG1 z) (CG2 z)]
+        clear CG1
+        clear CG2
+        rw [<- ENNReal.tsum_toReal_eq] at Hext'
+        · rw [PMF.tsum_coe] at Hext'
+          apply (@ENNReal.mul_eq_mul_right _ _ ((q x)⁻¹) ?G1 ?G2).mp
+          case G1 =>
+            simp
+            apply PMF.apply_ne_top
+          case G2 =>
+            simp
+            apply Hq
+          rw [ENNReal.mul_inv_cancel ?G1 ?G2]
+          case G1 => apply Hq
+          case G2 => apply PMF.apply_ne_top
+          apply ENNReal_toReal_partial_inj at Hext'
+          rw [<- division_def]
+          apply Hext'
+          · apply HRJf_nt
+          · simp
+        · intro
+          apply PMF.apply_ne_top
+
+    · -- Special case: There exists some element x0 with p x0 = ⊤ but q x0 ∈ ℝ+
+      -- This means the sum in Hnts will actually be ⊤
+      rename_i Hspecial
+      exfalso
+      apply Hnts
+      apply ENNReal.tsum_eq_top_of_eq_top
+      simp at Hspecial
+      rcases Hspecial with ⟨ x , ⟨ Hx1, ⟨ Hx2 , Hx3 ⟩ ⟩ ⟩
+      exists x
+      apply mul_eq_top.mpr
+      right
+      apply And.intro
+      · apply rpow_eq_top_iff.mpr
+        right
+        apply And.intro
+        · apply div_eq_top.mpr
+          right
+          apply And.intro Hx1 Hx3
+        · linarith
+      · apply Hx2
+  · -- One of the series is Top, so the other series is too
+    rename_i Hlhs_top
+    simp at Hlhs_top
+    rw [Hlhs_top] at Hsumeq
+    -- This series should actually be 1 by PMF
+    conv at Hsumeq =>
+      lhs
+      arg 1
+      arg 1
+      intro x
+      rw [PMF_mul_mul_inv_eq_mul_cancel p q H]
+    conv at Hsumeq =>
+      lhs
+      arg 1
+      rw [PMF.tsum_coe]
+    simp at Hsumeq
 
 /--
 Restriction of the PMF f to the support of q
@@ -797,10 +1042,6 @@ lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = Ren
   rw [<- H1]
   simp
 
-
--- lemma Jensens_equality_converse_ENNReal (f g h : ENNReal -> ENNReal) (H : h (∑'(x : T), f x * g x) ≤ ∑'(x : T), h (f x) * g x) :
---   (∃ a b : ENNReal, ∀ x : ENNReal, h x = a * x + b) := by
---   sorry
 
 
 

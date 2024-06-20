@@ -344,4 +344,7 @@ lemma ereal_smul_le_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w �
 lemma ereal_smul_eq_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = s * z) : w = z := by
   sorry
 
+
+lemma ENNReal_toReal_partial_inj (a b : ENNReal) (H : a.toReal = b.toReal) (H1 : a ≠ ⊤) (H2 : b ≠ ⊤) : a = b := sorry
+
 end ENNReal
