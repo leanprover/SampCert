@@ -136,12 +136,13 @@ lemma eexp_elog : (elog (eexp w)) = w := by
 
 
 @[simp]
-lemma elog_mul : elog x * elog y = elog (x + y) := by
+lemma elog_mul : elog x + elog y = elog (x * y) := by
 
   sorry -- checked truth table
 
 @[simp]
 lemma eexp_add : eexp w * eexp z = eexp (w + z) := by sorry -- checked truth table
+
 
 -- Log of power, log and exp inverses
 
