@@ -25,58 +25,56 @@ variable [Inhabited V]
 variable [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U]
 variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 
-lemma ENNReal_toReal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
-  x.toReal ≠ 0 := by
-  unfold ENNReal.toReal
-  unfold ENNReal.toNNReal
-  simp
-  constructor ; any_goals trivial
+-- lemma ENNReal_toReal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
+--   x.toReal ≠ 0 := by
+--   unfold ENNReal.toReal
+--   unfold ENNReal.toNNReal
+--   simp
+--   constructor ; any_goals trivial
+--
+-- lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
+--   apply @lt_trans _ _ _ 1 _ _ h
+--   simp only [zero_lt_one]
 
-lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
-  apply @lt_trans _ _ _ 1 _ _ h
-  simp only [zero_lt_one]
-
-/--
+/-
 The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
 -/
-theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : NormalMechanism nq} {α ε : ℝ}
-  (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq HNorm ε)
-  (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
-  (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
-  simp [zCDPBound] at h3
-  replace h3 := h3 α h1 l₁ l₂ h2
-  simp [RenyiDivergence] at h3
-  simp [NonZeroNQ] at h4
-  simp [NonTopRDNQ] at h5
-  replace h5 := h5 α h1 l₁ l₂ h2
-  have h6 := h4 l₁
-  have h7 := h4 l₂
-  apply ENNReal_toReal_NZ
-  . by_contra CONTRA
-    rw [ENNReal.tsum_eq_zero] at CONTRA
-    replace CONTRA := CONTRA default
-    replace h6 := h6 default
-    replace h7 := h7 default
-    rw [_root_.mul_eq_zero] at CONTRA
-    cases CONTRA
-    . rename_i h8
-      rw [rpow_eq_zero_iff_of_pos] at h8
-      contradiction
-      apply simp_α_1 h1
-    . rename_i h8
-      rw [ENNReal.rpow_eq_zero_iff] at h8
-      cases h8
-      . rename_i h8
-        cases h8
-        contradiction
-      . rename_i h8
-        cases h8
-        rename_i h8 h9
-        replace nts := nts l₂ default
-        contradiction
-  . exact h5
-
-set_option pp.coercions false
+-- theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : NormalMechanism nq} {α ε : ℝ}
+--   (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq HNorm ε)
+--   (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
+--   (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
+--   simp [zCDPBound] at h3
+--   replace h3 := h3 α h1 l₁ l₂ h2
+--   simp [RenyiDivergence] at h3
+--   simp [NonZeroNQ] at h4
+--   simp [NonTopRDNQ] at h5
+--   replace h5 := h5 α h1 l₁ l₂ h2
+--   have h6 := h4 l₁
+--   have h7 := h4 l₂
+--   apply ENNReal_toReal_NZ
+--   . by_contra CONTRA
+--     rw [ENNReal.tsum_eq_zero] at CONTRA
+--     replace CONTRA := CONTRA default
+--     replace h6 := h6 default
+--     replace h7 := h7 default
+--     rw [_root_.mul_eq_zero] at CONTRA
+--     cases CONTRA
+--     . rename_i h8
+--       rw [rpow_eq_zero_iff_of_pos] at h8
+--       contradiction
+--       apply simp_α_1 h1
+--     . rename_i h8
+--       rw [ENNReal.rpow_eq_zero_iff] at h8
+--       cases h8
+--       . rename_i h8
+--         cases h8
+--         contradiction
+--       . rename_i h8
+--         cases h8
+--         rename_i h8 h9
+--         replace nts := nts l₂ default
+--         contradiction
+--   . exact h5
 
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
@@ -270,92 +268,92 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
       · apply log_nonneg_1
       · apply log_nonneg_2
 
-/--
+/-
 All outputs of a composed query have finite probability.
 -/
-theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
-  NonTopNQ (privCompose nq1 nq2) := by
-  simp [NonTopNQ] at *
-  intro l a b
-  replace nt1 := nt1 l a
-  replace nt2 := nt2 l b
-  simp [privCompose]
-  rw [compose_sum_rw]
-  rw [mul_eq_top]
-  intro H
-  cases H
-  . rename_i H
-    cases H
-    contradiction
-  . rename_i H
-    cases H
-    contradiction
+-- theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
+--   NonTopNQ (privCompose nq1 nq2) := by
+--   simp [NonTopNQ] at *
+--   intro l a b
+--   replace nt1 := nt1 l a
+--   replace nt2 := nt2 l b
+--   simp [privCompose]
+--   rw [compose_sum_rw]
+--   rw [mul_eq_top]
+--   intro H
+--   cases H
+--   . rename_i H
+--     cases H
+--     contradiction
+--   . rename_i H
+--     cases H
+--     contradiction
 
-/--
+/-
 Renyi divergence beteeen composed queries on neighbours are finite.
 -/
-theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
-  NonTopRDNQ (privCompose nq1 nq2) := by
-  simp [NonTopRDNQ] at *
-  intro α h1 l₁ l₂ h2
-  replace nt1 := nt1 α h1 l₁ l₂ h2
-  replace nt2 := nt2 α h1 l₁ l₂ h2
-  simp [privCompose]
-  rw [ENNReal.tsum_prod']
-  simp
-  conv =>
-    right
-    left
-    right
-    intro x
-    right
-    intro y
-    congr
-    . left
-      rw [compose_sum_rw]
-    . left
-      rw [compose_sum_rw]
-  conv =>
-    right
-    left
-    right
-    intro x
-    right
-    intro y
-    rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
-    rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 l₂ y)]
-    rw [mul_assoc]
-    right
-    rw [mul_comm]
-    rw [mul_assoc]
-    right
-    rw [mul_comm]
-  conv =>
-    right
-    left
-    right
-    intro x
-    right
-    intro y
-    rw [← mul_assoc]
-  conv =>
-    right
-    left
-    right
-    intro x
-    rw [ENNReal.tsum_mul_left]
-  rw [ENNReal.tsum_mul_right]
-  intro H
-  rw [mul_eq_top] at H
-  cases H
-  . rename_i h3
-    cases h3
-    rename_i h4 h5
-    contradiction
-  . rename_i h3
-    cases h3
-    rename_i h4 h5
-    contradiction
+-- theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopRDNQ nq1) (nt2 : NonTopRDNQ nq2) (nn1 : NonTopNQ nq1) (nn2 : NonTopNQ nq2) :
+--   NonTopRDNQ (privCompose nq1 nq2) := by
+--   simp [NonTopRDNQ] at *
+--   intro α h1 l₁ l₂ h2
+--   replace nt1 := nt1 α h1 l₁ l₂ h2
+--   replace nt2 := nt2 α h1 l₁ l₂ h2
+--   simp [privCompose]
+--   rw [ENNReal.tsum_prod']
+--   simp
+--   conv =>
+--     right
+--     left
+--     right
+--     intro x
+--     right
+--     intro y
+--     congr
+--     . left
+--       rw [compose_sum_rw]
+--     . left
+--       rw [compose_sum_rw]
+--   conv =>
+--     right
+--     left
+--     right
+--     intro x
+--     right
+--     intro y
+--     rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
+--     rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 l₂ y)]
+--     rw [mul_assoc]
+--     right
+--     rw [mul_comm]
+--     rw [mul_assoc]
+--     right
+--     rw [mul_comm]
+--   conv =>
+--     right
+--     left
+--     right
+--     intro x
+--     right
+--     intro y
+--     rw [← mul_assoc]
+--   conv =>
+--     right
+--     left
+--     right
+--     intro x
+--     rw [ENNReal.tsum_mul_left]
+--   rw [ENNReal.tsum_mul_right]
+--   intro H
+--   rw [mul_eq_top] at H
+--   cases H
+--   . rename_i h3
+--     cases h3
+--     rename_i h4 h5
+--     contradiction
+--   . rename_i h3
+--     cases h3
+--     rename_i h4 h5
+--     contradiction
 
 /--
 ``privCompose`` satisfies zCDP
