@@ -944,8 +944,6 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
     rcases t with ⟨ a , Ha ⟩
     apply (reducedPMF_pos Hq a Ha)
 
-set_option pp.coercions false
-
 lemma  Renyi_Jensen_ENNReal_converse [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q)
   (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
@@ -1052,6 +1050,7 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     exact EReal.coe_lt_top (α - OfNat.ofNat 1)
   · assumption
 
+
 lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = RenyiDivergence_def p p α) := by
   have H1 : 1 = eexp ((α - 1) * RenyiDivergence_def p p α) := by
     rw [RenyiDivergence_def_exp p p Hα]
@@ -1132,9 +1131,15 @@ theorem RenyiDivergence_def_eq_0_iff [MeasurableSpace T] [MeasurableSingletonCla
     apply Hα
 
 
-lemma RenyiDivergence_def_log_sum_nonneg (p q : PMF T) (α : ℝ) : (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
+lemma RenyiDivergence_def_log_sum_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) (Hac : AbsCts p q) {α : ℝ} (Hα : 1 < α ): (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
   -- Follows from RenyiDivergence_def_nonneg
-  sorry
+  have Hrd := RenyiDivergence_def_nonneg p q Hac Hα
+  rw [RenyiDivergence_def] at Hrd
+  apply ofEReal_nonneg_scal_l at Hrd
+  · assumption
+  · apply inv_pos_of_pos
+    linarith
 
 /--
 The Renyi divergence.

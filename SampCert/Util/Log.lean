@@ -31,6 +31,35 @@ noncomputable def ofEReal (e : EReal) : ENNReal :=
   | ⊤ => ⊤
   | some (some r) => ENNReal.ofReal r
 
+lemma EReal_cases (w : EReal) : w = ⊥ ∨ w = ⊤ ∨ (∃ v : ℝ,  w = v) := by
+  cases w
+  · left
+    rfl
+  rename_i w'
+  cases w'
+  · right
+    left
+    rfl
+  rename_i wR
+  right
+  right
+  exists wR
+
+@[simp]
+lemma ofEReal_bot : ofEReal ⊥ = 0 := by simp [ofEReal]
+
+@[simp]
+lemma ofEReal_top : ofEReal ⊤ = ⊤ := by simp [ofEReal]
+
+@[simp]
+lemma ofEReal_real (r : ℝ) : ofEReal r = ENNReal.ofReal r := by
+  simp [Real.toEReal]
+  simp [ofEReal]
+
+lemma ofEReal_nonpos (w : EReal) (HW : w ≤ 0): ofEReal w = 0 := by
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;> simp_all
+
+
 -- instance : Coe EReal ENNReal := ⟨ofEReal⟩
 
 /--
@@ -144,6 +173,7 @@ lemma elog_mul : elog x + elog y = elog (x * y) := by
 lemma eexp_add : eexp w * eexp z = eexp (w + z) := by sorry -- checked truth table
 
 
+
 -- Log of power, log and exp inverses
 
 lemma eexp_injective : eexp w = eexp z -> w = z := by
@@ -198,9 +228,56 @@ lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w =
 lemma ofEReal_le_mono : (0 ≤ w) -> w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
 
+#check 3
 
 @[simp]
-lemma ofEReal_mul (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w * z) = ofEReal w * ofEReal z := sorry
+lemma ofEReal_plus_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w + z) = ofEReal w + ofEReal z := by
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+  rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩)
+  all_goals rw [Hw', Hz']
+  all_goals simp_all
+  sorry
+
+@[simp]
+lemma ofEReal_mul_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w * z) = ofEReal w * ofEReal z := by
+  have HBle: (⊥ : EReal) ≤ 0 := by exact OrderBot.bot_le 0
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+  rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩)
+  all_goals rw [Hw', Hz']
+  all_goals simp_all
+  · rw [top_mul']
+    split
+    · simp_all
+      apply ofEReal_nonpos
+      sorry
+    · cases (LE.le.lt_or_eq Hz)
+      · sorry
+      · sorry
+  · sorry
+  · sorry
+
+lemma ofEReal_nonneg_scal_l (H1 : 0 < r) (H2 : 0 ≤ r * w) : 0 ≤ w := by
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩)
+  · simp_all
+    sorry
+  · simp_all
+  · simp_all
+    sorry
+
+
+
+  -- <;> rcases (EReal_cases z) with ⟨ Hz , Hz , ⟨ z' , Hz ⟩⟩
+
+
+
+
+  -- cases w <;> cases z
+  -- · exfalso
+  --   rw [WithBot.none_eq_bot] at Hw
+  --   simp at *
+  -- · sorry
+  -- · sorry
+  -- · sorry
 
 @[simp]
 lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := sorry

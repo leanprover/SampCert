@@ -22,6 +22,8 @@ namespace SLang
 variable { T U V : Type }
 variable [Inhabited U]
 variable [Inhabited V]
+variable [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U]
+variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 
 lemma ENNReal_toReal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
   x.toReal ≠ 0 := by
@@ -156,29 +158,117 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
       right
       intro b
       rw [ENNReal.tsum_mul_left]
-
     rw [ENNReal.tsum_mul_right]
     rw [← elog_mul]
 
+    conv at h1 =>
+      lhs
+      arg 1
+      arg 2
+      arg 1
+      arg 1
+      intro x
+      rw [DFunLike.coe]
+      rw [PMF.instFunLike]
+      rw [SLang.toPMF]
+      rw [SLang.toPMF]
+      simp
+    conv at h2 =>
+      lhs
+      arg 1
+      arg 2
+      arg 1
+      arg 1
+      intro x
+      rw [DFunLike.coe]
+      rw [PMF.instFunLike]
+      rw [SLang.toPMF]
+      rw [SLang.toPMF]
+      simp
 
-    -- Need product/sum rule for elog, is it true?
+    have log_nonneg_1 : 0 ≤ (∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α)).elog := by
+      have Hac1 : AbsCts ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) := by sorry
+      have Hnn1 := (RenyiDivergence_def_log_sum_nonneg ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) Hac1 h3)
+      conv at Hnn1 =>
+        rhs
+        arg 1
+        arg 1
+        intro x
+        rw [DFunLike.coe]
+        rw [PMF.instFunLike]
+        rw [SLang.toPMF]
+        rw [SLang.toPMF]
+        simp
+      apply Hnn1
+    have log_nonneg_2 :  0 ≤ (∑' (i : V), nq2 l₁ i ^ α * nq2 l₂ i ^ (1 - α)).elog := by
+      have Hac2 : AbsCts ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) := by sorry
+      have Hnn2 := (RenyiDivergence_def_log_sum_nonneg ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) Hac2 h3)
+      conv at Hnn2 =>
+        rhs
+        arg 1
+        arg 1
+        intro x
+        rw [DFunLike.coe]
+        rw [PMF.instFunLike]
+        rw [SLang.toPMF]
+        rw [SLang.toPMF]
+        simp
+      apply Hnn2
 
-    sorry
-    -- rw [ENNReal.toReal_mul]
-    -- rw [Real.log_mul]
-    -- . rw [mul_add]
-    --   have D := _root_.add_le_add h1 h2
-    --   apply le_trans D
-    --   rw [← add_mul]
-    --   rw [mul_le_mul_iff_of_pos_right]
-    --   . rw [← mul_add]
-    --     rw [mul_le_mul_iff_of_pos_left]
-    --     . ring_nf
-    --       simp
-    --     . simp
-    --   . apply lt_trans zero_lt_one h3
-    -- . apply Renyi_noised_query_NZ h3 h4 X nn1 nt1 nts1
-    -- . apply Renyi_noised_query_NZ h3 h4 Y nn2 nt2 nts2
+    -- Split up the series
+    rw [ofEReal_mul_nonneg]
+    · simp only [ofEReal_real]
+      -- In order to distribute ofReal, we need the logarithms to be nonegative
+      rw [ofEReal_plus_nonneg log_nonneg_1 log_nonneg_2]
+
+      -- Distribute
+      rw [CanonicallyOrderedCommSemiring.left_distrib]
+      apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (↑↑ε₁ ^ 2 / ↑↑ε₂ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (↑↑ε₃ ^ 2 / ↑↑ε₄ ^ 2) * α)))
+      · -- apply?
+        apply _root_.add_le_add
+        · rw [ofEReal_mul_nonneg] at h1
+          · apply h1
+          · apply EReal.coe_nonneg.mpr
+            apply inv_nonneg.mpr
+            linarith
+          · apply log_nonneg_1
+        · rw [ofEReal_mul_nonneg] at h2
+          · apply h2
+          · apply EReal.coe_nonneg.mpr
+            apply inv_nonneg.mpr
+            linarith
+          · apply log_nonneg_2
+      · clear h1 h2
+        rw [<- ENNReal.ofReal_add]
+        · apply ofReal_le_ofReal_iff'.mpr
+          left
+          rw [← add_mul]
+          rw [mul_le_mul_iff_of_pos_right]
+          · rw [← mul_add]
+            rw [mul_le_mul_iff_of_pos_left]
+            · ring_nf
+              simp
+            · simp only [inv_pos, Nat.ofNat_pos]
+          · linarith
+        · apply mul_nonneg
+          · apply mul_nonneg
+            · simp
+            · apply div_nonneg
+              · exact sq_nonneg ε₁.val.cast
+              · exact sq_nonneg ε₂.val.cast
+          · linarith
+        · apply mul_nonneg
+          · apply mul_nonneg
+            · simp
+            · apply div_nonneg
+              · exact sq_nonneg ε₃.val.cast
+              · exact sq_nonneg ε₄.val.cast
+          · linarith
+    · simp
+      linarith
+    · apply Left.add_nonneg
+      · apply log_nonneg_1
+      · apply log_nonneg_2
 
 /--
 All outputs of a composed query have finite probability.
@@ -273,14 +363,9 @@ theorem privCompose_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : List T → SLan
 theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
   zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  sorry
-  -- cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
-  -- cases h' ; rename_i h'1 h'2 ; cases h'2 ; rename_i h'2 h'3 ; cases h'3 ; rename_i h'3 h'4 ; cases h'4 ; rename_i h'4 h'5
-  -- repeat any_goals constructor
-  -- . apply privCompose_zCDPBound h1 h'1 h2 h'2 h5 h'5 h4 h'4
-  -- . apply privCompose_NonZeroNQ h2 h'2
-  -- . apply privCompose_NonTopSum h3 h'3
-  -- . apply privCompose_NonTopNQ h4 h'4
-  -- . apply privCompose_NonTopRDNQ h5 h'5 h4 h'4
+  rcases h with ⟨ Hn1, Hb1 ⟩
+  rcases h' with ⟨ Hn2, Hb2 ⟩
+  exists (privCompose_norm nq1 nq2 Hn1 Hn2)
+  exact privCompose_zCDPBound Hb1 Hb2
 
 end SLang
