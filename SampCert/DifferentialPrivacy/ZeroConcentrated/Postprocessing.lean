@@ -57,7 +57,6 @@ Jensen's ineuquality for the exponential applied to Renyi's sum
 -/
 theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
-
   conv =>
     left
     left
@@ -219,9 +218,10 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
 
 
 
-theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq)
-  (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
+theorem DPostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
+  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
+  (nn : ∀(l : List T), ∀(u : U), nq l u ≠ 0) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq)
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
   (∑' (x : V),
       (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
         (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
@@ -555,27 +555,46 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-set_option pp.coercions false
+
+
+
+
+
+
+
+theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
+  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
+  (∑' (x : V),
+      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
+        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
+  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
+
+  -- First step is to reduce to the case where (nq l) is nonzero
+  -- Next I need to generalize the fiberwisation argument to eliminate the side conditions and work in
+  -- the extended reals
+  -- I'll also have to generalize the δpmf normalization, though that should mstly just be making sure the correct terms are PMFs
+  -- That should bring be down to the extended Renyi divergence
+
+  -- This lemma should be provable as stated
+  sorry
+
+
 
 theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq)
-  (f : U → V) :
+  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (f : U → V) :
   zCDPBound (privPostProcess nq f) (privPostProcess_norm nq HNorm f) ((ε₁ : ℝ) / ε₂) := by
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
   simp [zCDPBound, RenyiDivergence] at h'
   replace h' := h' α h1 l₁ l₂ h2
-
-  -- Part 1, removing fluff
   apply le_trans _ h'
   clear h'
   unfold RenyiDivergence_def
   rw [DFunLike.coe]
   rw [PMF.instFunLike]
   simp
-
-  -- Clean up coercions
   conv =>
     lhs
     arg 1
@@ -596,59 +615,19 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     repeat rw [DFunLike.coe]
     repeat rw [PMF.instFunLike]
     simp
-
-  -- Split multiplication in ofReals
-  rw [ofEReal_mul_nonneg ?G1 ?G2]
-  case G1 =>
+  apply ofEReal_le_mono
+  apply ereal_smul_left_le
+  · apply EReal.coe_pos.mpr
+    apply inv_pos_of_pos
+    linarith
+  · exact EReal.coe_lt_top (α - 1)⁻¹
+  apply elog_mono_le.mp
+  apply (DPostPocess_pre h f h1 ?Gabs h2)
+  case Gabs =>
+    -- absolute continuity
     sorry
-  case G2 =>
-    -- Use normalization for PostProcessing for the arguments (might have to move around
-    -- the coercion cleanup step)
-    #check RenyiDivergence_def_log_sum_nonneg
-    sorry
-  rw [ofEReal_mul_nonneg ?G1 ?G2]
-  case G1 =>
-    sorry
-  case G2 =>
-    sorry
-  simp
 
-  -- Remove the α scaling
-  apply mul_le_mul_of_nonneg_left _ ?G1
-  case G1 => simp
-
-  apply (ofEReal_le_mono_nonneg ?G1).mp
-  case G1 => sorry
-
-  #check DPostPocess_pre h
-
-  -- have B := DPostPocess_pre h nn nt nts conv f h1 h2
-  -- have B' : ∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α) ≠ ⊤ := by
-  --   by_contra CONTRA
-  --   rw [CONTRA] at B
-  --   simp at B
-  --   contradiction
-  sorry
   /-
-  -- remove the α scaling
-  have A : 0 ≤ (α - 1)⁻¹ := by
-    simp
-    apply le_of_lt h1
-  apply mul_le_mul_of_nonneg_left _ A
-  clear A
-
-  have RDConvegence : ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤ := by
-    simp [NonTopRDNQ] at nt
-    have nt := nt α h1 l₁ l₂ h2
-    trivial
-
-  have B := DPostPocess_pre h nn nt nts conv f h1 h2
-  have B' : ∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α) ≠ ⊤ := by
-    by_contra CONTRA
-    rw [CONTRA] at B
-    simp at B
-    contradiction
-
   -- remove the log
   apply log_le_log _ (toReal_mono RDConvegence B)
   apply toReal_pos _ B'

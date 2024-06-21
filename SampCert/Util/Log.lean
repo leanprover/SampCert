@@ -228,6 +228,16 @@ lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w =
 lemma ofEReal_le_mono_nonneg (Hw : 0 ≤ w) : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
 
+
+lemma ofEReal_le_mono (H : w ≤ z) : ofEReal w ≤ ofEReal z := by
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+  rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩)
+  all_goals rw [Hw', Hz']
+  all_goals simp_all [ENNReal.ofEReal]
+  simp [Real.toEReal]
+  exact ofReal_le_ofReal H
+
+
 @[simp]
 lemma ofEReal_plus_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w + z) = ofEReal w + ofEReal z := by
   rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
@@ -404,6 +414,10 @@ lemma ereal_smul_le_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w �
   exact EReal.coe_pos.mp Hr1
 
 lemma ereal_smul_eq_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = s * z) : w = z := by
+  sorry
+
+
+lemma ereal_smul_left_le (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
   sorry
 
 
