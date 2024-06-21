@@ -225,10 +225,8 @@ lemma elog_mono_le : (x <= y) <-> elog x <= elog y := by sorry
 lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w = ofEReal z) :=
   sorry
 
-lemma ofEReal_le_mono : (0 ≤ w) -> w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
+lemma ofEReal_le_mono_nonneg (Hw : 0 ≤ w) : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
-
-#check 3
 
 @[simp]
 lemma ofEReal_plus_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w + z) = ofEReal w + ofEReal z := by
@@ -264,20 +262,6 @@ lemma ofEReal_nonneg_scal_l (H1 : 0 < r) (H2 : 0 ≤ r * w) : 0 ≤ w := by
   · simp_all
     sorry
 
-
-
-  -- <;> rcases (EReal_cases z) with ⟨ Hz , Hz , ⟨ z' , Hz ⟩⟩
-
-
-
-
-  -- cases w <;> cases z
-  -- · exfalso
-  --   rw [WithBot.none_eq_bot] at Hw
-  --   simp at *
-  -- · sorry
-  -- · sorry
-  -- · sorry
 
 @[simp]
 lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := sorry

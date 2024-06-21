@@ -321,7 +321,8 @@ theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 
       . rw [← RenyiDivergenceExpectation _ _ h1]
         . replace nt := nt α h1 l₁ l₂ h2
           apply convergent_subset _ nt
-        . intro x
+        . -- Need absolute continuity between neighbours
+          intro x
           sorry
         --   apply nn
         -- . intro x
@@ -554,6 +555,7 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
+set_option pp.coercions false
 
 theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq)
@@ -566,13 +568,67 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
   replace h' := h' α h1 l₁ l₂ h2
 
   -- Part 1, removing fluff
-
   apply le_trans _ h'
   clear h'
+  unfold RenyiDivergence_def
+  rw [DFunLike.coe]
+  rw [PMF.instFunLike]
+  simp
 
+  -- Clean up coercions
+  conv =>
+    lhs
+    arg 1
+    arg 2
+    arg 1
+    arg 1
+    intro x
+    repeat rw [SLang.toPMF]
+    simp
+  conv =>
+    rhs
+    arg 1
+    arg 2
+    arg 1
+    arg 1
+    intro x
+    repeat rw [SLang.toPMF]
+    repeat rw [DFunLike.coe]
+    repeat rw [PMF.instFunLike]
+    simp
 
+  -- Split multiplication in ofReals
+  rw [ofEReal_mul_nonneg ?G1 ?G2]
+  case G1 =>
+    sorry
+  case G2 =>
+    -- Use normalization for PostProcessing for the arguments (might have to move around
+    -- the coercion cleanup step)
+    #check RenyiDivergence_def_log_sum_nonneg
+    sorry
+  rw [ofEReal_mul_nonneg ?G1 ?G2]
+  case G1 =>
+    sorry
+  case G2 =>
+    sorry
+  simp
+
+  -- Remove the α scaling
+  apply mul_le_mul_of_nonneg_left _ ?G1
+  case G1 => simp
+
+  apply (ofEReal_le_mono_nonneg ?G1).mp
+  case G1 => sorry
+
+  #check DPostPocess_pre h
+
+  -- have B := DPostPocess_pre h nn nt nts conv f h1 h2
+  -- have B' : ∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α) ≠ ⊤ := by
+  --   by_contra CONTRA
+  --   rw [CONTRA] at B
+  --   simp at B
+  --   contradiction
   sorry
-
   /-
   -- remove the α scaling
   have A : 0 ≤ (α - 1)⁻¹ := by
@@ -651,19 +707,19 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
   sorry
   -/
 
-theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
-  (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
-  NonTopRDNQ (privPostProcess nq f) := by
-  simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
-  intros α h1 l₁ l₂ h2
-  have ntrdnq := nt
-  replace nt := nt α h1 l₁ l₂ h2
-  sorry
-  -- have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
-  -- apply @LT.lt.ne_top _ _ _ _ ⊤
-  -- rw [Eq.comm] at nt
-  -- have B := Ne.lt_top' nt
-  -- exact lt_of_le_of_lt A B
+-- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
+--   (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
+--   NonTopRDNQ (privPostProcess nq f) := by
+--   simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
+--   intros α h1 l₁ l₂ h2
+--   have ntrdnq := nt
+--   replace nt := nt α h1 l₁ l₂ h2
+--   sorry
+--   -- have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
+--   -- apply @LT.lt.ne_top _ _ _ _ ⊤
+--   -- rw [Eq.comm] at nt
+--   -- have B := Ne.lt_top' nt
+--   -- exact lt_of_le_of_lt A B
 
 /--
 Postprocessing preserves zCDP
