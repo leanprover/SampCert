@@ -28,105 +28,106 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
-  MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
-  have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
-  revert X
-  conv =>
-    left
-    left
-    intro x
-    rw [← norm_rpow_of_nonneg (nn x)]
-  intro X
-  simp [Integrable] at *
-  constructor
-  . cases X
-    rename_i left right
-    rw [@aestronglyMeasurable_iff_aemeasurable]
-    apply AEMeasurable.pow_const
-    simp [Memℒp] at mem
-    cases mem
-    rename_i left' right'
-    rw [aestronglyMeasurable_iff_aemeasurable] at left'
-    simp [left']
-  . rw [← hasFiniteIntegral_norm_iff]
-    simp [X]
+-- lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
+--   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
+--   have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
+--   revert X
+--   conv =>
+--     left
+--     left
+--     intro x
+--     rw [← norm_rpow_of_nonneg (nn x)]
+--   intro X
+--   simp [Integrable] at *
+--   constructor
+--   . cases X
+--     rename_i left right
+--     rw [@aestronglyMeasurable_iff_aemeasurable]
+--     apply AEMeasurable.pow_const
+--     simp [Memℒp] at mem
+--     cases mem
+--     rename_i left' right'
+--     rw [aestronglyMeasurable_iff_aemeasurable] at left'
+--     simp [left']
+--   . rw [← hasFiniteIntegral_norm_iff]
+--     simp [X]
 
-/--
-Jensen's ineuquality for the exponential applied to Renyi's sum
--/
-theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
-  ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
-  conv =>
-    left
-    left
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  conv =>
-    right
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  rw [← PMF.integral_eq_tsum]
-  rw [← PMF.integral_eq_tsum]
+-- /-
+-- Jensen's ineuquality for the exponential applied to Renyi's sum
+-- -/
+-- theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+--   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
+--   conv =>
+--     left
+--     left
+--     right
+--     intro x
+--     rw [mul_comm]
+--     rw [← smul_eq_mul]
+--   conv =>
+--     right
+--     right
+--     intro x
+--     rw [mul_comm]
+--     rw [← smul_eq_mul]
+--   rw [← PMF.integral_eq_tsum]
+--   rw [← PMF.integral_eq_tsum]
+--
+--   have A := @convexOn_rpow α (le_of_lt h)
+--   have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
+--     apply ContinuousOn.rpow
+--     . exact continuousOn_id' (Set.Ici 0)
+--     . exact continuousOn_const
+--     . intro x h'
+--       simp at h'
+--       have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
+--       cases OR
+--       . rename_i h''
+--         subst h''
+--         right
+--         apply lt_trans zero_lt_one h
+--       . rename_i h''
+--         left
+--         by_contra
+--         rename_i h3
+--         subst h3
+--         simp at h''
+--   have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
+--     exact isClosed_Ici
+--   have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
+--   simp at D
+--   apply D
+--   . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
+--   . apply MeasureTheory.Memℒp.integrable _ mem
+--     rw [one_le_ofReal]
+--     apply le_of_lt h
+--   . rw [Function.comp_def]
+--     have X : ENNReal.ofReal α ≠ 0 := by
+--       simp
+--       apply lt_trans zero_lt_one h
+--     have Y : ENNReal.ofReal α ≠ ⊤ := by
+--       simp
+--     have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+--     rw [toReal_ofReal] at Z
+--     . exact Z
+--     . apply le_of_lt
+--       apply lt_trans zero_lt_one h
+--   . have X : ENNReal.ofReal α ≠ 0 := by
+--       simp
+--       apply lt_trans zero_lt_one h
+--     have Y : ENNReal.ofReal α ≠ ⊤ := by
+--       simp
+--     have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+--     rw [toReal_ofReal] at Z
+--     . exact Z
+--     . apply le_of_lt
+--       apply lt_trans zero_lt_one h
+--   . apply MeasureTheory.Memℒp.integrable _ mem
+--     rw [one_le_ofReal]
+--     apply le_of_lt h
 
-  have A := @convexOn_rpow α (le_of_lt h)
-  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
-    apply ContinuousOn.rpow
-    . exact continuousOn_id' (Set.Ici 0)
-    . exact continuousOn_const
-    . intro x h'
-      simp at h'
-      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
-      cases OR
-      . rename_i h''
-        subst h''
-        right
-        apply lt_trans zero_lt_one h
-      . rename_i h''
-        left
-        by_contra
-        rename_i h3
-        subst h3
-        simp at h''
-  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
-    exact isClosed_Ici
-  have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
-  simp at D
-  apply D
-  . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
-  . rw [Function.comp_def]
-    have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
-
-def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
+def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal :=
+  fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
 lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
@@ -216,23 +217,20 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
   apply toReal_strict_mono h1
   apply ENNReal.tsum_pos_int h1 h2
 
-
--- set_option pp.coercions false
-
-theorem DPostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
+theorem PostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ (l : List T), HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
   (nn : ∀(l : List T), ∀(u : U), nq l u ≠ 0)
   (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
-  (∑' (x : V),
-      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
-        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
-  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
+  (∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤ (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  -- Turn everything into an explicit PMF
-  let nq_PMF (l : List T) : PMF U := ⟨ nq l, HNorm l ⟩
+  -- Turn everything into an explicit PMF (is this necessary? I don't think so, since we use δpmf for Renyi lemma)
+  let nq_PMF : List T -> PMF U := (fun l => SLang.toPMF (nq l) (HNorm l))
+
   have nq_PMF_coe (l : List T) (u : U) : nq l u = nq_PMF l u := by
     rw [DFunLike.coe]
     simp [PMF.instFunLike]
+    exact rfl
+
   conv =>
     congr
     · arg 1
@@ -258,13 +256,13 @@ theorem DPostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ l, HasSum 
   have nq_nt : ∀ l : List T, ∀ u : U, nq_PMF l u ≠ ⊤ := by
     exact fun l u => PMF.apply_ne_top (nq_PMF l) u
 
-  -- TODO (if needed): Renyi divergence is not Top
-
   -- Rewrite as cascading expectations
   simp [zCDPBound, RenyiDivergence] at h
   rw [RenyiDivergenceExpectation]
   case h => apply h1
-  case H => sorry
+  case H =>
+    -- Unfold the other top-level continuity proof for postprocessing
+    sorry
   simp
   rw [RenyiDivergenceExpectation (fun x => DFunLike.coe (nq_PMF l₁) x) (fun x => nq l₂ x) h1 Habs]
   conv =>
@@ -337,8 +335,9 @@ theorem DPostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ l, HasSum 
 
   -- Unfold normalization constants from δpmf
   let N (l : List T) := (∑' (x : {n // i = f n}), nq_PMF l x)⁻¹
-  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq_PMF l x)⁻¹ := by sorry -- exact rfl
-  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq_PMF l x) = (N l)⁻¹ := by sorry -- exact rfl
+  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq_PMF l x)⁻¹ := by exact rfl
+  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq_PMF l x) = (N l)⁻¹ := by
+    exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq_PMF l) ↑x))
   have δpmf_N (l : List T) (x : { x // i = f x }) : (δpmf (nq_PMF l) f i (MasterZero l) (MasterRW l)) x = (N l) * nq_PMF l x := by
     simp [δpmf]
     unfold δ
@@ -402,14 +401,33 @@ theorem DPostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ l, HasSum 
   -- Apply transitivity with HJ
   rw [<- mul_assoc] at HJ
   rw [mul_comm] at HJ
-  apply (ENNReal.div_le_iff_le_mul ?G1 ?G2).mpr at HJ
+
+  -- Super haunted bug: When I apply this as normal to HJ (with placeholders)
+  -- Lean it lights up all of my "have" and "let" statements because it \"doesn't
+  -- know how to synthesize\" a placeholder. The placeholder it points me to is in
+  -- Pure/Postprocessing, where the same lemma is also applied with placeholders.
+  --
+  -- So I can't use placeholders here, and I have to write out the terms explicitly
+  have W :=
+    @ENNReal.div_le_iff_le_mul
+      1
+      ((N l₁ / N l₂) ^ α * N l₂)
+      (∑' (i_1 : { x // i = f x }), ((nq_PMF l₁) ↑i_1 / (nq_PMF l₂) ↑i_1) ^ α * (nq_PMF l₂) ↑i_1)
+      ?G1
+      ?G2
+  case G1 => sorry -- Probably right?
+  case G2 => sorry -- left
+  apply W.mpr at HJ
+  clear W
+
   apply (le_trans ?G3 HJ)
+  clear HJ
 
   -- These are equal
+  apply Eq.le
+  repeat rw [division_def]
+  simp
   sorry
-
-
-
 
 theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h : ∀ x : T, f x ≠ 0) :
   ∑' x : T, f x ≠ 0 := by
@@ -418,25 +436,6 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have A := h default
   have B := CONTRA default
   contradiction
-
-
-
-theorem DPostPocess_pre_reduct_1 {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nn : ∀(l : List T), ∀(u : U), nq l u ≠ 0)
-  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
-  (∑' (x : V),
-      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
-        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
-  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
-
-  -- Next I need to generalize the fiberwisation argument to eliminate the side conditions and work in
-  -- the extended reals
-  -- I'll also have to generalize the δpmf normalization, though that should mstly just be making sure the correct terms are PMFs
-  -- That should bring be down to the extended Renyi divergence
-
-  -- This lemma should be provable as stated
-  sorry
-
 
 
 theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
@@ -457,8 +456,6 @@ theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 
   -- simp at Hsumeq
 
   sorry
-
-
 
 theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
