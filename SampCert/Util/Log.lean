@@ -52,6 +52,10 @@ lemma ofEReal_bot : ofEReal ⊥ = 0 := by simp [ofEReal]
 lemma ofEReal_top : ofEReal ⊤ = ⊤ := by simp [ofEReal]
 
 @[simp]
+lemma ofEReal_zero : ofEReal 0 = 0 := by simp [ofEReal]
+
+
+@[simp]
 lemma ofEReal_real (r : ℝ) : ofEReal r = ENNReal.ofReal r := by
   simp [Real.toEReal]
   simp [ofEReal]
@@ -227,6 +231,9 @@ lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w =
 
 lemma ofEReal_le_mono_nonneg (Hw : 0 ≤ w) : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
   sorry
+
+-- Use above
+lemma ofEReal_nonneg_zero (Hz : 0 ≤ z) : (0 = z) <-> 0 = ofEReal z := sorry
 
 
 lemma ofEReal_le_mono (H : w ≤ z) : ofEReal w ≤ ofEReal z := by

@@ -1147,10 +1147,23 @@ The Renyi divergence.
 noncomputable def RenyiDivergence (p q : PMF T) (α : ℝ) : ENNReal :=
   ENNReal.ofEReal (RenyiDivergence_def p q α)
 
--- MARKUSDE: We evaluate through the ENNReal.ofEReal using ``RenyiDivergence_def_nonneg``, these are some special cases
-theorem RenyiDivergence_aux_zero (p q : PMF T) (α : ℝ) : p = q <-> RenyiDivergence p q α = 0
-  := sorry
 
+-- Lifted property of RenyiDivergence_def
+theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+  (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hac : AbsCts p q) : p = q <-> RenyiDivergence p q α = 0 := by
+  apply Iff.intro
+  · intro Heq
+    rw [Heq]
+    rw [RenyiDivergence]
+    rw [<- RenyiDivergence_refl_zero _ Hα]
+    simp
+  · intro H
+    apply (RenyiDivergence_def_eq_0_iff p q Hα Hac).mp
+    symm
+    apply (ofEReal_nonneg_zero ?G1).mpr
+    case G1 =>
+      exact RenyiDivergence_def_nonneg p q Hac Hα
+    exact id (Eq.symm H)
 
 -- Unused
 /-
