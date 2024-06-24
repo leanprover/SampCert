@@ -341,11 +341,22 @@ lemma privCompose_norm (nq1 : List T → SLang U) (nq2 : List T → SLang V) (HN
   apply Summable.hasSum
   exact ENNReal.summable
 
-lemma privPostProcess_norm (nq : List T → SLang U) (HNorm : NormalMechanism nq) (f : U -> V) :  NormalMechanism (privPostProcess nq f) := by
+lemma privPostProcess_norm (nq : List T → SLang U) (HNorm : NormalMechanism nq) (f : U -> V) : NormalMechanism (privPostProcess nq f) := by
   rw [NormalMechanism] at *
   intro l
-  have HNorm' := HasSum.tsum_eq (HNorm l)
-  have HR : (∑' (b : V), privPostProcess nq f l b = 1) := sorry
+  have HR : (∑' (b : V), privPostProcess nq f l b = 1) := by
+    rw [privPostProcess]
+    simp
+    rw [<- HasSum.tsum_eq (ENNReal.HasSum_fiberwise (HNorm l) f)]
+    apply tsum_congr
+    intro v
+    rw [condition_to_subset]
+    have Htyeq : ({a | v = f a}) = (f ⁻¹' {v}) := by
+      rw [Set.ext_iff]
+      intro x
+      simp
+      exact eq_comm
+    rw [Htyeq]
   rw [<- HR]
   apply Summable.hasSum
   exact ENNReal.summable
