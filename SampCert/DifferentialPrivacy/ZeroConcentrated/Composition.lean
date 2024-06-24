@@ -353,6 +353,31 @@ Renyi divergence beteeen composed queries on neighbours are finite.
 --     rename_i h4 h5
 --     contradiction
 
+
+def privCompose_AC (nq1 : List T → SLang U) (nq2 : List T → SLang V) (Hac1 : ACNeighbour nq1) (Hac2 : ACNeighbour nq2) : ACNeighbour (privCompose nq1 nq2) := by
+  rw [ACNeighbour] at *
+  intro l₁ l₂ Hn
+  have Hac1 := Hac1 l₁ l₂ Hn
+  have Hac2 := Hac2 l₁ l₂ Hn
+  rw [AbsCts] at *
+  intro x
+  rcases x with ⟨ u, v ⟩
+  intro Hk
+  simp [privCompose] at *
+  intro i
+  cases (Hk i)
+  · rename_i Hk
+    left
+    apply Hac1
+    apply Hk
+  · rename_i Hk
+    right
+    intro H
+    apply Hac2
+    apply Hk
+    apply H
+
+
 /--
 ``privCompose`` satisfies zCDP
 -/
@@ -362,7 +387,7 @@ theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (
   rcases h with ⟨ Hac1, ⟨ Hn1, Hb1 ⟩⟩
   rcases h' with ⟨ Hac2, ⟨ Hn2, Hb2 ⟩⟩
   apply And.intro
-  · sorry
+  · exact privCompose_AC nq1 nq2 Hac1 Hac2
   · exists (privCompose_norm nq1 nq2 Hn1 Hn2)
     exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
 
