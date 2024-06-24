@@ -694,23 +694,31 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
 --   -- have B := Ne.lt_top' nt
 --   -- exact lt_of_le_of_lt A B
 
+
+
+
+def privPostProcess_AC {f : U -> V} (nq : List T → SLang U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+  rw [ACNeighbour] at *
+  unfold AbsCts at *
+  intro l₁ l₂ Hn v
+  have Hac := Hac l₁ l₂ Hn
+  simp [privPostProcess]
+  intro Hppz i fi
+  apply Hac
+  apply Hppz
+  apply fi
+
 /--
 Postprocessing preserves zCDP
 -/
-theorem privPostProcess_zCDP {f : U → V} (sur : Function.Surjective f)
+theorem privPostProcess_zCDP {f : U → V}
   (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
+  rcases h with ⟨ Hac1, ⟨ Hn1, Hb1 ⟩⟩
   simp [zCDP] at *
-  sorry
-  -- cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
-  -- repeat any_goals constructor
-  -- . apply privPostProcess_zCDPBound h1 h2 h5 h4 h3
-  -- . apply privPostProcess_NonZeroNQ h2 sur
-  -- . apply privPostProcess_NonTopSum f h3
-  -- . simp [NonTopNQ]
-  --   intro l
-  --   apply ENNReal.ne_top_of_tsum_ne_top
-  --   apply privPostProcess_NonTopSum f h3
-  -- . apply privPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
+  apply And.intro
+  · exact privPostProcess_AC nq Hac1
+  · exists (privPostProcess_norm  nq Hn1 f)
+    exact (privPostProcess_zCDPBound Hb1 f)
 
 end SLang

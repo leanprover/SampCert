@@ -27,6 +27,6 @@ noncomputable instance gaussian_zCDPSystem : DPSystem T where
   noise := privNoisedQuery
   noise_prop := privNoisedQuery_zCDP
   compose_prop := privCompose_zCDP
-  postprocess_prop := privPostProcess_zCDP
+  postprocess_prop := (fun _ => privPostProcess_zCDP) -- FIXME: Remove surjectivity from system definition?
 
 end SLang
