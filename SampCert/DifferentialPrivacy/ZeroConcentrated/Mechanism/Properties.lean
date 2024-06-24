@@ -195,20 +195,6 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
     · apply inv_nonneg.mpr
       apply sq_nonneg
 
-/-
-All outputs of the zCDP mechanism have nonzero probability.
--/
--- theorem privNoisedQuery_NonZeroNQ (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
---   NonZeroNQ (privNoisedQuery query Δ ε₁ ε₂) := by
---   simp [NonZeroNQ, privNoisedQuery, DiscreteGaussianGenSample]
---   intros l n
---   exists (n - query l)
---   simp
---   have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by
---     simp
---   have X := @discrete_gaussian_pos (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) A 0 (n - query l)
---   simp at X
---   trivial
 
 /-
 All outputs of the zCDP mechanism have finite probability.
@@ -387,7 +373,17 @@ The Renyi divergence of the zCDP mechanism is finite on neighbouring inputs.
 
 def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeighbour (privNoisedQuery query Δ ε₁ ε₂) := by
   rw [ACNeighbour]
-  sorry
+  intro l₁ l₂ _
+  rw [AbsCts]
+  intro n Hk
+  exfalso
+  simp [privNoisedQuery, DiscreteGaussianGenSample] at Hk
+  have Hk := Hk (n - query l₂)
+  simp at Hk
+  have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by simp
+  have X := @discrete_gaussian_pos (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) A 0 (n - query l₂)
+  simp at X
+  linarith
 
 /--
 The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
@@ -396,14 +392,10 @@ theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (b
   zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [zCDP]
   apply And.intro
-  · sorry
+  · exact privNoisedQuery_AC query Δ ε₁ ε₂
   · repeat any_goals constructor
     . apply privNoisedQuery_zCDPBound
       exact bounded_sensitivity
-  -- . apply privNoisedQuery_NonZeroNQ
-  -- . apply privNoisedQuery_NonTopSum
-  -- . apply privNoisedQuery_NonTopNQ
-  -- . apply privNoisedQuery_NonTopRDNQ
 
 
 end SLang
