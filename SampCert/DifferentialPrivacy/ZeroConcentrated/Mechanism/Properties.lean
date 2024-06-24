@@ -385,15 +385,21 @@ The Renyi divergence of the zCDP mechanism is finite on neighbouring inputs.
 --       rw [discrete_gaussian_shift P]
 --     simp [X]
 
+def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeighbour (privNoisedQuery query Δ ε₁ ε₂) := by
+  rw [ACNeighbour]
+  sorry
+
 /--
 The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [zCDP]
-  repeat any_goals constructor
-  . apply privNoisedQuery_zCDPBound
-    exact bounded_sensitivity
+  apply And.intro
+  · sorry
+  · repeat any_goals constructor
+    . apply privNoisedQuery_zCDPBound
+      exact bounded_sensitivity
   -- . apply privNoisedQuery_NonZeroNQ
   -- . apply privNoisedQuery_NonTopSum
   -- . apply privNoisedQuery_NonTopNQ

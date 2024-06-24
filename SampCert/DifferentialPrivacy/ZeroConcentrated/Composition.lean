@@ -80,12 +80,10 @@ The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {HNorm1 : ∀ l, HasSum (nq1 l) 1} {HNorm2 : ∀ l, HasSum (nq2 l) 1} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-  (h1 : zCDPBound nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) :
+  (h1 : zCDPBound nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2):
   zCDPBound (privCompose nq1 nq2) (privCompose_norm nq1 nq2 HNorm1 HNorm2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
-  have X := h1
-  have Y := h2
   simp [zCDPBound] at h1 h2
   replace h1 := h1 α h3 l₁ l₂ h4
   replace h2 := h2 α h3 l₁ l₂ h4
@@ -185,7 +183,7 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
       simp
 
     have log_nonneg_1 : 0 ≤ (∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α)).elog := by
-      have Hac1 : AbsCts ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) := by sorry
+      have Hac1 : AbsCts ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) := by exact Ha1 l₁ l₂ h4
       have Hnn1 := (RenyiDivergence_def_log_sum_nonneg ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) Hac1 h3)
       conv at Hnn1 =>
         rhs
@@ -199,7 +197,7 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
         simp
       apply Hnn1
     have log_nonneg_2 :  0 ≤ (∑' (i : V), nq2 l₁ i ^ α * nq2 l₂ i ^ (1 - α)).elog := by
-      have Hac2 : AbsCts ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) := by sorry
+      have Hac2 : AbsCts ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) := by exact Ha2 l₁ l₂ h4
       have Hnn2 := (RenyiDivergence_def_log_sum_nonneg ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) Hac2 h3)
       conv at Hnn2 =>
         rhs
@@ -361,9 +359,11 @@ Renyi divergence beteeen composed queries on neighbours are finite.
 theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
   zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  rcases h with ⟨ Hn1, Hb1 ⟩
-  rcases h' with ⟨ Hn2, Hb2 ⟩
-  exists (privCompose_norm nq1 nq2 Hn1 Hn2)
-  exact privCompose_zCDPBound Hb1 Hb2
+  rcases h with ⟨ Hac1, ⟨ Hn1, Hb1 ⟩⟩
+  rcases h' with ⟨ Hac2, ⟨ Hn2, Hb2 ⟩⟩
+  apply And.intro
+  · sorry
+  · exists (privCompose_norm nq1 nq2 Hn1 Hn2)
+    exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
 
 end SLang
