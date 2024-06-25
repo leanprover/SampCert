@@ -45,6 +45,7 @@ lemma EReal_cases (w : EReal) : w = ⊥ ∨ w = ⊤ ∨ (∃ v : ℝ,  w = v) :=
   right
   exists wR
 
+
 @[simp]
 lemma ofEReal_bot : ofEReal ⊥ = 0 := by simp [ofEReal]
 
@@ -91,16 +92,25 @@ variable {x y : ENNReal}
 variable {w z : EReal}
 variable {r : Real}
 
+set_option pp.coercions false
+
 @[simp]
 lemma elog_of_pos_real (H : 0 < r) : elog (ENNReal.ofReal r) = Real.log r := by
   rw [elog]
   split
-  · sorry
+  · simp at *
   · split
-    · rename_i r heq h
-      simp
-      sorry
-    · sorry
+    · rename_i r' heq h
+      exfalso
+      rw [h] at heq
+      simp at heq
+      linarith
+    · rename_i h' r' heq h
+      simp_all
+      congr
+      simp [ENNReal.ofReal] at heq
+      rw [<- heq]
+      exact (Real.coe_toNNReal r (le_of_lt H))
 
 @[simp]
 lemma elog_zero : elog (ENNReal.ofReal 0) = ⊥ := by simp [elog]
@@ -116,7 +126,6 @@ lemma eexp_top : eexp ⊤ = ⊤ := by simp [eexp]
 
 @[simp]
 lemma eexp_zero : eexp 0 = 1 := by simp [eexp]
-
 
 @[simp]
 lemma eexp_ofReal : eexp r = ENNReal.ofReal (Real.exp r) := by
@@ -163,15 +172,93 @@ lemma eexp_elog : (elog (eexp w)) = w := by
       rename_i v''
       simp [ENNReal.ofReal]
       split
-      · -- exp is nonnegative
-        sorry
-      · sorry
+      · rename_i Hcont
+        have Hcont' : 0 < rexp v'' := by exact exp_pos v''
+        linarith
+      · rename_i H
+        have RW : (max (rexp v'') 0) = (rexp v'') := by
+          apply max_eq_left_iff.mpr
+          linarith
+        simp [RW]
+        clear RW
+        simp [Real.toEReal]
 
 
 @[simp]
 lemma elog_mul : elog x + elog y = elog (x * y) := by
+  rcases x with _ | ⟨ rx , Hrx ⟩ <;>
+  rcases y with _ | ⟨ ry , Hry ⟩ <;>
+  simp_all
+  · rcases (LE.le.lt_or_eq Hry) with Hry' | Hry'
+    · simp [elog]
+      split
+      · exfalso
+        rename_i h
+        cases h
+        linarith
+      · simp_all
+    · simp [top_mul']
+      split
+      · simp_all [elog]
+      · exfalso
+        rename_i H
+        apply H
+        congr
+        rw [Hry']
+  · rcases (LE.le.lt_or_eq Hrx) with Hrx' | Hrx'
+    · simp [elog]
+      split
+      · exfalso
+        rename_i h
+        cases h
+        linarith
+      · simp_all
+    · simp [mul_top']
+      split
+      · simp_all [elog]
+      · exfalso
+        rename_i H
+        apply H
+        congr
+        rw [Hrx']
+  · rcases (LE.le.lt_or_eq Hry) with Hry' | Hry' <;>
+    rcases (LE.le.lt_or_eq Hrx) with Hrx' | Hrx'
+    · rw [ENNReal.ofNNReal]
+      simp_all [elog]
+      sorry
+    · sorry
+    · simp [elog]
+      split
+      · rename_i H
+        rw [H]
+        simp
+      · rename_i H
+        split
+        · rename_i H'
+          rw [H']
+          simp
+        · split
+          · exfalso
+            simp_all [or_self]
+          · simp_all
+            sorry
+    · simp [elog]
+      split
+      · split
+        · rename_i H1 H2
+          rw [H1]
+          simp
+        · exfalso
+          rename_i H
+          apply H
+          congr
+          rw [Hry']
+      · exfalso
+        rename_i H
+        apply H
+        congr
+        rw [Hrx']
 
-  sorry -- checked truth table
 
 @[simp]
 lemma eexp_add : eexp w * eexp z = eexp (w + z) := by sorry -- checked truth table
@@ -186,20 +273,35 @@ lemma eexp_injective : eexp w = eexp z -> w = z := by
   cases w <;> cases z <;> try tauto
   · rename_i v
     cases v <;> simp at *
-    sorry
+    rename_i v'
+    have Hv' := exp_pos v'
+    linarith
   · rename_i v
     cases v <;> simp at *
-    sorry
+    rename_i v'
+    have Hv' := exp_pos v'
+    linarith
   · rename_i v₁ v₂
     cases v₁ <;> cases v₂ <;> simp at *
     congr
-    sorry
+    rename_i v₁' v₂'
+    simp [ENNReal.ofReal] at H
+    apply NNReal.coe_inj.mpr at H
+    simp at H
+    have RW (r : ℝ) : (max (rexp r) 0) = (rexp r) := by
+      apply max_eq_left_iff.mpr
+      exact exp_nonneg r
+    rw [RW v₁'] at H
+    rw [RW v₂'] at H
+    exact exp_eq_exp.mp H
+
 
 lemma elog_injective : elog x = elog y -> x = y := by
   rw [elog, elog]
   cases x <;> cases y <;> try tauto
   · rename_i v
     cases v; simp at *
+
     sorry
   · rename_i v
     cases v; simp at *
@@ -226,11 +328,38 @@ lemma elog_mono_le : (x <= y) <-> elog x <= elog y := by sorry
 
 
 -- Specialized lemmas for ofEReal when its argument is nonnegative (so no truncation happens)
-lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w = ofEReal z) :=
-  sorry
+lemma ofEReal_nonneg_eq_iff (Hw : 0 <= w) (Hz : 0 <= z) : w = z <-> (ofEReal w = ofEReal z) := by
+  apply Iff.intro
+  · intro H1
+    rw [H1]
+  · intro H1
+    rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+    rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩) <;>
+    simp_all
 
-lemma ofEReal_le_mono_nonneg (Hw : 0 ≤ w) : w ≤ z <-> (ofEReal w ≤ ofEReal z) :=
-  sorry
+lemma ofEReal_le_mono_nonneg (Hw : 0 ≤ w) : w ≤ z <-> (ofEReal w ≤ ofEReal z) := by
+  apply Iff.intro
+  · intro H1
+    rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+    rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩) <;>
+    simp_all
+    exact ofReal_le_ofReal H1
+  · intro H1
+    rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
+    rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩) <;>
+    simp_all
+    · sorry
+    · simp [ENNReal.ofReal] at H1
+      apply toNNReal_le_toNNReal_iff'.mp at H1
+      cases H1
+      · assumption
+      · rename_i H
+        have H' : w' = 0 := by apply le_antisymm <;> assumption
+        simp_all
+        apply EReal.coe_nonneg.mp
+        simp_all
+        -- ???
+        sorry
 
 -- Use above
 lemma ofEReal_nonneg_zero (Hz : 0 ≤ z) : (0 = z) <-> 0 = ofEReal z := sorry
@@ -274,18 +403,48 @@ lemma ofEReal_mul_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w * z) = ofERe
 lemma ofEReal_nonneg_scal_l (H1 : 0 < r) (H2 : 0 ≤ r * w) : 0 ≤ w := by
   rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩)
   · simp_all
-    sorry
+    rw [EReal.mul_bot_of_pos] at H2
+    all_goals simp_all
   · simp_all
   · simp_all
     sorry
 
 
 @[simp]
-lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := sorry
+lemma toEReal_ofENNReal_nonneg (H : 0 ≤ w) : ENNReal.toEReal (ofEReal w) = w := by
+  rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;> simp_all
 
 
 @[simp]
-lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by sorry
+lemma ofEReal_toENNReal : ofEReal (ENNReal.toEReal x) = x := by
+  rw [ENNReal.ofEReal]
+  split
+  · rename_i x' Hx'
+    simp [toEReal] at Hx'
+    cases x <;> simp_all
+    rename_i x''
+    exfalso
+    rw [NNReal.toReal] at Hx'
+    rw [Real.toEReal] at Hx'
+    simp_all
+  · rename_i x' Hx'
+    simp [toEReal] at Hx'
+    cases x <;> simp_all
+    rw [NNReal.toReal] at Hx'
+    rw [Real.toEReal] at Hx'
+    simp_all
+    cases Hx'
+  · rename_i e x' Hx'
+    simp [toEReal] at Hx'
+    cases x <;> simp_all
+    · cases Hx'
+    · rw [ENNReal.ofReal]
+      simp_all
+      rw [NNReal.toReal] at Hx'
+      rw [Real.toEReal] at Hx'
+      simp_all
+      cases Hx'
+      simp_all
 
 lemma ofEReal_ofReal_toENNReal : ENNReal.ofEReal (Real.toEReal r) = ENNReal.ofReal r := by
   simp [ofEReal, Real.toEReal, ENNReal.ofReal]
@@ -444,7 +603,11 @@ lemma ereal_smul_eq_left (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = 
     cases H
   · repeat rw [<- EReal.coe_mul] at H
     apply EReal.coe_eq_coe_iff.mp at H
-    sorry
+    simp_all only [mul_eq_mul_left_iff]
+    cases H
+    · assumption
+    · exfalso
+      linarith
 
 lemma ereal_smul_left_le (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
   rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
