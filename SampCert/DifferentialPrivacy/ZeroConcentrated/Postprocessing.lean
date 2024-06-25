@@ -242,8 +242,10 @@ lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ �
 -- set_option pp.coercions false
 
 theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Countable U] [disc : DiscreteMeasurableSpace U] [Inhabited U]
-  {nq : List T → SLang U} {HNorm : ∀ (l : List T), HasSum (nq l) 1}
+  {nq : List T → SLang U}
   (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T}
+  (HNorm1 : HasSum (nq l₁) 1)
+  (HNorm2 : HasSum (nq l₂) 1)
   (Habs : AbsCts (nq l₁) (nq l₂))
   (Hnq2 : ∀ (u : U), nq l₁ u ≠ 0)
   (h2 : Neighbour l₁ l₂) :
@@ -258,9 +260,8 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
     apply HK
 
   -- Noised query is not ⊤
-  have nq_nts : ∀ l : List T, ∑' n : U, nq l n ≠ ⊤ := by
-    intro l
-    simp [HasSum.tsum_eq (HNorm l)]
+  have nq_nts1 : ∑' n : U, nq l₁ n ≠ ⊤ := by simp [HasSum.tsum_eq HNorm1]
+  have nq_nts2 : ∑' n : U, nq l₂ n ≠ ⊤ := by simp [HasSum.tsum_eq HNorm2]
 
   -- Rewrite as cascading expectations
   rw [RenyiDivergenceExpectation]
@@ -292,8 +293,8 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
   rename_i NotEmpty
   repeat rw [condition_to_subset]
 
-  have nq_restriction_nts (l' : List T) : ∑' (a : ↑{a | i = f a}), nq l' ↑a ≠ ⊤ := by
-    exact convergent_subset (fun y => f y) (nq_nts l')
+  have nq_restriction_nts1 : ∑' (a : ↑{a | i = f a}), nq l₁ ↑a ≠ ⊤ := by exact convergent_subset (fun y => f y) nq_nts1
+  have nq_restriction_nts2 : ∑' (a : ↑{a | i = f a}), nq l₂ ↑a ≠ ⊤ := by exact convergent_subset (fun y => f y) nq_nts2
 
   have nq_restriction_nzs (l' : List T) (Hl : ∀ u : U, nq l' u ≠ 0) : ∑' (a : ↑{a | i = f a}), nq l' ↑a ≠ 0 := by
     simp
@@ -306,10 +307,10 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
     . exact Hl z
   simp
 
-  let δF₁ := (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) (nq_restriction_nts l₁))
-  let δF₂ := (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂))
-  have δF₁_Eq : δF₁ = (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) (nq_restriction_nts l₁)) := by exact rfl
-  have δF₂_Eq : δF₂ = (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂)) := by exact rfl
+  let δF₁ := (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) nq_restriction_nts1)
+  let δF₂ := (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) nq_restriction_nts2)
+  have δF₁_Eq : δF₁ = (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) nq_restriction_nts1) := by exact rfl
+  have δF₂_Eq : δF₂ = (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) nq_restriction_nts2) := by exact rfl
 
   -- Normalized fibers are absolutely continuous
   have HAC_Fiber : AbsCts δF₁ δF₂ := by
@@ -329,13 +330,13 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
       apply Habs
       apply Hl2z
     · exfalso
-      apply nq_restriction_nts l₂
+      apply nq_restriction_nts2
       simp
       assumption
 
   have δF₂_NT (x : { x // i = f x }) : δF₂ x ≠ ⊤ := by
     rw [δF₂_Eq]
-    exact PMF.apply_ne_top ((nq l₂).δpmf f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂)) x
+    exact PMF.apply_ne_top ((nq l₂).δpmf f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts2)) x
 
   -- Normalized fibers avoid the bad case for rewriting the Jensen term
   have Hspecial (x : { x // i = f x }) : ¬(δF₁ x ≠ 0 ∧ δF₂ x = ⊤) := by
@@ -367,8 +368,8 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
   have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq l x)⁻¹ := by exact rfl
   have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq l x) = (N l)⁻¹ := by
     exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq l) ↑x))
-  have N1_nz : N l₁ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts l₁)
-  have N2_nz : N l₂ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts l₂)
+  have N1_nz : N l₁ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts1)
+  have N2_nz : N l₂ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts2)
 
   -- Unfold normalization constants in HJ
   conv at HJ =>
@@ -398,14 +399,14 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
     rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
     case G1 =>
       apply mul_ne_top
-      · exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+      · exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
       · exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
     case G2 =>
       apply inv_ne_top.mpr
       exact mul_ne_zero (Hnql1 ↑x) N2_nz
     rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
     case G1 =>
-      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
     case G2 =>
       exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
     rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
@@ -415,7 +416,7 @@ theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Count
       exact inv_ne_top.mpr N2_nz
     rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
     case G1 =>
-      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
     case G2 =>
       exact inv_ne_top.mpr (Hnql1 ↑x)
     conv =>
@@ -540,9 +541,9 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   contradiction
 
 -- Note: Relies on the symmetry of neighbours
-theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
-  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (Habs' : AbsCts (nq l₂) (nq l₁)) :
+theorem DPostPocess_pre {nq : List T → SLang U} (HNorm : ∀ l, HasSum (nq l) 1)
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (HN : Neighbour l₁ l₂)
+  (Habs : AbsCts (nq l₁) (nq l₂)) (Habs' : AbsCts (nq l₂) (nq l₁)) :
   (∑' (x : V),
       (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
         (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
@@ -551,7 +552,7 @@ theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 
   have HSup1 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by simp [Function.support]
   have HSup2 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₂ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by
     simp [Function.support]
-    exact fun a a_1 a_2 a_3 => a_2 (Habs' a a_3)
+    exact fun a _ a_2 a_3 => a_2 (Habs' a a_3)
   have HSup3 : Function.support (fun (a : U) => nq l₁ a ^ α * nq l₂ a ^ (1 - α)) ⊆ { u : U | nq l₁ u ≠ 0 } := by
     simp only [Function.support, Set.setOf_subset_setOf]
     intro a Hnz
@@ -576,20 +577,59 @@ theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 
   clear HSup3
   simp
 
-  -- Now rewrite nq and f to be reduced functions over the type {x // ¬ nq l₁ x = 0}
-
-  -- #check @PostPocess_pre_reduct T {x // ¬ nq l₁ x = 0} V ?TC1 ?TC2 ?TC3 ?TC4
-
-  sorry
-  -- First step is to reduce to the case where (nq l₁) is nonzero (reduct_1)
-
-
-  -- have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
-  -- rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
-  -- rw [<- tsum_subtype_eq_of_support_subset K2] at Hsumeq
-  -- simp at Hsumeq
-
-  -- repeat rw [<- condition_to_subset]
+  cases (Classical.em (∃ x : U, ¬ nq l₁ x = 0))
+  · rename_i x_witness
+    have HR := @PostPocess_pre_reduct T V {x // ¬ nq l₁ x = 0}
+                 _ _ _ ?TC
+                 (fun t u => nq t u) (fun x => f x) α h1
+                 l₁ l₂ ?GNorm1 ?GNorm2 ?Gac ?Gnz HN
+    case TC =>
+      apply inhabited_of_nonempty
+      exact Set.Nonempty.to_subtype x_witness
+    case GNorm1 =>
+      simp
+      rw [<- HasSum.tsum_eq (HNorm l₁)]
+      have HSup4 : Function.support (fun u => nq l₁ u) ⊆ { u | nq l₁ u ≠ 0 } := by simp [Function.support]
+      rw [<- tsum_subtype_eq_of_support_subset HSup4]
+      simp
+      apply Summable.hasSum
+      exact ENNReal.summable
+    case GNorm2 =>
+      simp
+      rw [<- HasSum.tsum_eq (HNorm l₂)]
+      have HSup4 : Function.support (fun u => nq l₂ u) ⊆ { u | nq l₁ u ≠ 0 } := by
+        simp [Function.support]
+        intro a Hk1 Hk2
+        apply Hk1
+        apply Habs'
+        apply Hk2
+      rw [<- tsum_subtype_eq_of_support_subset HSup4]
+      simp
+      apply Summable.hasSum
+      exact ENNReal.summable
+    case Gac =>
+      rw [AbsCts]
+      simp
+      intro a _ H2
+      exact Habs a (Habs' a (Habs a H2))
+    case Gnz => simp
+    simp at HR
+    apply HR
+  · rename_i x_empty
+    simp at *
+    have Hempty : IsEmpty {x // ¬nq l₁ x = 0} := by
+      exact Subtype.isEmpty_of_false fun a a_1 => a_1 (x_empty a)
+    rw [@tsum_empty _ _ _ _ _ Hempty]
+    conv =>
+      lhs
+      arg 1
+      intro
+      rw [@tsum_empty _ _ _ _ _ Hempty]
+      rw [@tsum_empty _ _ _ _ _ Hempty]
+    simp
+    intro
+    left
+    linarith
 
 theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
@@ -632,73 +672,11 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     linarith
   · exact EReal.coe_lt_top (α - 1)⁻¹
   apply elog_mono_le.mp
-  apply (DPostPocess_pre h f h1 ?Gabs ?Gabs')
-  case Gabs => exact Hac l₁ l₂ h2
-  case Gabs' =>
-    apply Hac
-    apply Neighbour_symm
-    apply h2
+  apply (DPostPocess_pre HNorm (fun a => f a) h1 h2 (Hac l₁ l₂ h2))
+  apply Hac
+  apply Neighbour_symm
+  apply h2
 
-
-
-  /-
-  -- remove the log
-  apply log_le_log _ (toReal_mono RDConvegence B)
-  apply toReal_pos _ B'
-  apply (tsum_ne_zero_iff ENNReal.summable).mpr
-  exists (f default)
-
-  rw [ENNReal.tsum_eq_add_tsum_ite default]
-  conv =>
-    left
-    right
-    rw [ENNReal.tsum_eq_add_tsum_ite default]
-  simp only [reduceIte]
-  apply mul_ne_zero
-  . by_contra CONTRA
-    rw [ENNReal.rpow_eq_zero_iff_of_pos (lt_trans zero_lt_one h1)] at CONTRA
-    simp at CONTRA
-    cases CONTRA
-    rename_i left right
-    have Y := nn l₁ default
-    contradiction
-  . by_contra CONTRA
-    rw [ENNReal.rpow_eq_zero_iff] at CONTRA
-    cases CONTRA
-    . rename_i CONTRA
-      cases CONTRA
-      rename_i left right
-      simp at left
-      cases left
-      rename_i le1 le2
-      have Y := nn l₂ default
-      contradiction
-    . rename_i CONTRA
-      cases CONTRA
-      rename_i left right
-      simp at left
-      cases left
-      . rename_i left
-        have Y := nts l₂ default
-        contradiction
-      . rename_i left
-        have Rem := conv l₂
-        have X : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) ≤ ∑' (n : U), nq l₂ n := by
-          apply ENNReal.tsum_le_tsum
-          intro a
-          split
-          . simp
-          . split
-            . simp
-            . simp
-        replace Rem := Ne.symm Rem
-        have Y := Ne.lt_top' Rem
-        have Z : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) < ⊤ := by
-          apply lt_of_le_of_lt X Y
-        rw [lt_top_iff_ne_top] at Z
-        contradiction
-  sorry
-  -/
 
 -- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
 --   (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
