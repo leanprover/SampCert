@@ -241,7 +241,8 @@ lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ �
 
 -- set_option pp.coercions false
 
-theorem PostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ (l : List T), HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
+theorem PostPocess_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Countable U] [disc : DiscreteMeasurableSpace U] [Inhabited U]
+  {nq : List T → SLang U} {HNorm : ∀ (l : List T), HasSum (nq l) 1}
   (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T}
   (Habs : AbsCts (nq l₁) (nq l₂))
   (Hnq2 : ∀ (u : U), nq l₁ u ≠ 0)
@@ -538,24 +539,57 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-
+-- Note: Relies on the symmetry of neighbours
 theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
-  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (Habs' : AbsCts (nq l₂) (nq l₁)) :
   (∑' (x : V),
       (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
         (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
   (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
-  -- First step is to reduce to the case where (nq l) is nonzero (reduct_1)
+  -- Restruct the sum to a type where nq l₁ is nonzero
+  have HSup1 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by simp [Function.support]
+  have HSup2 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₂ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by
+    simp [Function.support]
+    exact fun a a_1 a_2 a_3 => a_2 (Habs' a a_3)
+  have HSup3 : Function.support (fun (a : U) => nq l₁ a ^ α * nq l₂ a ^ (1 - α)) ⊆ { u : U | nq l₁ u ≠ 0 } := by
+    simp only [Function.support, Set.setOf_subset_setOf]
+    intro a Hnz
+    apply mul_ne_zero_iff.mp at Hnz
+    rcases Hnz with ⟨ H1 , _ ⟩
+    intro Hk
+    apply H1
+    apply (ENNReal.rpow_eq_zero_iff).mpr
+    left
+    apply And.intro
+    · apply Hk
+    · linarith
+  rw [<- tsum_subtype_eq_of_support_subset HSup3]
+  conv =>
+    lhs
+    arg 1
+    intro v
+    rw [<- tsum_subtype_eq_of_support_subset (HSup1 v)]
+    rw [<- tsum_subtype_eq_of_support_subset (HSup2 v)]
+  clear HSup1
+  clear HSup2
+  clear HSup3
+  simp
 
-  -- have K1_pre (x : V) : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { t : T | nq t ≠ 0 } := by
+  -- Now rewrite nq and f to be reduced functions over the type {x // ¬ nq l₁ x = 0}
+
+  -- #check @PostPocess_pre_reduct T {x // ¬ nq l₁ x = 0} V ?TC1 ?TC2 ?TC3 ?TC4
+
+  sorry
+  -- First step is to reduce to the case where (nq l₁) is nonzero (reduct_1)
+
 
   -- have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
   -- rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
   -- rw [<- tsum_subtype_eq_of_support_subset K2] at Hsumeq
   -- simp at Hsumeq
 
-  sorry
+  -- repeat rw [<- condition_to_subset]
 
 theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
@@ -598,8 +632,12 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     linarith
   · exact EReal.coe_lt_top (α - 1)⁻¹
   apply elog_mono_le.mp
-  apply (DPostPocess_pre h f h1 ?Gabs h2)
+  apply (DPostPocess_pre h f h1 ?Gabs ?Gabs')
   case Gabs => exact Hac l₁ l₂ h2
+  case Gabs' =>
+    apply Hac
+    apply Neighbour_symm
+    apply h2
 
 
 
