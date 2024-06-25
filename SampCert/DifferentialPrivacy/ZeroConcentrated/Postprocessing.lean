@@ -126,6 +126,17 @@ variable [Inhabited U]
 --     rw [one_le_ofReal]
 --     apply le_of_lt h
 
+def privPostProcess_AC {f : U -> V} (nq : List T → SLang U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+  rw [ACNeighbour] at *
+  unfold AbsCts at *
+  intro l₁ l₂ Hn v
+  have Hac := Hac l₁ l₂ Hn
+  simp [privPostProcess]
+  intro Hppz i fi
+  apply Hac
+  apply Hppz
+  apply fi
+
 def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal :=
   fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
@@ -217,67 +228,58 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
   apply toReal_strict_mono h1
   apply ENNReal.tsum_pos_int h1 h2
 
+
+lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ ∧ y < 0)) : x ^ y ≠ 0 := by
+  intro Hk
+  apply H
+  apply (ENNReal.rpow_eq_zero_iff).mp
+  apply Hk
+
+
+
+
+
+-- set_option pp.coercions false
+
 theorem PostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ (l : List T), HasSum (nq l) 1} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂))
-  (nn : ∀(l : List T), ∀(u : U), nq l u ≠ 0)
-  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (Habs : AbsCts (nq l₁) (nq l₂)) (h2 : Neighbour l₁ l₂) :
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T}
+  (Habs : AbsCts (nq l₁) (nq l₂))
+  (Hnq2 : ∀ (u : U), nq l₁ u ≠ 0)
+  (h2 : Neighbour l₁ l₂) :
   (∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤ (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  -- Turn everything into an explicit PMF (is this necessary? I don't think so, since we use δpmf for Renyi lemma)
-  let nq_PMF : List T -> PMF U := (fun l => SLang.toPMF (nq l) (HNorm l))
+  -- By absolute continuity, nq1 is nonzero
+  have Hnql1 : (∀ (u : U), nq l₂ u ≠ 0) := by
+    rw [AbsCts] at Habs
+    intro u HK
+    apply Hnq2
+    apply Habs
+    apply HK
 
-  have nq_PMF_coe (l : List T) (u : U) : nq l u = nq_PMF l u := by
-    rw [DFunLike.coe]
-    simp [PMF.instFunLike]
-    exact rfl
-
-  conv =>
-    congr
-    · arg 1
-      intro x
-      congr
-      · arg 1
-        arg 1
-        intro i
-        rw [nq_PMF_coe]
-      · arg 1
-        arg 1
-        intro a
-        rw [nq_PMF_coe]
-    · arg 1
-      intro x
-      rw [nq_PMF_coe]
-
-  -- Derive the assumptions from the old proof
-  have nq_nts : ∀ l : List T, ∑' n : U, nq_PMF l n ≠ ⊤ := by
+  -- Noised query is not ⊤
+  have nq_nts : ∀ l : List T, ∑' n : U, nq l n ≠ ⊤ := by
     intro l
-    exact PMF.tsum_coe_ne_top (nq_PMF l)
-
-  have nq_nt : ∀ l : List T, ∀ u : U, nq_PMF l u ≠ ⊤ := by
-    exact fun l u => PMF.apply_ne_top (nq_PMF l) u
+    simp [HasSum.tsum_eq (HNorm l)]
 
   -- Rewrite as cascading expectations
-  simp [zCDPBound, RenyiDivergence] at h
   rw [RenyiDivergenceExpectation]
   case h => apply h1
   case H =>
-    -- Unfold the other top-level continuity proof for postprocessing
-    sorry
+    simp [AbsCts]
+    intro v Hv i vEq
+    apply Habs
+    apply Hv
+    apply vEq
   simp
-  rw [RenyiDivergenceExpectation (fun x => DFunLike.coe (nq_PMF l₁) x) (fun x => nq l₂ x) h1 Habs]
-  conv =>
-    rhs
-    arg 1
-    intro x
-    rw [nq_PMF_coe]
+  rw [RenyiDivergenceExpectation (fun x => nq l₁ x) (fun x => nq l₂ x) h1 Habs]
 
   -- Shuffle the sum
-  rw [fiberwisation (fun x => (nq_PMF l₁ x / nq_PMF l₂ x) ^ α * nq_PMF l₂ x) f]
+  rw [fiberwisation (fun x => (nq l₁ x / nq l₂ x) ^ α * nq l₂ x) f]
   apply ENNReal.tsum_le_tsum
   intro i
   simp
 
-  -- Eliminate epements with probability zero
+  -- Eliminate elements with probability zero
   split
   case h.inl =>
     rename_i H
@@ -285,16 +287,14 @@ theorem PostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ (l : List T
     rw [H]
     simp
 
-  -- Part 2: Apply Jensen's inequality to the normalized fibers
+  -- Normalize each fiber into a PMF
   rename_i NotEmpty
   repeat rw [condition_to_subset]
 
-  have MasterRW : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq_PMF l ↑a ≠ ⊤ := by
-    intro l
-    exact convergent_subset (fun y => f y) (nq_nts l)
+  have nq_restriction_nts (l' : List T) : ∑' (a : ↑{a | i = f a}), nq l' ↑a ≠ ⊤ := by
+    exact convergent_subset (fun y => f y) (nq_nts l')
 
-  have MasterZero : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq_PMF l ↑a ≠ 0 := by
-    intro l
+  have nq_restriction_nzs (l' : List T) (Hl : ∀ u : U, nq l' u ≠ 0) : ∑' (a : ↑{a | i = f a}), nq l' ↑a ≠ 0 := by
     simp
     have T := witness NotEmpty
     cases T
@@ -302,132 +302,233 @@ theorem PostPocess_pre_reduct {nq : List T → SLang U} {HNorm : ∀ (l : List T
     exists z
     constructor
     . trivial
-    . apply nn l
+    . exact Hl z
   simp
 
-  have Hac : AbsCts (δpmf (nq_PMF l₁) f i (MasterZero l₁) (MasterRW l₁)) (δpmf (nq_PMF l₂) f i (MasterZero l₂) (MasterRW l₂)) := by sorry
-  rw [AbsCts] at Hac
+  let δF₁ := (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) (nq_restriction_nts l₁))
+  let δF₂ := (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂))
+  have δF₁_Eq : δF₁ = (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) (nq_restriction_nts l₁)) := by exact rfl
+  have δF₂_Eq : δF₂ = (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂)) := by exact rfl
 
-  have HJ := Renyi_Jensen_ENNReal (δpmf (nq_PMF l₁) f i (MasterZero l₁) (MasterRW l₁)) (δpmf (nq_PMF l₂) f i (MasterZero l₂) (MasterRW l₂)) h1 Hac
+  -- Normalized fibers are absolutely continuous
+  have HAC_Fiber : AbsCts δF₁ δF₂ := by
+    simp [AbsCts]
+    rw [δF₁_Eq]
+    rw [δF₂_Eq]
+    intro a b
+    repeat rw [δpmf]
+    unfold δ
+    simp
+    rw [DFunLike.coe]
+    simp [PMF.instFunLike]
+    intro H
+    cases H
+    · rename_i Hl2z
+      left
+      apply Habs
+      apply Hl2z
+    · exfalso
+      apply nq_restriction_nts l₂
+      simp
+      assumption
 
-  have δnt (x : { x // i = f x }) (l : List T) : (δpmf (nq_PMF l) f i (MasterZero l) (MasterRW l) x) ≠ ⊤ := by sorry
+  have δF₂_NT (x : { x // i = f x }) : δF₂ x ≠ ⊤ := by
+    rw [δF₂_Eq]
+    exact PMF.apply_ne_top ((nq l₂).δpmf f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts l₂)) x
 
-  have Hspecial (x : { x // i = f x }) : ¬((δpmf (nq_PMF l₁) f i (MasterZero l₁) (MasterRW l₁) x) ≠ 0 ∧ (δpmf (nq_PMF l₂) f i (MasterZero l₂) (MasterRW l₂) x) = ⊤) := by
+  -- Normalized fibers avoid the bad case for rewriting the Jensen term
+  have Hspecial (x : { x // i = f x }) : ¬(δF₁ x ≠ 0 ∧ δF₂ x = ⊤) := by
     simp
     intro _ Hcont
     exfalso
-    apply δnt
+    apply δF₂_NT
     apply Hcont
 
-  -- Cancel the δPMF on the LHS of HJ, its sum is 1
+  -- Apply Jensen's inequality to the normalized fibers
+  have HJ := Renyi_Jensen_ENNReal δF₁ δF₂ h1 HAC_Fiber
+
+  -- Cancel and simplify the LHS of HJ to 1
   conv at HJ =>
     lhs
     arg 1
     arg 1
     intro x
     rw [division_def]
-    rw [mul_mul_inv_eq_mul_cancel (Hac x) (Hspecial x)]
+    rw [mul_mul_inv_eq_mul_cancel (HAC_Fiber x) (Hspecial x)]
   conv at HJ =>
     lhs
     arg 1
     rw [PMF.tsum_coe]
   simp at HJ
 
-  -- Unfold normalization constants from δpmf
-  let N (l : List T) := (∑' (x : {n // i = f n}), nq_PMF l x)⁻¹
-  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq_PMF l x)⁻¹ := by exact rfl
-  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq_PMF l x) = (N l)⁻¹ := by
-    exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq_PMF l) ↑x))
-  have δpmf_N (l : List T) (x : { x // i = f x }) : (δpmf (nq_PMF l) f i (MasterZero l) (MasterRW l)) x = (N l) * nq_PMF l x := by
+  -- Name the normalization constants for each fiber
+  let N (l : List T) := (∑' (x : {n // i = f n}), nq l x)⁻¹
+  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq l x)⁻¹ := by exact rfl
+  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq l x) = (N l)⁻¹ := by
+    exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq l) ↑x))
+  have N1_nz : N l₁ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts l₁)
+  have N2_nz : N l₂ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts l₂)
+
+  -- Unfold normalization constants in HJ
+  conv at HJ =>
+    rhs
+    arg 1
+    intro x
+    repeat rw [DFunLike.coe]
+    repeat rw [PMF.instFunLike]
+    simp
+    rw [δF₁_Eq]
+    rw [δF₂_Eq]
     simp [δpmf]
     unfold δ
     repeat rw [DFunLike.coe]
     repeat rw [PMF.instFunLike]
     simp
-    repeat rw [DFunLike.coe]
-    repeat rw [PMF.instFunLike]
-    simp
-    rw [N_def]
+    rw [<- N_def]
+    rw [<- N_def]
+
+  -- Fold constants in goal
+  rw [N_inv]
+  rw [N_inv]
+
+  -- Pull out constants from the sum in HJ
+  have conv1  (x : { x // i = f x }) : (nq l₁ x.val * N l₁ / (nq l₂ x.val * N l₂)) ^ α = (N l₁ / N l₂) ^ α * (nq l₁ x.val / nq l₂ x.val) ^ α := by
+    simp [division_def]
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      apply mul_ne_top
+      · exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+      · exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    case G2 =>
+      apply inv_ne_top.mpr
+      exact mul_ne_zero (Hnql1 ↑x) N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+    case G2 =>
+      exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    case G2 =>
+      exact inv_ne_top.mpr N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts l₁) ↑x
+    case G2 =>
+      exact inv_ne_top.mpr (Hnql1 ↑x)
+    conv =>
+      arg 1
+      rw [mul_assoc]
+      rw [mul_comm]
+      skip
+    repeat rw [mul_assoc]
+    congr 1
+    conv =>
+      arg 2
+      arg 2
+      rw [mul_comm]
+    rw [<- mul_assoc]
+    congr 1
+    rw [ENNReal.mul_inv ?G1 ?G2]
+    case G1 =>
+      right
+      exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+    case G2 =>
+      right
+      exact N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 => exact inv_ne_top.mpr (Hnql1 ↑x)
+    case G2 => exact inv_ne_top.mpr N2_nz
     rw [mul_comm]
-    repeat rw [DFunLike.coe]
-    repeat rw [PMF.instFunLike]
   conv at HJ =>
     rhs
     arg 1
     intro x
-    simp [δpmf]
-    unfold δ
-    repeat rw [DFunLike.coe]
-    repeat rw [PMF.instFunLike]
-    simp
-    rw [<- N_def]
-    rw [<- N_def]
-
-  -- Simplify constants in goal
-  rw [N_inv]
-  rw [N_inv]
-
-  -- Simplify constants in HJ
-  have C (x : { n // i = f n }) : (((nq_PMF l₁) ↑x * N l₁ / ((nq_PMF l₂) ↑x * N l₂)) : ENNReal) =  ((N l₁ / N l₂) * ((nq_PMF l₁) ↑x / ((nq_PMF l₂) ↑x )) : ENNReal) := by sorry
-  conv at HJ =>
-    rhs
-    arg 1
-    intro x
-    arg 1
-    arg 1
-    rw [C]
-  clear C
-
-  have Hα' : 0 <= α := by
-    linarith
-
-  conv at HJ =>
-    rhs
-    arg 1
-    intro x
-    arg 1
-    rw [ENNReal.mul_rpow_of_nonneg _ _ Hα']
-  conv at HJ =>
-    rhs
-    arg 1
-    intro x
+    rw [conv1 x]
     rw [mul_assoc]
     arg 2
-    rw [<- mul_assoc]
     rw [mul_comm]
+    rw [mul_assoc]
+    rw [mul_comm]
+    rw [mul_assoc]
+  clear conv1
   rw [ENNReal.tsum_mul_left] at HJ
   rw [ENNReal.tsum_mul_left] at HJ
-
-  -- Apply transitivity with HJ
   rw [<- mul_assoc] at HJ
-  rw [mul_comm] at HJ
 
+  -- Move constants to the left-hand side of HJ
   -- Super haunted bug: When I apply this as normal to HJ (with placeholders)
   -- Lean it lights up all of my "have" and "let" statements because it \"doesn't
   -- know how to synthesize\" a placeholder. The placeholder it points me to is in
   -- Pure/Postprocessing, where the same lemma is also applied with placeholders.
-  --
-  -- So I can't use placeholders here, and I have to write out the terms explicitly
   have W :=
     @ENNReal.div_le_iff_le_mul
       1
       ((N l₁ / N l₂) ^ α * N l₂)
-      (∑' (i_1 : { x // i = f x }), ((nq_PMF l₁) ↑i_1 / (nq_PMF l₂) ↑i_1) ^ α * (nq_PMF l₂) ↑i_1)
+      (∑' (i_1 : { x // i = f x }), (nq l₁ i_1.val / nq l₂ i_1.val) ^ α * nq l₂ i_1.val)
       ?G1
       ?G2
-  case G1 => sorry -- Probably right?
-  case G2 => sorry -- left
+  case G1 =>
+    left
+    apply mul_ne_zero_iff.mpr
+    apply And.intro
+    · apply (rpow_nonzero (N l₁ / N l₂) α)
+      intro Hk
+      rcases Hk with ⟨ H1 , _ ⟩ | ⟨ _ , H2 ⟩
+      · have Hk' : 0 < N l₁ / N l₂ := by
+          apply ENNReal.div_pos_iff.mpr
+          apply And.intro
+          · exact N1_nz
+          · exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+        rw [H1] at Hk'
+        simp at Hk'
+      · linarith
+    · apply N2_nz
+  case G2 =>
+    left
+    apply mul_ne_top
+    · apply rpow_ne_top_of_nonneg
+      · linarith
+      · intro Hk
+        have Hk' : (N l₁ / N l₂ < ⊤) := by
+          apply ENNReal.div_lt_top
+          · exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+          · exact N2_nz
+        rw [Hk] at Hk'
+        simp at Hk'
+    · exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+  rw [mul_comm] at HJ
   apply W.mpr at HJ
   clear W
 
+  -- Apply transitivity
   apply (le_trans ?G3 HJ)
   clear HJ
 
-  -- These are equal
+  -- These terms are equal
   apply Eq.le
   repeat rw [division_def]
   simp
-  sorry
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 =>
+    right
+    exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+  case G2 =>
+    right
+    exact N2_nz
+  congr
+  rw [<- ENNReal.inv_rpow]
+  congr
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 =>
+    left
+    exact N1_nz
+  case G2 =>
+    left
+    exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+  simp
+
 
 theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h : ∀ x : T, f x ≠ 0) :
   ∑' x : T, f x ≠ 0 := by
@@ -447,8 +548,7 @@ theorem DPostPocess_pre {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 
   (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
   -- First step is to reduce to the case where (nq l) is nonzero (reduct_1)
 
-
-  -- have K1 : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
+  -- have K1_pre (x : V) : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { t : T | nq t ≠ 0 } := by
 
   -- have K2 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | q t ≠ 0 } := by simp [Function.support]
   -- rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
@@ -576,19 +676,6 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
 --   -- have B := Ne.lt_top' nt
 --   -- exact lt_of_le_of_lt A B
 
-
-
-
-def privPostProcess_AC {f : U -> V} (nq : List T → SLang U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
-  rw [ACNeighbour] at *
-  unfold AbsCts at *
-  intro l₁ l₂ Hn v
-  have Hac := Hac l₁ l₂ Hn
-  simp [privPostProcess]
-  intro Hppz i fi
-  apply Hac
-  apply Hppz
-  apply fi
 
 /--
 Postprocessing preserves zCDP
