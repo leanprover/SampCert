@@ -241,22 +241,22 @@ lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := b
   apply ofReal_le_ofReal
   assumption
 
-
-lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
-  all_goals case_EReal_isENNReal w
-  all_goals case_EReal_isENNReal z
-  · exfalso
-    rename_i Hw' _
-    -- 0 <= w < 0
-    sorry
-  · exfalso
-    rename_i r Hw' Hr
-    -- 0 <= w < 0
-    sorry
-  · exfalso
-    rename_i r Hr Hz'
-    -- 0 <= w <= z < 0
-    sorry
+-- True, but unused
+-- lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
+--   all_goals case_EReal_isENNReal w
+--   all_goals case_EReal_isENNReal z
+--   · exfalso
+--     rename_i Hw' _
+--     -- 0 <= w < 0
+--     sorry
+--   · exfalso
+--     rename_i r Hw' Hr
+--     -- 0 <= w < 0
+--     sorry
+--   · exfalso
+--     rename_i r Hr Hz'
+--     -- 0 <= w <= z < 0
+--     sorry
 
 
 
@@ -506,27 +506,115 @@ lemma elog_injective {x y : ENNReal} : elog x = elog y -> x = y := by
   all_goals simp_all
 
 
+lemma eexp_zero_iff {w : EReal} : eexp w = 0 <-> w = ⊥ := by
+  apply Iff.intro
+  · intro H
+    all_goals case_EReal_isReal w
+    rename_i r _
+    have Hcont := exp_pos r
+    linarith
+  · simp_all
+
+
+lemma elog_bot_iff {x : ENNReal} : elog x = ⊥ <-> x = 0 := by
+  apply Iff.intro
+  · intro H
+    all_goals case_ENNReal_isReal_zero x
+  · simp_all
+
+
 
 lemma eexp_mono_lt {w z : EReal} : (w < z) <-> eexp w < eexp z := by
-  sorry
+  apply Iff.intro
+  · intro H
+    all_goals case_EReal_isReal w
+    · apply bot_lt_iff_ne_bot.mpr
+      apply bot_lt_iff_ne_bot.mp at H
+      intro HK
+      apply H
+      apply eexp_zero_iff.mp
+      simp_all
+    all_goals case_EReal_isReal z
+    apply (ENNReal.ofReal_lt_ofReal_iff_of_nonneg ?G1).mpr
+    case G1 => apply exp_nonneg
+    exact exp_lt_exp.mpr H
+  · intro H
+    all_goals case_EReal_isReal w
+    · apply bot_lt_iff_ne_bot.mpr
+      intro HK
+      have H'' : 0 ≠ eexp z := by exact ne_of_lt H
+      apply H''
+      symm
+      apply eexp_zero_iff.mpr
+      assumption
+    all_goals case_EReal_isReal z
+    rename_i a _ _ _
+    have C1 : OfNat.ofNat 0 ≤ rexp a := by exact exp_nonneg a
+    apply (ENNReal.ofReal_lt_ofReal_iff_of_nonneg C1).mp at H
+    exact exp_lt_exp.mp H
 
-lemma eexp_mono_le {w z : EReal} : (w <= z) <-> eexp w <= eexp z := by sorry
-
-lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by sorry
-
-lemma elog_mono_le {x y : ENNReal} : (x <= y) <-> elog x <= elog y := by sorry
-
--- iff for log positive
-
--- Special values
-
--- Need to write compat lemmas for ofEReal
--- Not sure which ones we'll need but
 
 
+lemma eexp_mono_le {w z : EReal} : (w <= z) <-> eexp w <= eexp z := by
+  apply Iff.intro
+  · intro H
+    cases (LE.le.lt_or_eq H)
+    · apply LT.lt.le
+      apply eexp_mono_lt.mp
+      assumption
+    · simp_all
+  · intro H
+    cases (LE.le.lt_or_eq H)
+    · apply LT.lt.le
+      apply eexp_mono_lt.mpr
+      assumption
+    · apply Eq.le
+      apply eexp_injective
+      assumption
 
-set_option pp.coercions false
 
+
+lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by
+  apply Iff.intro
+  · intro H
+    all_goals case_ENNReal_isReal_zero x
+    · apply Ne.bot_lt'
+      intro HK
+      symm at HK
+      apply elog_bot_iff.mp at HK
+      simp [HK] at H
+    all_goals case_ENNReal_isReal_zero y
+    apply log_lt_log
+    · assumption
+    · assumption
+  · intro H
+    all_goals case_ENNReal_isReal_zero x
+    · apply Ne.bot_lt'
+      intro HK
+      symm at HK
+      simp [HK] at H
+    all_goals case_ENNReal_isReal_zero y
+    apply (Real.log_lt_log_iff ?G1 ?G2).mp <;> assumption
+
+
+
+
+lemma elog_mono_le {x y : ENNReal} : (x <= y) <-> elog x <= elog y := by
+  apply Iff.intro
+  · intro H
+    cases (LE.le.lt_or_eq H)
+    · apply LT.lt.le
+      apply elog_mono_lt.mp
+      assumption
+    · simp_all
+  · intro H
+    cases (LE.le.lt_or_eq H)
+    · apply LT.lt.le
+      apply elog_mono_lt.mpr
+      assumption
+    · apply Eq.le
+      apply elog_injective
+      assumption
 
 
 end elog_eexp
@@ -539,8 +627,6 @@ section misc
 
 
 -- MARKUSDE: cleanup
--- ENNReal inequalities
--- These are needed to prove the extensded version of Jensen's inequality
 lemma mul_mul_inv_le_mul_cancel {x y : ENNReal} : (x * y⁻¹) * y ≤ x := by
   cases x
   · simp_all
