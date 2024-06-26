@@ -1160,10 +1160,11 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
   · intro H
     apply (RenyiDivergence_def_eq_0_iff p q Hα Hac).mp
     symm
-    apply (ofEReal_nonneg_zero ?G1).mpr
-    case G1 =>
-      exact RenyiDivergence_def_nonneg p q Hac Hα
-    exact id (Eq.symm H)
+    rw [RenyiDivergence] at H
+    have H' := RenyiDivergence_def_nonneg p q Hac Hα
+    refine (ofEReal_nonneg_eq_iff ?mpr.Hw H').mpr ?mpr.a
+    · simp
+    simp  [H]
 
 -- Unused
 /-
