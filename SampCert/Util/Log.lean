@@ -214,6 +214,12 @@ lemma ofEReal_ofReal_toENNReal : ENNReal.ofEReal (Real.toEReal r) = ENNReal.ofRe
   simp [ofEReal, Real.toEReal, ENNReal.ofReal]
 
 
+lemma ofReal_injective_nonneg {r s : ℝ} (HR : 0 ≤ r) (HS : 0 ≤ s) (H : ENNReal.ofReal r = ENNReal.ofReal s) : r = s := by
+  apply (Real.toNNReal_eq_toNNReal_iff HR HS).mp
+  simp [ENNReal.ofReal] at H
+  assumption
+
+
 lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := by
   all_goals case_EReal_isReal w
   all_goals case_EReal_isReal z
@@ -222,24 +228,21 @@ lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := b
 
 
 lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
-    -- Reduce to comparison between ENNReals?
-
-    -- case_EReal_isENNReal w
-    -- · -- w < 0 => ofEReal w = 0
-    --   rw [(ofEReal_eq_zero_iff w).mp ?G0] at Hle
-    --   case G0 => exact le_of_lt Hzlz
-    --   skip
-    --   sorry
-    -- rename_i w' Hw'
-    -- case_EReal_isENNReal z
-    -- · rename_i Hzlz
-    --   -- z < 0 => ofEReal z = 0
-    --   rw [(ofEReal_eq_zero_iff z).mp ?G1] at Hle
-    --   case G1 => exact le_of_lt Hzlz
-    --   skip
-    --   sorry
-    -- rename_i z' Hz'
+  all_goals case_EReal_isENNReal w
+  all_goals case_EReal_isENNReal z
+  · exfalso
+    rename_i Hw' _
+    -- 0 <= w < 0
     sorry
+  · exfalso
+    rename_i r Hw' Hr
+    -- 0 <= w < 0
+    sorry
+  · exfalso
+    rename_i r Hr Hz'
+    -- 0 <= w <= z < 0
+    sorry
+
 
 
  @[simp]
@@ -252,39 +255,34 @@ lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w 
    rw [ofReal_add Hw Hz]
 
 
+
 @[simp]
 lemma ofEReal_mul_nonneg (Hw : 0 ≤ w) (Hz : 0 ≤ z) : ofEReal (w * z) = ofEReal w * ofEReal z := by
   all_goals case_EReal_isReal w
   all_goals case_EReal_isReal z
-  · rename_i r Hr Hz'
+  · rename_i r _ _
     case_nonneg_zero Hz
     rename_i Hr_nz
     simp [top_mul_coe_of_pos Hr_nz]
   · rename_i r Hr Hz'
     case_nonneg_zero Hw
     rename_i Hr_nz
-    -- simp [top_mul_coe_of_pos Hr_nz]
-    sorry
-  · rename_i r₁ r₂ Hr₁ Hr₂
-    rw [← EReal.coe_mul]
+    simp [coe_mul_top_of_pos Hr_nz]
+  · rw [← EReal.coe_mul]
     rw [ofEReal_ofReal_toENNReal]
     rw [ofReal_mul' Hz]
 
--- ???
+
+
 lemma ofEReal_nonneg_scal_l {r : ℝ} {w : EReal} (H1 : 0 < r) (H2 : 0 ≤ r * w) : 0 ≤ w := by
-  sorry
--- lemma ofEReal_nonneg_scal_l (H1 : 0 < r) (H2 : 0 ≤ r * w) : 0 ≤ w := by
---   rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩)
---   · simp_all
---     rw [EReal.mul_bot_of_pos] at H2
---     all_goals simp_all
---   · simp_all
---   · simp_all
---     sorry
---
---
-
-
+  all_goals case_EReal_isReal w
+  · exfalso
+    rw [EReal.mul_bot_of_pos (EReal.coe_pos.mpr H1)] at H2
+    simp at H2
+  · rename_i w' Hw'
+    rw [← EReal.coe_mul] at H2
+    apply EReal.coe_nonneg.mp at H2
+    exact nonneg_of_mul_nonneg_right H2 H1
 
 end ofEReal
 
