@@ -667,10 +667,9 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     simp
   apply ofEReal_le_mono
   apply ereal_smul_left_le
-  · apply EReal.coe_pos.mpr
-    apply inv_pos_of_pos
+  · apply EReal.coe_nonneg.mpr
+    apply inv_nonneg_of_nonneg
     linarith
-  · exact EReal.coe_lt_top (α - 1)⁻¹
   apply elog_mono_le.mp
   apply (DPostPocess_pre HNorm (fun a => f a) h1 h2 (Hac l₁ l₂ h2))
   apply Hac

@@ -501,7 +501,7 @@ lemma elog_injective {x y : ENNReal} : elog x = elog y -> x = y := by
   all_goals case_ENNReal_isReal_zero y
   rename_i r₁ Hr₁ HPr₁ r₂ Hr₂ HPr₂
   intro Hlog_eq
-  suffices r₁ = r₁ by simp
+  suffices r₁ = r₂ by simp [this]
   apply Real.log_injOn_pos
   all_goals simp_all
 
@@ -689,7 +689,7 @@ lemma ereal_smul_eq_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
   sorry
 
   -- Hr2 should not be needed?
-lemma ereal_smul_left_le {s : EReal} {w z : EReal} (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
+lemma ereal_smul_left_le {s : EReal} {w z : EReal} (Hr1 : 0 ≤ s) /- (Hr2 : s < ⊤) -/ (H : w ≤ z) : s * w ≤ s * z := by
   sorry
   -- rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
   -- rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩)
