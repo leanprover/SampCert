@@ -656,62 +656,10 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
   apply le_of_mul_le_mul_left H
   exact EReal.coe_pos.mp Hr1
 
--- MARKUSDE: Cleanup
 lemma ereal_smul_eq_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = s * z) : w = z := by
-  -- rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
-  -- rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩) <;>
-  -- rcases (EReal_cases s) with Hs' | (Hs' | ⟨ s', Hs' ⟩)
-  -- all_goals rw [Hw', Hz']
-  -- all_goals simp_all
-  -- · rw [mul_top_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   rw [mul_bot_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   cases H
-  -- · rw [mul_bot_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   cases H
-  -- · rw [mul_top_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   rw [mul_bot_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   cases H
-  -- · rw [mul_top_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   cases H
-  -- · rw [mul_bot_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   repeat rw [<- EReal.coe_mul] at H
-  --   cases H
-  -- · rw [mul_top_of_pos (by exact EReal.coe_pos.mpr Hr1)] at H
-  --   repeat rw [<- EReal.coe_mul] at H
-  --   cases H
-  -- · repeat rw [<- EReal.coe_mul] at H
-  --   apply EReal.coe_eq_coe_iff.mp at H
-  --   simp_all only [mul_eq_mul_left_iff]
-  --   cases H
-  --   · assumption
-  --   · exfalso
-  --     linarith
-  sorry
-
-  -- Hr2 should not be needed?
-lemma ereal_smul_left_le {s : EReal} {w z : EReal} (Hr1 : 0 ≤ s) /- (Hr2 : s < ⊤) -/ (H : w ≤ z) : s * w ≤ s * z := by
-  sorry
-  -- rcases (EReal_cases w) with Hw' | (Hw' | ⟨ w', Hw' ⟩) <;>
-  -- rcases (EReal_cases z) with Hz' | (Hz' | ⟨ z', Hz' ⟩)
-  -- all_goals rw [Hw', Hz']
-  -- all_goals simp_all
-  -- · rw [mul_top_of_pos Hr1]
-  --   exact OrderTop.le_top (s * ⊥)
-  -- · rw [mul_bot_of_pos Hr1]
-  --   exact OrderBot.bot_le (s * z'.toEReal)
-  -- · rw [mul_top_of_pos Hr1]
-  --   exact OrderTop.le_top (s * w'.toEReal)
-  -- rcases (EReal_cases s) with Hs' | (Hs' | ⟨ s', Hs' ⟩)
-  -- all_goals simp_all
-  -- repeat rw [← EReal.coe_mul]
-  -- apply EReal.coe_le_coe_iff.mpr
-  -- exact (mul_le_mul_iff_of_pos_left Hr1).mpr H
-
-lemma ENNReal_toReal_partial_inj {a b : ENNReal} (H : a.toReal = b.toReal) (H1 : a ≠ ⊤) (H2 : b ≠ ⊤) : a = b := by
-  sorry
-  -- rcases a with Ha' | ⟨ a' | Ha' ⟩ <;>
-  -- rcases b with Hb' | ⟨ b' | Hb' ⟩
-  -- all_goals simp_all
+  apply LE.le.antisymm
+  · apply ereal_smul_le_left s Hr1 Hr2 (le_of_eq H)
+  · apply ereal_smul_le_left s Hr1 Hr2 (le_of_eq (id (Eq.symm H)))
 
 end misc
 

@@ -666,8 +666,9 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     repeat rw [PMF.instFunLike]
     simp
   apply ofEReal_le_mono
-  apply ereal_smul_left_le
-  · apply EReal.coe_nonneg.mpr
+  apply mul_le_mul_of_nonneg_left ?G1 ?G2
+  case G2 =>
+    apply EReal.coe_nonneg.mpr
     apply inv_nonneg_of_nonneg
     linarith
   apply elog_mono_le.mp

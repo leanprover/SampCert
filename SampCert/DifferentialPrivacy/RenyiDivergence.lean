@@ -813,11 +813,9 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
           rw [ENNReal.mul_inv_cancel ?G1 ?G2]
           case G1 => apply Hq
           case G2 => apply PMF.apply_ne_top
-          apply ENNReal_toReal_partial_inj at Hext'
-          rw [<- division_def]
+          apply (toReal_eq_toReal_iff' (HRJf_nt x) ?G3).mp
+          case G3 => simp
           apply Hext'
-          · apply HRJf_nt
-          · simp
         · intro
           apply PMF.apply_ne_top
 
@@ -1164,7 +1162,7 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     have H' := RenyiDivergence_def_nonneg p q Hac Hα
     refine (ofEReal_nonneg_eq_iff ?mpr.Hw H').mpr ?mpr.a
     · simp
-    simp  [H]
+    simp [H]
 
 -- Unused
 /-
