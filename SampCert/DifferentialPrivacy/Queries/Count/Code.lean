@@ -19,12 +19,12 @@ variable {T : Type}
 variable [dps : DPSystem T]
 
 /--
-Query to count the size of the input
+Query to count the size of the input list.
 -/
 def exactCount (l : List T) : ℤ := List.length l
 
 /--
-Noised counting mechanism from the DP system
+A noised counting mechanism.
 -/
 def privNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : PMF ℤ := do
   dps.noise exactCount 1 ε₁ ε₂ l

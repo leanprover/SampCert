@@ -11,7 +11,7 @@ import Init.Data.Int.Order
 /-!
 # ``privNoisedBoundedSum`` Implementation
 
-This file defines a differentially private noising of a bounded sum query.
+This file defines a differentially private bounded sum query.
 -/
 
 noncomputable section
