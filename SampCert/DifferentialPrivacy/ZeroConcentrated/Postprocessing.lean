@@ -541,7 +541,7 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   contradiction
 
 -- Note: Relies on the symmetry of neighbours
-theorem DPostPocess_pre {nq : List T → SLang U} (HNorm : ∀ l, HasSum (nq l) 1)
+theorem DPostPocess_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq l) 1)
   (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (HN : Neighbour l₁ l₂)
   (Habs : AbsCts (nq l₁) (nq l₂)) (Habs' : AbsCts (nq l₂) (nq l₁)) :
   (∑' (x : V),
@@ -631,6 +631,8 @@ theorem DPostPocess_pre {nq : List T → SLang U} (HNorm : ∀ l, HasSum (nq l) 
     left
     linarith
 
+
+
 theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
   (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
   zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
@@ -672,11 +674,15 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
     apply inv_nonneg_of_nonneg
     linarith
   apply elog_mono_le.mp
-  sorry
-  -- apply (DPostPocess_pre (fun a => f a) h1 h2 (Hac l₁ l₂ h2))
-  -- apply Hac
-  -- apply Neighbour_symm
-  -- apply h2
+  simp [PMF.bind, PMF.pure]
+  simp [PMF.instFunLike]
+  apply DPostPocess_pre
+  · exact fun l => PMF.hasSum_coe_one (nq l)
+  · exact h1
+  · exact h2
+  · exact Hac l₁ l₂ h2
+  · apply Hac l₂ l₁
+    exact Neighbour_symm l₁ l₂ h2
 
 
 -- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
