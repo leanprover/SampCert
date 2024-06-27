@@ -16,7 +16,7 @@ variable { T : Type }
 noncomputable instance PureDPSystem : DPSystem T where
   prop := PureDP
   noise := privNoisedQueryPure
-  noise_prop := NoisedQuery_PureDP
+  noise_prop := privNoisedQueryPure_DP
   compose_prop := privCompose_DP
   postprocess_prop_f := Function.Surjective
   postprocess_prop := PureDP_PostProcess
