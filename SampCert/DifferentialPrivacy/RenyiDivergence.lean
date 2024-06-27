@@ -13,20 +13,29 @@ import Mathlib.Analysis.Convex.Integral
 
 /-! Renyi Divergence
 
-This file defines the Renyi divergence and equations for evaluating its expectation.
+This file defines the Renyi divergence, and equations for evaluating it.
 -/
 
 
 open Real ENNReal PMF Nat Int MeasureTheory Measure PMF
 open Classical
 
+
 /--
-Simplified consequence of absolute continuity (remove me?)
+Simplified consequence of absolute continuity between PMF's.
 -/
 def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
 
+
 /--
-Specialize the definitation of AbsolutelyContinuous when singletons are measurable
+All PMF's are absolutely continuous with respect to themselves.
+-/
+lemma AbsCts_refl (q : PMF T) : AbsCts q q  := by
+  rw [AbsCts]
+  simp
+
+/--
+Obtain simplified absolute continuity from the measure-theoretic version of absolute continuity in a discrete space.
 -/
 lemma PMF_AbsCts [MeasurableSpace T] [MeasurableSingletonClass T] (p q : PMF T) (H : AbsolutelyContinuous (PMF.toMeasure p) (PMF.toMeasure q)) : AbsCts p q := by
   rw [AbsolutelyContinuous] at H
@@ -63,7 +72,7 @@ noncomputable def RenyiDivergence_def (p q : PMF T) (α : ℝ) : EReal :=
   (α - 1)⁻¹  * (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))
 
 /--
-Equation for the Renyi divergence series in terms of the Renyi Divergence
+Rearrange the definition of ``RenyiDivergence_def`` to obtain an equation for the inner series.
 -/
 lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
   eexp (((α - 1)) * RenyiDivergence_def p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)) := by
@@ -82,7 +91,7 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
 
 
 /--
-Closed form of the series in the definition of the Renyi divergence.
+Renyi Divergence series written as a conditional expectation.
 -/
 theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^α  * (q x) := by
@@ -146,7 +155,7 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
 
 
 /-!
-## Jensen's inequality
+## Jensen's inequalitya
 -/
 section Jensen
 
@@ -185,22 +194,19 @@ lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure 
   . rw [← hasFiniteIntegral_norm_iff]
     simp [X]
 
+-- MARKUSDE: This lemma is derivable from ``Renyi_Jensen_strict_real``, however it requires a reduction
+-- to first eliminate all elements (t : T) where q t = 0 from the series.
 /--
-Jensen's ineuquality for the exponential applied to Renyi's sum
+Jensen's inequality for the exponential applied to the real-valued function ``(⬝)^α``.
 -/
 theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
   conv =>
-    left
-    left
-    right
-    intro x
+    enter [1, 1, 1, x]
     rw [mul_comm]
     rw [← smul_eq_mul]
   conv =>
-    right
-    right
-    intro x
+    enter [2, 1, x]
     rw [mul_comm]
     rw [← smul_eq_mul]
   rw [← PMF.integral_eq_tsum]
@@ -261,23 +267,16 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
 
 
 /--
-Jensen's strict ineuquality for the exponential applied to Renyi's sum
+Strict version of Jensen't inequality applied to the function ``(⬝)^α``.
 -/
 theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) (HT_nz : ∀ t : T, q t ≠ 0):
   ((∑' x : T, (f x) * (q x).toReal)) ^ α < (∑' x : T, (f x) ^ α * (q x).toReal) ∨ (∀ x : T, f x = ∑' (x : T), (q x).toReal * f x) := by
   conv =>
-    left
-    left
-    left
-    right
-    intro x
+    enter [1, 1, 1, 1, x]
     rw [mul_comm]
     rw [← smul_eq_mul]
   conv =>
-    left
-    right
-    right
-    intro x
+    enter [1, 2, 1, x]
     rw [mul_comm]
     rw [← smul_eq_mul]
   rw [← PMF.integral_eq_tsum]
@@ -396,15 +395,17 @@ theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 <
     rw [one_le_ofReal]
     apply le_of_lt h
 
-
-
-
 end Jensen
 
--- MARKUSDE: move
-noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => ((p z / q z)).toReal)
 
--- Except for one case, we can rewrite the ENNReal-valued inequality into the form Jenen's inequality expects.
+/--
+Quotient from the Real-valued Jenen's inequality applied to the series in the Renyi divergence.
+-/
+noncomputable def Renyi_Jensen_f (p q : PMF T) : T -> ℝ := (fun z => (p z / q z).toReal)
+
+/--
+Summand from the Renyi divergence equals a real-valued summand, except in a special case.
+-/
 lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)) (x : T) :
   (p x / q x)^α  * (q x) = ENNReal.ofReal (((Renyi_Jensen_f p q) x)^α * (q x).toReal) := by
   simp [Renyi_Jensen_f]
@@ -433,9 +434,10 @@ lemma Renyi_Jensen_rw (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hs
   · exact apply_ne_top q x
 
 
--- FIXME: might be able to simplify this argument with the new rewrite lemmas
+-- MARKUSDE: I think it might be possible to use `Renyi_Jensen_strict_real` in this proof instead,
+-- this would eliminate the need for `Renyi_Jensen_real`.
 /--
-Jensen's inquality applied to ENNReals, in the case that q is nonzero
+Jensen's inquality applied to ENNReals, in the case that q is nonzero.
 -/
 lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0) :
@@ -525,21 +527,14 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
                 · simp
                   apply le_of_not_ge Hα
                 · conv =>
-                    lhs
-                    arg 1
-                    intro a
-                    arg 1
-                    arg 1
+                    enter [1, 1, a, 1, 1]
                     rw [<- Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
                     rw [Renyi_Jensen_f]
                     rw [<- ENNReal.ofReal.eq_1]
                     rw [ENNReal.ofReal_toReal (HRJf_nt a)]
                     rfl
                   conv =>
-                    lhs
-                    arg 1
-                    intro a
-                    rhs
+                    enter [1, 1, a, 2]
                     simp [toMeasure]
                     simp [PMF.toOuterMeasure]
                     rw [Hsum_indicator]
@@ -565,16 +560,11 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
           rw [<- ENNReal.toReal_mul]
         rw [<- ENNReal.tsum_toReal_eq]
         · rw [ENNReal.ofReal_toReal]
-          -- Could do another case at the top if not derivable
-          -- Want to bound above my ∑'
           conv =>
-            arg 1
-            arg 1
-            intro a
+            enter [1, 1, a]
             rw [PMF_mul_mul_inv_eq_mul_cancel p q H]
           exact tsum_coe_ne_top p
-        · -- Bound above by p a
-          intro a
+        · intro a
           conv =>
             arg 1
             rw [PMF_mul_mul_inv_eq_mul_cancel p q H]
@@ -617,10 +607,10 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
     exact OrderTop.le_top ((∑' (x : T), p x / q x * q x) ^ α)
 
 
-
--- Lift the properties of Renyi_Jensen_strict_real to ENNReal
--- q is still nonnegative
-lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
+/--
+On types where q is nonzero, Jensen's inequality for the Renyi divergence sum is tight only for equal distributions.
+-/
+lemma Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0)
   (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
   (p = q) := by
@@ -648,13 +638,10 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
           intro x
           rw [Renyi_Jensen_f]
         conv =>
-          arg 1
-          intro x
-          lhs
+          enter [1, x, 1]
           rw [ENNReal.toReal_rpow]
         conv =>
-          arg 1
-          intro x
+          enter [1, x]
           rw [<- ENNReal.toReal_mul]
         apply ENNReal.summable_toReal
         assumption
@@ -707,21 +694,14 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
             · simp
               apply le_of_not_ge Hα
             · conv =>
-                lhs
-                arg 1
-                intro a
-                arg 1
-                arg 1
+                enter [1, 1, a, 1, 1]
                 rw [<- Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
                 rw [Renyi_Jensen_f]
                 rw [<- ENNReal.ofReal.eq_1]
                 rw [ENNReal.ofReal_toReal (HRJf_nt a)]
                 rfl
               conv =>
-                lhs
-                arg 1
-                intro a
-                rhs
+                enter [1, 1, a, 2]
                 simp [toMeasure]
                 simp [PMF.toOuterMeasure]
                 rw [Hsum_indicator]
@@ -735,10 +715,7 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
           intro
           apply PMF.apply_ne_top
         conv at Hk =>
-          lhs
-          arg 1
-          arg 1
-          intro z
+          enter [1, 1, 1, z]
           rw [Renyi_Jensen_f]
           rw [<- ENNReal.toReal_mul]
           arg 1
@@ -749,10 +726,7 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
 
         -- Convert the LHS of Hsumeq to the ℝ-valued summand, and then contradict
         conv at Hsumeq =>
-          lhs
-          arg 1
-          arg 1
-          intro x
+          enter [1, 1, 1, x]
           rw [division_def]
           rw [mul_assoc]
           rw [ENNReal.inv_mul_cancel]
@@ -857,15 +831,13 @@ lemma  Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingl
     simp at Hsumeq
 
 /--
-Restriction of the PMF f to the support of q
+Restriction of the PMF f to the support of q.
 -/
 def reducedPMF_def (f q : PMF T) (x : { t : T // ¬q t = 0 }) : ENNReal := f x.val
 
--- Should be provable
-lemma AbsCts_refl (q : PMF T) : AbsCts q q  := by
-  rw [AbsCts]
-  simp
-
+/--
+Restricted PMF has sum  1
+-/
 lemma reducedPMF_norm_acts (p q : PMF T) (H : AbsCts p q) : HasSum (reducedPMF_def p q) 1 := by
   have H1 : Summable (reducedPMF_def p q) := by exact ENNReal.summable
   have H2 := Summable.hasSum H1
@@ -888,9 +860,15 @@ lemma reducedPMF_norm_acts (p q : PMF T) (H : AbsCts p q) : HasSum (reducedPMF_d
   rw [<- H3]
   apply H2
 
+/--
+Restriction of the PMF f to the support of q
+-/
 noncomputable def reducedPMF {p q : PMF T} (H : AbsCts p q): PMF { t : T // ¬q t = 0 } :=
   ⟨ reducedPMF_def p q, reducedPMF_norm_acts p q H ⟩
 
+/--
+`reducedPMF` is nonzero everywhere
+-/
 lemma reducedPMF_pos {q : PMF T} (H : AbsCts q q) (a : T) (Ha : ¬q a = 0): (reducedPMF H) ⟨a, Ha⟩ ≠ 0 := by
   simp
   rw [reducedPMF]
@@ -901,7 +879,7 @@ lemma reducedPMF_pos {q : PMF T} (H : AbsCts q q) (a : T) (Ha : ¬q a = 0): (red
   apply Ha
 
 /--
-Jensen's inquality applied to ENNReals
+Jensen's inquality for the Renyi divergence sum between absolutely continuous PMFs
 -/
 theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) {α : ℝ} (h : 1 < α) (Hac : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
@@ -918,9 +896,7 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
   have B2 (x : { x // ¬q x = 0 }) : (p ↑x / q ↑x)^α * q ↑x = (reducedPMF Hac x / reducedPMF Hq x)^α * reducedPMF Hq x := by congr
   conv =>
     congr
-    · arg 1
-      arg 1
-      intro x
+    · enter [1, 1, x]
       rw [B1 x]
     · arg 1
       intro x
@@ -942,6 +918,9 @@ theorem Renyi_Jensen_ENNReal [MeasurableSpace T] [MeasurableSingletonClass T] [C
     rcases t with ⟨ a , Ha ⟩
     apply (reducedPMF_pos Hq a Ha)
 
+/--
+Converse of Jensen's inquality for the Renyi divergence sum between absolutely continuous PMFs
+-/
 lemma  Renyi_Jensen_ENNReal_converse [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q)
   (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
@@ -1002,17 +981,12 @@ lemma  Renyi_Jensen_ENNReal_converse [MeasurableSpace T] [MeasurableSingletonCla
     simp at Hreduced'
     assumption
 
-
--- FIXME (or not ?)
 /--
-The Renyi divergence is monotonic in the value of its sum.
--/
-lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp ((α - 1) * x)) ≤ (Real.exp ((α - 1) * y)) -> (x ≤ y) := by
-  intro H
-  apply _root_.le_of_mul_le_mul_left
-  · exact exp_le_exp.mp H
-  · linarith
+The ``EReal``-valued Renyi divergence is nonnegative.
 
+Use this lemma to perform rewrites through the ``ENNReal.ofEReal`` in the
+``ENNReal``-valued ``RenyiDivergence``
+-/
 theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T] (p q : PMF T) (Hpq : AbsCts p q) {α : ℝ} (Hα : 1 < α) :
   (0 ≤ RenyiDivergence_def p q α) := by
   have H1 : eexp (((α - 1)) * 0)  ≤ eexp ((α - 1) * RenyiDivergence_def p q α) := by
@@ -1048,7 +1022,9 @@ theorem RenyiDivergence_def_nonneg [MeasurableSpace T] [MeasurableSingletonClass
     exact EReal.coe_lt_top (α - OfNat.ofNat 1)
   · assumption
 
-
+/--
+Renyi divergence between identical distributions is zero
+-/
 lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = RenyiDivergence_def p p α) := by
   have H1 : 1 = eexp ((α - 1) * RenyiDivergence_def p p α) := by
     rw [RenyiDivergence_def_exp p p Hα]
@@ -1093,7 +1069,7 @@ lemma RenyiDivergence_refl_zero (p : PMF T) {α : ℝ} (Hα : 1 < α) : (0 = Ren
   simp
 
 /--
-Renyi divergence attains equality if and only if the distributions are equal
+Renyi divergence is zero if and only if the distributions are equal
 -/
 theorem RenyiDivergence_def_eq_0_iff [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hcts : AbsCts p q) :
@@ -1128,10 +1104,11 @@ theorem RenyiDivergence_def_eq_0_iff [MeasurableSpace T] [MeasurableSingletonCla
     apply RenyiDivergence_refl_zero
     apply Hα
 
-
+/--
+The logarithm in the definition of the Renyi divergence is nonnegative.
+-/
 lemma RenyiDivergence_def_log_sum_nonneg [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) (Hac : AbsCts p q) {α : ℝ} (Hα : 1 < α ): (0 ≤ (elog (∑' x : T, (p x)^α  * (q x)^(1 - α)))) := by
-  -- Follows from RenyiDivergence_def_nonneg
   have Hrd := RenyiDivergence_def_nonneg p q Hac Hα
   rw [RenyiDivergence_def] at Hrd
   apply ofEReal_nonneg_scal_l at Hrd
@@ -1140,13 +1117,16 @@ lemma RenyiDivergence_def_log_sum_nonneg [MeasurableSpace T] [MeasurableSingleto
     linarith
 
 /--
-The Renyi divergence.
+The ``ENNReal``-valued Renyi divergence between PMF's.
 -/
 noncomputable def RenyiDivergence (p q : PMF T) (α : ℝ) : ENNReal :=
   ENNReal.ofEReal (RenyiDivergence_def p q α)
 
 
--- Lifted property of RenyiDivergence_def
+/--
+The Renyi divergence between absolutely continuous distributions is zero if and only if the
+distributions are equal.
+-/
 theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (Hα : 1 < α) (Hac : AbsCts p q) : p = q <-> RenyiDivergence p q α = 0 := by
   apply Iff.intro
@@ -1163,19 +1143,3 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     refine (ofEReal_nonneg_eq_iff ?mpr.Hw H').mpr ?mpr.a
     · simp
     simp [H]
-
--- Unused
-/-
-Closed form for the Renyi Divergence.
--/
--- theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (h1 : ∀ x : T, q x ≠ 0) (h2 : ∀ x : T, q x ≠ ⊤) :
---   (α - 1)⁻¹ * Real.log ((∑' x : T, (p x)^α  * (q x)^(1 - α))).toReal = (α - 1)⁻¹ * Real.log (∑' x : T, (p x / q x)^α  * (q x)).toReal := by
---   congr 4
---   ext x
---   rw [ENNReal.rpow_sub]
---   . rw [← ENNReal.mul_comm_div]
---     rw [← ENNReal.div_rpow_of_nonneg]
---     . rw [ENNReal.rpow_one]
---     . apply le_of_lt (lt_trans Real.zero_lt_one h )
---   . apply h1 x
---   . apply h2 x
