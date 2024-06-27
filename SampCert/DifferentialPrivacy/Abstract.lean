@@ -74,9 +74,13 @@ class DPSystem (T : Type) where
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
+  Predicate which must hold on a function for postcompostion
+  -/
+  postprocess_prop_f : {U V : Type} -> (f : U -> V) -> Prop
+  /--
   Notion of privacy is invariant under post-processing.
   -/
-  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → Function.Surjective pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
+  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → postprocess_prop_f pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
    prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
 
 @[simp]

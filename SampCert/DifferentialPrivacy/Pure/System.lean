@@ -18,6 +18,7 @@ noncomputable instance PureDPSystem : DPSystem T where
   noise := privNoisedQueryPure
   noise_prop := NoisedQuery_PureDP
   compose_prop := PureDP_Compose
+  postprocess_prop_f := Function.Surjective
   postprocess_prop := PureDP_PostProcess
 
 end SLang
