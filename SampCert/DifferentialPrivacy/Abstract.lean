@@ -115,9 +115,9 @@ lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → P
   --     subst h4
   --     contradiction
 
-lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : U) (c : V) (l : List T) :
-  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = nq1 l b * nq2 l c := by
-  have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 l a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0) else 0 := by
+lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
+  (∑' (a : U), nq1 a * ∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 a_1 else 0) = nq1 b * nq2 c := by
+  have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 a_1 else 0) else 0 := by
     intro x  y
     split
     . rename_i h
@@ -135,7 +135,7 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
     rw [A]
   rw [ENNReal.tsum_eq_add_tsum_ite b]
   simp
-  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 l x * ∑' (a_1 : V), if c = a_1 then nq2 l a_1 else 0 else 0) = 0 := by
+  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 x * ∑' (a_1 : V), if c = a_1 then nq2 a_1 else 0 else 0) = 0 := by
     intro x
     split
     . simp
@@ -154,7 +154,7 @@ lemma compose_sum_rw (nq1 : List T → SLang U) (nq2 : List T → SLang V) (b : 
   congr 1
   rw [ENNReal.tsum_eq_add_tsum_ite c]
   simp
-  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 l x else 0) = 0 := by
+  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 x else 0) = 0 := by
     intro x
     split
     . simp

@@ -25,6 +25,7 @@ variable [Inhabited V]
 variable [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U]
 variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 
+set_option pp.coercions false
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
@@ -44,164 +45,140 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
   rw [PMF.instFunLike]
   simp
   repeat rw [SLang.toPMF]
-  have CG1 (b : U) : nq1 l₂ b ≠ ⊤ := by exact PMF.apply_ne_top (nq1 l₂) b
-  have CG2 (b : V) : nq2 l₂ b ≠ ⊤ := by exact PMF.apply_ne_top (nq2 l₂) b
+  have CG1 (b : U) : (nq1 l₂).val b ≠ ⊤ := by
+    have H := PMF.apply_ne_top (nq1 l₂) b
+    simp [DFunLike.coe, PMF.instFunLike] at H
+    apply H
+  have CG2 (b : V) : (nq2 l₂).val b ≠ ⊤ := by
+    have H := PMF.apply_ne_top (nq2 l₂) b
+    simp [DFunLike.coe, PMF.instFunLike] at H
+    apply H
   simp
   rw [tsum_prod' ENNReal.summable (fun b : U => ENNReal.summable)]
-  sorry
-    /-
-    simp
-    conv =>
-      left
-      right
-      right
-      right
-      right
-      intro b
-      right
-      intro c
-      rw [compose_sum_rw]
-      rw [compose_sum_rw]
-      rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h3))]
-      rw [ENNReal.mul_rpow_of_ne_top (CG1 b) (CG2 c)]
-      rw [mul_assoc]
-      right
-      rw [mul_comm]
-      rw [mul_assoc]
-      right
-      rw [mul_comm]
-    clear CG1
-    clear CG2
-    conv =>
-      left
-      right
-      right
-      right
-      right
-      intro b
-      right
-      intro c
-      rw [← mul_assoc]
-    conv =>
-      left
-      right
-      right
-      right
-      right
-      intro b
-      rw [ENNReal.tsum_mul_left]
-    rw [ENNReal.tsum_mul_right]
-    rw [← elog_mul]
+  simp [PMF.bind, PMF.pure, DFunLike.coe, PMF.instFunLike]
+  conv =>
+    enter [1, 1, 2, 1, 1, b, 1, c]
+    rw [compose_sum_rw]
+    rw [compose_sum_rw]
+    rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h3))]
+    rw [ENNReal.mul_rpow_of_ne_top (CG1 b) (CG2 c)]
+    rw [mul_assoc]
+    right
+    rw [mul_comm]
+    rw [mul_assoc]
+    right
+    rw [mul_comm]
+  clear CG1
+  clear CG2
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro b
+    right
+    intro c
+    rw [← mul_assoc]
+  conv =>
+    left
+    right
+    right
+    right
+    right
+    intro b
+    rw [ENNReal.tsum_mul_left]
+  rw [ENNReal.tsum_mul_right]
+  rw [← elog_mul]
 
-    conv at h1 =>
-      lhs
-      arg 1
-      arg 2
-      arg 1
-      arg 1
-      intro x
-      rw [DFunLike.coe]
-      rw [PMF.instFunLike]
-      rw [SLang.toPMF]
-      rw [SLang.toPMF]
-      simp
-    conv at h2 =>
-      lhs
-      arg 1
-      arg 2
-      arg 1
-      arg 1
-      intro x
-      rw [DFunLike.coe]
-      rw [PMF.instFunLike]
-      rw [SLang.toPMF]
-      rw [SLang.toPMF]
-      simp
+  -- conv at h1 =>
+  --   lhs
+  --   arg 1
+  --   arg 2
+  --   arg 1
+  --   arg 1
+  --   intro x
+  --   rw [DFunLike.coe]
+  --   rw [PMF.instFunLike]
+  --   rw [SLang.toPMF]
+  --   rw [SLang.toPMF]
+  --   simp
+  -- conv at h2 =>
+  --   lhs
+  --   arg 1
+  --   arg 2
+  --   arg 1
+  --   arg 1
+  --   intro x
+  --   rw [DFunLike.coe]
+  --   rw [PMF.instFunLike]
+  --   rw [SLang.toPMF]
+  --   rw [SLang.toPMF]
+  --   simp
 
-    have log_nonneg_1 : 0 ≤ (∑' (i : U), nq1 l₁ i ^ α * nq1 l₂ i ^ (1 - α)).elog := by
-      have Hac1 : AbsCts ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) := by exact Ha1 l₁ l₂ h4
-      have Hnn1 := (RenyiDivergence_def_log_sum_nonneg ((nq1 l₁).toPMF (HNorm1 l₁)) ((nq1 l₂).toPMF (HNorm1 l₂)) Hac1 h3)
-      conv at Hnn1 =>
-        rhs
-        arg 1
-        arg 1
-        intro x
-        rw [DFunLike.coe]
-        rw [PMF.instFunLike]
-        rw [SLang.toPMF]
-        rw [SLang.toPMF]
-        simp
-      apply Hnn1
-    have log_nonneg_2 :  0 ≤ (∑' (i : V), nq2 l₁ i ^ α * nq2 l₂ i ^ (1 - α)).elog := by
-      have Hac2 : AbsCts ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) := by exact Ha2 l₁ l₂ h4
-      have Hnn2 := (RenyiDivergence_def_log_sum_nonneg ((nq2 l₁).toPMF (HNorm2 l₁)) ((nq2 l₂).toPMF (HNorm2 l₂)) Hac2 h3)
-      conv at Hnn2 =>
-        rhs
-        arg 1
-        arg 1
-        intro x
-        rw [DFunLike.coe]
-        rw [PMF.instFunLike]
-        rw [SLang.toPMF]
-        rw [SLang.toPMF]
-        simp
-      apply Hnn2
+  have log_nonneg_1 : 0 ≤ (∑' (i : U), (nq1 l₁).val i ^ α * (nq1 l₂).val i ^ (1 - α)).elog := by
+    have Hac1 : AbsCts (nq1 l₁) (nq1 l₂) := by exact Ha1 l₁ l₂ h4
+    apply (RenyiDivergence_def_log_sum_nonneg (nq1 l₁) (nq1 l₂) Hac1 h3)
+  have log_nonneg_2 :  0 ≤ (∑' (i : V), (nq2 l₁).val i ^ α * (nq2 l₂).val i ^ (1 - α)).elog := by
+    have Hac2 : AbsCts (nq2 l₁) (nq2 l₂) := by exact Ha2 l₁ l₂ h4
+    have Hnn2 := (RenyiDivergence_def_log_sum_nonneg (nq2 l₁) (nq2 l₂) Hac2 h3)
+    apply Hnn2
 
-    -- Split up the series
-    rw [ofEReal_mul_nonneg]
-    · simp only [ofEReal_real]
-      -- In order to distribute ofReal, we need the logarithms to be nonegative
-      rw [ofEReal_plus_nonneg log_nonneg_1 log_nonneg_2]
+  -- Split up the series
+  rw [ofEReal_mul_nonneg]
+  · simp only [ofEReal_real]
+    -- In order to distribute ofReal, we need the logarithms to be nonegative
+    rw [ofEReal_plus_nonneg log_nonneg_1 log_nonneg_2]
 
-      -- Distribute
-      rw [CanonicallyOrderedCommSemiring.left_distrib]
-      apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (↑↑ε₁ ^ 2 / ↑↑ε₂ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (↑↑ε₃ ^ 2 / ↑↑ε₄ ^ 2) * α)))
-      · -- apply?
-        apply _root_.add_le_add
-        · rw [ofEReal_mul_nonneg] at h1
-          · apply h1
-          · apply EReal.coe_nonneg.mpr
-            apply inv_nonneg.mpr
-            linarith
-          · apply log_nonneg_1
-        · rw [ofEReal_mul_nonneg] at h2
-          · apply h2
-          · apply EReal.coe_nonneg.mpr
-            apply inv_nonneg.mpr
-            linarith
-          · apply log_nonneg_2
-      · clear h1 h2
-        rw [<- ENNReal.ofReal_add]
-        · apply ofReal_le_ofReal_iff'.mpr
-          left
-          rw [← add_mul]
-          rw [mul_le_mul_iff_of_pos_right]
-          · rw [← mul_add]
-            rw [mul_le_mul_iff_of_pos_left]
-            · ring_nf
-              simp
-            · simp only [inv_pos, Nat.ofNat_pos]
-          · linarith
+    -- Distribute
+    rw [CanonicallyOrderedCommSemiring.left_distrib]
+    apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (↑↑ε₁ ^ 2 / ↑↑ε₂ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (↑↑ε₃ ^ 2 / ↑↑ε₄ ^ 2) * α)))
+    · -- apply?
+      apply _root_.add_le_add
+      · rw [ofEReal_mul_nonneg] at h1
+        · apply h1
+        · apply EReal.coe_nonneg.mpr
+          apply inv_nonneg.mpr
+          linarith
+        · apply log_nonneg_1
+      · rw [ofEReal_mul_nonneg] at h2
+        · apply h2
+        · apply EReal.coe_nonneg.mpr
+          apply inv_nonneg.mpr
+          linarith
+        · apply log_nonneg_2
+    · clear h1 h2
+      rw [<- ENNReal.ofReal_add]
+      · apply ofReal_le_ofReal_iff'.mpr
+        left
+        rw [← add_mul]
+        rw [mul_le_mul_iff_of_pos_right]
+        · rw [← mul_add]
+          rw [mul_le_mul_iff_of_pos_left]
+          · ring_nf
+            simp
+          · simp only [inv_pos, Nat.ofNat_pos]
+        · linarith
+      · apply mul_nonneg
         · apply mul_nonneg
-          · apply mul_nonneg
-            · simp
-            · apply div_nonneg
-              · exact sq_nonneg ε₁.val.cast
-              · exact sq_nonneg ε₂.val.cast
-          · linarith
+          · simp
+          · apply div_nonneg
+            · exact sq_nonneg ε₁.val.cast
+            · exact sq_nonneg ε₂.val.cast
+        · linarith
+      · apply mul_nonneg
         · apply mul_nonneg
-          · apply mul_nonneg
-            · simp
-            · apply div_nonneg
-              · exact sq_nonneg ε₃.val.cast
-              · exact sq_nonneg ε₄.val.cast
-          · linarith
-    · simp
-      linarith
-    · apply Left.add_nonneg
-      · apply log_nonneg_1
-      · apply log_nonneg_2
-  -/
+          · simp
+          · apply div_nonneg
+            · exact sq_nonneg ε₃.val.cast
+            · exact sq_nonneg ε₄.val.cast
+        · linarith
+  · simp
+    linarith
+  · apply Left.add_nonneg
+    · apply log_nonneg_1
+    · apply log_nonneg_2
+
 
 /-
 Renyi divergence beteeen composed queries on neighbours are finite.
