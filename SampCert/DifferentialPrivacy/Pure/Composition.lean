@@ -8,7 +8,7 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
 
-/-
+/-!
 # Pure Composition in Pure Differential Privacy
 
 This file proves a pure DP privacy bound on composed independent queries.
