@@ -9,10 +9,17 @@ import SampCert.DifferentialPrivacy.Pure.Mechanism.Basic
 import SampCert.DifferentialPrivacy.Pure.Composition
 import SampCert.DifferentialPrivacy.Pure.Postprocessing
 
+/-!
+# Pure DP system
+-/
+
 namespace SLang
 
 variable { T : Type }
 
+/--
+Pure ε-DP with noise drawn from the discrete Laplace distribution.
+-/
 noncomputable instance PureDPSystem : DPSystem T where
   prop := PureDP
   noise := privNoisedQueryPure

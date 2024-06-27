@@ -8,13 +8,19 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
 
+/-!
+# ``privPostProcess`` pure DP
+
+This file establishes a pure DP bound for ``privPostProcess``
+-/
+
 noncomputable section
 
 open Classical Set
 
 namespace SLang
 
-theorem PureDP_PostProcess' {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureDP nq ((ε₁ : ℝ) / ε₂)) (f : U → V) :
+lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureDP nq ((ε₁ : ℝ) / ε₂)) (f : U → V) :
   DP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
   rcases h with ⟨ha, _⟩
@@ -37,13 +43,16 @@ theorem PureDP_PostProcess' {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureD
       exact Real.exp_pos ((ε₁: ℝ) / ε₂)
   . simp
 
+/--
+``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.
+-/
 theorem PureDP_PostProcess {f : U → V} (sur : Function.Surjective f) (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
   PureDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
   have hc := h
   rcases h with ⟨ _ , h2 ⟩
   constructor
-  . apply PureDP_PostProcess' hc
+  . apply privPostProcess_DP_bound hc
   . apply privPostProcess_NonZeroNQ h2 sur
 
 end SLang
