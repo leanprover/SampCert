@@ -45,15 +45,8 @@ DP bound for noised mean.
 -/
 theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedBoundedMean U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  have Hbm_alt :
-    (privNoisedBoundedMean U ε₁ ε₂) =
-    (privPostProcess
-      (privCompose (privNoisedBoundedSum U ε₁ (2 * ε₂)) (privNoisedCount ε₁ (2 * ε₂)))
-      (fun a : ℤ × ℤ => (a.1 : ℚ) / (a.2 : ℚ))) := by
-    apply funext
-    simp [privNoisedBoundedMean, privPostProcess, privCompose]
-  rw [Hbm_alt]
-
+  unfold privNoisedBoundedMean
+  rw [bind_bind_indep]
   apply dps.postprocess_prop div_surjective
   rw [budget_split]
   apply dps.compose_prop
