@@ -15,18 +15,19 @@ namespace SLang
 
 theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   NonZeroNQ (privNoisedQueryPure query Δ ε₁ ε₂) := by
-  sorry
-  -- simp [NonZeroNQ, privNoisedQueryPure]
-  -- intro l n
-  -- apply Real.mul_pos
-  -- . rw [_root_.div_pos_iff]
-  --   left
-  --   constructor
-  --   . aesop
-  --   . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
-  --       apply exp_pos
-  --     apply add_pos A Real.zero_lt_one
-  -- . apply exp_pos
+  simp [NonZeroNQ, privNoisedQueryPure]
+  simp [DiscreteLaplaceGenSamplePMF]
+  simp [DFunLike.coe, PMF.instFunLike]
+  intro l n
+  apply Real.mul_pos
+  . rw [_root_.div_pos_iff]
+    left
+    constructor
+    . aesop
+    . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
+        apply exp_pos
+      apply add_pos A Real.zero_lt_one
+  . apply exp_pos
 
 theorem natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
