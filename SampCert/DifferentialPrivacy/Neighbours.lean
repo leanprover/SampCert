@@ -7,14 +7,16 @@ Authors: Jean-Baptiste Tristan
 /-!
 # Neighbours
 
-This file defines the notion of neighbouring lists, in order to define a notion of sensitivity.
+This file defines neighbouring lists.
 -/
 
 
 variable {T : Type}
 
 /--
-The notion of "difference" between lists for differential privacy.
+Lists which differ by the inclusion or modification of an element.
+
+This is SampCert's private property.
 -/
 inductive Neighbour (l₁ l₂ : List T) : Prop where
   | Addition : l₁ = a ++ b → l₂ = a ++ [n] ++ b → Neighbour l₁ l₂
@@ -22,6 +24,9 @@ inductive Neighbour (l₁ l₂ : List T) : Prop where
   | Update : l₁ = a ++ [n] ++ b → l₂ = a ++ [m] ++ b -> Neighbour l₁ l₂
 
 
+/--
+Neighbour relation is symmetric.
+-/
 def Neighbour_symm (l₁ l₂ : List T) (H : Neighbour l₁ l₂) : Neighbour l₂ l₁ := by
   cases H
   · rename_i _ _ _ Hl1 Hl2
