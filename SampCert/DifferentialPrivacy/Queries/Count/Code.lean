@@ -26,7 +26,7 @@ def exactCount (l : List T) : ℤ := List.length l
 /--
 Noised counting mechanism from the DP system
 -/
-def privNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : SLang ℤ := do
+def privNoisedCount (ε₁ ε₂ : ℕ+) (l : List T) : PMF ℤ := do
   dps.noise exactCount 1 ε₁ ε₂ l
 
 end SLang

@@ -37,7 +37,7 @@ theorem PureDP_PostProcess' {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureD
       exact Real.exp_pos ((ε₁: ℝ) / ε₂)
   . simp
 
-theorem PureDP_PostProcess {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem PureDP_PostProcess {f : U → V} (sur : Function.Surjective f) (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
   PureDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
   have hc := h

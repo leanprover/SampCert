@@ -29,7 +29,7 @@ def exactBoundedSum (U : ℕ+) (l : List ℕ) : ℤ :=
 /--
 Noised bounded sum query obtained by applying the DP noise mechanism to the bounded sum.
 -/
-def privNoisedBoundedSum (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℤ := do
+def privNoisedBoundedSum (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℤ := do
   dps.noise (exactBoundedSum U) U ε₁ ε₂ l
 
 end SLang

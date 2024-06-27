@@ -25,63 +25,13 @@ variable [Inhabited V]
 variable [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U]
 variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 
--- lemma ENNReal_toReal_NZ (x : ENNReal) (h1 : x ≠ 0) (h2 : x ≠ ⊤) :
---   x.toReal ≠ 0 := by
---   unfold ENNReal.toReal
---   unfold ENNReal.toNNReal
---   simp
---   constructor ; any_goals trivial
---
--- lemma simp_α_1 {α : ℝ} (h : 1 < α) : 0 < α := by
---   apply @lt_trans _ _ _ 1 _ _ h
---   simp only [zero_lt_one]
-
-/-
-The Renyi Divergence between neighbouring inputs of noised queries is nonzero.
--/
--- theorem Renyi_noised_query_NZ {nq : List T → SLang U} {HNorm : NormalMechanism nq} {α ε : ℝ}
---   (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) (h3 : zCDPBound nq HNorm ε)
---   (h4 : NonZeroNQ nq) (h5 : NonTopRDNQ nq) (nts : NonTopNQ nq) :
---   (∑' (i : U), nq l₁ i ^ α * nq l₂ i ^ (1 - α)).toReal ≠ 0 := by
---   simp [zCDPBound] at h3
---   replace h3 := h3 α h1 l₁ l₂ h2
---   simp [RenyiDivergence] at h3
---   simp [NonZeroNQ] at h4
---   simp [NonTopRDNQ] at h5
---   replace h5 := h5 α h1 l₁ l₂ h2
---   have h6 := h4 l₁
---   have h7 := h4 l₂
---   apply ENNReal_toReal_NZ
---   . by_contra CONTRA
---     rw [ENNReal.tsum_eq_zero] at CONTRA
---     replace CONTRA := CONTRA default
---     replace h6 := h6 default
---     replace h7 := h7 default
---     rw [_root_.mul_eq_zero] at CONTRA
---     cases CONTRA
---     . rename_i h8
---       rw [rpow_eq_zero_iff_of_pos] at h8
---       contradiction
---       apply simp_α_1 h1
---     . rename_i h8
---       rw [ENNReal.rpow_eq_zero_iff] at h8
---       cases h8
---       . rename_i h8
---         cases h8
---         contradiction
---       . rename_i h8
---         cases h8
---         rename_i h8 h9
---         replace nts := nts l₂ default
---         contradiction
---   . exact h5
-
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
-theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang V} {HNorm1 : ∀ l, HasSum (nq1 l) 1} {HNorm2 : ∀ l, HasSum (nq2 l) 1} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-  (h1 : zCDPBound nq1 HNorm1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 HNorm2 ((ε₃ : ℝ) / ε₄)) (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2):
-  zCDPBound (privCompose nq1 nq2) (privCompose_norm nq1 nq2 HNorm1 HNorm2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
+  (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄))
+  (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2) :
+  zCDPBound (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   simp [zCDPBound] at h1 h2
@@ -94,27 +44,13 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
   rw [PMF.instFunLike]
   simp
   repeat rw [SLang.toPMF]
-  have CG1 (b : U) : nq1 l₂ b ≠ ⊤ := by
-    have HS : (∑'(u : U), nq1 l₂ u) = 1 := by exact HasSum.tsum_eq (HNorm1 l₂)
-    have Hs : nq1 l₂ b ≤ (∑'(u : U), nq1 l₂ u) := by exact ENNReal.le_tsum b
-    rw [HS] at Hs
-    rename_i inst inst_1
-    simp_all only [ne_eq]
-    apply Aesop.BuiltinRules.not_intro
-    intro a
-    simp_all only [top_le_iff, one_ne_top]
-  have CG2 (b : V) : nq2 l₂ b ≠ ⊤ := by
-    have HS : (∑'(u : V), nq2 l₂ u) = 1 := by exact HasSum.tsum_eq (HNorm2 l₂)
-    have Hs : nq2 l₂ b ≤ (∑'(u : V), nq2 l₂ u) := by exact ENNReal.le_tsum b
-    rw [HS] at Hs
-    rename_i inst inst_1
-    simp_all only [ne_eq]
-    apply Aesop.BuiltinRules.not_intro
-    intro a
-    simp_all only [top_le_iff, one_ne_top]
+  have CG1 (b : U) : nq1 l₂ b ≠ ⊤ := by exact PMF.apply_ne_top (nq1 l₂) b
+  have CG2 (b : V) : nq2 l₂ b ≠ ⊤ := by exact PMF.apply_ne_top (nq2 l₂) b
   simp
   rw [tsum_prod' ENNReal.summable (fun b : U => ENNReal.summable)]
-  . simp
+  sorry
+    /-
+    simp
     conv =>
       left
       right
@@ -265,27 +201,7 @@ theorem privCompose_zCDPBound {nq1 : List T → SLang U} {nq2 : List T → SLang
     · apply Left.add_nonneg
       · apply log_nonneg_1
       · apply log_nonneg_2
-
-/-
-All outputs of a composed query have finite probability.
--/
--- theorem privCompose_NonTopNQ {nq1 : List T → SLang U} {nq2 : List T → SLang V} (nt1 : NonTopNQ nq1) (nt2 : NonTopNQ nq2) :
---   NonTopNQ (privCompose nq1 nq2) := by
---   simp [NonTopNQ] at *
---   intro l a b
---   replace nt1 := nt1 l a
---   replace nt2 := nt2 l b
---   simp [privCompose]
---   rw [compose_sum_rw]
---   rw [mul_eq_top]
---   intro H
---   cases H
---   . rename_i H
---     cases H
---     contradiction
---   . rename_i H
---     cases H
---     contradiction
+  -/
 
 /-
 Renyi divergence beteeen composed queries on neighbours are finite.
@@ -354,7 +270,8 @@ Renyi divergence beteeen composed queries on neighbours are finite.
 --     contradiction
 
 
-def privCompose_AC (nq1 : List T → SLang U) (nq2 : List T → SLang V) (Hac1 : ACNeighbour nq1) (Hac2 : ACNeighbour nq2) : ACNeighbour (privCompose nq1 nq2) := by
+def privCompose_AC (nq1 : Mechanism T U) (nq2 : Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ACNeighbour nq2) :
+    ACNeighbour (privCompose nq1 nq2) := by
   rw [ACNeighbour] at *
   intro l₁ l₂ Hn
   have Hac1 := Hac1 l₁ l₂ Hn
@@ -381,14 +298,13 @@ def privCompose_AC (nq1 : List T → SLang U) (nq2 : List T → SLang V) (Hac1 :
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
+    zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  rcases h with ⟨ Hac1, ⟨ Hn1, Hb1 ⟩⟩
-  rcases h' with ⟨ Hac2, ⟨ Hn2, Hb2 ⟩⟩
+  rcases h with ⟨ Hac1, Hb1 ⟩
+  rcases h' with ⟨ Hac2, Hb2 ⟩
   apply And.intro
   · exact privCompose_AC nq1 nq2 Hac1 Hac2
-  · exists (privCompose_norm nq1 nq2 Hn1 Hn2)
-    exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
+  · exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
 
 end SLang

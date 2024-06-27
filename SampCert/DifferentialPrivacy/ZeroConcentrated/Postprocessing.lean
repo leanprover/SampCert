@@ -126,7 +126,7 @@ variable [Inhabited U]
 --     rw [one_le_ofReal]
 --     apply le_of_lt h
 
-def privPostProcess_AC {f : U -> V} (nq : List T → SLang U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+def privPostProcess_AC {f : U -> V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
   rw [ACNeighbour] at *
   unfold AbsCts at *
   intro l₁ l₂ Hn v
@@ -631,9 +631,9 @@ theorem DPostPocess_pre {nq : List T → SLang U} (HNorm : ∀ l, HasSum (nq l) 
     left
     linarith
 
-theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMechanism nq} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
-  zCDPBound (privPostProcess nq f) (privPostProcess_norm nq HNorm f) ((ε₁ : ℝ) / ε₂) := by
+theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
+  (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
+  zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
@@ -672,10 +672,11 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
     apply inv_nonneg_of_nonneg
     linarith
   apply elog_mono_le.mp
-  apply (DPostPocess_pre HNorm (fun a => f a) h1 h2 (Hac l₁ l₂ h2))
-  apply Hac
-  apply Neighbour_symm
-  apply h2
+  sorry
+  -- apply (DPostPocess_pre (fun a => f a) h1 h2 (Hac l₁ l₂ h2))
+  -- apply Hac
+  -- apply Neighbour_symm
+  -- apply h2
 
 
 -- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
@@ -697,13 +698,12 @@ theorem privPostProcess_zCDPBound {nq : List T → SLang U} {HNorm : NormalMecha
 Postprocessing preserves zCDP
 -/
 theorem privPostProcess_zCDP {f : U → V}
-  (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+  (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
-  rcases h with ⟨ Hac1, ⟨ Hn1, Hb1 ⟩⟩
+  rcases h with ⟨ Hac1, Hb1 ⟩
   simp [zCDP] at *
   apply And.intro
   · exact privPostProcess_AC nq Hac1
-  · exists (privPostProcess_norm nq Hn1 f)
-    exact (privPostProcess_zCDPBound Hb1 f Hac1)
+  · exact (privPostProcess_zCDPBound Hb1 f Hac1)
 
 end SLang

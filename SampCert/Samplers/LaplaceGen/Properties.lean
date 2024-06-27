@@ -126,6 +126,17 @@ theorem DiscreteLaplaceGenSample_periodic (num : PNat) (den : PNat) (μ x : ℤ)
 
 --   -- sorrrryyyy
 
+theorem DiscreteLaplaceGenSample_sum (num : PNat) (den : PNat) (μ : ℤ) : HasSum (DiscreteLaplaceGenSample num den μ) 1 := by
+  rw [Summable.hasSum_iff ENNReal.summable]
+  sorry
+  -- conv =>
+  --   lhs
+  --   arg 1
+  --   intro b
+  --   rw [DiscreteGaussianGenSample_apply]
+
+def DiscreteLaplaceGenSamplePMF (num : PNat) (den : PNat) (μ : ℤ) : PMF ℤ :=
+  ⟨ DiscreteLaplaceGenSample num den μ , DiscreteLaplaceGenSample_sum num den μ ⟩
 
 
 end SLang

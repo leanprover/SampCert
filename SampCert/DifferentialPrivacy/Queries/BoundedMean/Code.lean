@@ -22,7 +22,7 @@ variable [dps : DPSystem ℕ]
 /--
 Compute a noised mean using a noised sum and noised count
 -/
-def privNoisedBoundedMean (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℚ := do
+def privNoisedBoundedMean (U : ℕ+) (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℚ := do
   let S ← privNoisedBoundedSum U ε₁ (2 * ε₂) l
   let C ← privNoisedCount ε₁ (2 * ε₂) l
   return S / C

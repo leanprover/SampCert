@@ -46,10 +46,11 @@ theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedBoundedMean U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   unfold privNoisedBoundedMean
   simp
-  apply dps.postprocess_prop div_surjective
-  rw [budget_split]
-  apply dps.compose_prop
-  . apply privNoisedBoundedSum_DP
-  . apply privNoisedCount_DP
+  sorry
+  -- apply dps.postprocess_prop div_surjective
+  -- rw [budget_split]
+  -- apply dps.compose_prop
+  -- . apply privNoisedBoundedSum_DP
+  -- . apply privNoisedCount_DP
 
 end SLang

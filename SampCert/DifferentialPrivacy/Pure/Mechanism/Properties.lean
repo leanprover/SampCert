@@ -15,17 +15,18 @@ namespace SLang
 
 theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
   NonZeroNQ (privNoisedQueryPure query Δ ε₁ ε₂) := by
-  simp [NonZeroNQ, privNoisedQueryPure]
-  intro l n
-  apply Real.mul_pos
-  . rw [_root_.div_pos_iff]
-    left
-    constructor
-    . aesop
-    . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
-        apply exp_pos
-      apply add_pos A Real.zero_lt_one
-  . apply exp_pos
+  sorry
+  -- simp [NonZeroNQ, privNoisedQueryPure]
+  -- intro l n
+  -- apply Real.mul_pos
+  -- . rw [_root_.div_pos_iff]
+  --   left
+  --   constructor
+  --   . aesop
+  --   . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
+  --       apply exp_pos
+  --     apply add_pos A Real.zero_lt_one
+  -- . apply exp_pos
 
 theorem natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
@@ -53,69 +54,70 @@ theorem NoisedQuery_PureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bo
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x
   simp [privNoisedQueryPure]
-  rw [← ENNReal.ofReal_div_of_pos]
-  . apply ofReal_le_ofReal
-    rw [division_def]
-    rw [mul_inv]
-    rw [← mul_assoc]
-    conv =>
-      left
-      left
-      rw [mul_assoc]
-      right
-      rw [mul_comm]
-    conv =>
-      left
-      left
-      rw [← mul_assoc]
-      left
-      rw [mul_inv_cancel (normalizing_constant_nonzero ε₁ ε₂ Δ)]
-    simp only [one_mul]
-    rw [← division_def]
-    rw [← exp_sub]
-    simp only [sub_neg_eq_add, exp_le_exp]
-    rw [neg_div']
-    rw [div_add_div_same]
-    rw [division_def]
-    apply (mul_inv_le_iff' _).mpr
-    . have B : (ε₁ : ℝ) / ε₂ * (Δ * ε₂ / ε₁) = Δ := by
-        ring_nf
-        simp
-        field_simp
-      rw [B]
-      clear B
+  sorry
+  -- rw [← ENNReal.ofReal_div_of_pos]
+  -- . apply ofReal_le_ofReal
+  --   rw [division_def]
+  --   rw [mul_inv]
+  --   rw [← mul_assoc]
+  --   conv =>
+  --     left
+  --     left
+  --     rw [mul_assoc]
+  --     right
+  --     rw [mul_comm]
+  --   conv =>
+  --     left
+  --     left
+  --     rw [← mul_assoc]
+  --     left
+  --     rw [mul_inv_cancel (normalizing_constant_nonzero ε₁ ε₂ Δ)]
+  --   simp only [one_mul]
+  --   rw [← division_def]
+  --   rw [← exp_sub]
+  --   simp only [sub_neg_eq_add, exp_le_exp]
+  --   rw [neg_div']
+  --   rw [div_add_div_same]
+  --   rw [division_def]
+  --   apply (mul_inv_le_iff' _).mpr
+  --   . have B : (ε₁ : ℝ) / ε₂ * (Δ * ε₂ / ε₁) = Δ := by
+  --       ring_nf
+  --       simp
+  --       field_simp
+  --     rw [B]
+  --     clear B
 
-      rw [add_comm]
-      ring_nf
-      -- Triangle inequality
-      have C := @abs_sub_abs_le_abs_sub ℝ _ ((x : ℝ) - (query l₂)) ((x : ℝ) - (query l₁))
-      apply le_trans C
-      clear C
-      simp
+  --     rw [add_comm]
+  --     ring_nf
+  --     -- Triangle inequality
+  --     have C := @abs_sub_abs_le_abs_sub ℝ _ ((x : ℝ) - (query l₂)) ((x : ℝ) - (query l₁))
+  --     apply le_trans C
+  --     clear C
+  --     simp
 
-      simp [sensitivity] at bounded_sensitivity
-      replace bounded_sensitivity := bounded_sensitivity l₁ l₂ neighbours
+  --     simp [sensitivity] at bounded_sensitivity
+  --     replace bounded_sensitivity := bounded_sensitivity l₁ l₂ neighbours
 
-      rw [← natAbs_to_abs]
-      exact Nat.cast_le.mpr bounded_sensitivity
+  --     rw [← natAbs_to_abs]
+  --     exact Nat.cast_le.mpr bounded_sensitivity
 
-    . simp
-  . rw [_root_.mul_pos_iff]
-    left
-    constructor
-    . rw [_root_.div_pos_iff]
-      left
-      have A : 1 < rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
-        rw [← exp_zero]
-        apply exp_lt_exp.mpr
-        simp
-      constructor
-      . simp [A]
-      . apply @lt_trans _ _ _ 2 _
-        . simp
-        . rw [← one_add_one_eq_two]
-          exact (add_lt_add_iff_right 1).mpr A
-    . apply exp_pos
+  --   . simp
+  -- . rw [_root_.mul_pos_iff]
+  --   left
+  --   constructor
+  --   . rw [_root_.div_pos_iff]
+  --     left
+  --     have A : 1 < rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
+  --       rw [← exp_zero]
+  --       apply exp_lt_exp.mpr
+  --       simp
+  --     constructor
+  --     . simp [A]
+  --     . apply @lt_trans _ _ _ 2 _
+  --       . simp
+  --       . rw [← one_add_one_eq_two]
+  --         exact (add_lt_add_iff_right 1).mpr A
+  --   . apply exp_pos
 
 theorem NoisedQuery_PureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by

@@ -18,25 +18,23 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-lemma privNoisedQuery_norm (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) : -- (bounded_sensitivity : sensitivity query Δ) :
-  NormalMechanism (privNoisedQuery query Δ ε₁ ε₂) := by
-  rw [NormalMechanism]
-  intro l
-  rw [privNoisedQuery]
-  exact DiscreteGaussianGen_sum (Δ * ε₂) ε₁ (query l)
+-- lemma privNoisedQuery_norm (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) : -- (bounded_sensitivity : sensitivity query Δ) :
+--   NormalMechanism (privNoisedQuery query Δ ε₁ ε₂) := by
+--   rw [NormalMechanism]
+--   intro l
+--   rw [privNoisedQuery]
+--   exact DiscreteGaussianGen_sum (Δ * ε₂) ε₁ (query l)
 
-set_option pp.coercions false
+-- set_option pp.coercions false
 -- set_option pp.notation false
 -- set_option pp.all true
 -- set_option pp.universes false
-
--- lemma L (x : ℝ) : x = 1 * x := by exact?
 
 /--
 The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) (privNoisedQuery_norm query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
   have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
@@ -377,7 +375,7 @@ def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeigh
   rw [AbsCts]
   intro n Hk
   exfalso
-  simp [privNoisedQuery, DiscreteGaussianGenSample] at Hk
+  simp [privNoisedQuery, DiscreteGaussianGenPMF, DiscreteGaussianGenSample, DFunLike.coe] at Hk
   have Hk := Hk (n - query l₂)
   simp at Hk
   have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by simp
