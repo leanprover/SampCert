@@ -48,6 +48,8 @@ lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
 -- set_option pp.coercions false
 
 
+lemma sup_lemma1 (f : U -> EReal) : ofEReal (⨆ (u : U), f u) = ⨆ (u : U), ofEReal (f u) := sorry
+
 lemma sup_lemma {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (f : U -> EReal) :
     eexp (s * ⨆ (u : U), f u) =  ⨆ (u : U), eexp (s * f u) := by
   apply LE.le.antisymm
@@ -95,9 +97,10 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     {α : ℝ} (Hα : 1 < α) {l₁ l₂ : List T} (HN : Neighbour l₁ l₂)
     (HAC1 : ACNeighbour nq1) (HAC2 : ∀ u, ACNeighbour (nq2 u)) :
     RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤
-    RenyiDivergence (nq1 l₁) (nq1 l₂) α + ENNReal.ofEReal (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
+    RenyiDivergence (nq1 l₁) (nq1 l₂) α + (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
   -- Open the definition of Renyi divergence
   unfold RenyiDivergence
+  rw [<- sup_lemma1]
   rw [<- ofEReal_plus_nonneg ?G1 ?G2]
   case G1 => exact RenyiDivergence_def_nonneg (nq1 l₁) (nq1 l₂) (HAC1 l₁ l₂ HN) Hα
   case G2 =>
@@ -122,12 +125,12 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
   rw [RenyiDivergence_def_exp _ _ Hα]
   rw [RenyiDivergence_def_exp _ _ Hα]
 
-  -- Simplify sup
-  conv =>
-    enter [2, 2, 1, 2, 1, u]
-    rw [toEReal_ofENNReal_nonneg]
-    · skip
-    · apply RenyiDivergence_def_nonneg (nq2 u l₁) (nq2 u l₂) (HAC2 u l₁ l₂ HN) Hα
+  -- -- Simplify sup
+  -- conv =>
+  --   enter [2, 2, 1, 2, 1, u]
+  --   rw [toEReal_ofENNReal_nonneg]
+  --   · skip
+  --   · apply RenyiDivergence_def_nonneg (nq2 u l₁) (nq2 u l₂) (HAC2 u l₁ l₂ HN) Hα
   rw [sup_lemma ?G1 ?G2]
   case G1 => sorry
   case G2 => sorry
@@ -174,21 +177,20 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     rw [mul_comm]
   exact le_iSup_iff.mpr fun b a_1 => a_1 a
 
+
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
+  (HAC1 : ACNeighbour nq1) (HAC2 : ∀ u, ACNeighbour (nq2 u))
   (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
-
-  sorry
-
-  /-
-  -- Loose step
-  apply (@LE.le.trans _ _ _ (1/2 * (↑↑ε₁ / ↑↑ε₂)^2 * α + 1/2 * (↑↑ε₃ / ↑↑ε₄)^2 * α) _ _ ?case_sq)
+  -- This step is loose
+  apply (@LE.le.trans _ _ _ (ENNReal.ofReal (1/2 * ((ε₁ : ℝ) / (ε₂ : ℝ))^2 * α + 1/2 * ((ε₃ : ℝ) / (ε₄ : ℝ))^2 * α : ℝ)) _ _ ?case_sq)
   case case_sq =>
+    apply ofReal_le_ofReal
     -- Binomial bound
     rw [add_sq]
     rw [<- right_distrib]
@@ -210,12 +212,16 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
   rw [zCDPBound] at h1
   have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
-  have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ 1 / 2 * (↑↑ε₃ / ↑↑ε₄) ^ 2 * α) :=
+  have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ ENNReal.ofReal (1 / 2 * ((ε₃ : ℝ) / (ε₄ : ℝ)) ^ 2 * α)) :=
     ciSup_le fun x => h2 x α Hα l₁ l₂ Hneighbours
   apply (@LE.le.trans _ _ _ (RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) _ _ ?case_alg)
-  case case_alg => linarith
-  apply (privComposeAdaptive_renyi_bound _ _ _ _) <;> aesop
-  -/
+  case case_alg =>
+    rw [ENNReal.ofReal_add ?G1 ?G2]
+    case G1 => sorry
+    case G2 => sorry
+    exact _root_.add_le_add (h1 α Hα l₁ l₂ Hneighbours) conditional_ub
+  exact privComposeAdaptive_renyi_bound Hα Hneighbours HAC1 HAC2
+
 
 
 /--
