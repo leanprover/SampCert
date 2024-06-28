@@ -25,7 +25,6 @@ variable [Inhabited V]
 variable [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U]
 variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 
-set_option pp.coercions false
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
@@ -71,50 +70,13 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
   clear CG1
   clear CG2
   conv =>
-    left
-    right
-    right
-    right
-    right
-    intro b
-    right
-    intro c
+    enter [1, 1, 2, 1, 1, b, 1, c]
     rw [← mul_assoc]
   conv =>
-    left
-    right
-    right
-    right
-    right
-    intro b
+    enter [1, 1, 2, 1, 1, b]
     rw [ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_mul_right]
   rw [← elog_mul]
-
-  -- conv at h1 =>
-  --   lhs
-  --   arg 1
-  --   arg 2
-  --   arg 1
-  --   arg 1
-  --   intro x
-  --   rw [DFunLike.coe]
-  --   rw [PMF.instFunLike]
-  --   rw [SLang.toPMF]
-  --   rw [SLang.toPMF]
-  --   simp
-  -- conv at h2 =>
-  --   lhs
-  --   arg 1
-  --   arg 2
-  --   arg 1
-  --   arg 1
-  --   intro x
-  --   rw [DFunLike.coe]
-  --   rw [PMF.instFunLike]
-  --   rw [SLang.toPMF]
-  --   rw [SLang.toPMF]
-  --   simp
 
   have log_nonneg_1 : 0 ≤ (∑' (i : U), (nq1 l₁).val i ^ α * (nq1 l₂).val i ^ (1 - α)).elog := by
     have Hac1 : AbsCts (nq1 l₁) (nq1 l₂) := by exact Ha1 l₁ l₂ h4
@@ -133,8 +95,7 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
     -- Distribute
     rw [CanonicallyOrderedCommSemiring.left_distrib]
     apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (↑↑ε₁ ^ 2 / ↑↑ε₂ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (↑↑ε₃ ^ 2 / ↑↑ε₄ ^ 2) * α)))
-    · -- apply?
-      apply _root_.add_le_add
+    · apply _root_.add_le_add
       · rw [ofEReal_mul_nonneg] at h1
         · apply h1
         · apply EReal.coe_nonneg.mpr
@@ -156,7 +117,8 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
         · rw [← mul_add]
           rw [mul_le_mul_iff_of_pos_left]
           · ring_nf
-            simp
+            simp only [inv_pow, add_le_add_iff_right, le_add_iff_nonneg_left, gt_iff_lt, inv_pos, Nat.cast_pos, PNat.pos,
+                      mul_pos_iff_of_pos_right, mul_pos_iff_of_pos_left, mul_nonneg_iff_of_pos_left, Nat.ofNat_nonneg]
           · simp only [inv_pos, Nat.ofNat_pos]
         · linarith
       · apply mul_nonneg
@@ -246,7 +208,9 @@ Renyi divergence beteeen composed queries on neighbours are finite.
 --     rename_i h4 h5
 --     contradiction
 
-
+/--
+``privCompose`` preserves absolute continuity between neighbours
+-/
 def privCompose_AC (nq1 : Mechanism T U) (nq2 : Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ACNeighbour nq2) :
     ACNeighbour (privCompose nq1 nq2) := by
   rw [ACNeighbour] at *
