@@ -23,27 +23,6 @@ variable [HU : Inhabited U] [HU_meas : MeasurableSpace U] [HU_discr : Measurable
 variable [HV : Inhabited V] [HV_meas : MeasurableSpace V] [HV_discr : MeasurableSingletonClass V] [HV_count : Countable V]
 
 
--- lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
---   intro z β Hz0 HzT
---   intro W
---   have h : z = 0 ∧ β < 0 ∨ z = ⊤ ∧ 0 < β := by
---     apply rpow_eq_top_iff.mp
---     apply W
---   cases h
---   · simp_all only [ne_eq, not_true_eq_false]
---   · simp_all only [ne_eq, top_ne_zero, not_false_eq_true, not_true_eq_false]
-
--- lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x = ⊤ ∨ ¬ y < 0) -> x ^ y ≠ 0 := by
---   have _ := (@ENNReal.rpow_eq_zero_iff x y)
---   aesop
-
--- lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
---   exact fun a => Ne.lt_top' (id (Ne.symm a))
---
--- lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
---   exact fun a => LT.lt.ne_top a
-
-
 lemma sup_lemma {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (f : U -> EReal) :
     eexp (s * ⨆ (u : U), f u) =  ⨆ (u : U), eexp (s * f u) := by
   rw [@GaloisConnection.l_iSup _ _ _ _ _ _ _ (galois_connection_smul_l HS0 HS1) f]
