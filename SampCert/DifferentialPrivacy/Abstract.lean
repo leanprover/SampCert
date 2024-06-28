@@ -38,7 +38,7 @@ def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : Li
   return (A, B)
 
 
-lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (u : U) (v : V) (l : List T) :
+lemma compose_sum_rw_adaptive (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (u : U) (v : V) (l : List T) :
   (∑' (a : U), nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = nq1 l u * nq2 u l v := by
   have hrw1 : ∀ (a : U), nq1 l a * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0 := by
     intro a
@@ -75,9 +75,8 @@ The joint distribution decomposes into the conditional and marginal (ie, nq1 l) 
 lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
   ∀ (u : U), ∀ (v : V), privComposeAdaptive nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
   intros u v
-  sorry
-  -- rw [<- compose_sum_rw_adaptive]
-  -- simp [privComposeAdaptive]
+  rw [<- compose_sum_rw_adaptive]
+  simp [privComposeAdaptive]
 
 /--
 Product of mechanisms.
@@ -116,15 +115,11 @@ class DPSystem (T : Type) where
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
-  /-
-  Uniformity conditions for adaptive composition
+  /--
+  Privacy adaptively composes by addition.
   -/
-  -- adaptive_unif_prop {U : Type} : (U -> Mechanism T Z) -> Prop
-  /-
-  Notion of privacy composes by addition
-  -/
-  -- adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-  --  prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> adaptive_unif_prop m₂ → prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
+    prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
   Requirement for postcomposition to hold.
   -/

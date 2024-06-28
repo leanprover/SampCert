@@ -299,7 +299,9 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
+
+
+theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
   (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))
   (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
