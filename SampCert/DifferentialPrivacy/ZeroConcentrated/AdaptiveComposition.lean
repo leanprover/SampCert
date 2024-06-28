@@ -43,232 +43,15 @@ lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
 lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
   exact fun a => LT.lt.ne_top a
 
--- FIXME: Is NonTopRDNQ necessary again?
--- FIXME: This is related to RDBounded being ⊤. I think I might want to change it back to a ℝ!
-
-/--
-``b`` is an upper bound on the Renyi divergence for particular neighbours, uniform across all values of the first query.
--/
-def RDBound (nq2 : U -> List T -> PMF V) (α : ℝ) (l₁ l₂ : List T) (b : ENNReal) : Prop :=
-  ∀ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ b
-
-/--
-There exsts an upper bound on the Renyi divergence, uniform across all values of the first query.
--/
-def RDBounded (nq2 : U -> List T -> PMF V) : Prop :=
-  ∀ α l₁ l₂, (1 < α) -> (Neighbour l₁ l₂) -> ∃ (b : ENNReal), RDBound nq2 α l₁ l₂ b
-
-/--
-``b`` is an upper bound on the Renyi divergence, uniform across all values of the first query.
--/
-def URDBound (nq2 : U -> List T -> PMF V) (b : ℝ -> List T -> List T -> ENNReal) : Prop :=
-  ∀ α l₁ l₂, (1 < α) -> (Neighbour l₁ l₂) -> RDBound nq2 α l₁ l₂ (b α l₁ l₂)
-
-lemma RDBounded_of_URDBound (nq2 : U -> List T -> PMF V) (b : ℝ -> List T -> List T -> ENNReal) :
-      URDBound nq2 b -> RDBounded nq2 := by
-  -- rw [URDBound, RDBounded]
-  -- aesop
-  sorry
-
-
--- lemma URDBound_of_sup (nq2 : U -> List T -> SLang V) : URDBound nq2 (fun α l₁ l₂ => ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
---   -- Is this provable?
---   -- I think only if the supremum exists, since we're working in ℝ instead of ENNReal
---   sorry
-
-/--
-Equation for the Renyi divergence series in terms of the Renyi Divergence
--/
-lemma RenyiDivergence_exp (p q : SLang T) {α : ℝ}
-  (h : 1 < α)
-  (H1 : 0 < ∑' (x : T), p x ^ α * q x ^ (1 - α))
-  (H2 : ∑' (x : T), p x ^ α * q x ^ (1 - α) < ⊤) : True := by sorry
-  -- Real.exp ((α - 1) * RenyiDivergence p q α) = (∑' x : T, (p x)^α * (q x)^(1 - α)).toReal := by
-  -- simp only [RenyiDivergence]
-  -- rw [<- mul_assoc]
-  -- have test : (α - 1) * (α - 1)⁻¹ = 1 := by
-  --   refine mul_inv_cancel ?h
-  --   linarith
-  -- rw [test]
-  -- clear test
-  -- simp
-  -- rw [Real.exp_log]
-  -- apply ENNReal.toReal_pos_iff.mpr
-  -- tauto
-
-
-/-
-Renyi divergence beteeen adaptive composed queries on neighbours are finite.
--/
--- theorem privComposeAdaptive_NonTopRDNQ {nq1 : List T → SLang U} {nq2 : U -> List T → SLang V}
---   (nt1 : NonTopRDNQ nq1) (nt2 : ∀ u, NonTopRDNQ (nq2 u))
---   (nz1 : NonZeroNQ nq1) (nz2 : ∀ u, NonZeroNQ (nq2 u))
---   (Hubound : RDBounded nq2) :
---   NonTopRDNQ (privComposeAdaptive nq1 nq2) := by
---   rw [NonTopRDNQ] at *
---   intro α h1 l₁ l₂ h2
---   simp [privComposeAdaptive]
---   rw [ENNReal.tsum_prod']
---   simp
---   conv =>
---     right
---     left
---     right
---     intro x
---     right
---     intro y
---     congr
---     . left
---       rw [(compose_sum_rw_adaptive _ _ x y)]
---     . left
---       rw [(compose_sum_rw_adaptive _ _ x y)]
---   conv =>
---     right
---     left
---     right
---     intro x
---     right
---     intro y
---     rw [ENNReal.mul_rpow_of_nonneg _ _ (le_of_lt (lt_trans zero_lt_one h1))]
---     rw [ENNReal.mul_rpow_of_ne_top (nn1 l₂ x) (nn2 x l₂ y)]
---     rw [mul_assoc]
---     right
---     rw [mul_comm]
---     rw [mul_assoc]
---     right
---     rw [mul_comm]
---   conv =>
---     right
---     left
---     right
---     intro x
---     right
---     intro y
---     rw [← mul_assoc]
---   conv =>
---     right
---     left
---     right
---     intro x
---     rw [ENNReal.tsum_mul_left]
---
---   rcases (Hubound α l₁ l₂ h1 h2) with ⟨ b , Hubound ⟩
---
---   apply lt_top_ne_top
---   apply (@LE.le.trans_lt _ _ _ (∑' (x : U), nq1 l₁ x ^ α * nq1 l₂ x ^ (1 - α) * ENNReal.ofReal (rexp ((α - 1) * b))) _ ?goal1)
---
---   case goal1 =>
---     apply ENNReal.tsum_le_tsum
---     intro a
---     refine (ENNReal.mul_le_mul_left ?h.h0 ?h.hinf).mpr ?h.a
---     · apply mul_ne_zero_iff.mpr
---       apply And.intro
---       · refine rpow_ne_zero_iff (nq1 l₁ a) α ?h.h0.left.a
---         apply And.intro
---         · left
---           aesop
---         · left
---           aesop
---       · refine rpow_ne_zero_iff (nq1 l₂ a) (1 - α) ?h.h0.right.a
---         apply And.intro
---         · left
---           aesop
---         · left
---           aesop
---     · intro H
---       rw [mul_eq_top] at H
---       cases H
---       · rename_i Hk
---         rcases Hk with ⟨ hk1, hk2 ⟩
---         have Hcont : nq1 l₂ a ^ (1-α) ≠ ⊤ := by
---           apply exp_non_top
---           · aesop
---           · aesop
---         aesop
---       · rename_i Hk
---         rcases Hk with ⟨ hk1, hk2 ⟩
---         have Hcont : nq1 l₁ a ^ (α) ≠ ⊤ := by
---           apply exp_non_top
---           · aesop
---           · apply nn1
---         aesop
---     · refine ((ENNReal.toReal_le_toReal ?g1 ?g2).mp ?g3)
---       case g1 => exact nt2 a α h1 l₁ l₂ h2
---       case g2 => exact Ne.symm top_ne_ofReal
---       case g3 =>
---
---         have GH1 : ∀ i, 0 < ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by
---           intro i
---           rcases HV with ⟨ v0 ⟩
---           have Hle : nq2 i l₁ v0 ^ α * nq2 i l₂ v0 ^ (1 - α) <= ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) := by apply ENNReal.le_tsum v0
---           apply (LE.le.trans_lt' Hle)
---           clear Hle
---           apply ENNReal.mul_pos
---           · have Hlt : (0 < nq2 i l₁ v0 ^ α) := by
---               apply ENNReal.rpow_pos
---               · have H1 : 0 <= nq2 i l₁ v0 := by simp
---                 have H2 : 0 ≠ nq2 i l₁ v0 := by
---                   exact fun a => nz2 i l₁ v0 (id (Eq.symm a))
---                 apply LE.le.lt_or_eq at H1
---                 cases H1
---                 · assumption
---                 · contradiction
---               · exact nn2 i l₁ v0
---             intro Hk
---             rw [Hk] at Hlt
---             apply (lt_self_iff_false 0).mp Hlt
---           · intro Hk
---             have Hlt : (0 < nq2 i l₂ v0 ^ (1 - α)) := by
---                  apply ENNReal.rpow_pos
---                  · have H1 : 0 <= nq2 i l₂ v0 := by simp
---                    have H2 : 0 ≠ nq2 i l₂ v0 := by exact fun a => nz2 i l₂ v0 (id (Eq.symm a))
---                    apply LE.le.lt_or_eq at H1
---                    cases H1
---                    · assumption
---                    · contradiction
---                  · exact nn2 i l₂ v0
---             rw [Hk] at Hlt
---             apply (lt_self_iff_false 0).mp Hlt
---
---         have GH2 : ∀ i, ∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α) < ⊤ := by
---           exact fun i => ne_top_lt_top (∑' (x : V), nq2 i l₁ x ^ α * nq2 i l₂ x ^ (1 - α)) (nt2 i α h1 l₁ l₂ h2)
---
---         rw [<- RenyiDivergence_exp (nq2 a l₁) (nq2 a l₂) h1 ?H1 ?H2]
---         case H1 => apply GH1
---         case H2 => apply GH2
---         rw [ENNReal.toReal_ofReal]
---         · apply Real.exp_le_exp_of_le
---           rw [RDBound] at Hubound
---           apply mul_le_mul_of_nonneg_left
---           · apply Hubound
---           · linarith
---         · apply (exp_nonneg ((α - 1) * b))
---
---   rw [ENNReal.tsum_mul_right]
---   apply ne_top_lt_top
---   intro H
---   rw [mul_eq_top] at H
---   cases H
---   . rename_i h3
---     rcases h3 with ⟨ _ , h31 ⟩
---     aesop
---   . rename_i h3
---     rcases h3 with ⟨ h30, _ ⟩
---     aesop
-
-
+-- RenyiDivergence_exp
+-- See: RenyiDivergenceExpectation
 
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
-lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} (α : ℝ) (Hα : 1 < α) (l₁ l₂ : List T)
-  -- (HNTRDNQ1 : NonTopRDNQ nq1) (HNTRDNQ2 : ∀ u, NonTopRDNQ (nq2 u))
-  (HN : Neighbour l₁ l₂) -- (HNZ1 : NonZeroNQ nq1) (HNZ2 : ∀ u, NonZeroNQ (nq2 u)) (HNT2 : ∀ u, NonTopNQ (nq2 u))
-  (b : ENNReal)
-  (Hubound : RDBound nq2 α l₁ l₂ b)
-  (Hubound2 : RDBounded nq2) :
+lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {α : ℝ} (Hα : 1 < α) {l₁ l₂ : List T} (HN : Neighbour l₁ l₂) :
   RenyiDivergence (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) α ≤
-    RenyiDivergence (nq1 l₁) (nq1 l₂) α + b := by
+  RenyiDivergence (nq1 l₁) (nq1 l₂) α + (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
   sorry
   /-
   apply (RenyiDivergence_mono_sum _ _ α Hα)
@@ -474,15 +257,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-  (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))
-  (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄))
-  (nn1 : NonZeroNQ nq1)
-  (nn2 : ∀ u, NonZeroNQ (nq2 u))
-  -- (nt1 : NonTopRDNQ nq1)
-  -- (nt2 : ∀ u, NonTopRDNQ (nq2 u))
-  -- (nts1 : NonTopNQ nq1) (nts2 : ∀ u, NonTopNQ (nq2 u))
-  (HB : RDBounded nq2)
-  (HB' : URDBound nq2 (fun α l₁ l₂ => ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)) :
+  (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
@@ -526,10 +301,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
 -/
 theorem privComposeAdaptive_zCDP {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
   (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))
-  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄))
-  (NonTopSum_Uniform : ∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : V), nq2 u l v ≤ ENNReal.ofReal z)
-  -- (RenyiBound_Uniform : URDBound nq2 (fun α l₁ l₂ => ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)) :
-  :
+  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
   sorry
