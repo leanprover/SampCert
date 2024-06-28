@@ -14,8 +14,8 @@ import SampCert.Samplers.GaussianGen.Basic
 /-!
 # Concentrated Bound
 
-This file derives a cDP bound for the discrete Gaussian. In particular, it bounds
-the Renyi divergence between discrete Gaussian evaluations with integer means.
+This file derives a cDP bound on the discrete Gaussian, and for the discrete Gaussian
+sampler.
 -/
 
 open Real Nat
@@ -84,7 +84,7 @@ lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   rfl
 
 /--
-Alternative definition for the Renyi Divergence.
+Real-valued Renyi Divergence.
 -/
 noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
