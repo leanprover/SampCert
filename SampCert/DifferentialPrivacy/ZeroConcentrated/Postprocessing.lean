@@ -28,106 +28,25 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : Memℒp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
-  MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
-  have X := @MeasureTheory.Memℒp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
-  revert X
-  conv =>
-    left
-    left
-    intro x
-    rw [← norm_rpow_of_nonneg (nn x)]
-  intro X
-  simp [Integrable] at *
-  constructor
-  . cases X
-    rename_i left right
-    rw [@aestronglyMeasurable_iff_aemeasurable]
-    apply AEMeasurable.pow_const
-    simp [Memℒp] at mem
-    cases mem
-    rename_i left' right'
-    rw [aestronglyMeasurable_iff_aemeasurable] at left'
-    simp [left']
-  . rw [← hasFiniteIntegral_norm_iff]
-    simp [X]
+/--
+privPostProcess preserves absolute continuity between neighbours
+-/
+def privPostProcess_AC {f : U -> V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+  rw [ACNeighbour] at *
+  unfold AbsCts at *
+  intro l₁ l₂ Hn v
+  have Hac := Hac l₁ l₂ Hn
+  simp [privPostProcess]
+  intro Hppz i fi
+  apply Hac
+  apply Hppz
+  apply fi
 
 /--
-Jensen's ineuquality for the exponential applied to Renyi's sum
+Normalized fiber
 -/
-theorem Renyi_Jensen (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : Memℒp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
-  ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
-
-  conv =>
-    left
-    left
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  conv =>
-    right
-    right
-    intro x
-    rw [mul_comm]
-    rw [← smul_eq_mul]
-  rw [← PMF.integral_eq_tsum]
-  rw [← PMF.integral_eq_tsum]
-
-  have A := @convexOn_rpow α (le_of_lt h)
-  have B : ContinuousOn (fun (x : ℝ) => x ^ α) (Set.Ici 0) := by
-    apply ContinuousOn.rpow
-    . exact continuousOn_id' (Set.Ici 0)
-    . exact continuousOn_const
-    . intro x h'
-      simp at h'
-      have OR : x = 0 ∨ 0 < x := by exact LE.le.eq_or_gt h'
-      cases OR
-      . rename_i h''
-        subst h''
-        right
-        apply lt_trans zero_lt_one h
-      . rename_i h''
-        left
-        by_contra
-        rename_i h3
-        subst h3
-        simp at h''
-  have C : @IsClosed ℝ UniformSpace.toTopologicalSpace (Set.Ici 0) := by
-    exact isClosed_Ici
-  have D := @ConvexOn.map_integral_le T ℝ t1 _ _ _ (PMF.toMeasure q) (Set.Ici 0) f (fun (x : ℝ) => x ^ α) (PMF.toMeasure.isProbabilityMeasure q) A B C
-  simp at D
-  apply D
-  . exact MeasureTheory.ae_of_all (PMF.toMeasure q) h2
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
-  . rw [Function.comp_def]
-    have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . have X : ENNReal.ofReal α ≠ 0 := by
-      simp
-      apply lt_trans zero_lt_one h
-    have Y : ENNReal.ofReal α ≠ ⊤ := by
-      simp
-    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
-    rw [toReal_ofReal] at Z
-    . exact Z
-    . apply le_of_lt
-      apply lt_trans zero_lt_one h
-  . apply MeasureTheory.Memℒp.integrable _ mem
-    rw [one_le_ofReal]
-    apply le_of_lt h
-
-def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal := fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
+def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal :=
+  fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
 lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
@@ -136,6 +55,9 @@ lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n |
   rw [ENNReal.tsum_mul_right]
   rw [ENNReal.mul_inv_cancel h1 h2]
 
+/--
+Normalized fiber distribution
+-/
 def δpmf (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) : PMF {n : U | a = f n} :=
   ⟨ δ nq f a , δ_normalizes nq f a h1 h2 ⟩
 
@@ -167,10 +89,6 @@ theorem norm_simplify (x : ENNReal) (h : x ≠ ⊤) :
     simp
     rfl
 
-theorem RD1 (p q : T → ENNReal) (α : ℝ) (h : 1 < α) (RD : ∑' (x : T), p x ^ α * q x ^ (1 - α) ≠ ⊤) (nz : ∀ x : T, q x ≠ 0) (nt : ∀ x : T, q x ≠ ⊤) :
-  ∑' (x : T), (p x / q x) ^ α * q x ≠ ⊤ := by
-  rw [← RenyiDivergenceExpectation p q h nz nt]
-  trivial
 
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
@@ -217,329 +135,307 @@ theorem tsum_pos_int {f : ℤ → ENNReal} (h1 : ∑' x : ℤ, f x ≠ ⊤) (h2 
   apply toReal_strict_mono h1
   apply ENNReal.tsum_pos_int h1 h2
 
-theorem DPostPocess_pre {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (h2 : Neighbour l₁ l₂) :
-  (∑' (x : V),
-      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
-        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
-  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
-  simp [zCDPBound, RenyiDivergence] at h
+lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ ∧ y < 0)) : x ^ y ≠ 0 := by
+  intro Hk
+  apply H
+  apply (ENNReal.rpow_eq_zero_iff).mp
+  apply Hk
+
+
+/--
+Jensen's inequality for privPostProcess, restructed to types where ``nq l₁`` is nonzero
+-/
+theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count : Countable U] [disc : DiscreteMeasurableSpace U] [Inhabited U]
+  {nq : List T → SLang U}
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T}
+  (HNorm1 : HasSum (nq l₁) 1)
+  (HNorm2 : HasSum (nq l₂) 1)
+  (Habs : AbsCts (nq l₁) (nq l₂))
+  (Hnq2 : ∀ (u : U), nq l₁ u ≠ 0)
+  (h2 : Neighbour l₁ l₂) :
+  (∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤ (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
+
+  -- By absolute continuity, nq1 is nonzero
+  have Hnql1 : (∀ (u : U), nq l₂ u ≠ 0) := by
+    rw [AbsCts] at Habs
+    intro u HK
+    apply Hnq2
+    apply Habs
+    apply HK
+
+  -- Noised query is not ⊤
+  have nq_nts1 : ∑' n : U, nq l₁ n ≠ ⊤ := by simp [HasSum.tsum_eq HNorm1]
+  have nq_nts2 : ∑' n : U, nq l₂ n ≠ ⊤ := by simp [HasSum.tsum_eq HNorm2]
 
   -- Rewrite as cascading expectations
-  rw [@RenyiDivergenceExpectation _ (nq l₁) (nq l₂) _ h1 (nn l₂) (nts l₂)]
+  rw [RenyiDivergenceExpectation]
+  case h => apply h1
+  case H =>
+    simp [AbsCts]
+    intro v Hv i vEq
+    apply Habs
+    apply Hv
+    apply vEq
+  simp
+  rw [RenyiDivergenceExpectation (fun x => nq l₁ x) (fun x => nq l₂ x) h1 Habs]
 
   -- Shuffle the sum
   rw [fiberwisation (fun x => (nq l₁ x / nq l₂ x) ^ α * nq l₂ x) f]
-
   apply ENNReal.tsum_le_tsum
-
   intro i
+  simp
 
-  -- Get rid of elements with probability 0 in the pushforward
+  -- Eliminate elements with probability zero
   split
-  . rename_i empty
-    rw [condition_to_subset]
-    have ZE : (∑' (x_1 : ↑{n | i = f n}), nq l₁ ↑x_1) = 0 := by
+  case h.inl =>
+    rename_i H
+    repeat rw [condition_to_subset]
+    rw [H]
+    simp
+
+  -- Normalize each fiber into a PMF
+  rename_i NotEmpty
+  repeat rw [condition_to_subset]
+
+  have nq_restriction_nts1 : ∑' (a : ↑{a | i = f a}), nq l₁ ↑a ≠ ⊤ := by exact convergent_subset (fun y => f y) nq_nts1
+  have nq_restriction_nts2 : ∑' (a : ↑{a | i = f a}), nq l₂ ↑a ≠ ⊤ := by exact convergent_subset (fun y => f y) nq_nts2
+
+  have nq_restriction_nzs (l' : List T) (Hl : ∀ u : U, nq l' u ≠ 0) : ∑' (a : ↑{a | i = f a}), nq l' ↑a ≠ 0 := by
+    simp
+    have T := witness NotEmpty
+    cases T
+    rename_i z w
+    exists z
+    constructor
+    . trivial
+    . exact Hl z
+  simp
+
+  let δF₁ := (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) nq_restriction_nts1)
+  let δF₂ := (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) nq_restriction_nts2)
+  have δF₁_Eq : δF₁ = (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) nq_restriction_nts1) := by exact rfl
+  have δF₂_Eq : δF₂ = (δpmf (nq l₂) f i (nq_restriction_nzs l₂ Hnql1) nq_restriction_nts2) := by exact rfl
+
+  -- Normalized fibers are absolutely continuous
+  have HAC_Fiber : AbsCts δF₁ δF₂ := by
+    simp [AbsCts]
+    rw [δF₁_Eq]
+    rw [δF₂_Eq]
+    intro a b
+    repeat rw [δpmf]
+    unfold δ
+    simp
+    rw [DFunLike.coe]
+    simp [PMF.instFunLike]
+    intro H
+    cases H
+    · rename_i Hl2z
+      left
+      apply Habs
+      apply Hl2z
+    · exfalso
+      apply nq_restriction_nts2
       simp
-      intro a H
-      have I₁ : a ∈ {b | i = f b} := by
-        simp [H]
-      have I2 : {b | i = f b} ≠ ∅ := by
-        apply ne_of_mem_of_not_mem' I₁
-        simp
-      contradiction
-    rw [ZE]
-    simp only [toReal_mul, zero_toReal, ge_iff_le]
+      assumption
 
-    rw [ENNReal.zero_rpow_of_pos]
-    . simp
-    . apply lt_trans zero_lt_one h1
+  have δF₂_NT (x : { x // i = f x }) : δF₂ x ≠ ⊤ := by
+    rw [δF₂_Eq]
+    exact PMF.apply_ne_top ((nq l₂).δpmf f i (nq_restriction_nzs l₂ Hnql1) (nq_restriction_nts2)) x
 
-  -- Part 2: apply Jensen's inequality
-  . rename_i NotEmpty
+  -- Normalized fibers avoid the bad case for rewriting the Jensen term
+  have Hspecial (x : { x // i = f x }) : ¬(δF₁ x ≠ 0 ∧ δF₂ x = ⊤) := by
+    simp
+    intro _ Hcont
+    exfalso
+    apply δF₂_NT
+    apply Hcont
 
-    have MasterRW : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq l ↑a ≠ ⊤ := by
-      intro l
-      apply convergent_subset
-      simp [NonTopSum] at conv
-      have conv := conv l
-      apply conv
+  -- Apply Jensen's inequality to the normalized fibers
+  have HJ := Renyi_Jensen_ENNReal δF₁ δF₂ h1 HAC_Fiber
 
-    have MasterZero : ∀ l : List T, ∑' (a : ↑{a | i = f a}), nq l ↑a ≠ 0 := by
-      intro l
-      simp
-      have T := witness NotEmpty
-      cases T
-      rename_i z w
-      exists z
-      constructor
-      . trivial
-      . apply nn l
-
-    have S2 : (∑' (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a) ^ α ≠ ⊤ := by
-      conv =>
-        left
-        left
-        right
-        intro a
-        rw [← δpmf_conv]
-        rw [division_def]
-        rw [mul_assoc]
-        right
-        rw [← mul_assoc]
-        rw [ENNReal.inv_mul_cancel (nn l₂ a) (nts l₂ a)]
-      rw [one_mul]
-      rw [ENNReal.tsum_mul_right]
-      apply ENNReal.rpow_ne_top_of_nonneg (le_of_lt (lt_trans zero_lt_one h1 ))
-      apply mul_ne_top
-      . apply convergent_subset _ (conv l₁)
-      . apply inv_ne_top.mpr (MasterZero l₂)
-
-    have S1 : ∀ (a : ↑{n | i = f n}), nq l₁ ↑a / nq l₂ ↑a * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
-      intro a
-      apply mul_ne_top
-      . rw [division_def]
-        apply mul_ne_top (nts l₁ a)
-        apply inv_ne_top.mpr (nn l₂ a)
-      . rw [← δpmf_conv]
-        apply mul_ne_top (nts l₂ a)
-        apply inv_ne_top.mpr (MasterZero l₂)
-
-    have S3 : ∑' (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
-      conv =>
-        left
-        right
-        intro a
-        rw [← δpmf_conv]
-        rw [← mul_assoc]
-      rw [ENNReal.tsum_mul_right]
-      apply mul_ne_top
-      . rw [← RenyiDivergenceExpectation _ _ h1]
-        . replace nt := nt α h1 l₁ l₂ h2
-          apply convergent_subset _ nt
-        . intro x
-          apply nn
-        . intro x
-          apply nts
-      . apply inv_ne_top.mpr (MasterZero l₂)
-
-    have S4 : ∀ (a : ↑{n | i = f n}), (nq l₁ ↑a / nq l₂ ↑a) ^ α * (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) a ≠ ⊤ := by
-      intro a
-      apply ENNReal.ne_top_of_tsum_ne_top S3
-
-    rw [condition_to_subset]
-    rw [condition_to_subset]
-
-    -- Introduce Q(f⁻¹ i)
-    let κ := ∑' x : {n : U | i = f n}, nq l₂ x
-    have P4 : κ / κ = 1 := by
-      rw [division_def]
-      rw [ENNReal.mul_inv_cancel]
-      . simp [κ]  -- Use here for δ normalization
-        have T := witness NotEmpty
-        cases T
-        rename_i z w
-        exists z
-        constructor
-        . trivial
-        . apply nn l₂
-      . simp only [κ]
-        apply MasterRW l₂
-
-    conv =>
-      right
-      right
-      intro a
-      rw [← mul_one ((nq l₁ ↑a / nq l₂ ↑a) ^ α * nq l₂ ↑a)]
-      right
-      rw [← P4]
-    clear P4
-    simp only [κ]
-
-    conv =>
-      right
-      right
-      intro a
-      right
-      rw [division_def]
-      rw [mul_comm]
-
-    conv =>
-      right
-      right
-      intro a
-      rw [← mul_assoc]
-
-    rw [ENNReal.tsum_mul_right]
-
-    -- Jensen's inequality
-
-    have P5 : ∀ (x : ↑{n | i = f n}), 0 ≤ (fun a => (nq l₁ ↑a / nq l₂ ↑a).toReal) x := by
-      intro x
-      simp only [toReal_nonneg]
-
-    have XXX : @Memℒp ℝ Real.normedAddCommGroup (↑{n | i = f n}) Subtype.instMeasurableSpace (fun a => (nq l₁ ↑a / nq l₂ ↑a).toReal)
-      (ENNReal.ofReal α) (PMF.toMeasure (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂))) := by
-      simp [Memℒp]
-      constructor
-      . apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
-        apply Measurable.stronglyMeasurable
-        apply Measurable.ennreal_toReal
-        conv =>
-          right
-          intro x
-          rw [division_def]
-        apply Measurable.mul
-        . -- MeasurableSingletonClass.toDiscreteMeasurableSpace
-          apply measurable_discrete
-        . apply Measurable.inv
-          apply measurable_discrete
-      . simp [snorm]
-        split
-        . simp
-        . simp [snorm']
-          rw [MeasureTheory.lintegral_countable'] -- Uses countable
-          rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h1))]
-          have OTHER : ∀ a, nq l₁ a / nq l₂ a ≠ ⊤ := by
-            intro a
-            rw [division_def]
-            rw [ne_iff_lt_or_gt]
-            left
-            rw [mul_lt_top_iff]
-            left
-            constructor
-            . exact Ne.lt_top' (id (Ne.symm (nts l₁ a)))
-            . simp
-              exact pos_iff_ne_zero.mpr (nn l₂ a)
-
-          conv =>
-            left
-            left
-            right
-            intro a
-            rw [norm_simplify _ (OTHER a)]
-          have Z : 0 < α⁻¹ := by
-            simp
-            apply lt_trans zero_lt_one h1
-          rw [rpow_lt_top_iff_of_pos Z]
-          conv =>
-            left
-            right
-            intro a
-            rw [PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton a)]
-
-          apply Ne.lt_top' (id (Ne.symm _))
-          apply S3
-
-
-    have Jensen's := @Renyi_Jensen {n : U | i = f n} Subtype.instMeasurableSpace Subtype.instMeasurableSingletonClass (fun a => (nq l₁ a / nq l₂ a).toReal) (δpmf (nq l₂) f i (MasterZero l₂) (MasterRW l₂)) α h1 P5 XXX
-    clear P5
-
-    have P6 : 0 ≤ (∑' (x : ↑{n | i = f n}), nq l₂ ↑x).toReal := by
-      simp only [toReal_nonneg]
-    have A' := mul_le_mul_of_nonneg_left Jensen's P6
-    clear Jensen's P6
-
-    conv =>
-      right
-      rw [mul_comm]
-      right
-      right
-      intro a
-      rw [mul_assoc]
-      rw [δpmf_conv]
-
-    -- Here
-
-    replace A' := ofReal_le_ofReal A'
-    rw [ofReal_mul toReal_nonneg] at A'
-    rw [ofReal_mul toReal_nonneg] at A'
-    rw [ofReal_toReal_eq_iff.2 (MasterRW l₂)] at A'
-    simp only at A'
-
-    revert A'
-    conv =>
-      left
-      right
-      right
-      right
-      right
-      intro x
-      rw [toReal_rpow]
-      rw [← toReal_mul]
-    conv =>
-      left
-      right
-      right
-      right
-      rw [← ENNReal.tsum_toReal_eq S4]
-    intro A'
-    rw [ofReal_toReal_eq_iff.2 S3] at A'
-
-    apply le_trans _ A'
-    clear A'
-    apply le_of_eq
-
-    -- Part 3:
-
-    conv =>
-      right
-      right
-      right
-      left
-      right
-      intro x
-      rw [← toReal_mul]
-    rw [← ENNReal.tsum_toReal_eq S1]
-    rw [toReal_rpow]
-    rw [ofReal_toReal_eq_iff.2 S2]
-
-    conv =>
-      right
-      right
-      left
-      right
-      intro x
-      rw [division_def]
-      rw [← δpmf_conv]
-      rw [mul_assoc]
-      right
-      rw [← mul_assoc]
-      left
-      rw [ENNReal.inv_mul_cancel (nn l₂ x) (nts l₂ x)]
-    simp only [one_mul]
-
-    rw [ENNReal.tsum_mul_right]
-    have H4 : (∑' (a : ↑{a | i = f a}), nq l₂ ↑a)⁻¹ ≠ ⊤ := by
-      apply inv_ne_top.mpr
-      simp
-      have T := witness NotEmpty
-      cases T
-      rename_i z w
-      exists z
-      constructor
-      . trivial
-      . apply nn l₂
-    rw [ENNReal.mul_rpow_of_ne_top (MasterRW l₁) H4]
-
-    have H3 : ∑' (a : ↑{a | i = f a}), nq l₂ ↑a ≠ 0 := by
-      simp
-      have T := witness NotEmpty
-      cases T
-      rename_i z w
-      exists z
-      constructor
-      . trivial
-      . apply nn l₂
-    rw [ENNReal.rpow_sub _ _ H3 (MasterRW l₂)]
-    rw [ENNReal.rpow_one]
+  -- Cancel and simplify the LHS of HJ to 1
+  conv at HJ =>
+    lhs
+    arg 1
+    arg 1
+    intro x
     rw [division_def]
-    rw [← mul_assoc]
-    rw [← mul_assoc]
+    rw [mul_mul_inv_eq_mul_cancel (HAC_Fiber x) (Hspecial x)]
+  conv at HJ =>
+    lhs
+    arg 1
+    rw [PMF.tsum_coe]
+  simp at HJ
+
+  -- Name the normalization constants for each fiber
+  let N (l : List T) := (∑' (x : {n // i = f n}), nq l x)⁻¹
+  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq l x)⁻¹ := by exact rfl
+  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq l x) = (N l)⁻¹ := by
+    exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq l) ↑x))
+  have N1_nz : N l₁ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts1)
+  have N2_nz : N l₂ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts2)
+
+  -- Unfold normalization constants in HJ
+  conv at HJ =>
+    rhs
+    arg 1
+    intro x
+    repeat rw [DFunLike.coe]
+    repeat rw [PMF.instFunLike]
+    simp
+    rw [δF₁_Eq]
+    rw [δF₂_Eq]
+    simp [δpmf]
+    unfold δ
+    repeat rw [DFunLike.coe]
+    repeat rw [PMF.instFunLike]
+    simp
+    rw [<- N_def]
+    rw [<- N_def]
+
+  -- Fold constants in goal
+  rw [N_inv]
+  rw [N_inv]
+
+  -- Pull out constants from the sum in HJ
+  have conv1  (x : { x // i = f x }) : (nq l₁ x.val * N l₁ / (nq l₂ x.val * N l₂)) ^ α = (N l₁ / N l₂) ^ α * (nq l₁ x.val / nq l₂ x.val) ^ α := by
+    simp [division_def]
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      apply mul_ne_top
+      · exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
+      · exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    case G2 =>
+      apply inv_ne_top.mpr
+      exact mul_ne_zero (Hnql1 ↑x) N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
+    case G2 =>
+      exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+    case G2 =>
+      exact inv_ne_top.mpr N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 =>
+      exact ENNReal.ne_top_of_tsum_ne_top (nq_nts1) ↑x
+    case G2 =>
+      exact inv_ne_top.mpr (Hnql1 ↑x)
+    conv =>
+      arg 1
+      rw [mul_assoc]
+      rw [mul_comm]
+      skip
+    repeat rw [mul_assoc]
     congr 1
-    . rw [mul_comm]
-    . congr 1
-      rw [ENNReal.inv_rpow]
+    conv =>
+      arg 2
+      arg 2
+      rw [mul_comm]
+    rw [<- mul_assoc]
+    congr 1
+    rw [ENNReal.mul_inv ?G1 ?G2]
+    case G1 =>
+      right
+      exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+    case G2 =>
+      right
+      exact N2_nz
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G2]
+    case G1 => exact inv_ne_top.mpr (Hnql1 ↑x)
+    case G2 => exact inv_ne_top.mpr N2_nz
+    rw [mul_comm]
+  conv at HJ =>
+    rhs
+    arg 1
+    intro x
+    rw [conv1 x]
+    rw [mul_assoc]
+    arg 2
+    rw [mul_comm]
+    rw [mul_assoc]
+    rw [mul_comm]
+    rw [mul_assoc]
+  clear conv1
+  rw [ENNReal.tsum_mul_left] at HJ
+  rw [ENNReal.tsum_mul_left] at HJ
+  rw [<- mul_assoc] at HJ
+
+  -- Move constants to the left-hand side of HJ
+  -- Super haunted bug: When I apply this as normal to HJ (with placeholders)
+  -- Lean it lights up all of my "have" and "let" statements because it \"doesn't
+  -- know how to synthesize\" a placeholder. The placeholder it points me to is in
+  -- Pure/Postprocessing, where the same lemma is also applied with placeholders.
+  have W :=
+    @ENNReal.div_le_iff_le_mul
+      1
+      ((N l₁ / N l₂) ^ α * N l₂)
+      (∑' (i_1 : { x // i = f x }), (nq l₁ i_1.val / nq l₂ i_1.val) ^ α * nq l₂ i_1.val)
+      ?G1
+      ?G2
+  case G1 =>
+    left
+    apply mul_ne_zero_iff.mpr
+    apply And.intro
+    · apply (rpow_nonzero (N l₁ / N l₂) α)
+      intro Hk
+      rcases Hk with ⟨ H1 , _ ⟩ | ⟨ _ , H2 ⟩
+      · have Hk' : 0 < N l₁ / N l₂ := by
+          apply ENNReal.div_pos_iff.mpr
+          apply And.intro
+          · exact N1_nz
+          · exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+        rw [H1] at Hk'
+        simp at Hk'
+      · linarith
+    · apply N2_nz
+  case G2 =>
+    left
+    apply mul_ne_top
+    · apply rpow_ne_top_of_nonneg
+      · linarith
+      · intro Hk
+        have Hk' : (N l₁ / N l₂ < ⊤) := by
+          apply ENNReal.div_lt_top
+          · exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+          · exact N2_nz
+        rw [Hk] at Hk'
+        simp at Hk'
+    · exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+  rw [mul_comm] at HJ
+  apply W.mpr at HJ
+  clear W
+
+  -- Apply transitivity
+  apply (le_trans ?G3 HJ)
+  clear HJ
+
+  -- These terms are equal
+  apply Eq.le
+  repeat rw [division_def]
+  simp
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 =>
+    right
+    exact inv_ne_top.mpr (nq_restriction_nzs l₂ Hnql1)
+  case G2 =>
+    right
+    exact N2_nz
+  congr
+  rw [<- ENNReal.inv_rpow]
+  congr
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 =>
+    left
+    exact N1_nz
+  case G2 =>
+    left
+    exact inv_ne_top.mpr (nq_restriction_nzs l₁ Hnq2)
+  simp
+
 
 theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h : ∀ x : T, f x ≠ 0) :
   ∑' x : T, f x ≠ 0 := by
@@ -549,121 +445,172 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-theorem privPostProcess_zCDPBound {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nn : NonZeroNQ nq) (nt : NonTopRDNQ nq) (nts : NonTopNQ nq) (conv : NonTopSum nq) (f : U → V) :
+/--
+Jensen's inequality for privPostProcess.
+
+Implementation note: This reduction only works because neighbours are symmetric. A different reduction may
+be able to relax this requirement.
+-/
+theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq l) 1)
+  (f : U → V) {α : ℝ} (h1 : 1 < α) {l₁ l₂ : List T} (HN : Neighbour l₁ l₂)
+  (Habs : AbsCts (nq l₁) (nq l₂)) (Habs' : AbsCts (nq l₂) (nq l₁)) :
+  (∑' (x : V),
+      (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α *
+        (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤
+  (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
+  -- Restruct the sum to a type where nq l₁ is nonzero
+  have HSup1 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₁ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by simp [Function.support]
+  have HSup2 (x : V) : Function.support (fun (a : U) => if x = f a then nq l₂ a else 0) ⊆ { u : U | nq l₁ u ≠ 0 } := by
+    simp [Function.support]
+    exact fun a _ a_2 a_3 => a_2 (Habs' a a_3)
+  have HSup3 : Function.support (fun (a : U) => nq l₁ a ^ α * nq l₂ a ^ (1 - α)) ⊆ { u : U | nq l₁ u ≠ 0 } := by
+    simp only [Function.support, Set.setOf_subset_setOf]
+    intro a Hnz
+    apply mul_ne_zero_iff.mp at Hnz
+    rcases Hnz with ⟨ H1 , _ ⟩
+    intro Hk
+    apply H1
+    apply (ENNReal.rpow_eq_zero_iff).mpr
+    left
+    apply And.intro
+    · apply Hk
+    · linarith
+  rw [<- tsum_subtype_eq_of_support_subset HSup3]
+  conv =>
+    lhs
+    arg 1
+    intro v
+    rw [<- tsum_subtype_eq_of_support_subset (HSup1 v)]
+    rw [<- tsum_subtype_eq_of_support_subset (HSup2 v)]
+  clear HSup1
+  clear HSup2
+  clear HSup3
+  simp
+
+  cases (Classical.em (∃ x : U, ¬ nq l₁ x = 0))
+  · rename_i x_witness
+    have HR := @privPostPocess_DP_pre_reduct T V {x // ¬ nq l₁ x = 0}
+                 _ _ _ ?TC
+                 (fun t u => nq t u) (fun x => f x) α h1
+                 l₁ l₂ ?GNorm1 ?GNorm2 ?Gac ?Gnz HN
+    case TC =>
+      apply inhabited_of_nonempty
+      exact Set.Nonempty.to_subtype x_witness
+    case GNorm1 =>
+      simp
+      rw [<- HasSum.tsum_eq (HNorm l₁)]
+      have HSup4 : Function.support (fun u => nq l₁ u) ⊆ { u | nq l₁ u ≠ 0 } := by simp [Function.support]
+      rw [<- tsum_subtype_eq_of_support_subset HSup4]
+      simp
+      apply Summable.hasSum
+      exact ENNReal.summable
+    case GNorm2 =>
+      simp
+      rw [<- HasSum.tsum_eq (HNorm l₂)]
+      have HSup4 : Function.support (fun u => nq l₂ u) ⊆ { u | nq l₁ u ≠ 0 } := by
+        simp [Function.support]
+        intro a Hk1 Hk2
+        apply Hk1
+        apply Habs'
+        apply Hk2
+      rw [<- tsum_subtype_eq_of_support_subset HSup4]
+      simp
+      apply Summable.hasSum
+      exact ENNReal.summable
+    case Gac =>
+      rw [AbsCts]
+      simp
+      intro a _ H2
+      exact Habs a (Habs' a (Habs a H2))
+    case Gnz => simp
+    simp at HR
+    apply HR
+  · rename_i x_empty
+    simp at *
+    have Hempty : IsEmpty {x // ¬nq l₁ x = 0} := by
+      exact Subtype.isEmpty_of_false fun a a_1 => a_1 (x_empty a)
+    rw [@tsum_empty _ _ _ _ _ Hempty]
+    conv =>
+      lhs
+      arg 1
+      intro
+      rw [@tsum_empty _ _ _ _ _ Hempty]
+      rw [@tsum_empty _ _ _ _ _ Hempty]
+    simp
+    intro
+    left
+    linarith
+
+/--
+privPostProcess satisfies the zCDP bound
+-/
+theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
+  (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
   zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
   simp [zCDPBound, RenyiDivergence] at h'
   replace h' := h' α h1 l₁ l₂ h2
-
-  -- Part 1, removing fluff
-
   apply le_trans _ h'
   clear h'
-
-  -- remove the α scaling
-  have A : 0 ≤ (α - 1)⁻¹ := by
-    simp
-    apply le_of_lt h1
-  apply mul_le_mul_of_nonneg_left _ A
-  clear A
-
-  have RDConvegence : ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤ := by
-    simp [NonTopRDNQ] at nt
-    have nt := nt α h1 l₁ l₂ h2
-    trivial
-
-  have B := DPostPocess_pre h nn nt nts conv f h1 h2
-  have B' : ∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α) ≠ ⊤ := by
-    by_contra CONTRA
-    rw [CONTRA] at B
-    simp at B
-    contradiction
-
-  -- remove the log
-  apply log_le_log _ (toReal_mono RDConvegence B)
-  apply toReal_pos _ B'
-  apply (tsum_ne_zero_iff ENNReal.summable).mpr
-  exists (f default)
-
-  rw [ENNReal.tsum_eq_add_tsum_ite default]
+  unfold RenyiDivergence_def
+  rw [DFunLike.coe]
+  rw [PMF.instFunLike]
+  simp
   conv =>
-    left
-    right
-    rw [ENNReal.tsum_eq_add_tsum_ite default]
-  simp only [reduceIte]
-  apply mul_ne_zero
-  . by_contra CONTRA
-    rw [ENNReal.rpow_eq_zero_iff_of_pos (lt_trans zero_lt_one h1)] at CONTRA
-    simp at CONTRA
-    cases CONTRA
-    rename_i left right
-    have Y := nn l₁ default
-    contradiction
-  . by_contra CONTRA
-    rw [ENNReal.rpow_eq_zero_iff] at CONTRA
-    cases CONTRA
-    . rename_i CONTRA
-      cases CONTRA
-      rename_i left right
-      simp at left
-      cases left
-      rename_i le1 le2
-      have Y := nn l₂ default
-      contradiction
-    . rename_i CONTRA
-      cases CONTRA
-      rename_i left right
-      simp at left
-      cases left
-      . rename_i left
-        have Y := nts l₂ default
-        contradiction
-      . rename_i left
-        have Rem := conv l₂
-        have X : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) ≤ ∑' (n : U), nq l₂ n := by
-          apply ENNReal.tsum_le_tsum
-          intro a
-          split
-          . simp
-          . split
-            . simp
-            . simp
-        replace Rem := Ne.symm Rem
-        have Y := Ne.lt_top' Rem
-        have Z : (∑' (x : U), if x = default then 0 else if f default = f x then nq l₂ x else 0) < ⊤ := by
-          apply lt_of_le_of_lt X Y
-        rw [lt_top_iff_ne_top] at Z
-        contradiction
+    enter [1, 1, 2, 1, 1, x]
+    repeat rw [SLang.toPMF]
+    simp
+  conv =>
+    enter [2, 1, 2, 1, 1, x]
+    repeat rw [SLang.toPMF]
+    repeat rw [DFunLike.coe]
+    repeat rw [PMF.instFunLike]
+    simp
+  apply ofEReal_le_mono
+  apply mul_le_mul_of_nonneg_left ?G1 ?G2
+  case G2 =>
+    apply EReal.coe_nonneg.mpr
+    apply inv_nonneg_of_nonneg
+    linarith
+  apply elog_mono_le.mp
+  simp [PMF.bind, PMF.pure]
+  simp [PMF.instFunLike]
+  apply privPostPocess_DP_pre
+  · exact fun l => PMF.hasSum_coe_one (nq l)
+  · exact h1
+  · exact h2
+  · exact Hac l₁ l₂ h2
+  · apply Hac l₂ l₁
+    exact Neighbour_symm l₁ l₂ h2
 
-theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {ε₁ ε₂ : ℕ+} (f : U → V) (dp :zCDPBound nq ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
-  NonTopRDNQ (privPostProcess nq f) := by
-  simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
-  intros α h1 l₁ l₂ h2
-  have ntrdnq := nt
-  replace nt := nt α h1 l₁ l₂ h2
-  have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
-  apply @LT.lt.ne_top _ _ _ _ ⊤
-  rw [Eq.comm] at nt
-  have B := Ne.lt_top' nt
-  exact lt_of_le_of_lt A B
+
+-- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
+--   (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
+--   NonTopRDNQ (privPostProcess nq f) := by
+--   simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
+--   intros α h1 l₁ l₂ h2
+--   have ntrdnq := nt
+--   replace nt := nt α h1 l₁ l₂ h2
+--   sorry
+--   -- have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
+--   -- apply @LT.lt.ne_top _ _ _ _ ⊤
+--   -- rw [Eq.comm] at nt
+--   -- have B := Ne.lt_top' nt
+--   -- exact lt_of_le_of_lt A B
+
 
 /--
 Postprocessing preserves zCDP
 -/
-theorem privPostProcess_zCDP {f : U → V} (sur : Function.Surjective f) (nq : List T → SLang U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem privPostProcess_zCDP {f : U → V}
+  (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
   zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
+  rcases h with ⟨ Hac1, Hb1 ⟩
   simp [zCDP] at *
-  cases h ; rename_i h1 h2 ; cases h2 ; rename_i h2 h3 ; cases h3 ; rename_i h3 h4 ; cases h4 ; rename_i h4 h5
-  repeat any_goals constructor
-  . apply privPostProcess_zCDPBound h1 h2 h5 h4 h3
-  . apply privPostProcess_NonZeroNQ h2 sur
-  . apply privPostProcess_NonTopSum f h3
-  . simp [NonTopNQ]
-    intro l
-    apply ENNReal.ne_top_of_tsum_ne_top
-    apply privPostProcess_NonTopSum f h3
-  . apply privPostProcess_NonTopRDNQ f h1 h5 h2 h4 h3
+  apply And.intro
+  · exact privPostProcess_AC nq Hac1
+  · exact (privPostProcess_zCDPBound Hb1 f Hac1)
 
 end SLang

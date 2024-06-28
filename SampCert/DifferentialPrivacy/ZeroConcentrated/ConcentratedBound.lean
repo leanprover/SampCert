@@ -14,8 +14,8 @@ import SampCert.Samplers.GaussianGen.Basic
 /-!
 # Concentrated Bound
 
-This file derives a cDP bound for the discrete Gaussian. In particular, it bounds
-the Renyi divergence between discrete Gaussian evaluations with integer means.
+This file derives a cDP bound on the discrete Gaussian, and for the discrete Gaussian
+sampler.
 -/
 
 open Real Nat
@@ -84,8 +84,7 @@ lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   rfl
 
 /--
-Alternative definition for the Renyi Divergence.
-FIXME: is there any reason to not get rid of this?
+Real-valued Renyi Divergence.
 -/
 noncomputable def RenyiDivergence' (p q : T → ℝ) (α : ℝ) : ℝ :=
   (1 / (α - 1)) * Real.log (∑' x : T, (p x)^α  * (q x)^(1 - α))
@@ -526,43 +525,88 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
   apply Summable.mul_right
   apply summable_gauss_term' h
 
+
 /--
 Upper bound on Renyi divergence between discrete Gaussians.
 -/
 theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (μ ν : ℤ)   :
-  RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
-                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
-                  α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
-  have A : RenyiDivergence (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ μ x))
-                  (fun (x : ℤ) => ENNReal.ofReal (discrete_gaussian σ ν x))
-                  α  = RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x)
-                  (fun (x : ℤ) => discrete_gaussian σ ν x)
-                  α  := by
+  RenyiDivergence (discrete_gaussian_pmf h μ)
+                  (discrete_gaussian_pmf h ν)
+                  α ≤ (ENNReal.ofReal α) * (ENNReal.ofReal ((((μ - ν) : ℤ)^2 : ℝ) / (2 * σ^2))) := by
+  have A : RenyiDivergence (discrete_gaussian_pmf h μ) (discrete_gaussian_pmf h ν) α =
+           ENNReal.ofReal (RenyiDivergence' (fun (x : ℤ) => discrete_gaussian σ μ x) (fun (x : ℤ) => discrete_gaussian σ ν x) α) := by
     unfold RenyiDivergence
+    unfold RenyiDivergence_def
     unfold RenyiDivergence'
     congr
     simp
-    have A₁ : ∀ x : ℤ, 0 ≤ discrete_gaussian σ μ x ^ α := by
-      intro x
-      apply Real.rpow_nonneg
-      apply discrete_gaussian_nonneg h μ x
+    unfold discrete_gaussian_pmf
+
+    have Hdg_pos (x : ℤ) (w : ℝ) : OfNat.ofNat 0 < discrete_gaussian σ w x.cast := by
+      exact discrete_gaussian_pos h w x
+    have Hdg_pow_pos (x : ℤ) w : OfNat.ofNat 0 ≤ discrete_gaussian σ w x.cast ^ α := by
+      apply rpow_nonneg
+      exact discrete_gaussian_nonneg h w x
+
     conv =>
-      left
-      right
-      right
+      lhs
+      arg 1
+      arg 2
+      arg 1
+      arg 1
       intro x
-      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h μ x)]
-      rw [ENNReal.ofReal_rpow_of_pos (discrete_gaussian_pos h ν x)]
-      rw [← ENNReal.ofReal_mul (A₁ x)]
-    rw [← ENNReal.ofReal_tsum_of_nonneg]
-    . simp
-      apply tsum_nonneg
-      intro i
-      apply Renyi_sum_SG_nonneg h
-    . apply Renyi_sum_SG_nonneg h
-    . apply Renyi_Gauss_summable h
+      simp [DFunLike.coe]
+      rw [ENNReal.ofReal_rpow_of_pos (Hdg_pos x μ.cast)]
+      rw [ENNReal.ofReal_rpow_of_pos (Hdg_pos x ν.cast)]
+      rw [<- ENNReal.ofReal_mul (Hdg_pow_pos x μ.cast)]
+    rw [<- ENNReal.ofEReal_ofReal_toENNReal]
+    simp
+    congr
+    cases (Classical.em (0 = ∑' (x : ℤ), discrete_gaussian σ μ.cast x.cast ^ α * discrete_gaussian σ ν.cast x.cast ^ (1 - α)))
+    · rename_i Hzero
+      rw [<- Hzero]
+      simp
+      rw [<- ENNReal.ofReal_tsum_of_nonneg]
+      · rw [<- Hzero]
+        exfalso
+        symm at Hzero
+        have Hzero' : (ENNReal.ofReal (∑' (x : ℤ), discrete_gaussian σ ↑μ ↑x ^ α * discrete_gaussian σ ↑ν ↑x ^ (1 - α)) = 0) := by
+          simp [Hzero]
+        rw [ENNReal.ofReal_tsum_of_nonneg ?G1 ?G2] at Hzero'
+        case G1 => exact fun n => Renyi_sum_SG_nonneg h μ ν n
+        case G2 => exact Renyi_Gauss_summable h μ ν α
+        apply ENNReal.tsum_eq_zero.mp at Hzero'
+        have Hzero'' := Hzero' (0 : ℤ)
+        simp at Hzero''
+        have C : (0 < discrete_gaussian σ (↑μ) 0 ^ α * discrete_gaussian σ (↑ν) 0 ^ (1 - α)) := by
+          apply Real.mul_pos
+          · apply Real.rpow_pos_of_pos
+            have A := discrete_gaussian_pos h μ (0 : ℤ)
+            simp at A
+            apply A
+          · apply Real.rpow_pos_of_pos
+            have A := discrete_gaussian_pos h ν (0 : ℤ)
+            simp at A
+            apply A
+        linarith
+      · exact fun n => Renyi_sum_SG_nonneg h μ ν n
+      · exact Renyi_Gauss_summable h μ ν α
+    · rename_i Hnz
+      rw [<- ENNReal.elog_ENNReal_ofReal_of_pos]
+      · rw [ENNReal.ofReal_tsum_of_nonneg ?Hnn]
+        · exact Renyi_Gauss_summable h μ ν α
+        · intro n
+          exact Renyi_sum_SG_nonneg h μ ν n
+      apply lt_of_le_of_ne
+      · apply tsum_nonneg
+        intro i
+        exact Renyi_sum_SG_nonneg h μ ν i
+      · apply Hnz
   rw [A]
-  apply Renyi_divergence_bound_pre h h'
+  rw [<- ENNReal.ofReal_mul]
+  apply ENNReal.ofReal_le_ofReal
+  apply Renyi_divergence_bound_pre h h' μ ν
+  linarith
 
 namespace SLang
 
@@ -570,18 +614,51 @@ namespace SLang
 Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussian sampler.
 -/
 theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num : PNat) (den : PNat) (μ ν : ℤ) :
-  RenyiDivergence ((DiscreteGaussianGenSample num den μ)) (DiscreteGaussianGenSample num den ν) α ≤
-  α * (((μ - ν) : ℤ)^2 / (2 * ((num : ℝ) / (den : ℝ))^2)) := by
+  RenyiDivergence ((DiscreteGaussianGenPMF num den μ)) (DiscreteGaussianGenPMF num den ν) α ≤
+  (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+  have Hpmf (w : ℤ) : (discrete_gaussian_pmf A w = DiscreteGaussianGenPMF num den w) := by
+    simp [discrete_gaussian_pmf]
+    simp [DiscreteGaussianGenPMF]
+    congr
+    apply funext
+    intro z
+    rw [← DiscreteGaussianGenSample_apply]
   conv =>
     left
     congr
-    . intro x
-      rw [DiscreteGaussianGenSample_apply]
-    . intro x
-      rw [DiscreteGaussianGenSample_apply]
+    . rw [<- Hpmf]
+    . rw [<- Hpmf]
     . skip
-  apply Renyi_Gauss_divergence_bound' A h
+  apply le_trans
+  · apply (Renyi_Gauss_divergence_bound')
+    apply h
+  · have X : (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) = ENNReal.ofReal (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) := by
+      simp
+      rw [ENNReal.ofReal_mul ?Hnn]
+      case Hnn => simp
+      congr
+      · simp
+      · rw [ENNReal.ofReal_div_of_pos ?Hpos]
+        case Hpos => simp
+        repeat rw [sq]
+        rw [ENNReal.ofReal_mul ?Hnn1]
+        case Hnn1 => simp
+        rw [ENNReal.ofReal_mul ?Hnn2]
+        case Hnn2 => simp
+        simp
+        repeat rw [ENNReal.div_eq_inv_mul]
+        rw [mul_mul_mul_comm]
+        congr
+        rw [ENNReal.mul_inv]
+        · right
+          simp
+        · left
+          simp
+    rw [X]
+    rw [ENNReal.ofReal_div_of_pos]
+    congr
+    simp
 
 end SLang

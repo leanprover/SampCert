@@ -39,14 +39,16 @@ lemma budget_split (ε₁ ε₂ : ℕ+) :
   field_simp
   ring_nf
 
+
 /--
 DP bound for noised mean.
 -/
-theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
+theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+)
+  (H : dps.postprocess_prop_f  (fun a : ℤ × ℤ => (a.1 : ℚ) / (a.2 : ℚ))) :
   dps.prop (privNoisedBoundedMean U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   unfold privNoisedBoundedMean
-  simp
-  apply dps.postprocess_prop div_surjective
+  rw [bind_bind_indep]
+  apply dps.postprocess_prop H
   rw [budget_split]
   apply dps.compose_prop
   . apply privNoisedBoundedSum_DP
