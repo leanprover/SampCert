@@ -23,72 +23,31 @@ variable [HU : Inhabited U] [HU_meas : MeasurableSpace U] [HU_discr : Measurable
 variable [HV : Inhabited V] [HV_meas : MeasurableSpace V] [HV_discr : MeasurableSingletonClass V] [HV_count : Countable V]
 
 
-lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
-  intro z β Hz0 HzT
-  intro W
-  have h : z = 0 ∧ β < 0 ∨ z = ⊤ ∧ 0 < β := by
-    apply rpow_eq_top_iff.mp
-    apply W
-  cases h
-  · simp_all only [ne_eq, not_true_eq_false]
-  · simp_all only [ne_eq, top_ne_zero, not_false_eq_true, not_true_eq_false]
+-- lemma exp_non_top : ∀ (z : ENNReal) (β : ℝ), z ≠ 0 -> z ≠ ⊤ -> z ^ β ≠ ⊤ := by
+--   intro z β Hz0 HzT
+--   intro W
+--   have h : z = 0 ∧ β < 0 ∨ z = ⊤ ∧ 0 < β := by
+--     apply rpow_eq_top_iff.mp
+--     apply W
+--   cases h
+--   · simp_all only [ne_eq, not_true_eq_false]
+--   · simp_all only [ne_eq, top_ne_zero, not_false_eq_true, not_true_eq_false]
 
-lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x = ⊤ ∨ ¬ y < 0) -> x ^ y ≠ 0 := by
-  have _ := (@ENNReal.rpow_eq_zero_iff x y)
-  aesop
+-- lemma rpow_ne_zero_iff (x : ENNReal) (y : ℝ): (¬x = 0 ∨ ¬ 0 < y) ∧ (¬ x = ⊤ ∨ ¬ y < 0) -> x ^ y ≠ 0 := by
+--   have _ := (@ENNReal.rpow_eq_zero_iff x y)
+--   aesop
 
-lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
-  exact fun a => Ne.lt_top' (id (Ne.symm a))
+-- lemma ne_top_lt_top (x : ENNReal) : (x ≠ ⊤) -> (x < ⊤) := by
+--   exact fun a => Ne.lt_top' (id (Ne.symm a))
+--
+-- lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
+--   exact fun a => LT.lt.ne_top a
 
-lemma lt_top_ne_top (x : ENNReal) : (x < ⊤) -> ¬ (x = ⊤) := by
-  exact fun a => LT.lt.ne_top a
-
--- RenyiDivergence_exp
-
--- set_option pp.coercions false
-
-
-lemma sup_lemma1 (f : U -> EReal) : ofEReal (⨆ (u : U), f u) = ⨆ (u : U), ofEReal (f u) := sorry
 
 lemma sup_lemma {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (f : U -> EReal) :
     eexp (s * ⨆ (u : U), f u) =  ⨆ (u : U), eexp (s * f u) := by
-  apply LE.le.antisymm
-  · apply le_iSup_iff.mpr
-    intro w Hw
-    apply @Classical.by_contradiction
-    intro Hw'
-    simp at *
-    have Hf' := le_iSup f
-    -- Somewhat rocky but I'm certain this is provable
-    sorry
-  · apply iSup_le
-    intro i
-    apply eexp_mono_le.mp
-    apply ereal_le_smul_left s HS0 HS1
-    exact le_iSup f i
-
-  -- symm
-  -- apply iSup_eq_of_forall_le_of_forall_lt_exists_gt
-  -- · sorry -- Easy
-  -- · intro w Hw
-  --   apply @Classical.by_contradiction
-  --   intro Hcont
-  --   simp at Hcont
-  --   have HR1 : s * ⨆ u, f u = ⨆ u, s * f u := by
-  --     sorry
-  --   rw [HR1] at Hw
-  --   clear HR1
-  --   apply iSup_le_iff.mpr at Hcont
-
-    -- have Hcont' : ⨆ u, eexp (s * f u) < eexp (s * ⨆ u, f u) := lt_of_le_of_lt Hcont Hw
-    -- clear Hcont
-
-    -- rcases HU with ⟨ u' ⟩
-    -- have Hcont' : eexp (s * f u') < eexp (s * ⨆ u, f u) := lt_of_le_of_lt (Hcont u') Hw
-    -- apply eexp_mono_lt.mpr at Hcont'
-    -- have Hcont'' : f u' < ⨆ u, f u := ereal_smul_lt_left s HS0 HS1 Hcont'
-
--- set_option pp.coercions false
+  rw [@GaloisConnection.l_iSup _ _ _ _ _ _ _ (galois_connection_smul_l HS0 HS1) f]
+  apply GaloisConnection.l_iSup galois_connection_eexp
 
 /--
 Bound on Renyi divergence on adaptively composed queries
@@ -100,7 +59,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     RenyiDivergence (nq1 l₁) (nq1 l₂) α + (⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) := by
   -- Open the definition of Renyi divergence
   unfold RenyiDivergence
-  rw [<- sup_lemma1]
+  rw [<- (GaloisConnection.l_iSup galois_connection_ofReal)]
   rw [<- ofEReal_plus_nonneg ?G1 ?G2]
   case G1 => exact RenyiDivergence_def_nonneg (nq1 l₁) (nq1 l₂) (HAC1 l₁ l₂ HN) Hα
   case G2 =>

@@ -309,6 +309,23 @@ lemma ofEReal_nonneg_scal_l {r : ℝ} {w : EReal} (H1 : 0 < r) (H2 : 0 ≤ r * w
     apply EReal.coe_nonneg.mp at H2
     exact nonneg_of_mul_nonneg_right H2 H1
 
+
+lemma galois_connection_ofReal : GaloisConnection ENNReal.ofEReal ENNReal.toEReal := by
+  rw [GaloisConnection]
+  intro a b
+  case_EReal_isENNReal a
+  rename_i Hneg
+  apply Iff.intro
+  · intro _
+    apply le_trans
+    · apply LT.lt.le
+      apply Hneg
+    · exact coe_ennreal_nonneg b
+  · intro _
+    rw [(ofEReal_eq_zero_iff a).mp]
+    · exact zero_le b
+    · exact le_of_lt Hneg
+
 end ofEReal
 
 
@@ -609,8 +626,6 @@ lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by
     apply (Real.log_lt_log_iff ?G1 ?G2).mp <;> assumption
 
 
-
-
 lemma elog_mono_le {x y : ENNReal} : (x <= y) <-> elog x <= elog y := by
   apply Iff.intro
   · intro H
@@ -627,6 +642,17 @@ lemma elog_mono_le {x y : ENNReal} : (x <= y) <-> elog x <= elog y := by
     · apply Eq.le
       apply elog_injective
       assumption
+
+lemma galois_connection_eexp : GaloisConnection eexp elog := by
+  rw [GaloisConnection]
+  intro a b
+  apply Iff.intro
+  · intro H
+    rw [<- @eexp_elog a]
+    exact elog_mono_le.mp H
+  · intro H
+    rw [<- @elog_eexp b]
+    exact eexp_mono_le.mp H
 
 
 end elog_eexp
@@ -769,6 +795,78 @@ lemma ereal_smul_distr_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s 
 lemma ereal_le_smul_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
   sorry
 
+
+lemma ereal_smul_inv_cancel_1 {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (x : EReal) :
+ s * (ENNReal.toEReal (ENNReal.ofEReal s)⁻¹) * x = x := by
+   case_EReal_isENNReal s
+   · rename_i H
+     rw [(ofEReal_eq_zero_iff s).mp ?G1]
+     case G1 => exact le_of_lt H
+     exfalso
+     apply (LT.lt.not_le H)
+     exact le_of_lt HS0
+   · rename_i r _
+     rw [← coe_ennreal_mul]
+     rw [← DivInvMonoid.div_eq_mul_inv]
+     rw [ENNReal.div_self ?G1 ?G2]
+     case G1 => exact Ne.symm (ne_of_lt HS0)
+     simp
+     intro
+     simp_all
+
+lemma ereal_smul_inv_cancel_2 {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (x : EReal) :
+ (ENNReal.toEReal (ENNReal.ofEReal s)⁻¹) * s * x = x := by
+   case_EReal_isENNReal s
+   · rename_i H
+     rw [(ofEReal_eq_zero_iff s).mp ?G1]
+     case G1 => exact le_of_lt H
+     exfalso
+     apply (LT.lt.not_le H)
+     exact le_of_lt HS0
+   · rename_i r _
+     rw [← coe_ennreal_mul]
+     conv =>
+       enter [1, 1]
+       rw [mul_comm]
+     rw [← DivInvMonoid.div_eq_mul_inv]
+     rw [ENNReal.div_self ?G1 ?G2]
+     case G1 => exact Ne.symm (ne_of_lt HS0)
+     simp
+     intro
+     simp_all
+
+lemma galois_connection_smul_l {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) :
+    GaloisConnection (HMul.hMul s) (fun (x : EReal) => (ENNReal.toEReal (ENNReal.ofEReal s)⁻¹) * x) := by
+  rw [GaloisConnection]
+  intro a b
+  apply Iff.intro
+  · intro
+    rw [<- ereal_smul_inv_cancel_2 HS0 HS1 a]
+    rw [mul_assoc]
+    apply (ereal_le_smul_left _ ?G1 ?G2)
+    case G1 =>
+      apply coe_ennreal_pos.mpr
+      apply bot_lt_iff_ne_bot.mpr
+      simp
+      intro H
+      rw [<- ofEReal_top] at H
+      have X := (@ofEReal_nonneg_inj s ⊤ ?G4 ?G5).mpr H
+      case G4 => exact le_of_lt HS0
+      case G5 => exact OrderTop.le_top 0
+      simp_all
+    case G2 =>
+      rw [lt_top_iff_ne_top]
+      intro H
+      simp at H
+      apply (ofEReal_eq_zero_iff s).mpr at H
+      apply (not_lt.mpr H)
+      apply HS0
+    assumption
+  · intro
+    rw [<- ereal_smul_inv_cancel_1 HS0 HS1 b]
+    rw [mul_assoc]
+    apply (ereal_le_smul_left _ HS0 HS1)
+    assumption
 
 end misc
 
