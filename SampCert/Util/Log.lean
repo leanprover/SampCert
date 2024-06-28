@@ -783,17 +783,56 @@ lemma ereal_smul_eq_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
   · apply ereal_smul_le_left s Hr1 Hr2 (le_of_eq (id (Eq.symm H)))
 
 lemma ereal_smul_lt_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w < s * z) : w < z := by
-  -- Should follow from above two thms
-  sorry
+  cases LE.le.lt_or_eq (ereal_smul_le_left s Hr1 Hr2 (LT.lt.le H))
+  · assumption
+  · simp_all
 
-
--- FIXME: Might need some assumptions on w and z? Some version of this is true enough for what I need though.
 lemma ereal_smul_distr_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) :
     s * (w + z) = s * w + s * z := by
-  sorry
+  case_EReal_isReal s
+  rename_i r _
+  case_EReal_isReal w
+  · rw [coe_mul_bot_of_pos Hr1]
+    simp
+  · rw [coe_mul_top_of_pos Hr1]
+    case_EReal_isReal z
+    · rw [coe_mul_bot_of_pos Hr1]
+      simp
+    · rw [coe_mul_top_of_pos Hr1]
+      simp
+    · rw [<- EReal.coe_mul]
+      rw [coe_mul_top_of_pos Hr1]
+      simp_all
+      rfl
+  case_EReal_isReal z
+  · rw [coe_mul_bot_of_pos Hr1]
+    simp
+  · rw [<- EReal.coe_mul]
+    rw [coe_mul_top_of_pos Hr1]
+    rfl
+  rename_i a Ha b Hb
+  rw [<- EReal.coe_mul]
+  rw [<- EReal.coe_mul]
+  rw [<- EReal.coe_add]
+  rw [<- EReal.coe_add]
+  rw [<- EReal.coe_mul]
+  congr
+  exact LeftDistribClass.left_distrib r a b
+
 
 lemma ereal_le_smul_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
-  sorry
+  case_EReal_isReal s
+  rename_i r Hr
+  case_EReal_isReal w
+  · rw [coe_mul_bot_of_pos Hr1]
+    simp
+  case_EReal_isReal z
+  · rw [coe_mul_top_of_pos Hr1]
+    simp
+  rw [<- EReal.coe_mul]
+  rw [<- EReal.coe_mul]
+  apply EReal.coe_le_coe_iff.mpr
+  exact (mul_le_mul_iff_of_pos_left Hr1).mpr H
 
 
 lemma ereal_smul_inv_cancel_1 {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (x : EReal) :
