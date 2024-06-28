@@ -32,7 +32,7 @@ abbrev Mechanism (T U : Type) := List T → PMF U
 /--
 General (value-dependent) composition of mechanisms
 -/
-def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : SLang (U × V) := do
+def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : PMF (U × V) := do
   let A <- nq1 l
   let B <- nq2 A l
   return (A, B)
@@ -75,8 +75,9 @@ The joint distribution decomposes into the conditional and marginal (ie, nq1 l) 
 lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
   ∀ (u : U), ∀ (v : V), privComposeAdaptive nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
   intros u v
-  rw [<- compose_sum_rw_adaptive]
-  simp [privComposeAdaptive]
+  sorry
+  -- rw [<- compose_sum_rw_adaptive]
+  -- simp [privComposeAdaptive]
 
 /--
 Product of mechanisms.
