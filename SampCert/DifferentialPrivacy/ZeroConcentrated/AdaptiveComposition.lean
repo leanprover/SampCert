@@ -296,22 +296,35 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
   apply (privComposeAdaptive_renyi_bound _ _ _ _) <;> aesop
   -/
 
+
+/--
+Adaptive composition preserves absolute continuity
+-/
+def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ∀ u, ACNeighbour (nq2 u)) :
+    ACNeighbour (privComposeAdaptive nq1 nq2) := by
+  rw [ACNeighbour]
+  simp [privComposeAdaptive]
+  intro l₁ l₂ HN x Hx
+  rcases x with ⟨ u, v ⟩
+  simp [DFunLike.coe, PMF.bind, PMF.pure] at *
+  intro u'
+  rcases Hx u' with A | B
+  · left
+    exact Hac1 l₁ l₂ HN u' A
+  · right
+    intro v'
+    simp_all
+    exact Hac2 u' l₁ l₂ HN v B
+
+
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-
-
 theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-  (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))
-  (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-  zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+    (h : zCDP nq1 ((ε₁ : ℝ) / ε₂)) (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
+    zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [zCDP] at *
-  sorry
-  -- have _ : RDBounded nq2 := RDBounded_of_URDBound nq2 (fun α l₁ l₂ => ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) RenyiBound_Uniform
-  -- repeat any_goals constructor
-  -- · apply privComposeAdaptive_zCDPBound <;> aesop
-  -- · apply privComposeAdaptive_NonZeroNQ <;> aesop
-  -- · apply privComposeAdaptive_NonTopSum <;> aesop
-  -- · apply privComposeAdaptive_NonTopNQ <;> aesop
-  -- · apply privComposeAdaptive_NonTopRDNQ <;> aesop
+  apply And.intro
+  · apply privComposeAdaptive_AC <;> aesop
+  · apply privComposeAdaptive_zCDPBound  <;> aesop
 end SLang
