@@ -89,6 +89,14 @@ lemma RenyiDivergence_def_exp (p q : PMF T) {α : ℝ} (h : 1 < α) :
     · linarith
   simp [H2]
 
+/-
+The Renyi divergence is monotonic in the value of its sum.
+-/
+--lemma RenyiDivergence_mono_sum (x y : ℝ) (α : ℝ) (h : 1 < α) : (Real.exp ((α - 1) * x)) ≤ (Real.exp ((α - 1) * y)) -> (x ≤ y) := by
+--  intro H
+--  apply le_of_mul_le_mul_left
+--  · exact exp_le_exp.mp H
+--  · linarith
 
 /--
 Renyi Divergence series written as a conditional expectation.

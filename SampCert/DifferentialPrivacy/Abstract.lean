@@ -30,6 +30,55 @@ abbrev Query (T U : Type) := List T → U
 abbrev Mechanism (T U : Type) := List T → PMF U
 
 /--
+General (value-dependent) composition of mechanisms
+-/
+def privComposeAdaptive (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) : SLang (U × V) := do
+  let A <- nq1 l
+  let B <- nq2 A l
+  return (A, B)
+
+
+lemma compose_sum_rw_adaptive (nq1 : List T → SLang U) (nq2 : U -> List T → SLang V) (u : U) (v : V) (l : List T) :
+  (∑' (a : U), nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = nq1 l u * nq2 u l v := by
+  have hrw1 : ∀ (a : U), nq1 l a * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) = if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0 := by
+    intro a
+    split
+    · simp
+    · aesop
+  have hrw2 : ∀ (a : U), (if (u = a) then (nq1 l a * ∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 a l a_1 else 0) else 0) = (nq1 l u * (∑' (a_1 : V), if u = a ∧ v = a_1 then nq2 u l a_1 else 0)) := by
+    intro a
+    split
+    · aesop
+    · aesop
+  rw [tsum_congr hrw1]
+  rw [tsum_congr hrw2]
+  clear hrw1 hrw2
+  rw [ENNReal.tsum_mul_left]
+  congr 1
+  rw [<- ENNReal.tsum_prod]
+  have hrw3 : ∀ (p : U × V), (if u = p.1 ∧ v = p.2 then nq2 u l p.2 else 0) = nq2 u l v * (if p = (u, v) then 1 else 0) := by
+    intro p
+    split
+    · aesop
+    · aesop
+  rw [tsum_congr hrw3]
+  rw [ENNReal.tsum_mul_left]
+  rw [tsum_ite_eq]
+  exact MulOneClass.mul_one (nq2 u l v)
+
+
+/--
+Chain rule relating the adaptive composition definitions
+
+The joint distribution decomposes into the conditional and marginal (ie, nq1 l) distributions
+-/
+lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l : List T) :
+  ∀ (u : U), ∀ (v : V), privComposeAdaptive nq1 nq2 l (u, v) = nq1 l u * nq2 u l v := by
+  intros u v
+  rw [<- compose_sum_rw_adaptive]
+  simp [privComposeAdaptive]
+
+/--
 Product of mechanisms.
 -/
 def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : PMF (U × V) := do
@@ -66,6 +115,15 @@ class DPSystem (T : Type) where
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  /-
+  Uniformity conditions for adaptive composition
+  -/
+  -- adaptive_unif_prop {U : Type} : (U -> Mechanism T Z) -> Prop
+  /-
+  Notion of privacy composes by addition
+  -/
+  -- adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
+  --  prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> adaptive_unif_prop m₂ → prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
   Requirement for postcomposition to hold.
   -/
@@ -138,6 +196,7 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
     intro X
     rw [C]
   simp
+
 
 /--
 All outputs of a composed query have nonzero probability.

@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
+import Mathlib.Logic.IsEmpty
 
 /-!
 # Pure Composition in Pure Differential Privacy
@@ -17,6 +18,8 @@ This file proves a pure DP privacy bound on composed independent queries.
 noncomputable section
 
 open Classical Set
+
+variable [Hu : Nonempty U]
 
 namespace SLang
 

@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
+import SampCert.DifferentialPrivacy.ZeroConcentrated.AdaptiveComposition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
 
 /-!
@@ -27,6 +28,13 @@ noncomputable instance gaussian_zCDPSystem : DPSystem T where
   noise := privNoisedQuery
   noise_prop := privNoisedQuery_zCDP
   compose_prop := privCompose_zCDP
+--  adaptive_unif_prop := fun {Z U} nq2 =>
+--    ((∃ (z : ℝ), ∀ (u : U), ∀ l, ∑'(v : Z), nq2 u l v ≤ ENNReal.ofReal z) ∧
+--     (URDBound nq2 (fun α l₁ l₂ => ⨆ u, RenyiDivergence (nq2 u l₁) (nq2 u l₂) α)))
+--  adaptive_compose_prop := by
+--    intros
+--    apply privComposeAdaptive_zCDP <;> aesop
+--  postprocess_prop := privPostProcess_zCDP
   postprocess_prop_f _ := True
   postprocess_prop _ := privPostProcess_zCDP
 
