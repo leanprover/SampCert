@@ -66,33 +66,40 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     apply le_iSup_iff.mpr
     intro b Hb
     -- Can use the fact that U is nonempty and RD is nonnegative
-    sorry
+    rcases HU with ⟨ u' ⟩
+    have Hb := Hb u'
+    apply le_trans ?G3 ?G4
+    case G4 => apply Hb
+    exact RenyiDivergence_def_nonneg (nq2 u' l₁) (nq2 u' l₂) (HAC2 u' l₁ l₂ HN) Hα
   apply ofEReal_le_mono
 
+
   -- Rewrite to series inequality
-  -- FIXME: Explicitly prove the side conditions on α we will need, since they're repeated so often
   have Hα' : ((1 : ℝ).toEReal < α.toEReal ) := by exact EReal.coe_lt_coe_iff.mpr Hα
   simp at Hα'
-  apply ereal_smul_le_left (α.toEReal - 1) ?G1 ?G2
-  case G1 => sorry
-  case G2 => sorry
-  rw [ereal_smul_distr_le_left _ ?G1 ?G2]
-  case G1 => sorry
-  case G2 => sorry
+  have Hanz : 0 < α.toEReal - 1 := by
+    have X : (0 : EReal) = (Real.toEReal 1) - (Real.toEReal 1) := by
+      rw [SubNegMonoid.sub_eq_add_neg]
+      rw [<- EReal.coe_neg]
+      rw [<- EReal.coe_add]
+      simp
+    rw [X]
+    apply EReal.sub_lt_sub_of_lt_of_le
+    · apply Hα'
+    · simp
+    · exact ne_of_beq_false rfl
+    · exact ne_of_beq_false rfl
+  have Hant : α.toEReal - 1 < ⊤ := by
+    exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+
+  apply ereal_smul_le_left (α.toEReal - 1) Hanz Hant
+  rw [ereal_smul_distr_le_left _ Hanz Hant]
   apply eexp_mono_le.mpr
   rw [<- eexp_add]
   rw [RenyiDivergence_def_exp _ _ Hα]
   rw [RenyiDivergence_def_exp _ _ Hα]
 
-  -- -- Simplify sup
-  -- conv =>
-  --   enter [2, 2, 1, 2, 1, u]
-  --   rw [toEReal_ofENNReal_nonneg]
-  --   · skip
-  --   · apply RenyiDivergence_def_nonneg (nq2 u l₁) (nq2 u l₂) (HAC2 u l₁ l₂ HN) Hα
-  rw [sup_lemma ?G1 ?G2]
-  case G1 => sorry
-  case G2 => sorry
+  rw [sup_lemma Hanz Hant]
   conv =>
     enter [2, 2, 1, u]
     rw [RenyiDivergence_def_exp _ _ Hα]
@@ -126,9 +133,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     rw [<- mul_assoc]
     skip
   rw [ENNReal.tsum_mul_left]
-  apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
-  case G1 => sorry
-  case G2 => sorry
+  apply mul_le_mul_left'
 
   -- Apply upper bound lemma
   conv =>
@@ -170,14 +175,30 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
     linarith
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
   rw [zCDPBound] at h1
-  have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
+  -- have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
   have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ ENNReal.ofReal (1 / 2 * ((ε₃ : ℝ) / (ε₄ : ℝ)) ^ 2 * α)) :=
     ciSup_le fun x => h2 x α Hα l₁ l₂ Hneighbours
   apply (@LE.le.trans _ _ _ (RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) _ _ ?case_alg)
   case case_alg =>
     rw [ENNReal.ofReal_add ?G1 ?G2]
-    case G1 => sorry
-    case G2 => sorry
+    case G1 =>
+      simp
+      apply mul_nonneg
+      · apply mul_nonneg
+        · simp
+        · apply div_nonneg
+          · exact sq_nonneg ε₁.val.cast
+          · exact sq_nonneg ε₂.val.cast
+      · linarith
+    case G2 =>
+      simp
+      apply mul_nonneg
+      · apply mul_nonneg
+        · simp
+        · apply div_nonneg
+          · exact sq_nonneg ε₃.val.cast
+          · exact sq_nonneg ε₄.val.cast
+      · linarith
     exact _root_.add_le_add (h1 α Hα l₁ l₂ Hneighbours) conditional_ub
   exact privComposeAdaptive_renyi_bound Hα Hneighbours HAC1 HAC2
 
