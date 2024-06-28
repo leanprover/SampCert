@@ -756,6 +756,20 @@ lemma ereal_smul_eq_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
   · apply ereal_smul_le_left s Hr1 Hr2 (le_of_eq H)
   · apply ereal_smul_le_left s Hr1 Hr2 (le_of_eq (id (Eq.symm H)))
 
+lemma ereal_smul_lt_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w < s * z) : w < z := by
+  -- Should follow from above two thms
+  sorry
+
+
+-- FIXME: Might need some assumptions on w and z? Some version of this is true enough for what I need though.
+lemma ereal_smul_distr_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) :
+    s * (w + z) = s * w + s * z := by
+  sorry
+
+lemma ereal_le_smul_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : w ≤ z) : s * w ≤ s * z := by
+  sorry
+
+
 end misc
 
 end ENNReal
