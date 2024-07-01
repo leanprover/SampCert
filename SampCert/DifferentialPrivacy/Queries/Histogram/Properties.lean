@@ -21,6 +21,7 @@ namespace SLang
 
 variable {T : Type}
 variable [dps : DPSystem T]
+variable [HT : Inhabited T]
 
 variable (numBins : ℕ+)
 variable (B : Bins T numBins)
@@ -66,33 +67,22 @@ lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
 /--
 DP bound for intermediate steps in the histogram calculation.
 -/
-lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
+lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins)
+  (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
   dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε₁ / (ε₂ * numBins : PNat))) := by
   induction n
   · unfold privNoisedHistogramAux
     simp only [Nat.cast_zero, succ_eq_add_one, zero_add, Nat.cast_one, Nat.cast_mul, one_mul]
-    apply dps.postprocess_prop
-    · sorry
-    -- · unfold Function.Surjective
-    --   intro h
-    --   exists (h.count.get (Fin.mk 0 Hn), h)
-    --   simp
-    --   rw [setCount]
-    --   cases h
-    --   simp
-    --   apply Vector.ext
-    --   intro m
-    --   rw [Vector.get_set_eq_if]
-    --   split
-    --   · rename_i Hm
-    --     rw [<- Hm]
-    --     congr
-    --     simp
-    --     exact Eq.symm (Nat.mod_eq_of_lt Hn)
-    --   · rfl
-    -- Should be able to prove abstractly that the constant function is DP
-    -- Maybe follows from value dependent composition?
-    -- sorry
+    refine DPSystem.postprocess_prop init_pp_fun
+      (privCompose (privNoisedBinCount numBins B ε₁ ε₂ 0) fun x => PMF.pure (emptyHistogram numBins B)) ε₁ (ε₂ * numBins)
+      ?Gcst_dp
+    apply privCompose_ext
+            (privNoisedBinCount numBins B ε₁ ε₂ 0)
+            (fun x => PMF.pure (emptyHistogram numBins B))
+            ε₁ ε₂ /- Can't put zero in here! -/
+
+    skip
+    all_goals sorry
   · sorry
     -- rename_i n IH
     -- unfold privNoisedHistogramAux
@@ -151,7 +141,8 @@ lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins
 /--
 DP bound for a noised histogram
 -/
-lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
+lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+)
+      (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
   dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
   unfold privNoisedHistogram
   have H : (↑↑ ε₁ / ↑↑ ε₂ : ℝ) = ↑(predBins numBins).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins)) := by
@@ -164,12 +155,15 @@ lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
     sorry
   rw [H]
   apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
+  apply init_pp_fun
+
 
 
 /--
 DP bound for the thresholding maximum
 -/
-lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
+lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ)
+  (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
   dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by
   rw [privMaxBinAboveThreshold]
   apply dps.postprocess_prop
