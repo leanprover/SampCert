@@ -7,18 +7,30 @@ import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
+import Mathlib.Logic.IsEmpty
+
+/-!
+# Pure Composition in Pure Differential Privacy
+
+This file proves a pure DP privacy bound on composed independent queries.
+-/
 
 noncomputable section
 
 open Classical Set
 
+variable [Hu : Nonempty U]
+
 namespace SLang
 
-theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
+/--
+Pure DP privacy bound for ``privCompose``.
+-/
+theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
   DP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
-  rcases h1 with ⟨h1a, _⟩
-  rcases h2 with ⟨h2a, _⟩
+  have h1a := h1
+  have h2a := h2
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x y
@@ -39,33 +51,55 @@ theorem PureDP_Compose' {nq1 : Mechanism T U} {nq2 : List T → SLang V} {ε₁ 
   . simp
     rw [tsum_tsum_eq_single _ x y]
     . simp
-      have A : nq1 l₁ x * nq2 l₁ y / (nq1 l₂ x * nq2 l₂ y) = (nq1 l₁ x / nq1 l₂ x) * (nq2 l₁ y / nq2 l₂ y) := by
-        rw [division_def]
-        rw [division_def]
-        rw [division_def]
-        rw [ENNReal.mul_inv]
-        . ring_nf
-        . aesop
-        . aesop
-      rw [A]
-      have B := mul_le_mul' h1a h2a
-      apply le_trans B
-      rw [Real.exp_add]
-      rw [ENNReal.ofReal_mul (Real.exp_nonneg (↑↑ε₁ / ↑↑ε₂))]
+      cases (Classical.em (((nq1 l₂) x = 0) ∨ ((nq2 l₂) y = 0)))
+      · rename_i Hzero
+        cases Hzero
+        · rename_i Hz'
+          cases (Classical.em (nq1 l₁ x = 0))
+          · rename_i Hz''
+            simp_all
+          · rename_i Hz''
+            exfalso
+            simp_all
+            simp [division_def] at h1a
+            rw [ENNReal.mul_top Hz''] at h1a
+            skip
+            simp_all
+        · cases (Classical.em (nq2 l₁ y = 0))
+          · rename_i Hz''
+            simp_all
+          · rename_i Hz''
+            exfalso
+            simp_all
+            simp [division_def] at h2a
+            rw [ENNReal.mul_top Hz''] at h2a
+            skip
+            simp_all
+      · have A : nq1 l₁ x * nq2 l₁ y / (nq1 l₂ x * nq2 l₂ y) = (nq1 l₁ x / nq1 l₂ x) * (nq2 l₁ y / nq2 l₂ y) := by
+          rw [division_def]
+          rw [division_def]
+          rw [division_def]
+          rw [ENNReal.mul_inv]
+          . ring_nf
+          . aesop
+          . aesop
+        rw [A]
+        have B := mul_le_mul' h1a h2a
+        apply le_trans B
+        rw [Real.exp_add]
+        rw [ENNReal.ofReal_mul (Real.exp_nonneg (↑↑ε₁ / ↑↑ε₂))]
     . aesop
     . aesop
   . aesop
   . aesop
 
-theorem PureDP_Compose (nq1 : List T → SLang U) (nq2 : List T → SLang V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
+
+/--
+Pure DP satisfies pure differential privacy.
+-/
+theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
   PureDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
-  have hc := h
-  have h'c := h'
-  rcases h with ⟨ _ , h2 ⟩
-  rcases h' with ⟨ _ , h'2 ⟩
-  constructor
-  . apply PureDP_Compose' hc h'c
-  . apply privCompose_NonZeroNQ h2 h'2
+  apply privCompose_DP_bound h h'
 
 end SLang
