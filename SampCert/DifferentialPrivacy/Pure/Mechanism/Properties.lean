@@ -19,25 +19,6 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-/--
-Noised query has nonzero probability over entire domain.
--/
-theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonZeroNQ (privNoisedQueryPure query Δ ε₁ ε₂) := by
-  simp [NonZeroNQ, privNoisedQueryPure]
-  simp [DiscreteLaplaceGenSamplePMF]
-  simp [DFunLike.coe, PMF.instFunLike]
-  intro l n
-  apply Real.mul_pos
-  . rw [_root_.div_pos_iff]
-    left
-    constructor
-    . aesop
-    . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
-        apply exp_pos
-      apply add_pos A Real.zero_lt_one
-  . apply exp_pos
-
 lemma natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
   rw [Int.cast_natAbs]
@@ -57,7 +38,6 @@ lemma normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
     exact _root_.ne_of_lt B
   rw [h] at C
   contradiction
-
 
 /--
 Differential privacy bound for a ``privNoisedQueryPure``

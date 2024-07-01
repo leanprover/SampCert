@@ -36,13 +36,6 @@ def zCDPBound (q : List T → PMF U) (ε : ℝ) : Prop :=
   RenyiDivergence (q l₁) (q l₂) α ≤ ENNReal.ofReal ((1/2) * ε ^ 2 * α)
 
 /--
-The Renyi divergence between neighbouring elements of the output of ``nq`` is finite.
--/
-def NonTopRDNQ (nq : List T → SLang U) : Prop :=
-  ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
-  ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤
-
-/--
 All neighbouring queries are absolutely continuous
 -/
 def ACNeighbour (p : List T -> PMF  U) : Prop := ∀ l₁ l₂, Neighbour l₁ l₂ -> AbsCts (p l₁) (p l₂)

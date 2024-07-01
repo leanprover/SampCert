@@ -586,21 +586,6 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
     exact Neighbour_symm l₁ l₂ h2
 
 
--- theorem privPostProcess_NonTopRDNQ {nq : List T → SLang U} {HNorm : ∀ l, HasSum (nq l) 1} {ε₁ ε₂ : ℕ+} (f : U → V)
---   (dp : zCDPBound nq HNorm ((ε₁ : ℝ) / ε₂)) (nt : NonTopRDNQ nq) (nz : NonZeroNQ nq) (nts : NonTopNQ nq) (ntsum: NonTopSum nq) :
---   NonTopRDNQ (privPostProcess nq f) := by
---   simp [NonTopRDNQ, NonTopSum, privPostProcess] at *
---   intros α h1 l₁ l₂ h2
---   have ntrdnq := nt
---   replace nt := nt α h1 l₁ l₂ h2
---   sorry
---   -- have A := @DPostPocess_pre T U V _ _ _ nq ε₁ ε₂ dp nz ntrdnq nts ntsum f α h1 l₁ l₂ h2
---   -- apply @LT.lt.ne_top _ _ _ _ ⊤
---   -- rw [Eq.comm] at nt
---   -- have B := Ne.lt_top' nt
---   -- exact lt_of_le_of_lt A B
-
-
 /--
 Postprocessing preserves zCDP
 -/

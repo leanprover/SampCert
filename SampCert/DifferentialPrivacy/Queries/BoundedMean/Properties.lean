@@ -22,23 +22,10 @@ namespace SLang
 
 variable [dps : DPSystem ℕ]
 
-lemma div_surjective :
-  Function.Surjective fun a : ℤ × ℤ => (a.1 : ℚ) / (a.2 : ℚ) := by
-  unfold Function.Surjective
-  intro b
-  cases b
-  rename_i n d h1 h2
-  simp
-  exists n
-  exists d
-  rw [intCast_div_eq_divInt]
-  simp [mkRat, h1, Rat.normalize, h2]
-
 lemma budget_split (ε₁ ε₂ : ℕ+) :
   (ε₁ : ℝ) / (ε₂ : ℝ) = (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) + (ε₁ : ℝ) / ((2 * ε₂) : ℕ+) := by
   field_simp
   ring_nf
-
 
 /--
 DP bound for noised mean.

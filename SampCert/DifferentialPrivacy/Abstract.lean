@@ -17,12 +17,6 @@ noncomputable section
 
 open Classical Nat Int Real ENNReal
 
-/--
-A mechanism is nonzero on its entire domain
--/
-def NonZeroNQ (nq : List T → PMF U) :=
-  ∀ l : List T, ∀ n : U, nq l n ≠ 0
-
 namespace SLang
 
 abbrev Query (T U : Type) := List T → U
@@ -191,18 +185,6 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
 
 
 /--
-All outputs of a composed query have nonzero probability.
--/
-theorem privCompose_NonZeroNQ {nq1 : Mechanism T U} {nq2 : Mechanism T V} (nn1 : NonZeroNQ nq1) (nn2 : NonZeroNQ nq2) :
-  NonZeroNQ (privCompose nq1 nq2) := by
-  simp [NonZeroNQ] at *
-  intro l a b
-  replace nn1 := nn1 l a
-  replace nn2 := nn2 l b
-  simp [privCompose]
-  exists a
-
-/--
 Partition series into fibers. `g` maps an element to its fiber.
 -/
 theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum f a) (g : T → V) :
@@ -265,21 +247,5 @@ lemma condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
   have B : ↑{i | decide (x = f i) = true} = ↑{a | x = f a} := by
     simp
   rw [B]
-
-
-/--
-Postprocessing by a surjection preserves `NonZeroNQ`.
--/
-theorem privPostProcess_NonZeroNQ {nq : Mechanism T U} {f : U → V} (nn : NonZeroNQ nq) (sur : Function.Surjective f) :
-  NonZeroNQ (privPostProcess nq f) := by
-  simp [NonZeroNQ, Function.Surjective, privPostProcess] at *
-  intros l n
-  replace sur := sur n
-  cases sur
-  rename_i a h
-  exists a
-  constructor
-  . rw [h]
-  . apply nn
 
 end SLang

@@ -50,6 +50,5 @@ theorem PureDP_PostProcess {f : U → V} (nq : Mechanism T U) (ε₁ ε₂ : ℕ
   PureDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
   apply privPostProcess_DP_bound h
-  -- apply privPostProcess_NonZeroNQ h2 sur
 
 end SLang
