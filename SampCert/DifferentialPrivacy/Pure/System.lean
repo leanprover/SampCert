@@ -28,5 +28,6 @@ noncomputable instance PureDPSystem : DPSystem T where
   compose_prop := privCompose_DP
   adaptive_compose_prop := PureDP_ComposeAdaptive'
   postprocess_prop := PureDP_PostProcess
+  const_prop := PureDP_privConst
 
 end SLang
