@@ -67,19 +67,18 @@ lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
 /--
 DP bound for intermediate steps in the histogram calculation.
 -/
-lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins)
-  (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
+lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) :
   dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε₁ / (ε₂ * numBins : PNat))) := by
   induction n
   · unfold privNoisedHistogramAux
     simp only [Nat.cast_zero, succ_eq_add_one, zero_add, Nat.cast_one, Nat.cast_mul, one_mul]
-    refine DPSystem.postprocess_prop init_pp_fun
-      (privCompose (privNoisedBinCount numBins B ε₁ ε₂ 0) fun x => PMF.pure (emptyHistogram numBins B)) ε₁ (ε₂ * numBins)
-      ?Gcst_dp
-    apply privCompose_ext
-            (privNoisedBinCount numBins B ε₁ ε₂ 0)
-            (fun x => PMF.pure (emptyHistogram numBins B))
-            ε₁ ε₂ /- Can't put zero in here! -/
+    -- refine DPSystem.postprocess_prop init_pp_fun
+    --   (privCompose (privNoisedBinCount numBins B ε₁ ε₂ 0) fun x => PMF.pure (emptyHistogram numBins B)) ε₁ (ε₂ * numBins)
+    --   ?Gcst_dp
+    -- apply privCompose_ext
+    --         (privNoisedBinCount numBins B ε₁ ε₂ 0)
+    --         (fun x => PMF.pure (emptyHistogram numBins B))
+    --         ε₁ ε₂ /- Can't put zero in here! -/
 
     skip
     all_goals sorry
@@ -141,8 +140,7 @@ lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins
 /--
 DP bound for a noised histogram
 -/
-lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+)
-      (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
+lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
   unfold privNoisedHistogram
   have H : (↑↑ ε₁ / ↑↑ ε₂ : ℝ) = ↑(predBins numBins).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins)) := by
@@ -155,15 +153,13 @@ lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+)
     sorry
   rw [H]
   apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
-  apply init_pp_fun
 
 
 
 /--
 DP bound for the thresholding maximum
 -/
-lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ)
-  (init_pp_fun : DPSystem.postprocess_prop_f T fun (z : _ × _) => setCount numBins B z.2 0 z.1) :
+lemma privMaxBinAboveThreshold_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) :
   dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) (ε₁ / ε₂) := by
   rw [privMaxBinAboveThreshold]
   apply dps.postprocess_prop
