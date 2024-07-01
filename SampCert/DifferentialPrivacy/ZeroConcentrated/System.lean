@@ -29,7 +29,6 @@ noncomputable instance gaussian_zCDPSystem : DPSystem T where
   noise_prop := privNoisedQuery_zCDP
   compose_prop := privCompose_zCDP
   adaptive_compose_prop := privComposeAdaptive_zCDP
-  postprocess_prop_f _ := True
-  postprocess_prop _ := privPostProcess_zCDP
+  postprocess_prop := privPostProcess_zCDP
 
 end SLang

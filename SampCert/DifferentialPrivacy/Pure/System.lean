@@ -27,7 +27,6 @@ noncomputable instance PureDPSystem : DPSystem T where
   noise_prop := privNoisedQueryPure_DP
   compose_prop := privCompose_DP
   adaptive_compose_prop := PureDP_ComposeAdaptive'
-  postprocess_prop_f := Function.Surjective
   postprocess_prop := PureDP_PostProcess
 
 end SLang

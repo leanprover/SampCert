@@ -23,7 +23,7 @@ namespace SLang
 lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : PureDP nq ((ε₁ : ℝ) / ε₂)) (f : U → V) :
   DP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
-  rcases h with ⟨ha, _⟩
+  have ha := h
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x
@@ -46,13 +46,10 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : Pu
 /--
 ``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.
 -/
-theorem PureDP_PostProcess {f : U → V} (sur : Function.Surjective f) (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
+theorem PureDP_PostProcess {f : U → V} (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
   PureDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
   simp [PureDP] at *
-  have hc := h
-  rcases h with ⟨ _ , h2 ⟩
-  constructor
-  . apply privPostProcess_DP_bound hc
-  . apply privPostProcess_NonZeroNQ h2 sur
+  apply privPostProcess_DP_bound h
+  -- apply privPostProcess_NonZeroNQ h2 sur
 
 end SLang

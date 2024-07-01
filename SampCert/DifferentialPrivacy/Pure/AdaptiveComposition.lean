@@ -85,18 +85,44 @@ namespace SLang
 theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : ∀ u : U, PureDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   PureDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
   simp [PureDP] at *
-  rcases h1 with ⟨h1a, h1nz⟩
+  have h1a := h1
+  -- rcases h1 with ⟨h1a, h1nz⟩
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
-  apply And.intro
-  · intros l₁ l₂ Hl₁l₂ u v
-    rw [privComposeChainRule]
-    rw [privComposeChainRule]
-    rw [Real.exp_add]
-    rw [ENNReal.ofReal_mul ?s1]
-    case s1 => apply Real.exp_nonneg
-    rw [ENNReal.div_eq_inv_mul]
-    rw [ENNReal.mul_inv]
+  intros l₁ l₂ Hl₁l₂ u v
+  rw [privComposeChainRule]
+  rw [privComposeChainRule]
+  rw [Real.exp_add]
+  rw [ENNReal.ofReal_mul ?s1]
+  case s1 => apply Real.exp_nonneg
+  rw [ENNReal.div_eq_inv_mul]
+
+  cases Classical.em ((nq1 l₂) u * (nq2 u l₂) v = 0)
+  · rename_i Hz
+    rw [Hz]
+    simp
+    simp at Hz
+    cases Hz
+    · cases (Classical.em (nq1 l₁ u = 0))
+      · simp_all
+      · rename_i HA HB
+        exfalso
+        have hcont := h1 l₁ l₂ Hl₁l₂ u
+        simp [HA, division_def] at hcont
+        rw [ENNReal.mul_top HB] at hcont
+        simp_all
+    · cases (Classical.em (nq2 u l₁ v = 0))
+      · simp_all
+      · rename_i HA HB
+        exfalso
+        have hcont := h2 u
+        rw [event_eq_singleton] at hcont
+        simp [DP_singleton] at hcont
+        have hcont := hcont l₁ l₂ Hl₁l₂ v
+        simp [HA, division_def] at hcont
+        rw [ENNReal.mul_top HB] at hcont
+        simp_all
+  · rw [ENNReal.mul_inv]
     · rw [<- mul_assoc]
       rw [mul_right_comm]
       conv =>
@@ -106,29 +132,16 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
       rw [mul_right_comm]
       rw [← ENNReal.div_eq_inv_mul]
       rw [← ENNReal.div_eq_inv_mul]
-      rcases h2 u with ⟨ h2a'_pre, _ ⟩
+      have h2a'_pre := h2 u
       rw [event_eq_singleton] at h2a'_pre
       simp [DP_singleton] at h2a'_pre
       exact (mul_le_mul' (h1a l₁ l₂ Hl₁l₂ u) (h2a'_pre l₁ l₂ Hl₁l₂ v))
     · left
-      apply h1nz
+      rename_i hnz
+      intro HK
+      simp_all
     · right
-      rcases (h2 u) with ⟨ _ , h2nz ⟩
-      apply h2nz
-  · simp only [NonZeroNQ]
-    intros l n
-    simp only [privComposeAdaptive  , bind, pure, bind_pure, bind_apply]
-    apply ne_of_gt
-    apply (LT.lt.trans_le ?g1 ?g2)
-    case g2 =>
-      apply ENNReal.le_tsum
-      apply n.1
-    apply ENNReal.mul_pos
-    · apply h1nz
-    · simp
-      exists n.2
-      simp
-      rcases (h2 n.1) with ⟨ _ , H2nz ⟩
-      apply H2nz
+      intro HK
+      simp_all
 
 end SLang

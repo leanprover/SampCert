@@ -121,13 +121,9 @@ class DPSystem (T : Type) where
   adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
     prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
   /--
-  Requirement for postcomposition to hold.
-  -/
-  postprocess_prop_f : {U V : Type} -> (f : U -> V) -> Prop
-  /--
   Privacy is invariant under post-processing.
   -/
-  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → postprocess_prop_f pp → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
+  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
    prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
 
 @[simp]
