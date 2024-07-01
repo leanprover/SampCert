@@ -155,7 +155,7 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
 
 
 /-!
-## Jensen's inequalitya
+## Jensen's inequality
 -/
 section Jensen
 
