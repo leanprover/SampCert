@@ -88,6 +88,12 @@ def privPostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : PMF V := 
   return pp A
 
 /--
+Constant mechanism
+-/
+def privConst (u : U) : Mechanism T U := fun _ => PMF.pure u
+
+
+/--
 Abstract definition of a differentially private systemm.
 -/
 class DPSystem (T : Type) where
@@ -107,18 +113,26 @@ class DPSystem (T : Type) where
   /--
   Privacy composes by addition.
   -/
-  compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-    prop m₁ (ε₁ / ε₂) → prop m₂ (ε₃ / ε₄) → prop (privCompose m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] →
+    ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : ℝ,
+    prop m₁ ε₁ → prop m₂ ε₃ → prop (privCompose m₁ m₂) (ε₁ + ε₂)
   /--
   Privacy adaptively composes by addition.
   -/
-  adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V, ∀ ε₁ ε₂ ε₃ ε₄ : ℕ+,
-    prop m₁ (ε₁ / ε₂) → (∀ u, prop (m₂ u) (ε₃ / ε₄)) -> prop (privComposeAdaptive m₁ m₂) ((ε₁ / ε₂) + (ε₃ / ε₄))
+  adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V,
+    ∀ ε₁ ε₂ : ℝ,
+    prop m₁ ε₁ → (∀ u, prop (m₂ u) ε₂) -> prop (privComposeAdaptive m₁ m₂) (ε₁ + ε₂)
   /--
   Privacy is invariant under post-processing.
   -/
-  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } → ∀ m : Mechanism T U, ∀ ε₁ ε₂ : ℕ+,
-   prop m (ε₁ / ε₂) → prop (privPostProcess m pp) (ε₁ / ε₂)
+  postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } →
+    ∀ m : Mechanism T U, ∀ ε : ℝ,
+   prop m ε → prop (privPostProcess m pp) ε
+  /--
+  Constant query is 0-DP
+  -/
+  const_prop : {U : Type} -> (u : U) -> prop (privConst u) 0
+
 
 @[simp]
 lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → PMF A) :
