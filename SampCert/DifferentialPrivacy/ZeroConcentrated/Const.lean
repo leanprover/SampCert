@@ -19,16 +19,25 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 variable { T U : Type }
+-- Could weaken these, but there's no point, since we need to establish these for the more useful queries too.
+variable [MeasurableSpace U]
+variable [MeasurableSingletonClass U]
+variable [Countable U]
 
 /--
 Constant query satisfies zCDP Renyi divergence bound.
 -/
-theorem privConst_zCDPBound {u : U} : zCDPBound (privConst u : Mechanism T U) 0 := by sorry
+theorem privConst_zCDPBound {u : U} : zCDPBound (privConst u : Mechanism T U) 0 := by
+  simp [zCDPBound, privConst]
+  intros
+  refine (RenyiDivergence_aux_zero (PMF.pure u) (PMF.pure u) ?G1 fun x a => a).mp rfl
+  linarith
 
 /--
 Constant query satisfies absolute continuity
 -/
-def privConst_AC {u : U} : ACNeighbour (privConst u : Mechanism T U) := by sorry
+def privConst_AC {u : U} : ACNeighbour (privConst u : Mechanism T U) := by
+  simp [ACNeighbour, AbsCts, privConst]
 
 /--
 ``privComposeAdaptive`` satisfies zCDP

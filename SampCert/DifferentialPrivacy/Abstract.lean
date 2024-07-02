@@ -131,7 +131,7 @@ class DPSystem (T : Type) where
   /--
   Constant query is 0-DP
   -/
-  const_prop : {U : Type} -> (u : U) -> prop (privConst u) (0 : NNReal)
+  const_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] -> (u : U) -> prop (privConst u) (0 : NNReal)
 
 
 @[simp]
