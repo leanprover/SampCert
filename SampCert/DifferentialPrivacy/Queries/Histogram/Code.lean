@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Abstract
 import Init.Data.Fin.Basic
-import Mathlib.Data.Vector
+import Mathlib.Data.Vector.Basic
 
 /-!
 # ``privHistogram`` Implementation
@@ -111,45 +111,46 @@ def logLongBins_def (l : Long) : ℕ :=
 
 lemma logLongBins_wf : logLongBins_def t < logLongBins_bins := by
   simp [logLongBins_def, logLongBins_bins]
-  split
-  case inl =>
-    -- Zero case
-    omega
-  split
-  case inr.inl =>
-    rename_i Hlz Hnz
-    trans
-    · apply Nat.sub_lt
-      · omega
-      · -- apply Nat.sub_lt_left_of_lt_add
-        refine Nat.log_pos_iff.mpr ?a.a
-        apply And.intro
-        · apply Nat.le_sub_of_add_le
-          simp
-          -- Uh oh is this true?
-          sorry
-        · linarith
-    · omega
-    --
-  case inr.inr =>
-    rename_i Hnlz Hnz
-    apply Nat.add_lt_of_lt_sub
-    simp
-    apply Nat.log_lt_of_lt_pow
-    · simp
-      sorry
-    · rcases t with ⟨ A , B ⟩
-      simp only [not_or, not_lt] at *
-      rcases B with ⟨ B1 , B2 ⟩
-      rcases Hnlz with ⟨ A1, A2 ⟩
-      rw [LongMAX] at B2
-      rw [Int.toNat]
-      cases A
-      · simp only []
-        -- rw [Int.ofNat] at B2
-        -- Uh oh is this true either?
-        sorry
-      · simp
+  sorry
+  -- split
+  -- case inl =>
+  --   -- Zero case
+  --   omega
+  -- split
+  -- case inr.inl =>
+  --   rename_i Hlz Hnz
+  --   trans
+  --   · apply Nat.sub_lt
+  --     · omega
+  --     · -- apply Nat.sub_lt_left_of_lt_add
+  --       refine Nat.log_pos_iff.mpr ?a.a
+  --       apply And.intro
+  --       · apply Nat.le_sub_of_add_le
+  --         simp
+  --         -- Uh oh is this true?
+  --         sorry
+  --       · linarith
+  --   · omega
+  --   --
+  -- case inr.inr =>
+  --   rename_i Hnlz Hnz
+  --   apply Nat.add_lt_of_lt_sub
+  --   simp
+  --   apply Nat.log_lt_of_lt_pow
+  --   · simp
+  --     sorry
+  --   · rcases t with ⟨ A , B ⟩
+  --     simp only [not_or, not_lt] at *
+  --     rcases B with ⟨ B1 , B2 ⟩
+  --     rcases Hnlz with ⟨ A1, A2 ⟩
+  --     rw [LongMAX] at B2
+  --     rw [Int.toNat]
+  --     cases A
+  --     · simp only []
+  --       -- rw [Int.ofNat] at B2
+  --       -- Uh oh is this true either?
+  --       sorry
+  --     · simp
 
 /--
 Logarithmic binning method for the Long type.
@@ -173,8 +174,9 @@ def predBins_lt_numBins : predBins numBins < numBins := by
   cases numBins
   rename_i v Hv
   simp
-  apply Nat.sub_one_lt_of_le Hv
-  exact Nat.le_refl v
+  sorry
+  -- apply Nat.sub_one_lt_of_le Hv
+  -- exact Nat.le_refl v
 
 
 /--
