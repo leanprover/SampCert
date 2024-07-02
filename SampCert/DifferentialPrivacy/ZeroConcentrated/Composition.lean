@@ -171,13 +171,14 @@ def privCompose_AC (nq1 : Mechanism T U) (nq2 : Mechanism T V) (Hac1 : ACNeighbo
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-    zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
-  simp [zCDP] at *
-  rcases h with ⟨ Hac1, Hb1 ⟩
-  rcases h' with ⟨ Hac2, Hb2 ⟩
-  apply And.intro
-  · exact privCompose_AC nq1 nq2 Hac1 Hac2
-  · exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
+theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : ℝ) (h : zCDP nq1 ε₁) (h' : zCDP nq2 ε₂) :
+    zCDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
+  sorry
+  -- simp [zCDP] at *
+  -- rcases h with ⟨ Hac1, Hb1 ⟩
+  -- rcases h' with ⟨ Hac2, Hb2 ⟩
+  -- apply And.intro
+  -- · exact privCompose_AC nq1 nq2 Hac1 Hac2
+  -- · exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
 
 end SLang

@@ -95,9 +95,10 @@ theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ 
 /--
 Pure DP satisfies pure differential privacy.
 -/
-theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  PureDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
-  simp [PureDP] at *
-  apply privCompose_DP_bound h h'
+theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : ℝ) (h : PureDP nq1 ε₁)  (h' : PureDP nq2 ε₂) :
+  PureDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
+  sorry
+  -- simp [PureDP] at *
+  -- apply privCompose_DP_bound h h'
 
 end SLang

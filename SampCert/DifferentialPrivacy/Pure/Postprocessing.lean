@@ -46,9 +46,10 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+} (h : Pu
 /--
 ``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.
 -/
-theorem PureDP_PostProcess {f : U → V} (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : PureDP nq ((ε₁ : ℝ) / ε₂)) :
-  PureDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
-  simp [PureDP] at *
-  apply privPostProcess_DP_bound h
+theorem PureDP_PostProcess {f : U → V} (nq : Mechanism T U) (ε : ℝ) (h : PureDP nq ε) :
+  PureDP (privPostProcess nq f) ε := by
+  sorry
+  -- simp [PureDP] at *
+  -- apply privPostProcess_DP_bound h
 
 end SLang

@@ -206,11 +206,12 @@ def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-    (h : zCDP nq1 ((ε₁ : ℝ) / ε₂)) (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-    zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
-  simp [zCDP] at *
-  apply And.intro
-  · apply privComposeAdaptive_AC <;> aesop
-  · apply privComposeAdaptive_zCDPBound  <;> aesop
+theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ : ℝ}
+    (h : zCDP nq1 ε₁) (h' : ∀ u, zCDP (nq2 u) ε₂) :
+    zCDP (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
+  sorry
+  -- simp [zCDP] at *
+  -- apply And.intro
+  -- · apply privComposeAdaptive_AC <;> aesop
+  -- · apply privComposeAdaptive_zCDPBound  <;> aesop
 end SLang

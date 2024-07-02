@@ -115,7 +115,7 @@ class DPSystem (T : Type) where
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] →
     ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : ℝ,
-    prop m₁ ε₁ → prop m₂ ε₃ → prop (privCompose m₁ m₂) (ε₁ + ε₂)
+    prop m₁ ε₁ → prop m₂ ε₂ → prop (privCompose m₁ m₂) (ε₁ + ε₂)
   /--
   Privacy adaptively composes by addition.
   -/
