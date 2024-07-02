@@ -63,7 +63,6 @@ theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ 
             simp_all
             simp [division_def] at h1a
             rw [ENNReal.mul_top Hz''] at h1a
-            skip
             simp_all
         · cases (Classical.em (nq2 l₁ y = 0))
           · rename_i Hz''
@@ -73,7 +72,6 @@ theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ 
             simp_all
             simp [division_def] at h2a
             rw [ENNReal.mul_top Hz''] at h2a
-            skip
             simp_all
       · have A : nq1 l₁ x * nq2 l₁ y / (nq1 l₂ x * nq2 l₂ y) = (nq1 l₁ x / nq1 l₂ x) * (nq2 l₁ y / nq2 l₂ y) := by
           rw [division_def]
