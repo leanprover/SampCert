@@ -188,7 +188,7 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
 
   -- Eliminate elements with probability zero
   split
-  case h.inl =>
+  case h.isTrue =>
     rename_i H
     repeat rw [condition_to_subset]
     rw [H]

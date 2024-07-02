@@ -538,7 +538,6 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
     unfold RenyiDivergence
     unfold RenyiDivergence_def
     unfold RenyiDivergence'
-    congr
     simp
     unfold discrete_gaussian_pmf
 
@@ -658,7 +657,6 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
           simp
     rw [X]
     rw [ENNReal.ofReal_div_of_pos]
-    congr
     simp
 
 end SLang

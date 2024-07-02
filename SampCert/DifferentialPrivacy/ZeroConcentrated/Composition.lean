@@ -43,7 +43,6 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
   rw [DFunLike.coe]
   rw [PMF.instFunLike]
   simp
-  repeat rw [SLang.toPMF]
   have CG1 (b : U) : (nq1 l₂).val b ≠ ⊤ := by
     have H := PMF.apply_ne_top (nq1 l₂) b
     simp [DFunLike.coe, PMF.instFunLike] at H

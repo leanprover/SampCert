@@ -212,9 +212,8 @@ theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (b
   simp [zCDP]
   apply And.intro
   · exact privNoisedQuery_AC query Δ ε₁ ε₂
-  · repeat any_goals constructor
-    . apply privNoisedQuery_zCDPBound
-      exact bounded_sensitivity
+  · apply privNoisedQuery_zCDPBound
+    exact bounded_sensitivity
 
 
 end SLang
