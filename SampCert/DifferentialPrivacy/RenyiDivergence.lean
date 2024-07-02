@@ -107,13 +107,8 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
   ext x
   rw [AbsCts] at H
   generalize Hvq : q x = vq
-  cases vq <;> simp
-  · -- q x = ⊤
-    rw [ENNReal.zero_rpow_of_pos ?H]
-    case H => linarith
-    simp
-    right
-    apply h
+  cases vq <;> try simp_all
+  · linarith
   · rename_i vq'
     cases (Classical.em (vq' = 0))
     · -- q x = 0
@@ -128,7 +123,7 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
     · -- q x ∈ ℝ+
       rename_i Hvq'
       generalize Hvp : p x = vp
-      cases vp <;> simp
+      cases vp
       · -- q x ∈ ℝ+, p x = ⊤
         rw [ENNReal.top_rpow_of_pos ?H]
         case H => linarith
@@ -142,10 +137,12 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
           cases Hcont'
           · simp_all only [some_eq_coe, none_eq_top, zero_ne_top]
           · simp_all only [some_eq_coe, none_eq_top, top_rpow_of_neg, coe_ne_top, sub_neg, and_true]
-        · rw [top_mul']
-          split
-          · simp_all only [some_eq_coe, none_eq_top, zero_ne_top]
-          · rfl
+        · simp_all
+          rw [top_rpow_def]
+          split <;> try simp_all
+          split <;> try simp_all
+          · linarith
+          · linarith
       · rename_i vp
         cases (Classical.em (vq' = 0))
         · -- q x ∈ ℝ+, p x = 0
@@ -337,10 +334,10 @@ theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 <
       right
       simp at HR
       -- Because T is discrete, almost-everywhere equality should become equality
-      have HR' := @Filter.EventuallyEq.eventually _ _ (q.toMeasure.ae) f (Function.const T (⨍ (x : T), f x ∂q.toMeasure)) HR
+      have HR' := @Filter.EventuallyEq.eventually _ _ (ae q.toMeasure) f (Function.const T (⨍ (x : T), f x ∂q.toMeasure)) HR
       simp [Filter.Eventually] at HR'
       -- The measure of the compliment of the set in HR' is zero
-      simp [MeasureTheory.Measure.ae] at HR'
+      simp [ae] at HR'
       rw [PMF.toMeasure_apply _ _ ?Hmeas] at HR'
       case Hmeas =>
         apply (@measurableSet_discrete _ _ ?DM)
