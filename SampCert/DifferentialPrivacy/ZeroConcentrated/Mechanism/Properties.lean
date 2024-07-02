@@ -19,6 +19,7 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 namespace SLang
 
 set_option pp.coercions false
+-- set_option pp.notation false
 -- set_option pp.all true
 
 /--
@@ -43,8 +44,11 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
       (ENNReal.ofReal (Δ ^ OfNat.ofNat 2) /
         (OfNat.ofNat 2 * (ofNNReal (NNReal.ofPNat (Δ * ε₂)) / ofNNReal (NNReal.ofPNat ε₁)) ^ OfNat.ofNat 2))) := by
       refine (ENNReal.mul_le_mul_left ?G1 ?G2).mpr ?G3
-      case G1 => sorry
-      case G2 => sorry
+      case G1 =>
+        intro HK
+        simp_all
+        linarith
+      case G2 => exact ofReal_ne_top
       refine ENNReal.div_le_div ?G4 ?G5
       case G5 => rfl
       apply ofReal_le_ofReal
@@ -56,185 +60,87 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
         apply bounded_sensitivity
       apply (le_trans _ X1)
       clear X1
-      rw [Int.cast_sub]
+      generalize HW : (query l₁ - query l₂) = W
       rw [NNReal.coe_natCast]
-      sorry
+      rw [natAbs]
+      split <;> simp_all
+      rw [abs_le]
+      apply And.intro
+      · linarith
+      · linarith
   apply le_trans
   · apply X
   clear X
   apply Eq.le
   rw [ENNReal.ofReal_mul ?G1]
-  case G1 => sorry
+  case G1 =>
+    simp
+    apply div_nonneg
+    · apply sq_nonneg
+    · apply sq_nonneg
   rw [ENNReal.ofReal_mul ?G1]
   case G1 => simp
   rw [mul_comm]
   congr
   repeat rw [division_def]
-
-  -- Doable, if annoying
-  sorry
-
-  -- -- Pull out the ENNReal.ofReal, reducing it to a Real case
-  -- rw [ENNReal.div_eq_inv_mul]
-  -- simp
-  -- simp [ofNNReal]
-  -- rw [ENNReal.ofReal_mul ?G1]
-  -- case G1 => sorry
-  -- rw [ENNReal.ofReal_mul ?G1]
-  -- case G1 => simp
-  -- rw [mul_comm]
-
-  -- skip
-
-  -- have L : (OfNat.ofNat 2 * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat 2)⁻¹ = ENNReal.ofReal ((OfNat.ofNat 2 * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat 2)⁻¹ ) := by
-  --   simp
-  --   rw [← div_pow]
-  --   conv =>
-  --     rhs
-  --     arg 1
-  --     rw [mul_comm]
-  --   rw [ENNReal.mul_inv]
-  --   · rw [ENNReal.ofReal_mul ?G1]
-  --     case G1 =>
-  --       simp
-  --     congr
-  --     · rw [ENNReal.ofReal_inv_of_pos]
-  --       congr
-  --       simp
-  --       exact zero_lt_two
-  --     · rw [ENNReal.inv_pow]
-  --       rw [ENNReal.ofReal_pow ?G]
-  --       case G =>
-  --         apply div_nonneg
-  --         · simp
-  --         · simp
-  --       congr
-  --       repeat rewrite [ENNReal.div_eq_inv_mul]
-  --       rw [ENNReal.mul_inv ?G1 ?G2]
-  --       case G1 =>
-  --         left
-  --         simp
-  --       case G2 =>
-  --         left
-  --         simp
-  --       simp
-  --       rw [div_eq_mul_inv]
-  --       rw [ENNReal.ofReal_mul]
-  --       · simp
-  --         congr
-  --         rw [ENNReal.mul_inv]
-  --         · rw [ENNReal.ofReal_mul]
-  --           · rw [mul_comm]
-  --             congr
-  --             · rw [ENNReal.ofReal_inv_of_pos]
-  --               · congr
-  --                 simp
-  --               · simp
-  --             · rw [ENNReal.ofReal_inv_of_pos]
-  --               · congr
-  --                 simp
-  --               · simp
-  --           · simp
-  --         · left ; simp
-  --         · left ; simp
-  --       · simp
-  --   · left ; simp
-  --   · left ; simp
-  -- sorry
-  -- /-
-  -- rw [L]
-  -- have H1 : OfNat.ofNat 0 ≤ ((OfNat.ofNat (OfNat.ofNat 2) * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat (OfNat.ofNat 2))⁻¹ : ℝ) := by
-  --   simp
-  --   apply div_nonneg
-  --   · simp
-  --   · simp
-  -- have H2 : OfNat.ofNat 0 ≤ α := by linarith
-  -- conv =>
-  --   lhs
-  --   arg 2
-  --   rw [<- ENNReal.ofReal_mul]
-  --   · skip
-  --   . apply H1
-  -- conv =>
-  --   lhs
-  --   rw [<- ENNReal.ofReal_mul]
-  --   · skip
-  --   · apply H2
-  -- clear H1
-  -- clear H2
-  -- apply ofReal_le_ofReal_iff'.mpr
-
-
-  -- replace bounded_sensitivity := bounded_sensitivity l₁ l₂ h2
-  -- ring_nf
-  -- simp
-  -- conv =>
-  --   left
-  --   left
-  --   left
-  --   rw [mul_pow]
-  -- conv =>
-  --   left
-  --   rw [mul_assoc]
-  --   right
-  --   rw [mul_comm]
-  --   rw [← mul_assoc]
-
-  -- left
-  -- -- Move α to left
-  -- conv =>
-  --   rhs
-  --   rw [mul_assoc]
-  --   rw [mul_comm]
-  -- -- Move ε₁^2 to the left
-  -- conv =>
-  --   lhs
-  --   rw [<- mul_assoc]
-  --   arg 1
-  --   rw [mul_assoc]
-  --   arg 2
-  --   rw [mul_comm]
-  -- conv =>
-  --   lhs
-  --   rw [<- mul_assoc]
-  --   rw [<- mul_assoc]
-  -- -- Add factor of 1 on the right
-  -- conv =>
-  --   rhs
-  --   rw [<- (mul_one (α * ε₁ ^ 2 * ((ε₂ : ℝ)^ 2)⁻¹ : ℝ))]
-  -- -- Reassocaite on left
-  -- conv =>
-  --   lhs
-  --   rw [mul_assoc]
-  -- apply mul_le_mul
-  -- · simp only [inv_pow, le_refl]
-  -- · simp
-  --   rw [inv_mul_eq_div]
-  --   rw [div_le_one_iff]
-  --   left
-  --   apply And.intro
-  --   · apply sq_pos_iff.mpr
-  --     simp
-  --   · apply sq_le_sq.mpr
-  --     clear L h2 h1 α
-  --     rw [<- Int.dist_eq]
-  --     rw [Int.dist_eq']
-  --     have X :  ((query l₁ - query l₂).natAbs : ℝ) ≤ (Δ.val : ℝ) := by
-  --       apply Nat.cast_le.mpr
-  --       apply bounded_sensitivity
-  --     rw [abs_eq_natAbs]
-  --     simp only [abs_cast]
-  --     exact X
-  -- · apply mul_nonneg
-  --   · apply sq_nonneg
-  --   · apply sq_nonneg
-  -- · apply mul_nonneg
-  --   · apply mul_nonneg
-  --     · linarith
-  --     · apply sq_nonneg
-  --   · apply inv_nonneg.mpr
-  --     apply sq_nonneg
-  -- -/
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 => left ; simp
+  case G2 => left ; simp
+  simp
+  rw [mul_comm]
+  repeat rw [mul_assoc]
+  congr
+  · rw [ENNReal.ofReal_inv_of_pos ?G1]
+    case G1 => simp
+    congr
+    rw [ENNReal.ofReal]
+    simp
+  ring_nf
+  rw [ENNReal.mul_inv ?G1 ?G2]
+  case G1 =>
+    left
+    apply ENNReal.pow_ne_zero
+    apply coe_ne_zero.mpr
+    rw [HMul.hMul]
+    rw [instHMul]
+    simp only [ne_eq, Nat.cast_eq_zero]
+    cases ε₂
+    cases Δ
+    rw [Mul.mul]
+    rw [instPNatMul]
+    rw [Positive.instMulSubtypeLtOfNat_mathlib]
+    simp
+    aesop
+  case G2 =>
+    left
+    exact Ne.symm (ne_of_beq_false rfl)
+  rw [ENNReal.ofReal_mul ?G1]
+  case G1 => apply sq_nonneg
+  rw [mul_assoc]
+  rw [mul_comm]
+  rw [mul_assoc]
+  congr
+  · rw [ENNReal.inv_pow]
+    rw [ENNReal.ofReal_pow ?G1]
+    case G1 => exact NNReal.zero_le_coe
+    congr
+    rw [InvolutiveInv.inv_inv]
+    rw [ENNReal.ofReal]
+    simp
+  · rcases Δ with ⟨ Δ', HΔ ⟩
+    rcases ε₂ with ⟨ ε₂', Hε₂ ⟩
+    simp
+    conv =>
+      enter [1, 2, 1, 1, 1]
+      rw [HMul.hMul]
+      rw [instHMul]
+      simp
+      rw [Mul.mul]
+      rw [instPNatMul]
+      rw [Positive.instMulSubtypeLtOfNat_mathlib]
+      simp
+    skip
+    sorry
 
 lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by
@@ -257,11 +163,14 @@ def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeigh
   simp [privNoisedQuery, DiscreteGaussianGenPMF, DiscreteGaussianGenSample, DFunLike.coe] at Hk
   have Hk := Hk (n - query l₂)
   simp at Hk
-  sorry
-  -- have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by simp
-  -- have X := @discrete_gaussian_pos (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) A 0 (n - query l₂)
-  -- simp at X
-  -- linarith
+  have X := @discrete_gaussian_pos (Δ.val.cast * ε₂.val.cast / ε₁.val.cast) ?G1 0 (n - query l₂)
+  case G1 =>
+    cases Δ
+    cases ε₁
+    cases ε₂
+    aesop
+  simp at *
+  linarith
 
 /--
 The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
