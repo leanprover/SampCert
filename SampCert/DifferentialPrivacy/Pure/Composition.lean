@@ -26,16 +26,14 @@ namespace SLang
 /--
 Pure DP privacy bound for ``privCompose``.
 -/
-theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ ε₃ ε₄ : ℕ+} (h1 : PureDP nq1 ((ε₁ : ℝ) / ε₂))  (h2 : PureDP nq2 ((ε₃ : ℝ) / ε₄)) :
-  DP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ : ℝ} (h1 : PureDP nq1 ε₁)  (h2 : PureDP nq2 ε₂) :
+  DP (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [PureDP] at *
-  have h1a := h1
-  have h2a := h2
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x y
-  replace h1a := h1a l₁ l₂ neighbours x
-  replace h2a := h2a l₁ l₂ neighbours y
+  replace h1a := h1 l₁ l₂ neighbours x
+  replace h2a := h2 l₁ l₂ neighbours y
   simp [privCompose]
   conv =>
     left
@@ -85,7 +83,7 @@ theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ 
         have B := mul_le_mul' h1a h2a
         apply le_trans B
         rw [Real.exp_add]
-        rw [ENNReal.ofReal_mul (Real.exp_nonneg (↑↑ε₁ / ↑↑ε₂))]
+        rw [ENNReal.ofReal_mul (Real.exp_nonneg ε₁)]
     . aesop
     . aesop
   . aesop
@@ -97,8 +95,7 @@ Pure DP satisfies pure differential privacy.
 -/
 theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : ℝ) (h : PureDP nq1 ε₁)  (h' : PureDP nq2 ε₂) :
   PureDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
-  sorry
-  -- simp [PureDP] at *
-  -- apply privCompose_DP_bound h h'
+  simp [PureDP] at *
+  apply privCompose_DP_bound h h'
 
 end SLang
