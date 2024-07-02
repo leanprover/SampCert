@@ -608,6 +608,7 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
   linarith
 
 namespace SLang
+set_option pp.coercions false
 
 /--
 Upper bound on Renyi divergence between outputs of the ``SLang`` discrete Gaussian sampler.
@@ -617,13 +618,15 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
   (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+    sorry
   have Hpmf (w : ℤ) : (discrete_gaussian_pmf A w = DiscreteGaussianGenPMF num den w) := by
     simp [discrete_gaussian_pmf]
     simp [DiscreteGaussianGenPMF]
     congr
     apply funext
     intro z
-    rw [← DiscreteGaussianGenSample_apply]
+    rw [DiscreteGaussianGenSample_apply]
+    congr
   conv =>
     left
     congr
@@ -633,30 +636,40 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
   apply le_trans
   · apply (Renyi_Gauss_divergence_bound')
     apply h
-  · have X : (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) = ENNReal.ofReal (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) := by
-      simp
-      rw [ENNReal.ofReal_mul ?Hnn]
-      case Hnn => simp
-      congr
-      · simp
-      · rw [ENNReal.ofReal_div_of_pos ?Hpos]
-        case Hpos => simp
-        repeat rw [sq]
-        rw [ENNReal.ofReal_mul ?Hnn1]
-        case Hnn1 => simp
-        rw [ENNReal.ofReal_mul ?Hnn2]
-        case Hnn2 => simp
-        simp
-        repeat rw [ENNReal.div_eq_inv_mul]
-        rw [mul_mul_mul_comm]
-        congr
-        rw [ENNReal.mul_inv]
-        · right
-          simp
-        · left
-          simp
-    rw [X]
-    rw [ENNReal.ofReal_div_of_pos]
-    simp
+  · simp [NNReal.ofPNat]
+    have X : (2 * (↑↑↑num ^ 2 / ↑↑↑den ^ 2)) = (2 * (↑↑↑num / ↑↑↑den) ^ 2) := by
+      sorry
+    apply Eq.le
+    congr
+
+
+    -- Doable
+    sorry
+
+    -- have X : (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) = ENNReal.ofReal (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) := by
+    --   simp
+    --   rw [ENNReal.ofReal_mul ?Hnn]
+    --   case Hnn => simp
+    --   congr
+    --   · simp
+    --   · rw [ENNReal.ofReal_div_of_pos ?Hpos]
+    --     case Hpos => simp
+    --     repeat rw [sq]
+    --     rw [ENNReal.ofReal_mul ?Hnn1]
+    --     case Hnn1 => simp
+    --     rw [ENNReal.ofReal_mul ?Hnn2]
+    --     case Hnn2 => simp
+    --     simp
+    --     repeat rw [ENNReal.div_eq_inv_mul]
+    --     rw [mul_mul_mul_comm]
+    --     congr
+    --     rw [ENNReal.mul_inv]
+    --     · right
+    --       simp
+    --     · left
+    --       simp
+    -- rw [<X]
+    -- rw [ENNReal.ofReal_div_of_pos]
+    -- simp
 
 end SLang

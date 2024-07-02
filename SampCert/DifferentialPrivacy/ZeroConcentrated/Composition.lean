@@ -32,6 +32,8 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
   (h1 : zCDPBound nq1 ε₁)  (h2 : zCDPBound nq2 ε₂)
   (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2) :
   zCDPBound (privCompose nq1 nq2) (ε₁ + ε₂) := by
+  sorry
+  /-
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   simp [zCDPBound] at h1 h2
@@ -139,6 +141,7 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
   · apply Left.add_nonneg
     · apply log_nonneg_1
     · apply log_nonneg_2
+  -/
 
 /--
 ``privCompose`` preserves absolute continuity between neighbours
@@ -171,7 +174,7 @@ def privCompose_AC (nq1 : Mechanism T U) (nq2 : Mechanism T V) (Hac1 : ACNeighbo
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : ℝ) (h : zCDP nq1 ε₁) (h' : zCDP nq2 ε₂) :
+theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : NNReal) (h : zCDP nq1 ε₁) (h' : zCDP nq2 ε₂) :
     zCDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [zCDP] at *
   rcases h with ⟨ Hac1, Hb1 ⟩

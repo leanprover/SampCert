@@ -111,7 +111,7 @@ lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins
     -- --   split
     -- --   · rename_i Hm
     -- --     rw [<- Hm]
-    -- --     congr
+    -- --     cong  r
     -- --     simp
     -- --     exact Eq.symm (Nat.mod_eq_of_lt Hn)
     -- --   · rfl
@@ -151,8 +151,9 @@ lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
     rw [div_mul_eq_div_div]
     -- Doable
     sorry
-  rw [H]
-  apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
+  sorry
+  -- rw [H]
+  -- apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
 
 
 

@@ -128,6 +128,8 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
   (HAC1 : ACNeighbour nq1) (HAC2 : ∀ u, ACNeighbour (nq2 u))
   (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
   zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  sorry
+  /-
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
   -- This step is loose
@@ -180,6 +182,7 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
       · linarith
     exact _root_.add_le_add (h1 α Hα l₁ l₂ Hneighbours) conditional_ub
   exact privComposeAdaptive_renyi_bound Hα Hneighbours HAC1 HAC2
+  -/
 
 
 
@@ -206,7 +209,7 @@ def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ : ℝ}
+theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ : NNReal}
     (h : zCDP nq1 ε₁) (h' : ∀ u, zCDP (nq2 u) ε₂) :
     zCDP (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
   sorry

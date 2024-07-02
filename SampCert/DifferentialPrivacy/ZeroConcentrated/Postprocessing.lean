@@ -590,7 +590,7 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
 Postprocessing preserves zCDP
 -/
 theorem privPostProcess_zCDP {f : U → V}
-  (nq : Mechanism T U) (ε : ℝ) (h : zCDP nq ε) :
+  (nq : Mechanism T U) (ε : NNReal) (h : zCDP nq ε) :
   zCDP (privPostProcess nq f) ε := by
   sorry
   -- rcases h with ⟨ Hac1, Hb1 ⟩

@@ -22,7 +22,7 @@ namespace SLang
 The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  zCDPBound (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : NNReal) / ε₂) := by
   simp [zCDPBound, privNoisedQuery]
   intros α h1 l₁ l₂ h2
   have A := @discrete_GaussianGenSample_ZeroConcentrated α h1 (Δ * ε₂) ε₁ (query l₁) (query l₂)
@@ -85,6 +85,8 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
         · simp
     · left ; simp
     · left ; simp
+  sorry
+  /-
   rw [L]
   have H1 : OfNat.ofNat 0 ≤ ((OfNat.ofNat (OfNat.ofNat 2) * ((Δ * ε₂).val.cast / ε₁.val.cast) ^ OfNat.ofNat (OfNat.ofNat 2))⁻¹ : ℝ) := by
     simp
@@ -177,6 +179,7 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
       · apply sq_nonneg
     · apply inv_nonneg.mpr
       apply sq_nonneg
+  -/
 
 lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by
@@ -199,16 +202,17 @@ def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeigh
   simp [privNoisedQuery, DiscreteGaussianGenPMF, DiscreteGaussianGenSample, DFunLike.coe] at Hk
   have Hk := Hk (n - query l₂)
   simp at Hk
-  have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by simp
-  have X := @discrete_gaussian_pos (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) A 0 (n - query l₂)
-  simp at X
-  linarith
+  sorry
+  -- have A : ((Δ : ℝ) * ε₂ / ε₁) ≠ 0 := by simp
+  -- have X := @discrete_gaussian_pos (↑↑Δ * ↑↑ε₂ / ↑↑ε₁) A 0 (n - query l₂)
+  -- simp at X
+  -- linarith
 
 /--
 The zCDP mechanism is ``(Δε₂/ε₁)^2``-zCDP.
 -/
 theorem privNoisedQuery_zCDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  zCDP (privNoisedQuery query Δ ε₁ ε₂) ((ε₁ : NNReal) / ε₂) := by
   simp [zCDP]
   apply And.intro
   · exact privNoisedQuery_AC query Δ ε₁ ε₂

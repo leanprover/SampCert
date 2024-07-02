@@ -43,4 +43,4 @@ def ACNeighbour (p : List T -> PMF  U) : Prop := ∀ l₁ l₂, Neighbour l₁ l
 /--
 The mechanism ``q`` is ``(ε^2)/2``-zCDP
 -/
-def zCDP (q : List T → PMF U) (ε : ℝ) : Prop := ACNeighbour q ∧ zCDPBound q ε
+def zCDP (q : List T → PMF U) (ε : NNReal) : Prop := ACNeighbour q ∧ zCDPBound q ε
