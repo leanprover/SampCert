@@ -23,8 +23,12 @@ variable { T U : Type }
 /--
 Constant query satisfies zCDP Renyi divergence bound.
 -/
-theorem privConst_DP_Bound {u : U} : DP (privConst u : Mechanism T U) 0 := by sorry
-
+theorem privConst_DP_Bound {u : U} : DP (privConst u : Mechanism T U) 0 := by
+  rw [event_eq_singleton]
+  rw [DP_singleton]
+  intros
+  simp [privConst]
+  split <;> simp
 
 /--
 ``privComposeAdaptive`` satisfies zCDP
