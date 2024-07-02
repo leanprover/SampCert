@@ -29,11 +29,10 @@ variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
 theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ : ℝ}
+  (Hε₁ : 0 ≤ ε₁) (Hε₂ : 0 ≤ ε₂)
   (h1 : zCDPBound nq1 ε₁)  (h2 : zCDPBound nq2 ε₂)
   (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2) :
   zCDPBound (privCompose nq1 nq2) (ε₁ + ε₂) := by
-  sorry
-  /-
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   simp [zCDPBound] at h1 h2
@@ -119,29 +118,24 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
           rw [mul_le_mul_iff_of_pos_left]
           · ring_nf
             simp only [add_le_add_iff_right, le_add_iff_nonneg_left, gt_iff_lt, Nat.ofNat_pos, mul_nonneg_iff_of_pos_right]
-            sorry
+            exact Left.mul_nonneg Hε₁ Hε₂
           · simp only [inv_pos, Nat.ofNat_pos]
         · linarith
       · apply mul_nonneg
         · apply mul_nonneg
           · simp
-          · apply div_nonneg
-            · exact sq_nonneg ε₁.val.cast
-            · exact sq_nonneg ε₂.val.cast
+          · exact sq_nonneg ε₁
         · linarith
       · apply mul_nonneg
         · apply mul_nonneg
           · simp
-          · apply div_nonneg
-            · exact sq_nonneg ε₃.val.cast
-            · exact sq_nonneg ε₄.val.cast
+          · exact sq_nonneg ε₂
         · linarith
   · simp
     linarith
   · apply Left.add_nonneg
     · apply log_nonneg_1
     · apply log_nonneg_2
-  -/
 
 /--
 ``privCompose`` preserves absolute continuity between neighbours
@@ -181,6 +175,9 @@ theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε�
   rcases h' with ⟨ Hac2, Hb2 ⟩
   apply And.intro
   · exact privCompose_AC nq1 nq2 Hac1 Hac2
-  · exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
+  · apply privCompose_zCDPBound ?G1 ?G2 Hb1 Hb2 Hac1 Hac2
+    · exact NNReal.zero_le_coe
+    · exact NNReal.zero_le_coe
+
 
 end SLang
