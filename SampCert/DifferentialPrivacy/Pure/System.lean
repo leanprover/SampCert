@@ -9,6 +9,7 @@ import SampCert.DifferentialPrivacy.Pure.Mechanism.Basic
 import SampCert.DifferentialPrivacy.Pure.Composition
 import SampCert.DifferentialPrivacy.Pure.AdaptiveComposition
 import SampCert.DifferentialPrivacy.Pure.Postprocessing
+import SampCert.DifferentialPrivacy.Pure.Const
 
 /-!
 # Pure DP system

@@ -33,8 +33,9 @@ def privConst_AC {u : U} : ACNeighbour (privConst u : Mechanism T U) := by sorry
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP {u : U} : zCDP (privConst u : Mechanism T U) 0 := by
+theorem privConst_zCDP : ∀ (u : U), zCDP (privConst u : Mechanism T U) 0 := by
   simp [zCDP] at *
+  intro u
   apply And.intro
   · apply privConst_AC
   · apply privConst_zCDPBound

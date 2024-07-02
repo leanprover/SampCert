@@ -9,6 +9,7 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.AdaptiveComposition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Const
 
 /-!
 # zCDP System
