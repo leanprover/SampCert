@@ -18,7 +18,7 @@ variable [Hu : Nonempty U]
 namespace SLang
 
 -- Better proof for Pure DP adaptive composition
-theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ : ℝ) (h1 : PureDP nq1 ε₁)  (h2 : ∀ u : U, PureDP (nq2 u) ε₂) :
+theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ : NNReal) (h1 : PureDP nq1 ε₁)  (h2 : ∀ u : U, PureDP (nq2 u) ε₂) :
   PureDP (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
   simp [PureDP] at *
   rw [event_eq_singleton] at *

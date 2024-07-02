@@ -20,7 +20,7 @@ def DP (m : Mechanism T U) (ε : ℝ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ S : Set U,
   (∑' x : U, if x ∈ S then m l₁ x else 0) / (∑' x : U, if x ∈ S then m l₂ x else 0) ≤ ENNReal.ofReal (Real.exp ε)
 
-def PureDP (m : Mechanism T U) (ε : ℝ) : Prop :=
+def PureDP (m : Mechanism T U) (ε : NNReal) : Prop :=
   DP m ε
 
 def DP_singleton (m : Mechanism T U) (ε : ℝ) : Prop :=

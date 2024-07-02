@@ -26,7 +26,7 @@ namespace SLang
 /--
 Pure DP privacy bound for ``privCompose``.
 -/
-theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ : ℝ} (h1 : PureDP nq1 ε₁)  (h2 : PureDP nq2 ε₂) :
+theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ : NNReal} (h1 : PureDP nq1 ε₁)  (h2 : PureDP nq2 ε₂) :
   DP (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [PureDP] at *
   rw [event_eq_singleton] at *
@@ -93,7 +93,7 @@ theorem privCompose_DP_bound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ 
 /--
 Pure DP satisfies pure differential privacy.
 -/
-theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : ℝ) (h : PureDP nq1 ε₁)  (h' : PureDP nq2 ε₂) :
+theorem privCompose_DP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : NNReal) (h : PureDP nq1 ε₁)  (h' : PureDP nq2 ε₂) :
   PureDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [PureDP] at *
   apply privCompose_DP_bound h h'

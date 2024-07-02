@@ -119,7 +119,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
 Laplace noising mechanism ``privNoisedQueryPure`` produces a pure ``ε₁/ε₂``-DP mechanism from a Δ-sensitive query.
 -/
 theorem privNoisedQueryPure_DP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : NNReal) / ε₂) := by
   simp [PureDP]
   apply privNoisedQueryPure_DP_bound
   apply bounded_sensitivity

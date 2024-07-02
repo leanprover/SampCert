@@ -100,7 +100,7 @@ class DPSystem (T : Type) where
   /--
   Differential privacy proposition, with one real paramater (ε-DP, ε-zCDP, etc)
   -/
-  prop : Mechanism T Z → ℝ → Prop
+  prop : Mechanism T Z → NNReal → Prop
   /--
   A noise mechanism (eg. Laplace, Discrete Gaussian, etc)
   Paramaterized by a query, sensitivity, and a (rational) security paramater.
@@ -114,24 +114,24 @@ class DPSystem (T : Type) where
   Privacy composes by addition.
   -/
   compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] →
-    ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : ℝ,
+    ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : NNReal,
     prop m₁ ε₁ → prop m₂ ε₂ → prop (privCompose m₁ m₂) (ε₁ + ε₂)
   /--
   Privacy adaptively composes by addition.
   -/
   adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V,
-    ∀ ε₁ ε₂ : ℝ,
+    ∀ ε₁ ε₂ : NNReal,
     prop m₁ ε₁ → (∀ u, prop (m₂ u) ε₂) -> prop (privComposeAdaptive m₁ m₂) (ε₁ + ε₂)
   /--
   Privacy is invariant under post-processing.
   -/
   postprocess_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → { pp : U → V } →
-    ∀ m : Mechanism T U, ∀ ε : ℝ,
+    ∀ m : Mechanism T U, ∀ ε : NNReal,
    prop m ε → prop (privPostProcess m pp) ε
   /--
   Constant query is 0-DP
   -/
-  const_prop : {U : Type} -> (u : U) -> prop (privConst u) 0
+  const_prop : {U : Type} -> (u : U) -> prop (privConst u) (0 : NNReal)
 
 
 @[simp]
