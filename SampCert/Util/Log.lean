@@ -699,29 +699,6 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
     cases w
     · apply left_eq_inf.mp
       rfl
-    -- rename_i w_nnr
-    -- cases w
-    -- · simp [defTop] at H
-    --   rw [EReal.mul_top_of_pos Hr1] at H
-    --   have X1 : z = ⊤ := by
-    --     cases z
-    --     · exfalso
-    --       simp at H
-    --       rw [defBot] at H
-    --       rw [EReal.mul_bot_of_pos] at H
-    --       · cases H
-    --       · apply Hr1
-    --     rename_i z_nnr
-    --     cases z_nnr
-    --     · simp [Top.top]
-    --     exfalso
-    --     apply top_le_iff.mp at H
-    --     rename_i z_R
-    --     have Hzr : some (some z_R) = Real.toEReal z_R := by simp [Real.toEReal]
-    --     rw [Hzr] at H
-    --     rw [<- EReal.coe_mul] at H
-    --     cases H
-    --   rw [defTop, X1]
     rename_i w_R
     cases z
     · rw [EReal.mul_bot_of_pos] at H
@@ -731,12 +708,7 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
         rw [<- EReal.coe_mul] at H
         cases H
       · apply Hr1
-    -- rename_i z_nnr
-    -- cases z_nnr
-    -- · exact right_eq_inf.mp rfl
     rename_i z_R
-    -- have Hwr : some (some w_R) = Real.toEReal w_R := by simp [Real.toEReal]
-    -- have Hzr : some (some z_R) = Real.toEReal z_R := by simp [Real.toEReal]
     have Hsr : some (some s_R) = Real.toEReal s_R := by simp [Real.toEReal]
     rw [Hsr] at H
 
@@ -755,11 +727,6 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
         · simp [Real.toEReal] at H
           cases H
       · exact Hr1
-    -- apply le_of_mul_le_mul_left H
-    -- exact EReal.coe_pos.mp Hr1
-    -- ·
-    -- · simp_all
-    --   -- have Hsr : some (some s_R) = Real.toEReal s_R := by simp [Real.toEReal]
   · simp at Hr2
 
 lemma ereal_smul_eq_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤) (H : s * w = s * z) : w = z := by
