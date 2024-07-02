@@ -31,6 +31,6 @@ noncomputable instance gaussian_zCDPSystem : DPSystem T where
   compose_prop := privCompose_zCDP
   adaptive_compose_prop := privComposeAdaptive_zCDP
   postprocess_prop := privPostProcess_zCDP
-  const_prop := sorry -- privConst_zCDP
+  const_prop := privConst_zCDP
 
 end SLang
