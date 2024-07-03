@@ -29,17 +29,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-      - uses: actions/checkout@v4
-      - name: build SampCert
-        uses: leanprover/lean-action@v1-beta
+      - uses: leanprover/lean-action@v1-beta
         with:
           test: false
-          build-args: "-Kwerror"
+          build-args: "-Kwerror -Kenv=doc"
           use-mathlib-cache: true
           use-github-cache: true
       - name: build docs
-        id: build
-        run: lake build -Kwerror -Kenv=doc SampCert:docs
+        run: |
+          lake build -Kwerror -Kenv=doc SampCert:docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
