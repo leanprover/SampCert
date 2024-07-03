@@ -38,7 +38,7 @@ jobs:
           use-github-cache: true
       - name: build docs
         run: |
-          lake build -Kwerror -Kenv=doc SampCert:docs
+          lake build -R -Kwerror -Kenv=doc SampCert:docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
