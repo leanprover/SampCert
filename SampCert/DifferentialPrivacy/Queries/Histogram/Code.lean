@@ -34,10 +34,8 @@ def predBins_lt_numBins : predBins numBins < numBins := by
   rw [predBins]
   cases numBins
   rename_i v Hv
-  simp
-  sorry
-  -- apply Nat.sub_one_lt_of_le Hv
-  -- exact Nat.le_refl v
+  simp only [PNat.natPred_eq_pred, Nat.pred_eq_sub_one, PNat.mk_coe, tsub_lt_self_iff, zero_lt_one, and_true]
+  assumption
 
 
 /--
@@ -67,11 +65,18 @@ instance : MeasurableSpace (Histogram T numBins B) where
 -- There's probably an easier way to do this?
 instance : Countable (Histogram T numBins B) where
   exists_injective_nat' := by
-    have X : Countable (Vector ℤ numBins) := by
-      sorry
-    have Y : ∃ f : Vector ℤ numBins -> ℕ, Function.Injective f := by
-      sorry
-    sorry
+    have Y : ∃ f : Vector ℤ numBins -> ℕ, Function.Injective f := by exact Countable.exists_injective_nat'
+    rcases Y with ⟨ f, Hf ⟩
+    exists (fun h => f h.count)
+    intro h₁ h₂
+    simp
+    intro Heq
+    cases h₁
+    cases h₂
+    simp_all
+    apply Hf
+    apply Heq
+
 
 instance : Inhabited (Histogram T numBins B) where
   default := emptyHistogram numBins B
