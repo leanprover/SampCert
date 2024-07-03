@@ -27,18 +27,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install elan
-        run: |
-          set -o pipefail
-          curl -sSfL https://github.com/leanprover/elan/releases/download/v1.4.2/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          ./elan-init -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> $GITHUB_PATH
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - uses: actions/checkout@v4
-      - name: build std
-        id: build
-        run: lake build -Kwerror -Kenv=doc SampCert:docs
+      # Build SampCert
+      # lean-action cannot execute without running lake build yet, but building the project
+      # twice is still faster than rebuilding mathlib
+      - name: build SampCert
+        uses: leanprover/lean-action@v1-beta
+        with:
+          test: false
+          build-args: "-Kwerror"
+          use-mathlib-cache: true
+          use-github-cache: true
+     - name: build docs
+       id: build
+       run: lake build -Kwerror -Kenv=doc SampCert:docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
