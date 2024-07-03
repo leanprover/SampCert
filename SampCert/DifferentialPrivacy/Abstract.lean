@@ -102,6 +102,10 @@ class DPSystem (T : Type) where
   -/
   prop : Mechanism T Z → NNReal → Prop
   /--
+  DP is monotonic
+  -/
+  prop_mono {m : Mechanism T Z} {ε₁ ε₂: NNReal} (Hε : ε₁ ≤ ε₂) (H : prop m ε₁) : prop m ε₂
+  /--
   A noise mechanism (eg. Laplace, Discrete Gaussian, etc)
   Paramaterized by a query, sensitivity, and a (rational) security paramater.
   -/

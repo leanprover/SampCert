@@ -26,6 +26,7 @@ Instance of a DP system for zCDP, using the discrete Gaussian as a noising mecha
 -/
 noncomputable instance gaussian_zCDPSystem : DPSystem T where
   prop := zCDP
+  prop_mono := zCDP_mono
   noise := privNoisedQuery
   noise_prop := privNoisedQuery_zCDP
   compose_prop := privCompose_zCDP

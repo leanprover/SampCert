@@ -44,3 +44,23 @@ def ACNeighbour (p : List T -> PMF  U) : Prop := ∀ l₁ l₂, Neighbour l₁ l
 The mechanism ``q`` is ``(ε^2)/2``-zCDP
 -/
 def zCDP (q : List T → PMF U) (ε : NNReal) : Prop := ACNeighbour q ∧ zCDPBound q ε
+
+lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε₂) (Hε : zCDP m ε₁) : zCDP m ε₂ := by
+  rcases Hε with ⟨ Hac , Hε ⟩
+  rw [zCDP] at *
+  apply And.intro
+  · assumption
+  · rw [zCDPBound] at *
+    intro α Hα l₁ l₂ N
+    apply (@le_trans _ _ _ (ENNReal.ofReal (1 / 2 * ↑ε₁ ^ 2 * α)) _ (Hε α Hα l₁ l₂ N))
+    apply ENNReal.coe_mono
+    refine (Real.toNNReal_le_toNNReal_iff ?a.hp).mpr ?a.a
+    · apply mul_nonneg
+      · apply mul_nonneg
+        · simp
+        · simp
+      · linarith
+    · repeat rw [mul_assoc]
+      apply (mul_le_mul_iff_of_pos_left (by simp)).mpr
+      apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr
+      apply pow_le_pow_left' H (OfNat.ofNat 2)

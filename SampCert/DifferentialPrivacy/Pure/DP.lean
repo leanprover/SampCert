@@ -75,4 +75,16 @@ theorem event_eq_singleton (m : Mechanism T U) (ε : ℝ) :
   . apply event_to_singleton
   . apply singleton_to_event
 
+lemma PureDP_mono {m : Mechanism T U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε₂) (Hε : PureDP m ε₁) : PureDP m ε₂ := by
+  rw [PureDP] at *
+  apply (event_eq_singleton _ _).mpr
+  apply (event_eq_singleton _ _).mp at Hε
+  simp [DP_singleton] at *
+  intro l₁ l₂ N x
+  apply (@le_trans _ _ _ (ENNReal.ofReal (Real.exp ↑ε₁)) _ (Hε l₁ l₂ N x))
+  apply ENNReal.coe_mono
+  refine (Real.toNNReal_le_toNNReal_iff ?a.hp).mpr ?a.a
+  · exact Real.exp_nonneg ↑ε₂
+  · exact Real.exp_le_exp.mpr H
+
 end SLang

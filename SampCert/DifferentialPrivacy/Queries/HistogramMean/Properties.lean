@@ -91,7 +91,7 @@ lemma privMeanHistogram_DP (ε₁ ε₂ : ℕ+) (τ : ℤ) (ε₃ ε₄ : ℕ+) 
   intro u
   cases u
   · simp only
-    -- Need to prove that DP is monotonic
+    -- Either strenghten 0-DP for constants, or prove that DP is monotonic.
     sorry
   · rename_i mx
     simp only
