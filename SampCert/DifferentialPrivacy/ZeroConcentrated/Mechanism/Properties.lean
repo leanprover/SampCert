@@ -18,9 +18,6 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-set_option pp.coercions false
--- set_option pp.notation false
--- set_option pp.all true
 
 /--
 The zCDP mechanism with bounded sensitivity satisfies the bound for ``(Δε₂/ε₁)^2``-zCDP.
@@ -139,8 +136,56 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
       rw [instPNatMul]
       rw [Positive.instMulSubtypeLtOfNat_mathlib]
       simp
-    skip
-    sorry
+    rw [ENNReal.inv_pow]
+    rw [<- ENNReal.rpow_neg_one]
+    rw [← ENNReal.rpow_mul_natCast]
+    rw [ENNReal.ofReal]
+    rw [ENNReal.coe_rpow_of_ne_zero ?G1]
+    case G1 =>
+      apply NNReal.coe_ne_zero.mp
+      simp
+      aesop
+    rw [<- ENNReal.coe_mul]
+    rw [ENNReal.ofReal]
+    congr
+    simp
+    rw [NNReal.rpow_neg]
+    rw [NNReal.mul_rpow]
+    simp
+    have X : (0 : NNReal) < (Δ'.cast * Δ'.cast) := by
+      simp
+      intro HK
+      rw [HK] at HΔ
+      simp at HΔ
+    have COE1 : (NNReal.toReal Δ'.cast ^ OfNat.ofNat 2).toNNReal  = (Δ'.cast ^ OfNat.ofNat 2) := by
+      simp
+      rw [Real.toNNReal]
+      -- Only rewriting sq because it's so hard to factor out terms with implicit coercions
+      rw [sq]
+      rw [sq]
+      conv =>
+        rhs
+        rw [<- @max_eq_left_of_lt _ _ (Δ'.cast * Δ'.cast) 0 X]
+      congr
+    rw [COE1]
+    generalize HA : ((Δ'.cast ^ OfNat.ofNat 2) : NNReal) = A
+    rw [mul_comm]
+    rw [mul_assoc]
+    rw [inv_mul_cancel ?G1]
+    case G1 =>
+      intro HK
+      rw [HK] at HA
+      simp at HA
+      rw [HA] at HΔ
+      simp at HΔ
+    clear A HA
+    simp
+    rw [Real.toNNReal_inv]
+    congr
+    rw [Real.toNNReal_pow ?G1]
+    case G1 => exact NNReal.zero_le_coe
+    congr
+    simp only [Real.toNNReal_coe]
 
 lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by
