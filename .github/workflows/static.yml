@@ -32,7 +32,7 @@ jobs:
       - uses: leanprover/lean-action@v1-beta
         with:
           test: false
-          build-args: "-R -Kwerror -Kenv=doc SampCert:docs"
+          build-args: "-R -Kwerror -Kenv=doc -Kdoc=on SampCert:docs"
           use-mathlib-cache: true
           use-github-cache: true
 #       - name: build docs
