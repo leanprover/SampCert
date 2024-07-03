@@ -24,7 +24,11 @@ jobs:
           test: false
           use-mathlib-cache: true
           use-github-cache: true
-          build-args: "-Kwerror FastExtract"
+          build-args: "-Kwerror"
+
+      - name: build FastExtract
+        run: |
+          lake build -Kwerror FastExtract
 
       - name: build Python version of SampCert
         run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py -o Tests/SampCert.dfy
