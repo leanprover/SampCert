@@ -11,13 +11,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: install elan
-        run: |
-          set -o pipefail
-          curl -sSfL https://github.com/leanprover/elan/releases/download/v1.4.2/elan-x86_64-unknown-linux-gnu.tar.gz | tar xz
-          ./elan-init -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> $GITHUB_PATH
-
       - uses: actions/checkout@v4
 
       - name: install Dafny
@@ -26,9 +19,16 @@ jobs:
       - name: install Python dependences
         run: pip install matplotlib numpy scipy
 
-      - name: build std
-        id: build
-        run: lake build -Kwerror FastExtract
+      - uses: leanprover/lean-action@v1-beta
+        with:
+          test: false
+          use-mathlib-cache: true
+          use-github-cache: true
+          build-args: "-Kwerror"
+
+      - name: build FastExtract
+        run: |
+          lake build -Kwerror FastExtract
 
       - name: build Python version of SampCert
         run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py -o Tests/SampCert.dfy
