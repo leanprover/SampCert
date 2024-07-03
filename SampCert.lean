@@ -8,6 +8,7 @@ import SampCert.DifferentialPrivacy.Queries.BoundedMean.Basic
 import SampCert.DifferentialPrivacy.Queries.Histogram.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 import SampCert.DifferentialPrivacy.Pure.System
+import SampCert.DifferentialPrivacy.Queries.HistogramMean.Properties
 
 open SLang
 
