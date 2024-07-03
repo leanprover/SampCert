@@ -15,6 +15,6 @@ jobs:
       - uses: leanprover/lean-action@v1-beta
         with:
           test: false
-          build-args: "-R -Kwerror"
+          build-args: "-Kwerror"
           use-mathlib-cache: true
           use-github-cache: true

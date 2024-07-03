@@ -29,13 +29,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
-# This step stops us from recompiling mathlib, even though we still need to compile the mathlib docs
       - uses: leanprover/lean-action@v1-beta
         with:
           test: false
-          build-args: "-R -Kwerror -Kenv=doc" # IDK if these are necessary
+          build-args: "-R -Kwerror -Kenv=doc" # IDK if these are necessary?
           use-mathlib-cache: true
-          use-github-cache: true
       - name: build docs
         run: |
           lake build -R -Kwerror -Kenv=doc SampCert:docs
