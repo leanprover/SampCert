@@ -64,6 +64,8 @@ lemma privNoisedBinCount_DP (ε₁ ε₂ : ℕ+) (b : Fin numBins) :
   apply dps.noise_prop
   apply exactBinCount_sensitivity
 
+-- MARKUSDE: Looking at this proof it is clear that we need better tactic support for the abstract DP operators
+-- MARKUSDE: - Lemmas with equality side conditions for the privacy cost
 /--
 DP bound for intermediate steps in the histogram calculation.
 -/
@@ -72,70 +74,42 @@ lemma privNoisedHistogramAux_DP (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins
   induction n
   · unfold privNoisedHistogramAux
     simp only [Nat.cast_zero, succ_eq_add_one, zero_add, Nat.cast_one, Nat.cast_mul, one_mul]
-    -- refine DPSystem.postprocess_prop init_pp_fun
-    --   (privCompose (privNoisedBinCount numBins B ε₁ ε₂ 0) fun x => PMF.pure (emptyHistogram numBins B)) ε₁ (ε₂ * numBins)
-    --   ?Gcst_dp
-    -- apply privCompose_ext
-    --         (privNoisedBinCount numBins B ε₁ ε₂ 0)
-    --         (fun x => PMF.pure (emptyHistogram numBins B))
-    --         ε₁ ε₂ /- Can't put zero in here! -/
-
-    skip
-    all_goals sorry
-  · sorry
-    -- rename_i n IH
-    -- unfold privNoisedHistogramAux
-    -- simp only []
-    -- have Hn_pos : 0 < n + 1 := by aesop
-    -- refine privPostProcess_ext ?succ.pp
-    --   (privCompose (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
-    --   (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn)))
-    --   ((⟨ n + 1, Hn_pos ⟩ + 1) * ε₁) (ε₂ * numBins) (↑(n + 1).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins))) ?succ.a1 ?succ.a2 ?succ.εEq
-    -- case succ.εEq =>
-    --   simp
-    --   sorry
-    --   -- exact Eq.symm (mul_div_assoc (↑n + 1 + 1) (↑↑ε₁) (↑↑ε₂ * ↑↑numBins))
-    -- case succ.pp => sorry
-    -- -- case succ.surj =>
-    -- --   unfold Function.Surjective
-    -- --   intro h
-    -- --   exists (h.count.get (Fin.mk (n + 1) Hn), h)
-    -- --   simp
-    -- --   rw [setCount]
-    -- --   cases h
-    -- --   rename_i count
-    -- --   simp
-    -- --   apply Vector.ext
-    -- --   intro m
-    -- --   rw [Vector.get_set_eq_if]
-    -- --   split
-    -- --   · rename_i Hm
-    -- --     rw [<- Hm]
-    -- --     cong  r
-    -- --     simp
-    -- --     exact Eq.symm (Nat.mod_eq_of_lt Hn)
-    -- --   · rfl
-
-    -- refine (privCompose_ext (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
-    --         (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn))
-    --         ε₁ (ε₂ * numBins) (⟨ n + 1, Hn_pos ⟩ * ε₁) (ε₂ * numBins)
-    --         (↑↑((⟨ n + 1, Hn_pos ⟩ + 1 : PNat) * ε₁) / ↑↑(ε₂ * numBins)) ?succ.a1.DPCount ?succ.a1.DPrec ?succ.a1.εEq)
-    -- case succ.a1.εEq =>
-    --   rw [div_add_div_same]
-    --   simp
-    --   congr
-    --   -- have Hrw : ε₁ = 1 * (ε₁ : ℝ) := by exact?
-    --   conv =>
-    --     rhs
-    --     arg 1
-    --     rw [one_mul]
-
-
-    --   sorry
-    -- case succ.a1.DPCount => sorry
-    -- case succ.a1.DPrec => sorry
-
-
+    refine DPSystem.postprocess_prop
+             (privCompose (privNoisedBinCount numBins B ε₁ ε₂ 0) (privConst (emptyHistogram numBins B)))
+             (↑↑ε₁ / ↑↑(ε₂ * numBins)) ?G1
+    apply (DPSystem_prop_ext _ ?HEq ?Hdp)
+    case Hdp =>
+      apply (DPSystem.compose_prop
+              (privNoisedBinCount numBins B ε₁ ε₂ 0)
+              (privConst (emptyHistogram numBins B))
+              (↑↑ε₁ / ↑↑(ε₂ * numBins))
+              0
+              (privNoisedBinCount_DP numBins B ε₁ ε₂ 0)
+              (DPSystem.const_prop (emptyHistogram numBins B)))
+    case HEq => simp only [PNat.mul_coe, Nat.cast_mul, add_zero]
+  · rename_i n IH
+    unfold privNoisedHistogramAux
+    simp only []
+    refine DPSystem.postprocess_prop
+      (privCompose (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
+      (privNoisedHistogramAux numBins B ε₁ ε₂ n (privNoisedHistogramAux.proof_2 numBins n Hn)))
+      (↑(n + 1).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins))) ?succ.a
+    apply (@DPSystem_prop_ext _ _ _ (?C1 + ?C2) _ _ ?HCeq ?Hdp)
+    case Hdp =>
+      refine
+        (DPSystem.compose_prop
+          (privNoisedBinCount numBins B ε₁ ε₂ ↑(n + 1))
+          (privNoisedHistogramAux numBins B ε₁ ε₂ n _) (↑↑ε₁ / ↑↑(ε₂ * numBins)) (↑n.succ * (↑↑ε₁ / ↑↑(ε₂ * numBins))) ?X ?Y)
+      case X => exact privNoisedBinCount_DP numBins B ε₁ ε₂ ↑(n + 1)
+      case Y => apply IH
+    generalize (ε₁.val.cast / (ε₂ * numBins).val.cast : NNReal) = A
+    conv =>
+      enter [1, 1]
+      rw [Eq.symm (one_mul A)]
+    rw [<- add_mul]
+    congr
+    simp only [succ_eq_add_one, Nat.cast_add, Nat.cast_one]
+    exact AddCommMagma.add_comm (OfNat.ofNat 1) (n.cast + OfNat.ofNat 1)
 
 /--
 DP bound for a noised histogram
@@ -143,18 +117,34 @@ DP bound for a noised histogram
 lemma privNoisedHistogram_DP (ε₁ ε₂ : ℕ+) :
   dps.prop (privNoisedHistogram numBins B ε₁ ε₂) (ε₁ / ε₂) := by
   unfold privNoisedHistogram
-  have H : (↑↑ ε₁ / ↑↑ ε₂ : ℝ) = ↑(predBins numBins).succ * (↑↑ε₁ / ↑↑(ε₂ * numBins)) := by
-    rw [cast_succ]
-    rw [predBins]
-    rw [PNat.natPred]
+  apply (DPSystem_prop_ext _ ?HEq ?Hdp)
+  case Hdp => apply privNoisedHistogramAux_DP
+  case HEq =>
     simp
-    rw [div_mul_eq_div_div]
-    -- Doable
-    sorry
-  sorry
-  -- rw [H]
-  -- apply (privNoisedHistogramAux_DP numBins B ε₁ ε₂ (predBins numBins) (predBins_lt_numBins numBins))
-
+    rw [division_def]
+    rw [division_def]
+    rw [mul_inv]
+    conv =>
+      enter [1, 2]
+      rw [<- mul_assoc]
+      rw [mul_comm]
+    generalize (ε₁.val.cast * ε₂.val.cast⁻¹ : NNReal)  = A
+    rw [<- mul_assoc]
+    conv =>
+      enter [2]
+      rw [Eq.symm (one_mul A)]
+    congr
+    unfold predBins
+    cases numBins
+    rename_i n' Hn'
+    simp only [PNat.natPred_eq_pred, pred_eq_sub_one, cast_tsub, Nat.cast_one, PNat.mk_coe]
+    rw [tsub_add_eq_max]
+    rw [max_eq_left (one_le_cast.mpr Hn')]
+    apply mul_inv_cancel
+    intro HK
+    simp_all
+    rw [HK] at Hn'
+    cases Hn'
 
 
 /--

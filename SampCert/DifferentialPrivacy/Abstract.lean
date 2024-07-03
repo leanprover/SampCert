@@ -134,6 +134,12 @@ class DPSystem (T : Type) where
   const_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] -> (u : U) -> prop (privConst u) (0 : NNReal)
 
 
+lemma DPSystem_prop_ext [dps : DPSystem T] {ε₁ ε₂ : NNReal} (m : Mechanism T U) (Hε : ε₁ = ε₂) (H : dps.prop m ε₁) :
+    dps.prop m ε₂ := by
+  rw [<- Hε]
+  assumption
+
+
 @[simp]
 lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → PMF A) :
     (fun l => (p l) >>= (fun a : U => (q l) >>= fun b : V => h a b)) =

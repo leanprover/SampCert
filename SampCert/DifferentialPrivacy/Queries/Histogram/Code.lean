@@ -242,13 +242,13 @@ def setCount (h : Histogram T numBins B) (b : Fin numBins) (v : ℤ) : Histogram
   { h with count := h.count.set b v }
 
 def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) : Mechanism T (Histogram T numBins B) :=
-  let mechRec :=
+  let privNoisedHistogramAux_rec :=
     match n with
-    | Nat.zero => (fun _ => PMF.pure (emptyHistogram numBins B))
+    | Nat.zero => privConst (emptyHistogram numBins B)
     | Nat.succ n' => privNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn)
   privPostProcess
-    (privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) mechRec)
-    (fun z => match z with | (vₙ , h') => (setCount numBins B h' n vₙ))
+    (privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) privNoisedHistogramAux_rec)
+    (fun z => setCount numBins B z.2 n z.1)
 
 
 /--
