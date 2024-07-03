@@ -30,9 +30,6 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - uses: actions/checkout@v4
-      # Build SampCert
-      # lean-action cannot execute without running lake build yet, but building the project
-      # twice is still faster than rebuilding mathlib
       - name: build SampCert
         uses: leanprover/lean-action@v1-beta
         with:
@@ -40,9 +37,9 @@ jobs:
           build-args: "-Kwerror"
           use-mathlib-cache: true
           use-github-cache: true
-     - name: build docs
-       id: build
-       run: lake build -Kwerror -Kenv=doc SampCert:docs
+      - name: build docs
+        id: build
+        run: lake build -Kwerror -Kenv=doc SampCert:docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
