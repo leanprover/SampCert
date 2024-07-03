@@ -28,55 +28,32 @@ variable (unbin : Fin numBins -> ℕ+)
 
 -- FIXME: Can I get away without these?
 
-instance : Inhabited (Option (Fin ↑numBins) × Option ℚ) where
-  default := sorry
-
 instance : MeasurableSpace (Option (Fin ↑numBins) × Option ℚ) where
-  MeasurableSet' := sorry
-  measurableSet_empty := sorry
-  measurableSet_compl := sorry
-  measurableSet_iUnion := sorry
+  MeasurableSet' _ := True
+  measurableSet_empty := by simp only
+  measurableSet_compl := by simp only [imp_self, implies_true]
+  measurableSet_iUnion := by simp only [implies_true, imp_self]
 
 instance : DiscreteMeasurableSpace (Option (Fin ↑numBins) × Option ℚ) where
-  forall_measurableSet := sorry
-
-instance : Countable (Option (Fin ↑numBins) × Option ℚ) where
- exists_injective_nat' := sorry
-
-
-instance : Inhabited (Option ℚ) where
-  default := sorry
+  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
 
 instance : MeasurableSpace (Option ℚ) where
-  MeasurableSet' := sorry
-  measurableSet_empty := sorry
-  measurableSet_compl := sorry
-  measurableSet_iUnion := sorry
+  MeasurableSet' _ := True
+  measurableSet_empty := by simp only
+  measurableSet_compl := by simp only [imp_self, implies_true]
+  measurableSet_iUnion := by simp only [implies_true, imp_self]
 
 instance : DiscreteMeasurableSpace (Option ℚ) where
-  forall_measurableSet := sorry
-
-instance : Countable (Option ℚ) where
- exists_injective_nat' := sorry
-
-
-instance : Inhabited (Option (Fin ↑numBins)) where
-  default := sorry
+  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
 
 instance : MeasurableSpace (Option (Fin ↑numBins)) where
-  MeasurableSet' := sorry
-  measurableSet_empty := sorry
-  measurableSet_compl := sorry
-  measurableSet_iUnion := sorry
+  MeasurableSet' _ := True
+  measurableSet_empty := by simp only
+  measurableSet_compl := by simp only [imp_self, implies_true]
+  measurableSet_iUnion := by simp only [implies_true, imp_self]
 
 instance : DiscreteMeasurableSpace (Option (Fin ↑numBins)) where
-  forall_measurableSet := sorry
-
-instance : Countable (Option (Fin ↑numBins)) where
- exists_injective_nat' := sorry
-
-
-
+  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
 
 
 /-
