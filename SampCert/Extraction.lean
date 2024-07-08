@@ -12,6 +12,12 @@ import SampCert.Samplers.BernoulliNegativeExponential.Code
 import SampCert.Samplers.Laplace.Code
 import SampCert.Samplers.Gaussian.Code
 
+import SampCert.DifferentialPrivacy.Queries.Count.Code
+import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
+import SampCert.DifferentialPrivacy.Queries.BoundedMean.Code
+import SampCert.DifferentialPrivacy.Queries.Histogram.Code
+import SampCert.DifferentialPrivacy.Queries.HistogramMean.Code
+
 open SLang
 
 /-! Extractor
@@ -39,3 +45,12 @@ attribute [export_dafny] DiscreteLaplaceSampleLoop
 attribute [export_dafny] DiscreteLaplaceSample
 attribute [export_dafny] DiscreteGaussianSampleLoop
 attribute [export_dafny] DiscreteGaussianSample
+
+-- attribute [export_dafny] privNoisedCount
+-- attribute [export_dafny] privNoisedBoundedSum
+-- attribute [export_dafny] privNoisedBoundedMean
+-- attribute [export_dafny] privNoisedBinCount
+-- attribute [export_dafny] privNoisedHistogramAux
+-- attribute [export_dafny] privNoisedHistogram
+-- attribute [export_dafny] privMaxBinAboveThreshold
+-- attribute [export_dafny] privMeanHistogram
