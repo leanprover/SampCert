@@ -85,7 +85,7 @@ The noised bounded sum satisfies the DP property of the DP system.
 -/
 @[simp]
 theorem privNoisedBoundedSum_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) :
-  dps.prop (privNoisedBoundedSum U ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+  dps.prop (privNoisedBoundedSum U ε₁ ε₂) ((ε₁ : NNReal) / ε₂) := by
   apply dps.noise_prop
   apply exactBoundedSum_sensitivity
 

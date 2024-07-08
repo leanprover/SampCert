@@ -9,6 +9,7 @@ import SampCert.DifferentialPrivacy.ZeroConcentrated.Mechanism.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Composition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.AdaptiveComposition
 import SampCert.DifferentialPrivacy.ZeroConcentrated.Postprocessing
+import SampCert.DifferentialPrivacy.ZeroConcentrated.Const
 
 /-!
 # zCDP System
@@ -25,10 +26,12 @@ Instance of a DP system for zCDP, using the discrete Gaussian as a noising mecha
 -/
 noncomputable instance gaussian_zCDPSystem : DPSystem T where
   prop := zCDP
+  prop_mono := zCDP_mono
   noise := privNoisedQuery
   noise_prop := privNoisedQuery_zCDP
   compose_prop := privCompose_zCDP
   adaptive_compose_prop := privComposeAdaptive_zCDP
   postprocess_prop := privPostProcess_zCDP
+  const_prop := privConst_zCDP
 
 end SLang

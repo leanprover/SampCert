@@ -617,46 +617,75 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
   (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+    cases num
+    cases den
+    simp
+    apply And.intro <;> linarith
   have Hpmf (w : ℤ) : (discrete_gaussian_pmf A w = DiscreteGaussianGenPMF num den w) := by
     simp [discrete_gaussian_pmf]
     simp [DiscreteGaussianGenPMF]
     congr
     apply funext
     intro z
-    rw [← DiscreteGaussianGenSample_apply]
+    rw [DiscreteGaussianGenSample_apply]
+    congr
   conv =>
     left
     congr
     . rw [<- Hpmf]
     . rw [<- Hpmf]
     . skip
+  clear Hpmf
   apply le_trans
   · apply (Renyi_Gauss_divergence_bound')
     apply h
-  · have X : (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) = ENNReal.ofReal (OfNat.ofNat 2 * (num.val.cast / den.val.cast) ^ OfNat.ofNat 2) := by
-      simp
-      rw [ENNReal.ofReal_mul ?Hnn]
-      case Hnn => simp
-      congr
-      · simp
-      · rw [ENNReal.ofReal_div_of_pos ?Hpos]
-        case Hpos => simp
-        repeat rw [sq]
-        rw [ENNReal.ofReal_mul ?Hnn1]
-        case Hnn1 => simp
-        rw [ENNReal.ofReal_mul ?Hnn2]
-        case Hnn2 => simp
-        simp
-        repeat rw [ENNReal.div_eq_inv_mul]
-        rw [mul_mul_mul_comm]
-        congr
-        rw [ENNReal.mul_inv]
-        · right
-          simp
-        · left
-          simp
-    rw [X]
-    rw [ENNReal.ofReal_div_of_pos]
+  · apply Eq.le
+    congr
+    simp [NNReal.ofPNat]
+    cases num
+    cases den
     simp
+    rename_i a Ha b Hb
+    rw [division_def]
+    rw [ENNReal.ofReal_mul ?G1]
+    case G1 => exact sq_nonneg (μ.cast - ν.cast)
+    rw [division_def]
+    congr
+    rw [ENNReal.ofReal_inv_of_pos ?G1]
+    case G1 =>
+      apply Real.mul_pos
+      · simp
+      apply Real.mul_pos
+      · apply sq_pos_of_pos
+        apply NNReal.coe_pos.mpr
+        exact cast_pos.mpr Ha
+      · apply inv_pos_of_pos
+        apply sq_pos_of_pos
+        apply NNReal.coe_pos.mpr
+        exact cast_pos.mpr Hb
+    congr
+    rw [ENNReal.ofReal_mul ?G1]
+    case G1 => simp
+    simp
+    congr
+    rw [division_def]
+    rw [← NNReal.coe_pow]
+    repeat rw [mul_pow]
+    rw [ENNReal.ofReal_mul ?G1]
+    case G1 => exact NNReal.zero_le_coe
+    congr
+    · simp
+      rw [← ENNReal.coe_pow]
+      rw [← NNReal.coe_pow]
+      rw [ENNReal.ofReal_coe_nnreal]
+    · rw [← ENNReal.inv_pow]
+      rw [← ENNReal.coe_pow]
+      rw [← NNReal.coe_pow]
+      rw [<- ENNReal.ofReal_coe_nnreal]
+      rw [ENNReal.ofReal_inv_of_pos]
+      apply NNReal.coe_pos.mpr
+      apply pow_two_pos_of_ne_zero
+      intro
+      simp_all
 
 end SLang

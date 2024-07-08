@@ -28,10 +28,11 @@ variable [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V]
 /--
 Composed queries satisfy zCDP Renyi divergence bound.
 -/
-theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-  (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂))  (h2 : zCDPBound nq2 ((ε₃ : ℝ) / ε₄))
+theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁ ε₂ : ℝ}
+  (Hε₁ : 0 ≤ ε₁) (Hε₂ : 0 ≤ ε₂)
+  (h1 : zCDPBound nq1 ε₁)  (h2 : zCDPBound nq2 ε₂)
   (Ha1 : ACNeighbour nq1) (Ha2 : ACNeighbour nq2) :
-  zCDPBound (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  zCDPBound (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [privCompose, RenyiDivergence, zCDPBound]
   intro α h3 l₁ l₂ h4
   simp [zCDPBound] at h1 h2
@@ -93,7 +94,7 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
 
     -- Distribute
     rw [CanonicallyOrderedCommSemiring.left_distrib]
-    apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (↑↑ε₁ ^ 2 / ↑↑ε₂ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (↑↑ε₃ ^ 2 / ↑↑ε₄ ^ 2) * α)))
+    apply (@le_trans _ _ _ (ENNReal.ofReal (2⁻¹ * (ε₁ ^ 2) * α) +  ENNReal.ofReal (2⁻¹ * (ε₂ ^ 2) * α)))
     · apply _root_.add_le_add
       · rw [ofEReal_mul_nonneg] at h1
         · apply h1
@@ -116,23 +117,19 @@ theorem privCompose_zCDPBound {nq1 : Mechanism T U} {nq2 : Mechanism T V} {ε₁
         · rw [← mul_add]
           rw [mul_le_mul_iff_of_pos_left]
           · ring_nf
-            simp only [inv_pow, add_le_add_iff_right, le_add_iff_nonneg_left, gt_iff_lt, inv_pos, Nat.cast_pos, PNat.pos,
-                      mul_pos_iff_of_pos_right, mul_pos_iff_of_pos_left, mul_nonneg_iff_of_pos_left, Nat.ofNat_nonneg]
+            simp only [add_le_add_iff_right, le_add_iff_nonneg_left, gt_iff_lt, Nat.ofNat_pos, mul_nonneg_iff_of_pos_right]
+            exact Left.mul_nonneg Hε₁ Hε₂
           · simp only [inv_pos, Nat.ofNat_pos]
         · linarith
       · apply mul_nonneg
         · apply mul_nonneg
           · simp
-          · apply div_nonneg
-            · exact sq_nonneg ε₁.val.cast
-            · exact sq_nonneg ε₂.val.cast
+          · exact sq_nonneg ε₁
         · linarith
       · apply mul_nonneg
         · apply mul_nonneg
           · simp
-          · apply div_nonneg
-            · exact sq_nonneg ε₃.val.cast
-            · exact sq_nonneg ε₄.val.cast
+          · exact sq_nonneg ε₂
         · linarith
   · simp
     linarith
@@ -171,13 +168,16 @@ def privCompose_AC (nq1 : Mechanism T U) (nq2 : Mechanism T V) (Hac1 : ACNeighbo
 /--
 ``privCompose`` satisfies zCDP
 -/
-theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ ε₃ ε₄ : ℕ+) (h : zCDP nq1 ((ε₁ : ℝ) / ε₂))  (h' : zCDP nq2 ((ε₃ : ℝ) / ε₄)) :
-    zCDP (privCompose nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privCompose_zCDP (nq1 : Mechanism T U) (nq2 : Mechanism T V) (ε₁ ε₂ : NNReal) (h : zCDP nq1 ε₁) (h' : zCDP nq2 ε₂) :
+    zCDP (privCompose nq1 nq2) (ε₁ + ε₂) := by
   simp [zCDP] at *
   rcases h with ⟨ Hac1, Hb1 ⟩
   rcases h' with ⟨ Hac2, Hb2 ⟩
   apply And.intro
   · exact privCompose_AC nq1 nq2 Hac1 Hac2
-  · exact privCompose_zCDPBound Hb1 Hb2 Hac1 Hac2
+  · apply privCompose_zCDPBound ?G1 ?G2 Hb1 Hb2 Hac1 Hac2
+    · exact NNReal.zero_le_coe
+    · exact NNReal.zero_le_coe
+
 
 end SLang

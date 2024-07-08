@@ -16,7 +16,7 @@ variable {T : Type}
 /--
 Lists which differ by the inclusion or modification of an element.
 
-This is SampCert's private property.
+This is SampCert's private property. 
 -/
 inductive Neighbour (l₁ l₂ : List T) : Prop where
   | Addition : l₁ = a ++ b → l₂ = a ++ [n] ++ b → Neighbour l₁ l₂

@@ -124,14 +124,15 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
-theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
+theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List T → PMF V} {ε₁ ε₂ : ℝ}
+  (Hε₁ : 0 ≤ ε₁) (Hε₂ : 0 ≤ ε₂)
   (HAC1 : ACNeighbour nq1) (HAC2 : ∀ u, ACNeighbour (nq2 u))
-  (h1 : zCDPBound nq1 ((ε₁ : ℝ) / ε₂)) (h2 : ∀ u, zCDPBound (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-  zCDPBound (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+  (h1 : zCDPBound nq1 ε₁) (h2 : ∀ u, zCDPBound (nq2 u) ε₂) :
+  zCDPBound (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
   -- This step is loose
-  apply (@LE.le.trans _ _ _ (ENNReal.ofReal (1/2 * ((ε₁ : ℝ) / (ε₂ : ℝ))^2 * α + 1/2 * ((ε₃ : ℝ) / (ε₄ : ℝ))^2 * α : ℝ)) _ _ ?case_sq)
+  apply (@LE.le.trans _ _ _ (ENNReal.ofReal (1/2 * (ε₁)^2 * α + 1/2 * (ε₂)^2 * α : ℝ)) _ _ ?case_sq)
   case case_sq =>
     apply ofReal_le_ofReal
     -- Binomial bound
@@ -143,19 +144,19 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
     apply (mul_le_mul_of_nonneg_left _ ?goal1)
     case goal1 => linarith
     apply add_le_add_right
-    have hrw : (↑↑ε₁ / ↑↑ε₂ : ℝ) ^ 2 = (↑↑ε₁ / ↑↑ε₂) ^ 2 + 0 := by linarith
+    have hrw :  ε₁ ^ 2 = ε₁ ^ 2 + 0 := by linarith
     conv =>
       lhs
       rw [hrw]
     clear hrw
     apply add_le_add_left
-    have h : 0 <= (↑↑ε₁ / ↑↑ε₂) * (↑↑ε₃ / ↑↑ε₄ : ℝ) := by
-      apply mul_nonneg <;> apply div_nonneg <;> linarith
-    linarith
+    refine mul_nonneg ?bc.bc.ha Hε₂
+    refine mul_nonneg ?G Hε₁
+    simp
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
   rw [zCDPBound] at h1
   -- have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
-  have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ ENNReal.ofReal (1 / 2 * ((ε₃ : ℝ) / (ε₄ : ℝ)) ^ 2 * α)) :=
+  have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α ≤ ENNReal.ofReal (1 / 2 * ε₂ ^ 2 * α)) :=
     ciSup_le fun x => h2 x α Hα l₁ l₂ Hneighbours
   apply (@LE.le.trans _ _ _ (RenyiDivergence (nq1 l₁) (nq1 l₂) α + ⨆ (u : U), RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) _ _ ?case_alg)
   case case_alg =>
@@ -165,18 +166,14 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
       apply mul_nonneg
       · apply mul_nonneg
         · simp
-        · apply div_nonneg
-          · exact sq_nonneg ε₁.val.cast
-          · exact sq_nonneg ε₂.val.cast
+        · exact sq_nonneg ε₁
       · linarith
     case G2 =>
       simp
       apply mul_nonneg
       · apply mul_nonneg
         · simp
-        · apply div_nonneg
-          · exact sq_nonneg ε₃.val.cast
-          · exact sq_nonneg ε₄.val.cast
+        · exact sq_nonneg ε₂
       · linarith
     exact _root_.add_le_add (h1 α Hα l₁ l₂ Hneighbours) conditional_ub
   exact privComposeAdaptive_renyi_bound Hα Hneighbours HAC1 HAC2
@@ -206,9 +203,9 @@ def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
-theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ ε₃ ε₄ : ℕ+}
-    (h : zCDP nq1 ((ε₁ : ℝ) / ε₂)) (h' : ∀ u, zCDP (nq2 u) ((ε₃ : ℝ) / ε₄)) :
-    zCDP (privComposeAdaptive nq1 nq2) (((ε₁ : ℝ) / ε₂) + ((ε₃ : ℝ) / ε₄)) := by
+theorem privComposeAdaptive_zCDP (nq1 : List T → PMF U) {nq2 : U -> List T → PMF V} {ε₁ ε₂ : NNReal}
+    (h : zCDP nq1 ε₁) (h' : ∀ u, zCDP (nq2 u) ε₂) :
+    zCDP (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
   simp [zCDP] at *
   apply And.intro
   · apply privComposeAdaptive_AC <;> aesop

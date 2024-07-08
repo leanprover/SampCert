@@ -544,9 +544,9 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
 /--
 privPostProcess satisfies the zCDP bound
 -/
-theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
-  (h : zCDPBound nq ((ε₁ : ℝ) / ε₂)) (f : U → V) (Hac : ACNeighbour nq) :
-  zCDPBound (privPostProcess nq f) ((ε₁ : ℝ) / ε₂) := by
+theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
+  (h : zCDPBound nq ε) (f : U → V) (Hac : ACNeighbour nq) :
+  zCDPBound (privPostProcess nq f) ε := by
   simp [privPostProcess, zCDPBound, RenyiDivergence]
   intro α h1 l₁ l₂ h2
   have h' := h
@@ -590,12 +590,12 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε₁ ε₂ : ℕ+}
 Postprocessing preserves zCDP
 -/
 theorem privPostProcess_zCDP {f : U → V}
-  (nq : Mechanism T U) (ε₁ ε₂ : ℕ+) (h : zCDP nq ((ε₁ : ℝ) / ε₂)) :
-  zCDP (privPostProcess nq f) (((ε₁ : ℝ) / ε₂)) := by
+  (nq : Mechanism T U) (ε : NNReal) (h : zCDP nq ε) :
+  zCDP (privPostProcess nq f) ε := by
   rcases h with ⟨ Hac1, Hb1 ⟩
   simp [zCDP] at *
   apply And.intro
   · exact privPostProcess_AC nq Hac1
-  · exact (privPostProcess_zCDPBound Hb1 f Hac1)
+  · exact privPostProcess_zCDPBound Hb1 f Hac1
 
 end SLang
