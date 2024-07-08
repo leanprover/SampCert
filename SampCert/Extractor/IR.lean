@@ -43,6 +43,7 @@ inductive Typ where
   | int
   | nat
   | pos
+  | list (t : Typ)
   | prod (left right : Typ)
   | dependent (e : Expression)
 
@@ -87,6 +88,7 @@ def Typ.print (t : Typ): String :=
   | int => "int"
   | nat => "nat"
   | pos => "pos"
+  | list t => s!"(list {t.print})"
   | prod t1 t2 => s!"({t1.print},{t2.print})"
   | dependent _ => "dependent"
 

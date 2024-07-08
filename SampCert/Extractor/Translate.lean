@@ -26,6 +26,7 @@ def chopLambda (e : Expr) : Expr :=
 mutual
 
 partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
+  logInfo s!"typ >>> Matching {e}"
   match e with
   | .bvar .. => throwError "toDafnyTyp: not supported -- bound variable {e}"
   | .fvar .. => throwError "toDafnyTyp: not supported -- free variable {e}"
@@ -39,6 +40,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
   | .app .. => (e.withApp fun fn args => do
       if let .const name .. := fn then
       match name with
+      | ``List => return .list (← toDafnyTyp env args[0]!)
       | ``Prod => return .prod (← toDafnyTyp env args[0]!) (← toDafnyTyp env args[1]!)
       | ``SLang => return (← toDafnyTyp env args[0]!)
       | _ => return .dependent (← toDafnyExpr "dummycalledfromtoDafnyTyp" env e)
@@ -52,6 +54,7 @@ partial def toDafnyTyp (env : List String) (e : Expr) : MetaM Typ := do
   | .proj .. => throwError "toDafnyTyp: not supported -- projection {e}"
 
 partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM Expression := do
+  logInfo s!"expr >>> Matching {e}"
   match e with
   | .bvar i => return .name (env[i]!)
   | .fvar .. => throwError "toDafnyExpr: not supported -- free variable {e}"
@@ -104,6 +107,7 @@ partial def toDafnyExpr (dname : String) (env : List String) (e : Expr) : MetaM 
       | ``PNat.val => toDafnyExpr dname env args[0]!
       | ``Subtype.mk => toDafnyExpr dname env args[2]!
       | ``Int.sub => return .binop .substraction (← toDafnyExpr dname env args[0]!) (← toDafnyExpr dname env args[1]!)
+      | ``List => throwError "toDafnyExpr: List: -- application of {fn} to {args}, info.type {info.type}"
       | _ =>
         if ← IsWFMonadic info.type
         then
