@@ -137,13 +137,14 @@ end
 
 def toDafnyTypTop (env : List String) (e: Expr) : MetaM ((List Typ) × Typ) := do
   match e with
-  | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet"
+  | .forallE _ (.sort _) _ _ => throwError "toDafnyTypTop: Polymorphism not supported yet: {e}"
   | (.app (.const ``SLang ..) arg) => return ([],← toDafnyTyp [] arg)
+  | (.app (.const ``PMF ..) arg) => return ([],← toDafnyTyp [] arg)
   | .forallE binder domain range _ =>
     let nenv := binder.toString :: env
     let r ← toDafnyTypTop nenv range
     return ((← toDafnyTyp env domain) :: r.1 , r.2)
-  | _ => throwError "toDafnyTypTop: error"
+  | _ => throwError "toDafnyTypTop: error at {e}"
 
 partial def toDafnyExprTop (dname : String) (num_args : Nat) (names : List String) (e : Expr) : MetaM (List String × Expression) := do
   match e with
