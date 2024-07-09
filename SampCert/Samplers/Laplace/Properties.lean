@@ -935,4 +935,147 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
 
     apply LE.le.trans_lt B E
 
+-- set_option pp.coercions false
+-- set_option pp.notation false
+-- set_option pp.all true
+
+
+/--
+PMF for the geometric distribution as seen in literature
+-/
+def Geo (r : ℝ) (n : ℕ) : ENNReal := (1 - ENNReal.ofReal r) ^ n * ENNReal.ofReal r
+
+/-
+``probGeometric`` in terms of ``Geo``
+-/
+lemma probGeometric_apply_Geo (t : SLang Bool) (trial_spec : t false + t true = 1) (trial_spec' : t true < 1) (x : ℕ) :
+      probGeometric t x = if x = 0 then 0 else Geo (ENNReal.toReal (1 - t true)) (x - 1) := by
+  rw [probGeometric_apply]
+  split <;> try simp
+  rw [Geo]
+  congr
+  · simp
+    rw [ENNReal.sub_sub_cancel] <;> try simp
+    -- linarith
+    sorry
+  · simp
+    sorry
+    -- linarith
+
+-- set_option pp.coercions false
+-- set_option pp.notation false
+-- set_option pp.all true
+
+
+/--
+Equivalence between the optimized an unoptimized sampling loops
+-/
+theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
+  DiscreteLaplaceSampleLoop num den = DiscreteLaplaceSampleLoop' num den := by
+  apply SLang.ext
+  intro ⟨ b, n ⟩
+
+  -- Apply DiscreteLaplaceSampleLoop spec and simplify
+  simp [DiscreteLaplaceSampleLoop_apply]
+  simp only [DiscreteLaplaceSampleLoop', Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure, bind_apply]
+  have H (a c : ℕ) :
+    ((if b = false ∧ n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (2⁻¹ : ENNReal) else 0) +
+      if b = true ∧ n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (2⁻¹ : ENNReal) else 0) =
+    ( (if n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (1 : ENNReal) else 0) * (2⁻¹ : ENNReal)) := by
+    cases b <;> simp
+
+  -- Eliminate the 1/2
+  conv =>
+    enter [2, 1, a, 2, 1, c, 2]
+    rw [tsum_bool]
+    simp
+    rw [H]
+  clear H
+  conv =>
+    enter [2, 1, a, 2, 1, c]
+    rw [<- mul_assoc]
+  conv =>
+    enter [2, 1, a, 2]
+    rw [ENNReal.tsum_mul_right]
+  conv =>
+    enter [2, 1, a]
+    rw [<- mul_assoc]
+  rw [ENNReal.tsum_mul_right]
+  congr
+
+  -- Convert LHS into Geometric PMF
+  have H :
+    ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) =
+    (Geo (1 - rexp (- (den / num))) n) := by
+    unfold Geo
+    rw [ENNReal.ofReal_sub]
+    case hq => apply exp_nonneg
+    simp
+    congr
+    generalize HW : rexp (-(↑↑den / ↑↑num)) = W
+    rw [Subtype.val]
+    simp
+    rw [NNReal.coe_sub_def]
+    rw [max_eq_left ?G1]
+    case G1 =>
+      apply sub_nonneg.mpr
+      rw [<- HW]
+      simp
+      apply div_nonneg <;> apply cast_nonneg
+    simp only [NNReal.coe_one, coe_toNNReal', sub_sub_cancel]
+    rw [max_eq_left ?G1]
+    rw [<- HW]
+    apply exp_nonneg
+  rw [H]
+  clear H
+
+  -- Convert the RHS probGeometric into Geo as well
+  have SC1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := sorry
+  have SC2 : BernoulliExpNegSample 1 1 true < 1 := sorry
+  conv =>
+    enter [2, 1, a, 2, 1, b, 1]
+    rw [probGeometric_apply_Geo _ SC1 SC2]
+  clear SC1 SC2
+
+  -- Reindex and simplify the inner sum on the RHS
+  have H (a : ℕ) :
+    ∑' (b : ℕ), ((if b = 0 then 0 else Geo (1 - BernoulliExpNegSample 1 1 true).toReal (b - 1)) * if n = (a + ↑num * (b - 1)) / ↑den then 1 else 0) =
+    ∑' (b : ℕ), ((Geo (1 - BernoulliExpNegSample 1 1 true).toReal b) * if n = (a + ↑num * b) / ↑den then 1 else 0) := by
+    apply (tsum_eq_tsum_of_ne_zero_bij ?Bij)
+    case Bij => exact (fun z => z + 1)
+    · intro _ _ H
+      simp at H
+      exact SetCoe.ext H
+    · simp
+      intro z Hn Hz HGeo
+      exists (z - 1)
+      apply And.intro
+      · apply And.intro
+        · exact Hn
+        · exact HGeo
+      · exact succ_pred_eq_of_ne_zero Hz
+    · simp
+  conv =>
+    enter [2, 1, a, 2]
+    rw [H]
+  clear H
+  simp only [BernoulliExpNegSample_apply_true, cast_one, NNReal.coe_one, PNat.val_ofNat, ne_eq, one_ne_zero, not_false_eq_true, div_self]
+
+
+  -- (done on paper)
+  -- Verify iff condition for div equals num provided denominator is 0
+  -- (done on paper)
+  -- Verify that if a ≥ num, n = (a + num b) / div is false
+  -- (have done this before)
+  -- Restruct outermost sum to it's support a < num
+  -- Rewrite (DiscreteLaplaceSampleLoopIn1 t n) using DiscreteLaplaceSampleLoopIn1_apply
+
+  -- Rewrite inner sum to its support using iff condition for div
+  -- (??) Inner sum to difference of geometric partial sums
+  -- (? Mathlib search) geometric partial sum formulas
+
+  -- (???) Complete by simplficiation
+
+  sorry
+
 end SLang
