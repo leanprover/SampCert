@@ -956,16 +956,31 @@ lemma probGeometric_apply_Geo (t : SLang Bool) (trial_spec : t false + t true = 
   congr
   · simp
     rw [ENNReal.sub_sub_cancel] <;> try simp
-    -- linarith
-    sorry
+    exact le_of_lt trial_spec'
   · simp
-    sorry
-    -- linarith
+    exact trial_one_minus t trial_spec
 
 -- set_option pp.coercions false
 -- set_option pp.notation false
 -- set_option pp.all true
 
+lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
+  apply Iff.intro
+  · intro H
+    apply And.intro
+    · apply (Nat.le_div_iff_mul_le Hc).mp
+      exact Nat.le_of_eq H
+    · apply (Nat.div_lt_iff_lt_mul Hc).mp
+      apply Nat.lt_succ_iff.mpr
+      exact Nat.le_of_eq (id (Eq.symm H))
+  · intro ⟨ H1, H2 ⟩
+    apply LE.le.antisymm
+    · apply (Nat.le_div_iff_mul_le Hc).mpr
+      apply H1
+    · apply Nat.lt_succ_iff.mp
+      simp
+      apply (Nat.div_lt_iff_lt_mul Hc).mpr
+      apply H2
 
 /--
 Equivalence between the optimized an unoptimized sampling loops
@@ -1062,17 +1077,114 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   simp only [BernoulliExpNegSample_apply_true, cast_one, NNReal.coe_one, PNat.val_ofNat, ne_eq, one_ne_zero, not_false_eq_true, div_self]
 
 
-  -- (done on paper)
-  -- Verify iff condition for div equals num provided denominator is 0
-  -- (done on paper)
-  -- Verify that if a ≥ num, n = (a + num b) / div is false
-  -- (have done this before)
-  -- Restruct outermost sum to it's support a < num
-  -- Rewrite (DiscreteLaplaceSampleLoopIn1 t n) using DiscreteLaplaceSampleLoopIn1_apply
+  -- Split up outermost series so that we can expand DiscreteLaplaceSampleLoopIn1
+  have Hsup1 : Function.support (fun a => DiscreteLaplaceSampleLoopIn1 num a * (∑' (b : ℕ), Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if n = (a + (num : ℕ) * b) / (den : ℕ) then 1 else 0))  ⊆ { n' : ℕ | n' < (num : ℕ)} := by
+    simp [Function.support]
+    intro a H1 x _ _
+    apply Classical.by_contradiction
+    intro Hk
+    apply H1
+    simp [DiscreteLaplaceSampleLoopIn1]
+    simp [DiscreteLaplaceSampleLoopIn1Aux]
+    intro i
+    cases Classical.em (i < (num : ℕ))
+    · right
+      intro Hk'
+      exfalso
+      linarith
+    · left
+      apply UniformSample_apply_out
+      apply Nat.le_of_not_lt
+      assumption
+  rewrite [<- tsum_subtype_eq_of_support_subset Hsup1]
+  clear Hsup1
+  have SC1 (x : {n' | n' < num.val}.Elem) : (x.val < num.val) := by
+    simp_all only [Set.mem_setOf_eq]
+    obtain ⟨val, property⟩ := x
+    simp_all only
+    simp_all only [Set.mem_setOf_eq]
+  conv =>
+    enter [2, 1, x, 1]
+    rw [DiscreteLaplaceSampleLoopIn1_apply]
+    · skip
+    · apply SC1
 
-  -- Rewrite inner sum to its support using iff condition for div
-  -- (??) Inner sum to difference of geometric partial sums
-  -- (? Mathlib search) geometric partial sum formulas
+
+  -- Simplify ite expression
+  have H1 (a b : ℕ) :
+    (if n = (a + ↑num * b) / ↑den then (1 : ENNReal) else 0) =
+    (if (n * (den) ≤ (a + ↑num * b) ∧ (a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else (0)) := by
+    congr
+    rw [propext (nat_div_eq_le_lt_iff (PNat.pos den))]
+  have H2 (a b : ℕ) :
+    (if (n * (den) ≤ (a + ↑num * b) ∧ (a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else (0)) =
+    (if ((a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else 0) -  (if (n * (den) ≤ (a + ↑num * b)) then (0 : ENNReal) else 1) := by
+      cases (Classical.em ((a + ↑num * b) < (n +  1) * den))
+      · simp_all
+        split
+        · simp only [tsub_zero]
+        · simp only [ge_iff_le, le_refl, tsub_eq_zero_of_le]
+      · rename_i h
+        rw [ite_and]
+        split
+        · simp only [ge_iff_le, le_refl, tsub_eq_zero_of_le]
+        · exfalso
+          linarith
+  conv =>
+    enter [2, 1, a, 2, 1, b, 2]
+    rw [H1]
+    rw [H2]
+  clear H1 H2
+
+  -- have HIndicatorInequality (a b : ℕ) :
+  --   ((if n * ↑den ≤ ↑a + ↑num * b then 0 else 1) ≤ (if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0)) := by sorry
+
+  -- Distribute series; split into partial series
+  have R2 (a b : ℕ) :=
+    @ENNReal.mul_sub
+      (Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b)
+      (if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0)
+      (if n * ↑den ≤ ↑a + ↑num * b then 0 else 1)
+      ?G2
+  case G2 =>
+    intro _ _
+    rw [Geo]
+    simp
+    exact ne_of_beq_false rfl
+  conv =>
+    enter [2, 1, a, 2, 1, b]
+    rw [R2]
+  clear R2
+
+  have S1 (a : ℕ) : (∑' (i : ℕ), Geo (1 - ENNReal.ofReal (rexp (-1))).toReal i * if n * ↑den ≤ ↑a + ↑num * i then 0 else 1) ≠ ⊤ := by
+    simp
+    intro HK
+    -- Prove that Geo never has a top sum
+    sorry
+  have S2 (a : ℕ) : (fun b => Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if n * ↑den ≤ ↑a + ↑num * b then 0 else 1) ≤ fun b => Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0 := by
+    intro x
+    simp
+    split
+    · split
+      · simp
+      · simp
+    · split
+      · simp
+      · exfalso
+        linarith
+  conv =>
+    enter [2, 1, a, 2]
+    rw [ENNReal.tsum_sub ]
+    · skip
+    · apply S1
+    · apply S2
+  -- Err... is this on the right track? Or is there an easier way to get to the second last step?
+
+  -- Rewrite the partial sums by their subtypes (so that it's easy to get a common formula for them )
+  -- Formula for geometric sums
+
+
+
 
   -- (???) Complete by simplficiation
 
