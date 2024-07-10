@@ -1076,7 +1076,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   clear H
   simp only [BernoulliExpNegSample_apply_true, cast_one, NNReal.coe_one, PNat.val_ofNat, ne_eq, one_ne_zero, not_false_eq_true, div_self]
 
-
   -- Split up outermost series so that we can expand DiscreteLaplaceSampleLoopIn1
   have Hsup1 : Function.support (fun a => DiscreteLaplaceSampleLoopIn1 num a * (∑' (b : ℕ), Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if n = (a + (num : ℕ) * b) / (den : ℕ) then 1 else 0))  ⊆ { n' : ℕ | n' < (num : ℕ)} := by
     simp [Function.support]
@@ -1110,6 +1109,12 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     · apply SC1
 
 
+  -- CHECKPOINT:
+  -- Here is where things start going sideways
+  -- Intead of
+
+
+
   -- Simplify ite expression
   have H1 (a b : ℕ) :
     (if n = (a + ↑num * b) / ↑den then (1 : ENNReal) else 0) =
@@ -1131,7 +1136,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
         · exfalso
           linarith
   conv =>
-    enter [2, 1, a, 2, 1, b, 2]
+    enter [2, 1, x, 2, 1, b, 2]
     rw [H1]
     rw [H2]
   clear H1 H2
@@ -1182,9 +1187,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 
   -- Rewrite the partial sums by their subtypes (so that it's easy to get a common formula for them )
   -- Formula for geometric sums
-
-
-
 
   -- (???) Complete by simplficiation
 
