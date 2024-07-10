@@ -187,7 +187,10 @@ def toDafnySLangDefIn (declName: Name) : MetaM MDef := do
     | ConstantInfo.defnInfo _ =>
       if ← IsWFMonadic info.type then
         let (inParamTyp, outParamTyp) ← toDafnyTypTop [] info.type
+        logInfo s!"toDafnySLangDefIn >>> extracting {info.value!}"
+        logInfo s!"toDafnySLangDefIn >>> norm. {(<-  Lean.Meta.withTransparency Lean.Meta.TransparencyMode.instances $ Lean.Meta.reduce info.value! (explicitOnly := true))}"
         let (inParam, body) ←  toDafnyExprTop declName.toString (List.length inParamTyp) [] info.value!
+        logInfo s!"toDafnySLangDefIn <<< extraction complete"
         let defn := MDef.mk (declName.toString) inParamTyp outParamTyp inParam body
         return defn
       else throwError "This extractor works for SLang monadic computations only (1)"

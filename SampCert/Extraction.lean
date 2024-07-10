@@ -56,7 +56,10 @@ Additionally, the following names are protected:
 -- means we can't support polymorphism in the list type either (because the type of
 -- DPSystem in parameterized by the list type).
 
--- attribute [export_dafny] privNoisedCount
+attribute [export_dafny] privNoisedCount
+
+-- To unfold these definitions, we mark them as reducible.
+attribute [reducible] SLang.privNoisedCount
 
 -- This one has concrete types only
 noncomputable def privNoisedCount_nat_pure := @privNoisedCount ℕ PureDPSystem
