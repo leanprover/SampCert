@@ -985,7 +985,59 @@ lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤
       apply H2
 
 
-lemma euc_decomp (n : ℕ) (D : ℕ) : ∃ n1 n2 : ℕ, (n2 < D) ∧ n = n1 * D + n2 := sorry
+/--
+Specialize Euclidean division from ℤ to ℕ
+-/
+lemma euclidean_division (n : ℕ) (D : ℕ) (HD : 0 < D): ∃ n1 n2 : ℕ, (n2 < D) ∧ n = n1 * D + n2 := by
+  exists (n / D)
+  exists (n % D)
+  apply And.intro
+  · exact mod_lt n HD
+  · apply ((@Nat.cast_inj ℤ).mp)
+    simp
+    conv =>
+      lhs
+      rw [<- EuclideanDomain.mod_add_div (n : ℤ) (D : ℤ)]
+    repeat rw [<- mul_assoc]
+    rw [add_comm]
+    congr 1
+    rw [mul_comm]
+
+/--
+Uniqueness of Euclidean division for Nats
+-/
+lemma euclidean_division_uniquness {n1 n2 n3 n4: ℕ} (D : ℕ) (HD : 0 < D) (Hn1 : n1 < D) (Hn2 : n2 < D) :
+  n1 + D * n3 = n2 + D * n4 -> (n1 = n2 ∧ n3 = n4) := by
+  intro H
+  cases (Classical.em (n1 = n2))
+  · aesop
+  cases (Classical.em (n3 = n4))
+  · aesop
+  exfalso
+  rename_i Hne1 Hne2
+
+  have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HZ : Z < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
+    suffices (D * W < D * X) by
+      -- FIXME: Cleanup
+      have A : (1 + W ≤ X) := by exact one_add_le_iff.mpr HK
+      have A : (D * (1 + W) ≤ D * X) := by exact Nat.mul_le_mul_left D A
+      have A : (D + D * W ≤ D * X) := by linarith
+      have A : (Y + D * W < D * X) := by linarith
+      have A : (Y + D * W < Z + D * X) := by linarith
+      assumption
+    exact Nat.mul_lt_mul_of_pos_left HK HD
+
+  rcases (lt_trichotomy n3 n4) with HK' | ⟨ HK' | HK' ⟩
+  · suffices (n1 + D * n3 < n2 + D * n4) by exact (LT.lt.ne this) H
+    exact Contra1 n3 n4 n1 n2 Hn1 Hn2 HK'
+  · exact Hne2 HK'
+  · suffices (n2 + D * n4 < n1 + D * n3) by
+      apply (LT.lt.ne this)
+      symm
+      apply H
+    exact Contra1 n4 n3 n2 n1 Hn2 Hn1 HK'
+
+lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) : Geo (1-p) k / n = Geo (1-(p ^ n)) k := sorry
 
 
 
@@ -1026,7 +1078,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
       split <;> try simp
       repeat rw [mul_assoc]
       congr
-      split
       all_goals sorry
   rw [H]
   clear H
@@ -1044,8 +1095,8 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     apply tsum_congr
     intro a
     congr 1
-    have S1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := sorry
-    have S2 : BernoulliExpNegSample 1 1 true < 1 := sorry
+    have S1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := by sorry
+    have S2 : BernoulliExpNegSample 1 1 true < 1 := by sorry
     conv =>
       enter [1, 1, b]
       rw [probGeometric_apply_Geo _ S1 S2]
@@ -1071,7 +1122,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   clear H
 
   -- Decompose n with Euclidean division
-  rcases (euc_decomp n num) with ⟨ vx, ux, Hux, Hn ⟩
+  rcases (euclidean_division n num (PNat.pos num)) with ⟨ vx, ux, Hux, Hn ⟩
   rw [Hn]
   simp only [Bind.bind, Pure.pure, Pi.natCast_def, bind_apply, Pi.div_apply, pure_apply]
 
@@ -1081,7 +1132,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     enter [2, 1, a]
     rw [<- ENNReal.tsum_mul_left]
   rw [<- ENNReal.tsum_prod]
-  rw [tsum_eq_single (vx, ux) ?G1]
+  rw [tsum_eq_single (ux, vx) ?G1]
   case G1 =>
     intro b' Hb'
     apply Classical.by_contradiction
@@ -1094,65 +1145,34 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     · exfalso
       apply Hb'
       -- Euclidean division uniqueness
-      sorry
+      rcases b' with ⟨ a, b ⟩
+      simp
+      apply (@euclidean_division_uniquness a ux b vx num)
+      · exact PNat.pos num
+      · simp_all
+      · assumption
+      · simp_all
+        rw [<- Hk]
+        rw [add_comm]
+        rw [mul_comm]
     · rfl
+
+  -- Conclude by simplifications
+  rw [ite_cond_eq_true _ _ ?G1]
+  case G1 =>
+    simp
+    linarith
+  simp only []
+  rw [DiscreteLaplaceSampleLoopIn1_apply _ _ Hux]
+  simp
+  rw [<- division_def]
+  rw [geo_div_geo _ _ _ ?G1 ?G2]
+  case G1 => sorry
+  case G2 => sorry
+  simp [Geo]
 
   skip
   sorry
-
-
-  -- rw [<- @tsum_subtype_eq_of_support_subset ENNReal (ℕ × ℕ) _ _ _ ({(ux, vx)} : Set (ℕ × ℕ)) ?G1]
-  -- case G1 =>
-  --   simp [Function.support]
-  --   intro a b H1 _ H3
-  --   have H4 : (a < num) := by
-  --     apply Nat.lt_of_not_ge
-  --     intro HK
-  --     apply H1
-  --   -- Euclidean division uniqueness
-  --   sorry
-  -- simp [tsum_def]
-
-
---   rw [@HasSum.tsum_eq _ _ _ _ _ ((fun p => DiscreteLaplaceSampleLoopIn1 num p.2 *(Geo (1 - rexp (-1)) p.1 * (1 / ↑↑den))) (ux, vx)) _ ?GEq]
---   case GEq =>
---     #check @hasSum_single _ _ _ _ (fun (p : ℕ × ℕ) => DiscreteLaplaceSampleLoopIn1 num p.2 *(Geo (1 - rexp (-1)) p.1 * (1 / ↑↑den))) _ ?G2
---
---
---     -- apply
---     sorry
---     -- all_goals sorry
---
-
-  -- have HS : HasSum
-  --   (fun (p : ℕ × ℕ) => DiscreteLaplaceSampleLoopIn1 num p.1 * (Geo (1 - rexp (-1)) p.2 * ((if vx * ↑num + ux = p.1 + ↑num * p.2 then 1 else 0) / ↑↑den)))
-  --   (DiscreteLaplaceSampleLoopIn1 num (ux, vx).1 * (Geo (1 - rexp (-1)) (ux, vx).2 * ((if vx * ↑num + ux = (ux, vx).1 + ↑num * (ux, vx).2 then 1 else 0) / ↑↑den))) := by
-  --   apply hasSum_single
-  --   intro b'
-  --   rcases b' with ⟨ a,  b ⟩
-  --   intro Hb'
-  --   simp
-  --   apply Classical.by_contradiction
-  --   simp
-  --   intro H1 _ Hk
-  --   apply H1
-  --   skip
-  --   simp [DiscreteLaplaceSampleLoopIn1]
-  --   rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
-  --   split
-  --   · exfalso
-  --     apply Hb'
-  --     simp
-  --     -- Euclidean division uniqueness
-  --     sorry
-  --   · rfl
-  -- rw [HS]
-
-  -- rw []
-
-
-  -- -- Evaluate the singleton sum
-
 
 
   /-
