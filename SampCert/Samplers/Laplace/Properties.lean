@@ -1016,30 +1016,29 @@ lemma euclidean_division_uniquness {n1 n2 n3 n4: ℕ} (D : ℕ) (HD : 0 < D) (Hn
   exfalso
   rename_i Hne1 Hne2
 
-  have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HZ : Z < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
+  have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
     suffices (D * W < D * X) by
       -- FIXME: Cleanup
       have A : (1 + W ≤ X) := by exact one_add_le_iff.mpr HK
       have A : (D * (1 + W) ≤ D * X) := by exact Nat.mul_le_mul_left D A
-      have A : (D + D * W ≤ D * X) := by linarith
-      have A : (Y + D * W < D * X) := by linarith
+      have _ : (D + D * W ≤ D * X) := by linarith
+      have _ : (Y + D * W < D * X) := by linarith
       have A : (Y + D * W < Z + D * X) := by linarith
       assumption
     exact Nat.mul_lt_mul_of_pos_left HK HD
 
   rcases (lt_trichotomy n3 n4) with HK' | ⟨ HK' | HK' ⟩
   · suffices (n1 + D * n3 < n2 + D * n4) by exact (LT.lt.ne this) H
-    exact Contra1 n3 n4 n1 n2 Hn1 Hn2 HK'
+    exact Contra1 n3 n4 n1 n2 Hn1 HK'
   · exact Hne2 HK'
   · suffices (n2 + D * n4 < n1 + D * n3) by
       apply (LT.lt.ne this)
       symm
       apply H
-    exact Contra1 n4 n3 n2 n1 Hn2 Hn1 HK'
+    exact Contra1 n4 n3 n2 n1 Hn2 HK'
 
-lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) : Geo (1-p) k / n = Geo (1-(p ^ n)) k := sorry
-
-
+lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) : Geo (1-p) k / n = Geo (1-(p ^ n)) k := by
+  sorry
 
 /--
 Equivalence between the optimized an unoptimized sampling loops
@@ -1051,7 +1050,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 
   -- Apply DiscreteLaplaceSampleLoop spec and simplify
   simp [DiscreteLaplaceSampleLoop_apply]
-  simp only [DiscreteLaplaceSampleLoop'] -- DiscreteLaplaceSampleLoopIn2_eq, Pure.pure, bind_apply]
+  simp only [DiscreteLaplaceSampleLoop']
 
   -- FIXME: Refactor this to a calc proof?
 
@@ -1095,8 +1094,16 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     apply tsum_congr
     intro a
     congr 1
-    have S1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := by sorry
-    have S2 : BernoulliExpNegSample 1 1 true < 1 := by sorry
+
+    have S1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := by
+      have A := BernoulliExpNegSample_normalizes 1 1
+      rw [tsum_bool] at A
+      assumption
+    have S2 : BernoulliExpNegSample 1 1 true < 1 := by
+      rw [BernoulliExpNegSample_apply_true]
+      apply ENNReal.ofReal_lt_one.mpr
+      apply exp_lt_one_iff.mpr
+      simp
     conv =>
       enter [1, 1, b]
       rw [probGeometric_apply_Geo _ S1 S2]
@@ -1171,209 +1178,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   case G2 => sorry
   simp [Geo]
 
-  skip
   sorry
-
-
-  /-
-
-  simp only [DiscreteLaplaceSampleLoop', Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure, bind_apply]
-  have H (a c : ℕ) :
-    ((if b = false ∧ n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (2⁻¹ : ENNReal) else 0) +
-      if b = true ∧ n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (2⁻¹ : ENNReal) else 0) =
-    ( (if n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (1 : ENNReal) else 0) * (2⁻¹ : ENNReal)) := by
-    cases b <;> simp
-
-  -- Eliminate the 1/2
-  conv =>
-    enter [2, 1, a, 2, 1, c, 2]
-    rw [tsum_bool]
-    simp
-    rw [H]
-  clear H
-  conv =>
-    enter [2, 1, a, 2, 1, c]
-    rw [<- mul_assoc]
-  conv =>
-    enter [2, 1, a, 2]
-    rw [ENNReal.tsum_mul_right]
-  conv =>
-    enter [2, 1, a]
-    rw [<- mul_assoc]
-  rw [ENNReal.tsum_mul_right]
-  congr
-
-  -- Convert LHS into Geometric PMF
-  have H :
-    ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) =
-    (Geo (1 - rexp (- (den / num))) n) := by
-    unfold Geo
-    rw [ENNReal.ofReal_sub]
-    case hq => apply exp_nonneg
-    simp
-    congr
-    generalize HW : rexp (-(↑↑den / ↑↑num)) = W
-    rw [Subtype.val]
-    simp
-    rw [NNReal.coe_sub_def]
-    rw [max_eq_left ?G1]
-    case G1 =>
-      apply sub_nonneg.mpr
-      rw [<- HW]
-      simp
-      apply div_nonneg <;> apply cast_nonneg
-    simp only [NNReal.coe_one, coe_toNNReal', sub_sub_cancel]
-    rw [max_eq_left ?G1]
-    rw [<- HW]
-    apply exp_nonneg
-  rw [H]
-  clear H
-
-  -- Convert the RHS probGeometric into Geo as well
-  have SC1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := sorry
-  have SC2 : BernoulliExpNegSample 1 1 true < 1 := sorry
-  conv =>
-    enter [2, 1, a, 2, 1, b, 1]
-    rw [probGeometric_apply_Geo _ SC1 SC2]
-  clear SC1 SC2
-
-  -- Reindex and simplify the inner sum on the RHS
-  have H (a : ℕ) :
-    ∑' (b : ℕ), ((if b = 0 then 0 else Geo (1 - BernoulliExpNegSample 1 1 true).toReal (b - 1)) * if n = (a + ↑num * (b - 1)) / ↑den then 1 else 0) =
-    ∑' (b : ℕ), ((Geo (1 - BernoulliExpNegSample 1 1 true).toReal b) * if n = (a + ↑num * b) / ↑den then 1 else 0) := by
-    apply (tsum_eq_tsum_of_ne_zero_bij ?Bij)
-    case Bij => exact (fun z => z + 1)
-    · intro _ _ H
-      simp at H
-      exact SetCoe.ext H
-    · simp
-      intro z Hn Hz HGeo
-      exists (z - 1)
-      apply And.intro
-      · apply And.intro
-        · exact Hn
-        · exact HGeo
-      · exact succ_pred_eq_of_ne_zero Hz
-    · simp
-  conv =>
-    enter [2, 1, a, 2]
-    rw [H]
-  clear H
-  simp only [BernoulliExpNegSample_apply_true, cast_one, NNReal.coe_one, PNat.val_ofNat, ne_eq, one_ne_zero, not_false_eq_true, div_self]
-
-  -- Split up outermost series so that we can expand DiscreteLaplaceSampleLoopIn1
-  have Hsup1 : Function.support (fun a => DiscreteLaplaceSampleLoopIn1 num a * (∑' (b : ℕ), Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if n = (a + (num : ℕ) * b) / (den : ℕ) then 1 else 0))  ⊆ { n' : ℕ | n' < (num : ℕ)} := by
-    simp [Function.support]
-    intro a H1 x _ _
-    apply Classical.by_contradiction
-    intro Hk
-    apply H1
-    simp [DiscreteLaplaceSampleLoopIn1]
-    simp [DiscreteLaplaceSampleLoopIn1Aux]
-    intro i
-    cases Classical.em (i < (num : ℕ))
-    · right
-      intro Hk'
-      exfalso
-      linarith
-    · left
-      apply UniformSample_apply_out
-      apply Nat.le_of_not_lt
-      assumption
-  rewrite [<- tsum_subtype_eq_of_support_subset Hsup1]
-  clear Hsup1
-  have SC1 (x : {n' | n' < num.val}.Elem) : (x.val < num.val) := by
-    simp_all only [Set.mem_setOf_eq]
-    obtain ⟨val, property⟩ := x
-    simp_all only
-    simp_all only [Set.mem_setOf_eq]
-  conv =>
-    enter [2, 1, x, 1]
-    rw [DiscreteLaplaceSampleLoopIn1_apply]
-    · skip
-    · apply SC1
-
-
-  -- CHECKPOINT:
-  -- Here is where things start going sideways
-  -- Intead of
-
-
-
-  -- Simplify ite expression
-  have H1 (a b : ℕ) :
-    (if n = (a + ↑num * b) / ↑den then (1 : ENNReal) else 0) =
-    (if (n * (den) ≤ (a + ↑num * b) ∧ (a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else (0)) := by
-    congr
-    rw [propext (nat_div_eq_le_lt_iff (PNat.pos den))]
-  have H2 (a b : ℕ) :
-    (if (n * (den) ≤ (a + ↑num * b) ∧ (a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else (0)) =
-    (if ((a + ↑num * b) < (n +  1) * den) then (1 : ENNReal) else 0) -  (if (n * (den) ≤ (a + ↑num * b)) then (0 : ENNReal) else 1) := by
-      cases (Classical.em ((a + ↑num * b) < (n +  1) * den))
-      · simp_all
-        split
-        · simp only [tsub_zero]
-        · simp only [ge_iff_le, le_refl, tsub_eq_zero_of_le]
-      · rename_i h
-        rw [ite_and]
-        split
-        · simp only [ge_iff_le, le_refl, tsub_eq_zero_of_le]
-        · exfalso
-          linarith
-  conv =>
-    enter [2, 1, x, 2, 1, b, 2]
-    rw [H1]
-    rw [H2]
-  clear H1 H2
-
-  -- have HIndicatorInequality (a b : ℕ) :
-  --   ((if n * ↑den ≤ ↑a + ↑num * b then 0 else 1) ≤ (if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0)) := by sorry
-
-  -- Distribute series; split into partial series
-  have R2 (a b : ℕ) :=
-    @ENNReal.mul_sub
-      (Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b)
-      (if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0)
-      (if n * ↑den ≤ ↑a + ↑num * b then 0 else 1)
-      ?G2
-  case G2 =>
-    intro _ _
-    rw [Geo]
-    simp
-    exact ne_of_beq_false rfl
-  conv =>
-    enter [2, 1, a, 2, 1, b]
-    rw [R2]
-  clear R2
-
-  have S1 (a : ℕ) : (∑' (i : ℕ), Geo (1 - ENNReal.ofReal (rexp (-1))).toReal i * if n * ↑den ≤ ↑a + ↑num * i then 0 else 1) ≠ ⊤ := by
-    simp
-    intro HK
-    -- Prove that Geo never has a top sum
-    sorry
-  have S2 (a : ℕ) : (fun b => Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if n * ↑den ≤ ↑a + ↑num * b then 0 else 1) ≤ fun b => Geo (1 - ENNReal.ofReal (rexp (-1))).toReal b * if ↑a + ↑num * b < (n + 1) * ↑den then 1 else 0 := by
-    intro x
-    simp
-    split
-    · split
-      · simp
-      · simp
-    · split
-      · simp
-      · exfalso
-        linarith
-  conv =>
-    enter [2, 1, a, 2]
-    rw [ENNReal.tsum_sub ]
-    · skip
-    · apply S1
-    · apply S2
-  -- Err... is this on the right track? Or is there an easier way to get to the second last step?
-
-  -- Rewrite the partial sums by their subtypes (so that it's easy to get a common formula for them )
-  -- Formula for geometric sums
-
-  -- (???) Complete by simplficiation
-  -/
 
 end SLang
