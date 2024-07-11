@@ -11,6 +11,8 @@ import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
 
+set_option linter.unusedTactic false
+
 /-!
 # ``DiscreteLaplaceSample`` Properties
 
@@ -982,6 +984,11 @@ lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤
       apply (Nat.div_lt_iff_lt_mul Hc).mpr
       apply H2
 
+
+lemma euc_decomp (n : ℕ) (D : ℕ) : ∃ n1 n2 : ℕ, (n2 < D) ∧ n = n1 * D + n2 := sorry
+
+
+
 /--
 Equivalence between the optimized an unoptimized sampling loops
 -/
@@ -992,6 +999,164 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 
   -- Apply DiscreteLaplaceSampleLoop spec and simplify
   simp [DiscreteLaplaceSampleLoop_apply]
+  simp only [DiscreteLaplaceSampleLoop'] -- DiscreteLaplaceSampleLoopIn2_eq, Pure.pure, bind_apply]
+
+  -- FIXME: Refactor this to a calc proof?
+
+  -- Evaluate the indepenent Bern(1/2) sample
+  have H :
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← DiscreteLaplaceSampleLoopIn2 1 1
+        let B ← BernoulliSample 1 2 DiscreteLaplaceSampleLoop'.proof_3
+        Pure.pure (B, (U + ↑num * (v - 1)) / ↑den)) (b, n) =
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← DiscreteLaplaceSampleLoopIn2 1 1
+        Pure.pure (U + ↑num * (v - 1)) / ↑den) (n) * 2⁻¹ := by
+      simp
+      rw [<- ENNReal.tsum_mul_right]
+      congr
+      apply funext
+      intro x
+      rw [mul_assoc]
+      congr
+      rw [<- ENNReal.tsum_mul_right]
+      congr
+      apply funext
+      intro y
+      split <;> try simp
+      repeat rw [mul_assoc]
+      congr
+      split
+      all_goals sorry
+  rw [H]
+  clear H
+  congr
+
+  -- Evaluate the DiscreteSampleLoopIn2 term to geometric distribution and reindex
+  have H :
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← DiscreteLaplaceSampleLoopIn2 1 1
+        Pure.pure (U + ↑num * (v - 1)) / ↑den) n =
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← Geo (1 - Real.exp (- 1))
+        Pure.pure (U + ↑num * v) / ↑den) n := by
+    simp only [Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, bind_apply] -- probGeometric_apply, BernoulliExpNegSample_apply_true]
+    apply tsum_congr
+    intro a
+    congr 1
+    have S1 : BernoulliExpNegSample 1 1 false + BernoulliExpNegSample 1 1 true = 1 := sorry
+    have S2 : BernoulliExpNegSample 1 1 true < 1 := sorry
+    conv =>
+      enter [1, 1, b]
+      rw [probGeometric_apply_Geo _ S1 S2]
+    conv =>
+      enter [2]
+      rw [<- tsum_shift_1]
+    apply tsum_congr
+    intro b
+    split <;> try simp
+    congr
+    rw [eq_sub_iff_add_eq]
+    rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+    case G1 =>
+      apply ENNReal.ofReal_le_one.mpr
+      apply exp_le_one_iff.mpr
+      simp
+    case G2 => simp
+    rw [ENNReal.toReal_ofReal']
+    rw [max_eq_left ?G1]
+    case G1 => exact exp_nonneg (-1)
+    simp
+  rw [H]
+  clear H
+
+  -- Decompose n with Euclidean division
+  rcases (euc_decomp n num) with ⟨ vx, ux, Hux, Hn ⟩
+  rw [Hn]
+  simp only [Bind.bind, Pure.pure, Pi.natCast_def, bind_apply, Pi.div_apply, pure_apply]
+
+
+  -- Simplify and evaluate singleton sum
+  conv =>
+    enter [2, 1, a]
+    rw [<- ENNReal.tsum_mul_left]
+  rw [<- ENNReal.tsum_prod]
+  rw [tsum_eq_single (vx, ux) ?G1]
+  case G1 =>
+    intro b' Hb'
+    apply Classical.by_contradiction
+    simp
+    intro H1 _ Hk
+    apply H1
+    simp [DiscreteLaplaceSampleLoopIn1]
+    rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+    split
+    · exfalso
+      apply Hb'
+      -- Euclidean division uniqueness
+      sorry
+    · rfl
+
+  skip
+  sorry
+
+
+  -- rw [<- @tsum_subtype_eq_of_support_subset ENNReal (ℕ × ℕ) _ _ _ ({(ux, vx)} : Set (ℕ × ℕ)) ?G1]
+  -- case G1 =>
+  --   simp [Function.support]
+  --   intro a b H1 _ H3
+  --   have H4 : (a < num) := by
+  --     apply Nat.lt_of_not_ge
+  --     intro HK
+  --     apply H1
+  --   -- Euclidean division uniqueness
+  --   sorry
+  -- simp [tsum_def]
+
+
+--   rw [@HasSum.tsum_eq _ _ _ _ _ ((fun p => DiscreteLaplaceSampleLoopIn1 num p.2 *(Geo (1 - rexp (-1)) p.1 * (1 / ↑↑den))) (ux, vx)) _ ?GEq]
+--   case GEq =>
+--     #check @hasSum_single _ _ _ _ (fun (p : ℕ × ℕ) => DiscreteLaplaceSampleLoopIn1 num p.2 *(Geo (1 - rexp (-1)) p.1 * (1 / ↑↑den))) _ ?G2
+--
+--
+--     -- apply
+--     sorry
+--     -- all_goals sorry
+--
+
+  -- have HS : HasSum
+  --   (fun (p : ℕ × ℕ) => DiscreteLaplaceSampleLoopIn1 num p.1 * (Geo (1 - rexp (-1)) p.2 * ((if vx * ↑num + ux = p.1 + ↑num * p.2 then 1 else 0) / ↑↑den)))
+  --   (DiscreteLaplaceSampleLoopIn1 num (ux, vx).1 * (Geo (1 - rexp (-1)) (ux, vx).2 * ((if vx * ↑num + ux = (ux, vx).1 + ↑num * (ux, vx).2 then 1 else 0) / ↑↑den))) := by
+  --   apply hasSum_single
+  --   intro b'
+  --   rcases b' with ⟨ a,  b ⟩
+  --   intro Hb'
+  --   simp
+  --   apply Classical.by_contradiction
+  --   simp
+  --   intro H1 _ Hk
+  --   apply H1
+  --   skip
+  --   simp [DiscreteLaplaceSampleLoopIn1]
+  --   rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+  --   split
+  --   · exfalso
+  --     apply Hb'
+  --     simp
+  --     -- Euclidean division uniqueness
+  --     sorry
+  --   · rfl
+  -- rw [HS]
+
+  -- rw []
+
+
+  -- -- Evaluate the singleton sum
+
+
+
+  /-
+
   simp only [DiscreteLaplaceSampleLoop', Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, Pure.pure, bind_apply]
   have H (a c : ℕ) :
     ((if b = false ∧ n = (a + (num : ℕ) * (c - 1)) / (den : ℕ) then (2⁻¹ : ENNReal) else 0) +
@@ -1189,7 +1354,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   -- Formula for geometric sums
 
   -- (???) Complete by simplficiation
-
-  sorry
+  -/
 
 end SLang
