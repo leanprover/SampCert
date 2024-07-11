@@ -945,7 +945,7 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
 /--
 PMF for the geometric distribution as seen in literature
 -/
-def Geo (r : ℝ) (n : ℕ) : ENNReal := (1 - ENNReal.ofReal r) ^ n * ENNReal.ofReal r
+def Geo (r : ℝ) : SLang ℕ := (fun n => (1 - ENNReal.ofReal r) ^ n * ENNReal.ofReal r)
 
 /-
 ``probGeometric`` in terms of ``Geo``
@@ -1037,7 +1037,84 @@ lemma euclidean_division_uniquness {n1 n2 n3 n4: ℕ} (D : ℕ) (HD : 0 < D) (Hn
       apply H
     exact Contra1 n4 n3 n2 n1 Hn2 HK'
 
-lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) : Geo (1-p) k / n = Geo (1-(p ^ n)) k := by
+lemma partial_geometric_series (p : ENNReal) (HP2 : p < 1) (B : ℕ) :
+      (∑' (a : ℕ), if a < B then p ^ a else 0) = (1 - p ^ B) / (1 - p) := by
+    sorry
+
+lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) :
+      (Geo (1-p) >>= (fun v => Pure.pure (v / n))) k = Geo (1-(p ^ n)) k := by
+  rw [Geo]
+  simp
+  -- Turn div equality into inequalities
+  have H : (∑' (a : ℕ), if k = a / n then Geo (1 - p) a else 0) =
+           (∑' (a : ℕ), if ((n * k ≤ a) ∧ (a < (n + 1)*k)) then Geo (1 - p) a else 0) := by sorry
+  rw [H]
+  clear H
+  skip
+
+  -- Open up Geo and commute out the constant factor
+  conv =>
+    enter [1, 1, a]
+    rw [Geo]
+  have H : (∑' (a : ℕ), if n * k ≤ a ∧ a < (n + 1) * k then (1 - ENNReal.ofReal (1 - p)) ^ a * ENNReal.ofReal (1 - p) else 0) =
+           ( ∑' (a : ℕ), ENNReal.ofReal (1 - p) * if n * k ≤ a ∧ a < (n + 1) * k then (1 - ENNReal.ofReal (1 - p)) ^ a else 0) := by
+    apply tsum_congr
+    intro b
+    split
+    · exact Eq.symm (CommMonoid.mul_comm (ENNReal.ofReal (1 - p)) ((1 - ENNReal.ofReal (1 - p)) ^ b))
+    · exact Eq.symm (CommMonoidWithZero.mul_zero (ENNReal.ofReal (1 - p)))
+  rw [H]
+  clear H
+  rw [ENNReal.tsum_mul_left]
+
+  -- Simplify some terms
+  have HP : (1 - ENNReal.ofReal (1 - p)) = ENNReal.ofReal p := by sorry
+  have HP' : (1 - ENNReal.ofReal (1 - p ^ n)) = (ENNReal.ofReal p) ^ n := by sorry
+  conv =>
+    congr
+    · enter [2, 1, a]
+      rw [HP]
+    · rw [HP']
+
+  -- Rewrite to difference of geometric series
+  have H : (∑' (a : ℕ), if n * k ≤ a ∧ a < (n + 1) * k then (ENNReal.ofReal p) ^ a else 0) =
+           (∑' (a : ℕ), if a < (n + 1) * k then (ENNReal.ofReal p) ^ a else 0) -  (∑' (a : ℕ), if a < n * k then (ENNReal.ofReal p) ^ a else 0) := by
+    sorry
+  rw [H]
+  clear H
+
+  -- Compute partial geometric series
+  -- rw [partial_geometric_series]
+  rw [partial_geometric_series (ENNReal.ofReal p) ?G1 (n * k)]
+  case G1 => sorry
+  rw [partial_geometric_series (ENNReal.ofReal p) ?G1 ((n + 1) * k)]
+  case G1 => sorry
+
+  have H : (1 - ENNReal.ofReal p) = ENNReal.ofReal (1 - p) := by sorry
+  rw [H]
+  clear H
+  rw [division_def]
+  rw [division_def]
+  rw [ENNReal.mul_sub ?G1]
+  case G1 => sorry
+  have SC1 : ENNReal.ofReal (1 - p) ≠ 0 := by sorry
+  have SC2 : ENNReal.ofReal (1 - p) ≠ ⊤ := by sorry
+  conv =>
+    enter [1]
+    congr
+    · rw [mul_comm]
+      rw [mul_assoc]
+      rw [ENNReal.inv_mul_cancel SC1 SC2]
+      simp
+    · rw [mul_comm]
+      rw [mul_assoc]
+      rw [ENNReal.inv_mul_cancel SC1 SC2]
+      simp
+
+  -- Simplify (1 - x) - (1 - y) to (x - y)
+
+  -- Factor out power
+  skip
   sorry
 
 /--
@@ -1161,7 +1238,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   have H : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) =
            Geo (1 - rexp (-((den : ℝ) / (num : ℝ)))) n := by
     rw [Geo]
-    -- Provable
+    -- Provable, but finish geo first to make sure it's the right shape
     sorry
   rw [H]
   clear H
@@ -1171,14 +1248,18 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [H]
   clear H
   rw [<- geo_div_geo n den (rexp (-(1 / ↑↑num))) ?G1 ?G2]
-  case G1 => sorry
+  case G1 => sorry -- exact exp_pos (-(1 / ↑↑num))
   case G2 => sorry
+  skip
+  simp only [Bind.bind, Pure.pure, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
+  apply tsum_congr
+  intro b
+  congr 1
 
-  -- Conclude by simplification?
+  -- Prove that X is geometric
   rw [<- HX]
   clear HX
-  rw [Geo]
-  simp
+  -- simp
 
   -- Now this is much much simpler: the divison is in the outermost sum only.
   -- I might not even need to use my Euclidean division lemma.
