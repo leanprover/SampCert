@@ -1174,8 +1174,10 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   simp
   rw [<- division_def]
   rw [geo_div_geo _ _ _ ?G1 ?G2]
-  case G1 => sorry
-  case G2 => sorry
+  case G1 => exact exp_pos (-1)
+  case G2 =>
+    apply exp_le_one_iff.mpr
+    simp
   simp [Geo]
 
   sorry
