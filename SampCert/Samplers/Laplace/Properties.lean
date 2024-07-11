@@ -1062,7 +1062,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
         Pure.pure (B, (U + ↑num * (v - 1)) / ↑den)) (b, n) =
     (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
         let v ← DiscreteLaplaceSampleLoopIn2 1 1
-        Pure.pure (U + ↑num * (v - 1)) / ↑den) (n) * 2⁻¹ := by
+        Pure.pure ((U + ↑num * (v - 1)) / ↑den)) (n) * 2⁻¹ := by
       simp
       rw [<- ENNReal.tsum_mul_right]
       congr
@@ -1077,7 +1077,20 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
       split <;> try simp
       repeat rw [mul_assoc]
       congr
-      all_goals sorry
+      rw [tsum_eq_single b ?G1]
+      case G1 =>
+        intros b' Hb'
+        rw [ite_eq_right_iff]
+        aesop
+      split
+      · split
+        · rfl
+        · aesop
+      · simp
+        symm
+        rw [ite_eq_right_iff]
+        intro
+        aesop
   rw [H]
   clear H
   congr
@@ -1086,10 +1099,10 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   have H :
     (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
         let v ← DiscreteLaplaceSampleLoopIn2 1 1
-        Pure.pure (U + ↑num * (v - 1)) / ↑den) n =
+        (Pure.pure ((U + ↑num * (v - 1)) / ↑den))) n =
     (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
         let v ← Geo (1 - Real.exp (- 1))
-        Pure.pure (U + ↑num * v) / ↑den) n := by
+        (Pure.pure ((U + ↑num * v) / ↑den))) n := by
     simp only [Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, bind_apply] -- probGeometric_apply, BernoulliExpNegSample_apply_true]
     apply tsum_congr
     intro a
@@ -1128,42 +1141,140 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [H]
   clear H
 
-  -- Decompose n with Euclidean division
-  rcases (euclidean_division n num (PNat.pos num)) with ⟨ vx, ux, Hux, Hn ⟩
-  rw [Hn]
-  simp only [Bind.bind, Pure.pure, Pi.natCast_def, bind_apply, Pi.div_apply, pure_apply]
+  -- Separate X and Y
+  have H :
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← Geo (1 - rexp (-1))
+        Pure.pure ((U + ↑num * v) / ↑den)) =
+    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+        let v ← Geo (1 - rexp (-1))
+        Pure.pure ((U + ↑num * v))) >>=
+    (fun X => Pure.pure (X / ↑den)) := by simp
+  rw [H]
+  clear H
+  generalize HX : (do
+          let U ← DiscreteLaplaceSampleLoopIn1 num
+          let v ← Geo (1 - rexp (-1))
+          Pure.pure (U + ↑num * v) : SLang ℕ) = X
+
+  -- Fold the left hand side into Geo
+  have H : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) =
+           Geo (1 - rexp (-((den : ℝ) / (num : ℝ)))) n := by
+    rw [Geo]
+    -- Provable
+    sorry
+  rw [H]
+  clear H
+
+  -- Apply the Geo lemma (prove me first!)
+  have H : Geo (1 - rexp (-(↑↑den / ↑↑num))) n = Geo (1 - (rexp (-(1 / ↑↑num))) ^ (den : ℕ)) n := by sorry
+  rw [H]
+  clear H
+  rw [<- geo_div_geo n den (rexp (-(1 / ↑↑num))) ?G1 ?G2]
+  case G1 => sorry
+  case G2 => sorry
+
+  -- Conclude by simplification?
+  rw [<- HX]
+  clear HX
+  rw [Geo]
+  simp
+
+  -- Now this is much much simpler: the divison is in the outermost sum only.
+  -- I might not even need to use my Euclidean division lemma.
 
 
-  -- Simplify and evaluate singleton sum
-  conv =>
-    enter [2, 1, a]
-    rw [<- ENNReal.tsum_mul_left]
-  rw [<- ENNReal.tsum_prod]
-  rw [tsum_eq_single (ux, vx) ?G1]
-  case G1 =>
-    intro b' Hb'
-    apply Classical.by_contradiction
-    simp
-    intro H1 _ Hk
-    apply H1
-    simp [DiscreteLaplaceSampleLoopIn1]
-    rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
-    split
-    · exfalso
-      apply Hb'
-      -- Euclidean division uniqueness
-      rcases b' with ⟨ a, b ⟩
-      simp
-      apply (@euclidean_division_uniquness a ux b vx num)
-      · exact PNat.pos num
-      · simp_all
-      · assumption
-      · simp_all
-        rw [<- Hk]
-        rw [add_comm]
-        rw [mul_comm]
-    · rfl
 
+
+
+
+  -- Prove that X has the resulting shape
+  -- simp only [Bind.bind, bind_apply]
+
+
+  -- -- Apply DiscreteLaplaceSampleLoopIn1
+  -- simp only [Bind.bind, bind_apply]
+  -- conv =>
+  --   enter [2, 1, a]
+  -- rw [<- @tsum_subtype_eq_of_support_subset ENNReal ℕ _ _ _  {n' : ℕ | n' < num} ?G1]
+  -- case G1 =>
+  --   simp [Function.support]
+  --   intro a H1 H2 H3 H4
+  --   apply Classical.by_contradiction
+  --   intro H5
+  --   apply H1
+  --   simp [DiscreteLaplaceSampleLoopIn1]
+  --   rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+  --   rw [ite_eq_right_iff]
+  --   intro H6
+  --   exfalso
+  --   exact H5 H6
+  -- have SC (a : ↑{n' : ℕ | n' < (num : ℕ)}) : ((a : ℕ) < (num : ℕ)) := by aesop
+  -- conv =>
+  --   enter [2, 1, a, 1]
+  --   rw [DiscreteLaplaceSampleLoopIn1_apply]
+  --   · skip
+  --   · exact SC a
+
+  skip
+  sorry
+
+  -- -- Decompose (den * n) with Euclidean division
+  -- rcases (euclidean_division (den * n) num (PNat.pos num)) with ⟨ vx, ux, Hux, Hn ⟩
+  -- have Hn' : n = (vx * num + ux) / den := by
+  --   sorry
+
+  --   -- suffices (den * n = den * ((vx * num + ux) / den)) by
+  --   --   skip
+  --   --   apply (nat_div_eq_le_lt_iff ?Hc).mpr
+  --   --   · apply And.intro
+  --   --     · rw [mul_comm]
+  --   --       rw [this]
+  --   --       linarith
+  --   --     · sorry
+  --   --   · exact PNat.pos den
+  --   -- skip
+  --   -- sorry
+
+  -- rw [Hn]
+  -- simp only [Bind.bind, Pure.pure, Pi.natCast_def, bind_apply, Pi.div_apply, pure_apply]
+  -- -- sorry
+
+
+  -- -- Simplify and evaluate singleton sum
+  -- conv =>
+  --   enter [2, 1, a]
+  --   rw [<- ENNReal.tsum_mul_left]
+  -- rw [<- ENNReal.tsum_prod]
+  -- rw [tsum_eq_single (ux, vx) ?G1]
+  -- case G1 =>
+  --   intro b' Hb'
+  --   apply Classical.by_contradiction
+  --   simp
+  --   intro H1 _
+
+
+    -- intro H1 _ Hk
+    -- apply H1
+    -- simp [DiscreteLaplaceSampleLoopIn1]
+    -- rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+    -- split
+    -- · exfalso
+    --   apply Hb'
+    --   -- Euclidean division uniqueness
+    --   rcases b' with ⟨ a, b ⟩
+    --   simp
+    --   apply (@euclidean_division_uniquness a ux b vx num)
+    --   · exact PNat.pos num
+    --   · simp_all
+    --   · assumption
+    --   · simp_all
+    --     rw [<- Hk]
+    --     rw [add_comm]
+    --     rw [mul_comm]
+    -- · rfl
+
+/-
   -- Conclude by simplifications
   rw [ite_cond_eq_true _ _ ?G1]
   case G1 =>
@@ -1179,7 +1290,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     apply exp_le_one_iff.mpr
     simp
   simp [Geo]
-
-  sorry
+-/
 
 end SLang
