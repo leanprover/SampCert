@@ -937,58 +937,49 @@ theorem DiscreteLaplaceSample_normalizes (num den : PNat) :
 
     apply LE.le.trans_lt B E
 
--- set_option pp.coercions false
--- set_option pp.notation false
--- set_option pp.all true
-
 
 /--
 PMF for the geometric distribution as seen in literature
 -/
-def Geo (r : ℝ) : SLang ℕ := (fun n => (1 - ENNReal.ofReal r) ^ n * ENNReal.ofReal r)
+def Geo (r : ENNReal) : SLang ℕ := (fun n => (1 - r) ^ n * r)
 
 /-
 ``probGeometric`` in terms of ``Geo``
 -/
-lemma probGeometric_apply_Geo (t : SLang Bool) (trial_spec : t false + t true = 1) (trial_spec' : t true < 1) (x : ℕ) :
-      probGeometric t x = if x = 0 then 0 else Geo (ENNReal.toReal (1 - t true)) (x - 1) := by
+lemma probGeometric_apply_Geo (t : SLang Bool) (trial_spec : t false + t true = 1)
+  (trial_spec' : t true < 1) (x : ℕ) :
+    probGeometric t x = if x = 0 then 0 else Geo (1 - t true) (x - 1) := by
   rw [probGeometric_apply]
   split <;> try simp
   rw [Geo]
   congr
-  · simp
-    rw [ENNReal.sub_sub_cancel] <;> try simp
+  · rw [ENNReal.sub_sub_cancel] <;> try simp
     exact le_of_lt trial_spec'
-  · simp
-    exact trial_one_minus t trial_spec
+  · exact trial_one_minus t trial_spec
 
--- set_option pp.coercions false
--- set_option pp.notation false
--- set_option pp.all true
-
-lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
-  apply Iff.intro
-  · intro H
-    apply And.intro
-    · apply (Nat.le_div_iff_mul_le Hc).mp
-      exact Nat.le_of_eq H
-    · apply (Nat.div_lt_iff_lt_mul Hc).mp
-      apply Nat.lt_succ_iff.mpr
-      exact Nat.le_of_eq (id (Eq.symm H))
-  · intro ⟨ H1, H2 ⟩
-    apply LE.le.antisymm
-    · apply (Nat.le_div_iff_mul_le Hc).mpr
-      apply H1
-    · apply Nat.lt_succ_iff.mp
-      simp
-      apply (Nat.div_lt_iff_lt_mul Hc).mpr
-      apply H2
-
+-- lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
+--   apply Iff.intro
+--   · intro H
+--     apply And.intro
+--     · apply (Nat.le_div_iff_mul_le Hc).mp
+--       exact Nat.le_of_eq H
+--     · apply (Nat.div_lt_iff_lt_mul Hc).mp
+--       apply Nat.lt_succ_iff.mpr
+--       exact Nat.le_of_eq (id (Eq.symm H))
+--   · intro ⟨ H1, H2 ⟩
+--     apply LE.le.antisymm
+--     · apply (Nat.le_div_iff_mul_le Hc).mpr
+--       apply H1
+--     · apply Nat.lt_succ_iff.mp
+--       simp
+--       apply (Nat.div_lt_iff_lt_mul Hc).mpr
+--       apply H2
 
 /--
 Specialize Euclidean division from ℤ to ℕ
 -/
-lemma euclidean_division (n : ℕ) (D : ℕ) (HD : 0 < D): ∃ n1 n2 : ℕ, (n2 < D) ∧ n = n1 * D + n2 := by
+lemma euclidean_division (n : ℕ) {D : ℕ} (HD : 0 < D) :
+  ∃ q r : ℕ, (r < D) ∧ n = r + D * q := by
   exists (n / D)
   exists (n % D)
   apply And.intro
@@ -998,46 +989,47 @@ lemma euclidean_division (n : ℕ) (D : ℕ) (HD : 0 < D): ∃ n1 n2 : ℕ, (n2 
     conv =>
       lhs
       rw [<- EuclideanDomain.mod_add_div (n : ℤ) (D : ℤ)]
-    repeat rw [<- mul_assoc]
-    rw [add_comm]
-    congr 1
-    rw [mul_comm]
-
 
 /--
-Uniqueness of Euclidean division for Nats
+Euclidiean division is unique
 -/
-lemma euclidean_division_uniquness (n1 n2 n3 n4: ℕ) (D : ℕ) (HD : 0 < D) (Hn1 : n1 < D) (Hn2 : n2 < D) :
-  n1 + D * n3 = n2 + D * n4 -> (n1 = n2 ∧ n3 = n4) := by
-  intro H
-  cases (Classical.em (n1 = n2))
-  · aesop
-  cases (Classical.em (n3 = n4))
-  · aesop
-  exfalso
-  rename_i Hne1 Hne2
+lemma euclidean_division_uniquness (r1 r2 q1 q2 : ℕ) {D : ℕ} (HD : 0 < D) (Hr1 : r1 < D) (Hr2 : r2 < D) :
+    r1 + D * q1 = r2 + D * q2 <-> (r1 = r2 ∧ q1 = q2) := by
+  apply Iff.intro
+  · intro H
+    cases (Classical.em (r1 = r2))
+    · aesop
+    cases (Classical.em (q1 = q2))
+    · aesop
+    rename_i Hne1 Hne2
+    exfalso
 
-  have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
-    suffices (D * W < D * X) by
-      -- FIXME: Cleanup
-      have A : (1 + W ≤ X) := by exact one_add_le_iff.mpr HK
-      have A : (D * (1 + W) ≤ D * X) := by exact Nat.mul_le_mul_left D A
-      have _ : (D + D * W ≤ D * X) := by linarith
-      have _ : (Y + D * W < D * X) := by linarith
-      have A : (Y + D * W < Z + D * X) := by linarith
-      assumption
-    exact Nat.mul_lt_mul_of_pos_left HK HD
+    have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
+      suffices (D * W < D * X) by
+        have A : (1 + W ≤ X) := by exact one_add_le_iff.mpr HK
+        have _ : (D * (1 + W) ≤ D * X) := by exact Nat.mul_le_mul_left D A
+        have _ : (D + D * W ≤ D * X) := by linarith
+        have _ : (Y + D * W < D * X) := by linarith
+        have _ : (Y + D * W < Z + D * X) := by linarith
+        assumption
+      exact Nat.mul_lt_mul_of_pos_left HK HD
 
-  rcases (lt_trichotomy n3 n4) with HK' | ⟨ HK' | HK' ⟩
-  · suffices (n1 + D * n3 < n2 + D * n4) by exact (LT.lt.ne this) H
-    exact Contra1 n3 n4 n1 n2 Hn1 HK'
-  · exact Hne2 HK'
-  · suffices (n2 + D * n4 < n1 + D * n3) by
-      apply (LT.lt.ne this)
-      symm
-      apply H
-    exact Contra1 n4 n3 n2 n1 Hn2 HK'
+    rcases (lt_trichotomy q1 q2) with HK' | ⟨ HK' | HK' ⟩
+    · exact (LT.lt.ne (Contra1 q1 q2 r1 r2 Hr1 HK') H)
+    · exact Hne2 HK'
+    · apply (LT.lt.ne (Contra1 q2 q1 r2 r1 Hr2 HK') (Eq.symm H))
 
+  · intro ⟨ _, _ ⟩
+    simp_all
+
+
+
+
+
+
+
+
+/-
 lemma partial_geometric_series (p : ENNReal) (HP2 : p < 1) (B : ℕ) :
       (∑' (a : ℕ), if a < B then p ^ a else 0) = (1 - p ^ B) / (1 - p) := by
     sorry
@@ -1326,4 +1318,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 
   skip
   sorry
+
+-/
 end SLang
