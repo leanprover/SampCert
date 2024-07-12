@@ -17,6 +17,7 @@ import Mathlib.MeasureTheory.Measure.Count
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
 import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.Convex.Integral
+import SampCert.DifferentialPrivacy.Pure.DP
 
 /-!
 # Zero Concentrated Differential Privacy
@@ -64,3 +65,30 @@ lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε�
       apply (mul_le_mul_iff_of_pos_left (by simp)).mpr
       apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr
       apply pow_le_pow_left' H (OfNat.ofNat 2)
+
+/-
+Convert ε-DP bound to `(1/2)ε²`-zCDP bound.
+
+Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
+-/
+lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDPBound q ε := by sorry
+
+/-
+Convert ε-DP to `(1/2)ε²`-zCDP.
+
+Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
+-/
+lemma ofDP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDP q ε := by
+  constructor
+  · -- Derive absolute continuity from the Pure DP bound
+    unfold SLang.PureDP at H
+    apply (SLang.event_eq_singleton q ε).mp at H
+    intro l₁ l₂ HN x Hx2
+    apply Classical.by_contradiction
+    intro Hx1
+    unfold SLang.DP_singleton at H
+    have H' := H l₁ l₂ HN x
+    rw [Hx2] at H'
+    rw [ENNReal.div_zero Hx1] at H'
+    simp at H'
+  · exact ofDP_bound ε q H
