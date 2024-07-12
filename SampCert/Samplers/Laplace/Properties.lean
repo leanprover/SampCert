@@ -1218,17 +1218,78 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
     · simp_all
       rename_i HK
       rcases HK with ⟨ _ , HK ⟩
-      sorry
-
-  -- apply ENNReal.sub_eq_of_add_eq ?G1
-  -- case G1 =>
-  --   apply ENNReal.sub_ne_top
-  --   simp
-
+      apply ENNReal.mul_eq_top.mp at HK
+      simp_all only [ne_eq, pow_eq_zero_iff', not_and, Decidable.not_not, and_imp, ENNReal.sub_eq_top_iff,
+        ENNReal.one_ne_top, ENNReal.pow_eq_top_iff, false_and, and_false, false_or, not_top_lt]
+  simp
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    cases (Classical.em (p = 0))
+    · rename_i H
+      rw [H]
+      simp
+      rw [zero_pow_eq]
+      split
+      · rw [zero_pow_eq]
+        split
+        · simp
+        · exfalso
+          simp_all
+      · simp_all
+    · apply (ENNReal.sub_le_sub_iff_left ?G3 ?G4).mpr
+      case G3 =>
+        apply pow_le_one'
+        exact le_of_lt Hp
+      case G4 =>
+        simp
+      rw [add_mul]
+      simp
+      rw [pow_add]
+      -- conv =>
+      --   rhs
+      --   rw [<- (mul_one (p^(k*n)))]
+      apply ENNReal.mul_le_of_le_div'
+      rw [division_def]
+      rw [ENNReal.mul_inv_cancel ?G3 ?G4]
+      case G3 =>
+        apply ENNReal.pow_ne_zero
+        trivial
+      case G4 =>
+        apply ENNReal.pow_ne_top
+        exact LT.lt.ne_top Hp
+      apply Right.pow_le_one_of_le
+      exact le_of_lt Hp
+  case G2 =>
+    apply ENNReal.sub_ne_top
+    simp
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    apply pow_le_one'
+    exact le_of_lt Hp
+  case G2 => simp
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    apply pow_le_one'
+    exact le_of_lt Hp
+  case G2 => simp
+  simp
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    apply pow_le_one'
+    exact le_of_lt Hp
+  case G2 => simp
   skip
-  sorry
-
-
+  simp
+  rw [mul_sub]
+  simp
+  congr 1
+  · exact pow_mul' p.toReal k n
+  · conv =>
+      rhs
+      rw [<- pow_mul']
+    rw [<- pow_add]
+    congr
+    exact succ_mul k n
 
 
 /--
