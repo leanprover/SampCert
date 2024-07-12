@@ -11,8 +11,6 @@ import SampCert.Samplers.Geometric.Basic
 import Mathlib.Data.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
 
-set_option linter.unusedTactic false
-
 /-!
 # ``DiscreteLaplaceSample`` Properties
 
@@ -1195,7 +1193,6 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
   case G1 =>
     intro _ _
     apply SC2
-  skip
 
   conv =>
     lhs
@@ -1210,7 +1207,6 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
       rw [mul_assoc]
       rw [ENNReal.inv_mul_cancel SC1 SC2]
       simp
-  skip
   suffices ((1 - p ^ ((k + 1) * n) - (1 - p ^ (k * n))).toReal = ((p ^ n) ^ k * (1 - p ^ n)).toReal) by
     apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
     cases this
@@ -1278,7 +1274,6 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
     apply pow_le_one'
     exact le_of_lt Hp
   case G2 => simp
-  skip
   simp
   rw [mul_sub]
   simp
@@ -1339,12 +1334,6 @@ lemma euclidean_division_uniquness (r1 r2 q1 q2 : ℕ) {D : ℕ} (HD : 0 < D) (H
   · intro ⟨ _, _ ⟩
     simp_all
 
-
-
-
-
-
-
 /--
 Equivalence between sampling loops
 -/
@@ -1378,7 +1367,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
       intro y
       split <;> try simp
       repeat rw [mul_assoc]
-      congr
       rw [tsum_eq_single b ?G1]
       case G1 =>
         intros b' Hb'
@@ -1487,7 +1475,6 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     apply exp_lt_one_iff.mpr
     simp
   case G2 => exact PNat.pos den
-  skip
   simp only [Bind.bind, Pure.pure, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   apply tsum_congr
   intro b
@@ -1533,18 +1520,122 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [Geo]
   rw [Geo]
   rw [DiscreteLaplaceSampleLoopIn1_apply _ _ Hbv]
+  rw [ENNReal.sub_sub_cancel ?G1 ?G2]
+  case G1 => simp
+  case G2 =>
+    apply ENNReal.ofReal_le_one.mpr
+    apply exp_le_one_iff.mpr
+    simp
+  rw [ENNReal.sub_sub_cancel ?G1 ?G2]
+  case G1 => simp
+  case G2 =>
+    apply ENNReal.ofReal_le_one.mpr
+    apply exp_le_one_iff.mpr
+    simp
 
-  -- suffices .toReal ...  by
-  --   -- apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
-  --   -- cases this
-  --   -- · trivial
-  --   -- · simp_all
-  --   --   rename_i HK
-  --   --   rcases HK with ⟨ _ , HK ⟩
-  --   --   sorry
 
+  suffices ENNReal.toReal (ENNReal.ofReal (rexp (-num.val.cast⁻¹)) ^ (bv + num.val * bu) * (OfNat.ofNat 1 - ENNReal.ofReal (rexp (-num.val.cast⁻¹)))) =
+           ENNReal.toReal (ENNReal.ofReal (rexp (-(ENNReal.toReal (bv.cast / num.val.cast))) * ((OfNat.ofNat 1 - rexp (-OfNat.ofNat 1 / num.val.cast)) / (OfNat.ofNat 1 - rexp (-OfNat.ofNat 1)))) *
+             (ENNReal.ofReal (rexp (-OfNat.ofNat 1)) ^ bu * (OfNat.ofNat 1 - ENNReal.ofReal (rexp (-OfNat.ofNat 1))))) by
+    apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
+    cases this
+    · trivial
+    · exfalso
+      simp_all
+      rename_i h
+      rcases h with ⟨ _ , B ⟩ | ⟨ B , _ ⟩
+      · apply ENNReal.mul_eq_top.mp at B
+        simp at B
+        rcases B with ⟨ _ , B ⟩
+        apply ENNReal.mul_eq_top.mp at B
+        simp at B
+      · apply ENNReal.mul_eq_top.mp at B
+        simp at B
 
-  skip
-  sorry
+  simp_all
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    apply ENNReal.ofReal_le_one.mpr
+    apply exp_le_one_iff.mpr
+    simp
+  case G2 => simp
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 =>
+    apply ENNReal.ofReal_le_one.mpr
+    apply exp_le_one_iff.mpr
+    simp
+  case G2 => simp
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply exp_nonneg
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 =>
+    apply mul_nonneg
+    · apply exp_nonneg
+    · rw [division_def]
+      apply mul_nonneg
+      · apply sub_nonneg.mpr
+        apply exp_le_one_iff.mpr
+        apply div_nonpos_iff.mpr
+        right
+        apply And.intro
+        · apply toNNReal_eq_zero.mp
+          simp only [toNNReal_eq_zero, Left.neg_nonpos_iff, zero_le_one]
+        · apply cast_nonneg
+      · apply inv_nonneg_of_nonneg
+        apply sub_nonneg.mpr
+        apply exp_le_one_iff.mpr
+        simp
+
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply exp_nonneg
+  conv =>
+    enter [2, 1, 2]
+    rw [division_def]
+  simp
+  repeat rw [<- mul_assoc]
+  rw [<- Real.exp_nat_mul]
+  simp
+  have H : (1 : ℝ) = OfNat.ofNat (1 : ℕ) := by rfl
+  conv =>
+    enter [2]
+    rw [mul_assoc]
+    rw [mul_assoc]
+    enter [2]
+    rw [mul_comm]
+    rw [mul_assoc]
+    enter [2]
+    rw [H]
+  rw [mul_inv_cancel ?G1]
+  case G1 =>
+    apply sub_ne_zero.mpr
+    apply _root_.ne_of_gt
+    apply exp_lt_one_iff.mpr
+    simp
+  simp
+  conv =>
+    enter [2]
+    rw [mul_assoc]
+    enter [2]
+    rw [mul_comm]
+  rw [H]
+  rw [<- mul_assoc]
+  congr
+  · rw [<- Real.exp_nat_mul]
+    rw [<- Real.exp_add]
+    congr
+    simp
+    rw [ENNReal.toReal_div]
+    rw [division_def]
+    rw [← neg_add_rev]
+    congr 1
+    rw [add_mul]
+    rw [add_comm]
+    congr
+    rw [mul_comm]
+    rw [<- mul_assoc]
+    rw [inv_mul_cancel_of_invertible]
+    simp
+  · rw [division_def]
+    simp
 
 end SLang
