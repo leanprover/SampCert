@@ -1211,12 +1211,21 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
       rw [ENNReal.inv_mul_cancel SC1 SC2]
       simp
   skip
+  suffices ((1 - p ^ ((k + 1) * n) - (1 - p ^ (k * n))).toReal = ((p ^ n) ^ k * (1 - p ^ n)).toReal) by
+    apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
+    cases this
+    · trivial
+    · simp_all
+      rename_i HK
+      rcases HK with ⟨ _ , HK ⟩
+      sorry
 
-  apply ENNReal.sub_eq_of_add_eq ?G1
-  case G1 =>
-    apply ENNReal.sub_ne_top
-    simp
+  -- apply ENNReal.sub_eq_of_add_eq ?G1
+  -- case G1 =>
+  --   apply ENNReal.sub_ne_top
+  --   simp
 
+  skip
   sorry
 
 
@@ -1392,10 +1401,23 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [H]
   clear H
 
-  -- Apply the Geo lemma (prove me first!)
+  -- Apply the Geo lemma
   have H : Geo (1 - ENNReal.ofReal (Real.exp (-(↑↑den / ↑↑num)))) n = Geo (1 - (ENNReal.ofReal (Real.exp (-(1 / ↑↑num)))) ^ (den : ℕ)) n := by
     congr
-    sorry
+    suffices (ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))).toReal =
+             (ENNReal.ofReal (rexp (-(1 / ↑↑num))) ^ (den : ℕ)).toReal by
+      apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
+      cases this
+      · trivial
+      · simp_all
+    simp_all
+    rw [ENNReal.toReal_ofReal ?G1]
+    case G1 => apply exp_nonneg
+    rw [ENNReal.toReal_ofReal ?G1]
+    case G1 => apply exp_nonneg
+    rw [← exp_nat_mul]
+    congr
+    simp [division_def]
   rw [H]
   clear H
   rw [<- geo_div_geo n den (ENNReal.ofReal (Real.exp (-(1 / ↑↑num)))) ?G1 ?G2]
@@ -1450,6 +1472,15 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [Geo]
   rw [Geo]
   rw [DiscreteLaplaceSampleLoopIn1_apply _ _ Hbv]
+
+  -- suffices .toReal ...  by
+  --   -- apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
+  --   -- cases this
+  --   -- · trivial
+  --   -- · simp_all
+  --   --   rename_i HK
+  --   --   rcases HK with ⟨ _ , HK ⟩
+  --   --   sorry
 
 
   skip
