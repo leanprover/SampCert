@@ -1029,19 +1029,52 @@ lemma partial_geometric_series {p : ENNReal} (HP2 : p < 1) (B : ℕ) :
         rw [mul_assoc]
         rw [ENNReal.inv_mul_cancel SC1 SC2]
         simp
-    symm
-    apply ENNReal.sub_eq_of_eq_add
-    · apply ENNReal.pow_ne_top
+    suffices ((1 - p ^ n + (p ^ n - p ^ n * p)).toReal = (1 - p ^ (n + 1)).toReal) by
+      apply (ENNReal.toReal_eq_toReal_iff _ _).mp at this
+      cases this
+      · trivial
+      · exfalso
+        rename_i HK
+        simp_all
+    rw [ENNReal.toReal_add ?G1 ?G2]
+    case G1 =>
+      apply ENNReal.sub_ne_top
+      simp
+    case G2 =>
+      apply ENNReal.sub_ne_top
+      apply ENNReal.pow_ne_top
       exact LT.lt.ne_top HP2
-    rw [add_assoc]
-    rw [pow_add]
-
-    -- #check ENNReal.sub_sub_cancel
-    -- #check ENNReal.add_sub_cancel_left
-    -- #check ENNReal.add_sub_cancel_right
-    -- Annoying but doable
-    skip
-    sorry
+    rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+    case G1 =>
+      refine pow_le_one' ?H n
+      exact le_of_lt HP2
+    case G2 => simp
+    rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+    case G1 =>
+      conv =>
+        rhs
+        rw [<- mul_one (p ^ n)]
+      cases Classical.em (p = 0)
+      · simp_all
+      · apply (ENNReal.mul_le_mul_left ?G3 ?G4).mpr
+        case G3 =>
+          apply ENNReal.pow_ne_zero
+          assumption
+        case G4 =>
+          apply ENNReal.pow_ne_top
+          exact LT.lt.ne_top HP2
+        exact le_of_lt HP2
+    case G2 =>
+      apply ENNReal.pow_ne_top
+      exact LT.lt.ne_top HP2
+    rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+    case G1 =>
+      refine pow_le_one' ?H (n + 1)
+    case G2 => simp
+    simp_all only [ne_eq, ENNReal.sub_eq_top_iff, ENNReal.one_ne_top, false_and, not_false_eq_true,
+      ENNReal.pow_eq_top_iff, not_and, Decidable.not_not, true_implies, ENNReal.one_toReal, ENNReal.toReal_pow,
+      ENNReal.toReal_mul, sub_add_sub_cancel, sub_right_inj]
+    rfl
 
 
 lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
