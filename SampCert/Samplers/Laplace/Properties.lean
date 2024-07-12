@@ -957,23 +957,237 @@ lemma probGeometric_apply_Geo (t : SLang Bool) (trial_spec : t false + t true = 
     exact le_of_lt trial_spec'
   · exact trial_one_minus t trial_spec
 
--- lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
---   apply Iff.intro
---   · intro H
---     apply And.intro
---     · apply (Nat.le_div_iff_mul_le Hc).mp
---       exact Nat.le_of_eq H
---     · apply (Nat.div_lt_iff_lt_mul Hc).mp
---       apply Nat.lt_succ_iff.mpr
---       exact Nat.le_of_eq (id (Eq.symm H))
---   · intro ⟨ H1, H2 ⟩
---     apply LE.le.antisymm
---     · apply (Nat.le_div_iff_mul_le Hc).mpr
---       apply H1
---     · apply Nat.lt_succ_iff.mp
---       simp
---       apply (Nat.div_lt_iff_lt_mul Hc).mpr
---       apply H2
+
+/--
+Closed for for partial geometric series
+-/
+lemma partial_geometric_series {p : ENNReal} (HP2 : p < 1) (B : ℕ) :
+    (∑' (a : ℕ), if a < B then p ^ a else 0) = (1 - p ^ B) / (1 - p) := by
+  induction B
+  · simp
+  · rename_i n IH
+    have H (a : ℕ) D : @ite ENNReal (a < n + 1) D (p^a) 0 = (if (a < n) then p^a else 0) + (if a = n then p^a else 0):= by
+      split
+      · rename_i H
+        split
+        · split
+          · exfalso
+            linarith
+          · simp
+        · split
+          · simp
+          · exfalso
+            apply le_of_lt_succ at H
+            apply Nat.le_iff_lt_or_eq.mp at H
+            cases H
+            · trivial
+            · trivial
+      · split
+        · exfalso
+          linarith
+        · split
+          · exfalso
+            linarith
+          · simp
+    conv =>
+      enter [1, 1, a]
+      rw [H]
+    clear H
+    rw [ENNReal.tsum_add]
+    rw [IH]
+    rw [tsum_eq_single n ?G1]
+    case G1 =>
+      intro _ _
+      simp
+      intro _
+      trivial
+    simp
+
+    have SC1 : (1 - p) ≠ 0 := by
+      apply pos_iff_ne_zero.mp
+      simp_all only [tsub_pos_iff_lt]
+    have SC2 : (1 - p) ≠ ⊤ := by
+      apply ENNReal.sub_ne_top
+      simp
+    have SC3 : 0 < p → p < 1 → p ^ n ≠ ⊤ := by
+      intro _ _
+      apply ENNReal.pow_ne_top
+      exact LT.lt.ne_top HP2
+
+    apply (@ENNReal.mul_eq_mul_right _ _ (1 - p) SC1 SC2).mp
+    rw [add_mul]
+    conv =>
+      congr
+      · congr
+        · rw [division_def]
+          rw [mul_assoc]
+          rw [ENNReal.inv_mul_cancel SC1 SC2]
+          simp
+        · rw [ENNReal.mul_sub SC3]
+          simp
+      · rw [division_def]
+        rw [mul_assoc]
+        rw [ENNReal.inv_mul_cancel SC1 SC2]
+        simp
+    symm
+    apply ENNReal.sub_eq_of_eq_add
+    · apply ENNReal.pow_ne_top
+      exact LT.lt.ne_top HP2
+    rw [add_assoc]
+    rw [pow_add]
+
+    -- #check ENNReal.sub_sub_cancel
+    -- #check ENNReal.add_sub_cancel_left
+    -- #check ENNReal.add_sub_cancel_right
+    -- Annoying but doable
+    skip
+    sorry
+
+
+lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
+  apply Iff.intro
+  · intro H
+    apply And.intro
+    · apply (Nat.le_div_iff_mul_le Hc).mp
+      exact Nat.le_of_eq H
+    · apply (Nat.div_lt_iff_lt_mul Hc).mp
+      apply Nat.lt_succ_iff.mpr
+      exact Nat.le_of_eq (id (Eq.symm H))
+  · intro ⟨ H1, H2 ⟩
+    apply LE.le.antisymm
+    · apply (Nat.le_div_iff_mul_le Hc).mpr
+      apply H1
+    · apply Nat.lt_succ_iff.mp
+      simp
+      apply (Nat.div_lt_iff_lt_mul Hc).mpr
+      apply H2
+
+/--
+Integer division of a geometric distribution is a geometric distribution
+-/
+lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
+      (Geo (1-p) >>= (fun v => Pure.pure (v / n))) k = Geo (1-(p ^ n)) k := by
+  rw [Geo]
+  simp
+
+  -- Convert integer division equality into integer inequalities
+  have H : (∑' (a : ℕ), if k = a / n then Geo (1 - p) a else 0) =
+           (∑' (a : ℕ), if ((k * n ≤ a) ∧ (a < (k + 1) * n)) then Geo (1 - p) a else 0) := by
+      apply tsum_congr
+      intro b
+      congr
+      apply propext
+      apply @nat_div_eq_le_lt_iff k b n Hn
+  rw [H]
+  clear H
+
+  -- Eliminate constant factor from Geo and simplify
+  conv =>
+    enter [1, 1, a]
+    rw [Geo]
+  have H : (∑' (a : ℕ), if ((k * n ≤ a) ∧ (a < (k + 1) * n)) then (1 - (1 - p)) ^ a * (1 - p) else 0) =
+           (∑' (a : ℕ), (1 - p) * if ((k * n ≤ a) ∧ (a < (k + 1) * n)) then p ^ a else 0) := by
+    apply tsum_congr
+    intro b
+    split
+    · rw [mul_comm]
+      congr
+      apply ENNReal.sub_sub_cancel
+      · simp
+      · exact le_of_lt Hp
+    · rw [mul_zero]
+  rw [H]
+  clear H
+  rw [ENNReal.tsum_mul_left]
+  rw [ENNReal.sub_sub_cancel ?G1 ?G2]
+  case G1 => simp
+  case G2 =>
+    apply Right.pow_le_one_of_le
+    exact le_of_lt Hp
+
+  have SC1 : (1 - p) ≠ 0 := by
+    apply pos_iff_ne_zero.mp
+    simp_all only [tsub_pos_iff_lt]
+  have SC2 : (1 - p) ≠ ⊤ := by
+    apply ENNReal.sub_ne_top
+    simp
+
+  -- Rewrite to difference of partial geometric series
+  have H : (∑' (a : ℕ), if ((k * n ≤ a) ∧ (a < (k + 1) * n)) then p ^ a else 0) =
+           (∑' (a : ℕ), if a < (k + 1) * n then p ^ a else 0) -  (∑' (a : ℕ), if a < k * n then p ^ a else 0) := by
+    symm
+    apply ENNReal.sub_eq_of_add_eq ?G1
+    case G1 =>
+      rw [partial_geometric_series Hp]
+      rw [division_def]
+      apply ENNReal.mul_ne_top
+      · apply ENNReal.sub_ne_top
+        simp
+      · apply ENNReal.inv_ne_top.mpr
+        apply SC1
+    rw [<- ENNReal.tsum_add]
+    apply tsum_congr
+    intro b
+    split
+    · rename_i H
+      rcases H with ⟨ H1, H2 ⟩
+      split
+      · exfalso
+        linarith
+      · simp
+    · rename_i HK
+      simp
+      split
+      · split
+        · trivial
+        · exfalso
+          linarith
+      · split
+        · exfalso
+          apply HK
+          apply And.intro
+          · linarith
+          · trivial
+        · trivial
+  rw [H]
+  clear H
+
+  -- Evaluate partial geometric series
+  rw [partial_geometric_series Hp]
+  rw [partial_geometric_series Hp]
+
+  -- Conclude by simplification
+
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intro _ _
+    apply SC2
+  skip
+
+  conv =>
+    lhs
+    congr
+    · rw [division_def]
+      rw [mul_comm]
+      rw [mul_assoc]
+      rw [ENNReal.inv_mul_cancel SC1 SC2]
+      simp
+    · rw [division_def]
+      rw [mul_comm]
+      rw [mul_assoc]
+      rw [ENNReal.inv_mul_cancel SC1 SC2]
+      simp
+  skip
+
+  apply ENNReal.sub_eq_of_add_eq ?G1
+  case G1 =>
+    apply ENNReal.sub_ne_top
+    simp
+
+  sorry
+
+
+
 
 /--
 Specialize Euclidean division from ℤ to ℕ
@@ -1028,101 +1242,16 @@ lemma euclidean_division_uniquness (r1 r2 q1 q2 : ℕ) {D : ℕ} (HD : 0 < D) (H
 
 
 
-
-/-
-lemma partial_geometric_series (p : ENNReal) (HP2 : p < 1) (B : ℕ) :
-      (∑' (a : ℕ), if a < B then p ^ a else 0) = (1 - p ^ B) / (1 - p) := by
-    sorry
-
-lemma geo_div_geo (k n : ℕ) (p : ℝ) (Hp1 : 0 < p) (Hp2 : p ≤ 1) :
-      (Geo (1-p) >>= (fun v => Pure.pure (v / n))) k = Geo (1-(p ^ n)) k := by
-  rw [Geo]
-  simp
-  -- Turn div equality into inequalities
-  have H : (∑' (a : ℕ), if k = a / n then Geo (1 - p) a else 0) =
-           (∑' (a : ℕ), if ((n * k ≤ a) ∧ (a < (n + 1)*k)) then Geo (1 - p) a else 0) := by sorry
-  rw [H]
-  clear H
-  skip
-
-  -- Open up Geo and commute out the constant factor
-  conv =>
-    enter [1, 1, a]
-    rw [Geo]
-  have H : (∑' (a : ℕ), if n * k ≤ a ∧ a < (n + 1) * k then (1 - ENNReal.ofReal (1 - p)) ^ a * ENNReal.ofReal (1 - p) else 0) =
-           ( ∑' (a : ℕ), ENNReal.ofReal (1 - p) * if n * k ≤ a ∧ a < (n + 1) * k then (1 - ENNReal.ofReal (1 - p)) ^ a else 0) := by
-    apply tsum_congr
-    intro b
-    split
-    · exact Eq.symm (CommMonoid.mul_comm (ENNReal.ofReal (1 - p)) ((1 - ENNReal.ofReal (1 - p)) ^ b))
-    · exact Eq.symm (CommMonoidWithZero.mul_zero (ENNReal.ofReal (1 - p)))
-  rw [H]
-  clear H
-  rw [ENNReal.tsum_mul_left]
-
-  -- Simplify some terms
-  have HP : (1 - ENNReal.ofReal (1 - p)) = ENNReal.ofReal p := by sorry
-  have HP' : (1 - ENNReal.ofReal (1 - p ^ n)) = (ENNReal.ofReal p) ^ n := by sorry
-  conv =>
-    congr
-    · enter [2, 1, a]
-      rw [HP]
-    · rw [HP']
-
-  -- Rewrite to difference of geometric series
-  have H : (∑' (a : ℕ), if n * k ≤ a ∧ a < (n + 1) * k then (ENNReal.ofReal p) ^ a else 0) =
-           (∑' (a : ℕ), if a < (n + 1) * k then (ENNReal.ofReal p) ^ a else 0) -  (∑' (a : ℕ), if a < n * k then (ENNReal.ofReal p) ^ a else 0) := by
-    sorry
-  rw [H]
-  clear H
-
-  -- Compute partial geometric series
-  -- rw [partial_geometric_series]
-  rw [partial_geometric_series (ENNReal.ofReal p) ?G1 (n * k)]
-  case G1 => sorry
-  rw [partial_geometric_series (ENNReal.ofReal p) ?G1 ((n + 1) * k)]
-  case G1 => sorry
-
-  have H : (1 - ENNReal.ofReal p) = ENNReal.ofReal (1 - p) := by sorry
-  rw [H]
-  clear H
-  rw [division_def]
-  rw [division_def]
-  rw [ENNReal.mul_sub ?G1]
-  case G1 => sorry
-  have SC1 : ENNReal.ofReal (1 - p) ≠ 0 := by sorry
-  have SC2 : ENNReal.ofReal (1 - p) ≠ ⊤ := by sorry
-  conv =>
-    enter [1]
-    congr
-    · rw [mul_comm]
-      rw [mul_assoc]
-      rw [ENNReal.inv_mul_cancel SC1 SC2]
-      simp
-    · rw [mul_comm]
-      rw [mul_assoc]
-      rw [ENNReal.inv_mul_cancel SC1 SC2]
-      simp
-
-  -- Simplify (1 - x) - (1 - y) to (x - y)
-
-  -- Factor out power
-  skip
-  sorry
-
 /--
-Equivalence between the optimized an unoptimized sampling loops
+Equivalence between sampling loops
 -/
 theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   DiscreteLaplaceSampleLoop num den = DiscreteLaplaceSampleLoop' num den := by
   apply SLang.ext
   intro ⟨ b, n ⟩
-
-  -- Apply DiscreteLaplaceSampleLoop spec and simplify
   simp [DiscreteLaplaceSampleLoop_apply]
   simp only [DiscreteLaplaceSampleLoop']
 
-  -- FIXME: Refactor this to a calc proof?
 
   -- Evaluate the indepenent Bern(1/2) sample
   have H :
@@ -1171,9 +1300,9 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
         let v ← DiscreteLaplaceSampleLoopIn2 1 1
         (Pure.pure ((U + ↑num * (v - 1)) / ↑den))) n =
     (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
-        let v ← Geo (1 - Real.exp (- 1))
+        let v ← Geo (1 - ENNReal.ofReal (Real.exp (- 1)))
         (Pure.pure ((U + ↑num * v) / ↑den))) n := by
-    simp only [Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, bind_apply] -- probGeometric_apply, BernoulliExpNegSample_apply_true]
+    simp only [Bind.bind, DiscreteLaplaceSampleLoopIn2_eq, bind_apply]
     apply tsum_congr
     intro a
     congr 1
@@ -1196,53 +1325,52 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     apply tsum_congr
     intro b
     split <;> try simp
-    congr
-    rw [eq_sub_iff_add_eq]
-    rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
-    case G1 =>
-      apply ENNReal.ofReal_le_one.mpr
-      apply exp_le_one_iff.mpr
-      simp
-    case G2 => simp
-    rw [ENNReal.toReal_ofReal']
-    rw [max_eq_left ?G1]
-    case G1 => exact exp_nonneg (-1)
-    simp
   rw [H]
   clear H
 
   -- Separate X and Y
-  have H :
-    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
-        let v ← Geo (1 - rexp (-1))
-        Pure.pure ((U + ↑num * v) / ↑den)) =
-    (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
-        let v ← Geo (1 - rexp (-1))
-        Pure.pure ((U + ↑num * v))) >>=
-    (fun X => Pure.pure (X / ↑den)) := by simp
+  have H : (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+             let v ← Geo (1 - ENNReal.ofReal (Real.exp (- 1)))
+             Pure.pure ((U + ↑num * v) / ↑den)) =
+           (DiscreteLaplaceSampleLoopIn1 num >>= fun U => do
+             let v ← Geo (1 - ENNReal.ofReal (Real.exp (- 1)))
+             Pure.pure ((U + ↑num * v))) >>=
+           (fun X =>  Pure.pure (X / ↑den)) := by simp
   rw [H]
   clear H
+
   generalize HX : (do
           let U ← DiscreteLaplaceSampleLoopIn1 num
-          let v ← Geo (1 - rexp (-1))
+          let v ← Geo (1 - ENNReal.ofReal (Real.exp (-1)))
           Pure.pure (U + ↑num * v) : SLang ℕ) = X
 
   -- Fold the left hand side into Geo
   have H : ENNReal.ofReal (rexp (-(↑↑den / ↑↑num))) ^ n * (1 - ENNReal.ofReal (rexp (-(↑↑den / ↑↑num)))) =
-           Geo (1 - rexp (-((den : ℝ) / (num : ℝ)))) n := by
+           Geo (1 - ENNReal.ofReal (Real.exp (-((den : ℝ) / (num : ℝ))))) n := by
     rw [Geo]
-    -- Provable, but finish geo first to make sure it's the right shape
-    sorry
+    rw [ENNReal.sub_sub_cancel]
+    · simp
+    apply ENNReal.ofReal_le_one.mpr
+    apply exp_le_one_iff.mpr
+    simp
+    apply div_nonneg
+    · exact cast_nonneg ↑den
+    · exact cast_nonneg ↑num
   rw [H]
   clear H
 
   -- Apply the Geo lemma (prove me first!)
-  have H : Geo (1 - rexp (-(↑↑den / ↑↑num))) n = Geo (1 - (rexp (-(1 / ↑↑num))) ^ (den : ℕ)) n := by sorry
+  have H : Geo (1 - ENNReal.ofReal (Real.exp (-(↑↑den / ↑↑num)))) n = Geo (1 - (ENNReal.ofReal (Real.exp (-(1 / ↑↑num)))) ^ (den : ℕ)) n := by
+    congr
+    sorry
   rw [H]
   clear H
-  rw [<- geo_div_geo n den (rexp (-(1 / ↑↑num))) ?G1 ?G2]
-  case G1 => sorry -- exact exp_pos (-(1 / ↑↑num))
-  case G2 => sorry
+  rw [<- geo_div_geo n den (ENNReal.ofReal (Real.exp (-(1 / ↑↑num)))) ?G1 ?G2]
+  case G1 =>
+    apply ENNReal.ofReal_lt_one.mpr
+    apply exp_lt_one_iff.mpr
+    simp
+  case G2 => exact PNat.pos den
   skip
   simp only [Bind.bind, Pure.pure, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   apply tsum_congr
@@ -1253,28 +1381,10 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   rw [<- HX]
   clear HX
 
-  -- Restruct the outermost sum using the support of DiscreteLaplaceSampleLoopIn1
-  -- -- Apply DiscreteLaplaceSampleLoopIn1
-  simp only [Bind.bind, bind_apply]
-  -- rw [<- @tsum_subtype_eq_of_support_subset ENNReal ℕ _ _ _  {n' : ℕ | n' < num} ?G1]
-  -- case G1 =>
-  --   simp [Function.support]
-  --   intro a H1 H2 H3 H4
-  --   apply Classical.by_contradiction
-  --   intro H5
-  --   apply H1
-  --   simp [DiscreteLaplaceSampleLoopIn1]
-  --   rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
-  --   rw [ite_eq_right_iff]
-  --   intro H6
-  --   exfalso
-  --   exact H5 H6
-
-  -- Establish the independence of U and v by the uniqueness of Euclidean division.
-  rcases euclidean_division b num (PNat.pos num) with ⟨ bu, bv, Hbv, Hb⟩
+  -- Decompose b by Euclidean division, in order to obtain independent samples
+  rcases euclidean_division b (PNat.pos num) with ⟨ bu, bv, Hbv, Hb ⟩
   rw [Hb]
   simp only [one_div, Bind.bind, Pure.pure, bind_apply, pure_apply]
-  -- simp only [Set.coe_setOf, Set.mem_setOf_eq]
 
   -- Evaluate the sum (as a singleton)
   conv =>
@@ -1291,10 +1401,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
     · rename_i Hsupport
       exfalso
       apply Hne
-      have W := (@euclidean_division_uniquness bv b'v bu b'u num (PNat.pos num) Hbv Hsupport ?G1)
-      case G1 =>
-        rw [<- He]
-        linarith
+      have W := (euclidean_division_uniquness bv b'v bu b'u (PNat.pos num) Hbv Hsupport).mp He
       simp_all
     · rename_i Hnsupport
       left
@@ -1307,17 +1414,12 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 
   -- Simplify RHS
   simp
-  rw [ite_eq_left_iff.mpr ?G1]
-  case G1 =>
-    intro HK
-    exfalso
-    apply HK
-    linarith
-  rw [DiscreteLaplaceSampleLoopIn1_apply num bv Hbv]
   rw [Geo]
+  rw [Geo]
+  rw [DiscreteLaplaceSampleLoopIn1_apply _ _ Hbv]
+
 
   skip
   sorry
 
--/
 end SLang
