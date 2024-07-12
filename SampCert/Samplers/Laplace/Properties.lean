@@ -1003,10 +1003,11 @@ lemma euclidean_division (n : ℕ) (D : ℕ) (HD : 0 < D): ∃ n1 n2 : ℕ, (n2 
     congr 1
     rw [mul_comm]
 
+
 /--
 Uniqueness of Euclidean division for Nats
 -/
-lemma euclidean_division_uniquness {n1 n2 n3 n4: ℕ} (D : ℕ) (HD : 0 < D) (Hn1 : n1 < D) (Hn2 : n2 < D) :
+lemma euclidean_division_uniquness (n1 n2 n3 n4: ℕ) (D : ℕ) (HD : 0 < D) (Hn1 : n1 < D) (Hn2 : n2 < D) :
   n1 + D * n3 = n2 + D * n4 -> (n1 = n2 ∧ n3 = n4) := by
   intro H
   cases (Classical.em (n1 = n2))
@@ -1259,24 +1260,10 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   -- Prove that X is geometric
   rw [<- HX]
   clear HX
-  -- simp
 
-  -- Now this is much much simpler: the divison is in the outermost sum only.
-  -- I might not even need to use my Euclidean division lemma.
-
-
-
-
-
-
-  -- Prove that X has the resulting shape
-  -- simp only [Bind.bind, bind_apply]
-
-
+  -- Restruct the outermost sum using the support of DiscreteLaplaceSampleLoopIn1
   -- -- Apply DiscreteLaplaceSampleLoopIn1
-  -- simp only [Bind.bind, bind_apply]
-  -- conv =>
-  --   enter [2, 1, a]
+  simp only [Bind.bind, bind_apply]
   -- rw [<- @tsum_subtype_eq_of_support_subset ENNReal ℕ _ _ _  {n' : ℕ | n' < num} ?G1]
   -- case G1 =>
   --   simp [Function.support]
@@ -1290,87 +1277,53 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
   --   intro H6
   --   exfalso
   --   exact H5 H6
-  -- have SC (a : ↑{n' : ℕ | n' < (num : ℕ)}) : ((a : ℕ) < (num : ℕ)) := by aesop
-  -- conv =>
-  --   enter [2, 1, a, 1]
-  --   rw [DiscreteLaplaceSampleLoopIn1_apply]
-  --   · skip
-  --   · exact SC a
+
+  -- Establish the independence of U and v by the uniqueness of Euclidean division.
+  rcases euclidean_division b num (PNat.pos num) with ⟨ bu, bv, Hbv, Hb⟩
+  rw [Hb]
+  simp only [one_div, Bind.bind, Pure.pure, bind_apply, pure_apply]
+  -- simp only [Set.coe_setOf, Set.mem_setOf_eq]
+
+  -- Evaluate the sum (as a singleton)
+  conv =>
+    enter [2, 1, x]
+    rw [<- ENNReal.tsum_mul_left]
+  rw [<- ENNReal.tsum_prod]
+  rw [tsum_eq_single (bv, bu) ?G1]
+  case G1 =>
+    intro ⟨ b'v, b'u ⟩
+    intro Hne
+    simp
+    intro He
+    cases (Classical.em (b'v < num))
+    · rename_i Hsupport
+      exfalso
+      apply Hne
+      have W := (@euclidean_division_uniquness bv b'v bu b'u num (PNat.pos num) Hbv Hsupport ?G1)
+      case G1 =>
+        rw [<- He]
+        linarith
+      simp_all
+    · rename_i Hnsupport
+      left
+      simp [DiscreteLaplaceSampleLoopIn1]
+      simp [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
+      intro Hk
+      exfalso
+      apply Hnsupport
+      apply Hk
+
+  -- Simplify RHS
+  simp
+  rw [ite_eq_left_iff.mpr ?G1]
+  case G1 =>
+    intro HK
+    exfalso
+    apply HK
+    linarith
+  rw [DiscreteLaplaceSampleLoopIn1_apply num bv Hbv]
+  rw [Geo]
 
   skip
   sorry
-
-  -- -- Decompose (den * n) with Euclidean division
-  -- rcases (euclidean_division (den * n) num (PNat.pos num)) with ⟨ vx, ux, Hux, Hn ⟩
-  -- have Hn' : n = (vx * num + ux) / den := by
-  --   sorry
-
-  --   -- suffices (den * n = den * ((vx * num + ux) / den)) by
-  --   --   skip
-  --   --   apply (nat_div_eq_le_lt_iff ?Hc).mpr
-  --   --   · apply And.intro
-  --   --     · rw [mul_comm]
-  --   --       rw [this]
-  --   --       linarith
-  --   --     · sorry
-  --   --   · exact PNat.pos den
-  --   -- skip
-  --   -- sorry
-
-  -- rw [Hn]
-  -- simp only [Bind.bind, Pure.pure, Pi.natCast_def, bind_apply, Pi.div_apply, pure_apply]
-  -- -- sorry
-
-
-  -- -- Simplify and evaluate singleton sum
-  -- conv =>
-  --   enter [2, 1, a]
-  --   rw [<- ENNReal.tsum_mul_left]
-  -- rw [<- ENNReal.tsum_prod]
-  -- rw [tsum_eq_single (ux, vx) ?G1]
-  -- case G1 =>
-  --   intro b' Hb'
-  --   apply Classical.by_contradiction
-  --   simp
-  --   intro H1 _
-
-
-    -- intro H1 _ Hk
-    -- apply H1
-    -- simp [DiscreteLaplaceSampleLoopIn1]
-    -- rw [DiscreteLaplaceSampleLoopIn1Aux_apply_true]
-    -- split
-    -- · exfalso
-    --   apply Hb'
-    --   -- Euclidean division uniqueness
-    --   rcases b' with ⟨ a, b ⟩
-    --   simp
-    --   apply (@euclidean_division_uniquness a ux b vx num)
-    --   · exact PNat.pos num
-    --   · simp_all
-    --   · assumption
-    --   · simp_all
-    --     rw [<- Hk]
-    --     rw [add_comm]
-    --     rw [mul_comm]
-    -- · rfl
-
-/-
-  -- Conclude by simplifications
-  rw [ite_cond_eq_true _ _ ?G1]
-  case G1 =>
-    simp
-    linarith
-  simp only []
-  rw [DiscreteLaplaceSampleLoopIn1_apply _ _ Hux]
-  simp
-  rw [<- division_def]
-  rw [geo_div_geo _ _ _ ?G1 ?G2]
-  case G1 => exact exp_pos (-1)
-  case G2 =>
-    apply exp_le_one_iff.mpr
-    simp
-  simp [Geo]
--/
-
 end SLang
