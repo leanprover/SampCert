@@ -64,6 +64,7 @@ def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) :=
 /--
 Empirical threshold for switching discrete laplace sampling algorithms.
 -/
+@[always_inline]
 def DiscreteLaplaceSampleOptThresh : ℕ := 50
 
 /--

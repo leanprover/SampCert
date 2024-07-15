@@ -31,7 +31,7 @@ jobs:
           lake build -Kwerror FastExtract
 
       - name: build Python version of SampCert
-        run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py -o Tests/SampCert.dfy
+        run: dafny/dafny build --target:py Tests/SampCert.dfy Tests/Random.py Tests/testing-kolmogorov-discretegaussian.py Tests/testing-kolmogorov-discretelaplace.py -o Tests/SampCert.dfy
 
       - name: run Test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretegaussian.py
