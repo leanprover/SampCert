@@ -13,8 +13,6 @@ import SampCert.Samplers.Uniform.Code
 The term ``BernoulliSample`` violates our naming scheme, but this is currently necessary for extraction.
 -/
 
-noncomputable section
-
 namespace SLang
 
 /--
