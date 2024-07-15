@@ -43,7 +43,7 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
 
 
     for num in range(1, num_eps):
-        print ("Sample {}/{}".format(num, num_eps))
+        # print ("Sample {}/{}".format(num, num_eps))
 
         eps.append(num/den)
         t_lap = []
