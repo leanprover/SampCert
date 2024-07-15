@@ -1670,6 +1670,7 @@ theorem DiscreteLaplaceSample'_apply (num den : PNat) (x : ℤ) :
 theorem DiscreteLaplaceSampleOpt_normalizes (num den : PNat) :
     ∑' x : ℤ, (DiscreteLaplaceSampleOpt num den) x = 1 := by
   rw [DiscreteLaplaceSampleOpt]
+  simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_normalizes num den
   · exact DiscreteLaplaceSample'_normalizes num den
@@ -1681,9 +1682,9 @@ Closed form for the evaluation of the ``SLang`` Laplace sampler.
 theorem DiscreteLaplaceSampleOpt_apply (num den : PNat) (x : ℤ) :
     (DiscreteLaplaceSampleOpt num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
   rw [DiscreteLaplaceSampleOpt]
+  simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_apply num den x
   · exact DiscreteLaplaceSample'_apply num den x
-
 
 end SLang

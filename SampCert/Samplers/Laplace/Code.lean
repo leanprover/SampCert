@@ -62,12 +62,6 @@ def DiscreteLaplaceSampleLoop (num : PNat) (den : PNat) : SLang (Bool × Nat) :=
   return (B,V)
 
 /--
-Empirical threshold for switching discrete laplace sampling algorithms.
--/
-@[always_inline]
-def DiscreteLaplaceSampleOptThresh : ℕ := 50
-
-/--
 ``SLang`` term to obtain a sample from the discrete Laplace distribution, optimized for
 `num/den` (≤ or ≥) `DiscreteLaplaceSampleOptThresh`
 -/
@@ -75,7 +69,6 @@ def DiscreteLaplaceSample (num den : PNat) : SLang ℤ := do
   let r ← probUntil (DiscreteLaplaceSampleLoop num den) (λ x : Bool × Nat => ¬ (x.1 ∧ x.2 = 0))
   let Z : Int := if r.1 then - r.2 else r.2
   return Z
-
 
 /--
 ``SLang`` term to obtain a sample from the discrete Laplace distribution, optimized for
@@ -89,11 +82,12 @@ def DiscreteLaplaceSample' (num den : PNat) : SLang ℤ := do
 /--
 ``SLang`` term to obtain a sample from the discrete Laplace distribution, optimized
 based on (num/den).
+
+FIXME: Extractor breaks when we move 50 to an external constant, even when we specify @[always_inline]
 -/
 def DiscreteLaplaceSampleOpt (num den : PNat) : SLang ℤ := do
-  if num ≤ den * DiscreteLaplaceSampleOptThresh
-    then DiscreteLaplaceSample num den
-    else DiscreteLaplaceSample' num den
-
+  if num ≤ den * 50
+    then let v <- DiscreteLaplaceSample num den; return v
+    else let v <- DiscreteLaplaceSample' num den; return v
 
 end SLang
