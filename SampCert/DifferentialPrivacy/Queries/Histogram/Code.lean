@@ -44,7 +44,7 @@ A histogram with a fixed binning method and ``i+1`` bins
 Counts in the histogram are permitted to be negative.
 -/
 structure Histogram (T : Type) (num_bins : ℕ+) (B : Bins T num_bins) where
-  count : Vector ℤ num_bins
+  count : Mathlib.Vector ℤ num_bins
 
 variable {T : Type}
 variable (B : Bins T numBins)
@@ -53,7 +53,7 @@ variable (B : Bins T numBins)
 Construct an empty histagram
 -/
 def emptyHistogram : Histogram T numBins B :=
-  Histogram.mk (Vector.replicate numBins 0)
+  Histogram.mk (Mathlib.Vector.replicate numBins 0)
 
 -- Is there any way to get the discrete measure space for free?
 instance : MeasurableSpace (Histogram T numBins B) where
@@ -65,7 +65,7 @@ instance : MeasurableSpace (Histogram T numBins B) where
 -- There's probably an easier way to do this?
 instance : Countable (Histogram T numBins B) where
   exists_injective_nat' := by
-    have Y : ∃ f : Vector ℤ numBins -> ℕ, Function.Injective f := by exact Countable.exists_injective_nat'
+    have Y : ∃ f : Mathlib.Vector ℤ numBins -> ℕ, Function.Injective f := by exact Countable.exists_injective_nat'
     rcases Y with ⟨ f, Hf ⟩
     exists (fun h => f h.count)
     intro h₁ h₂

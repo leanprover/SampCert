@@ -22,7 +22,7 @@ Implementation for
 
 noncomputable section
 
-variable (dps : DPSystem ℕ)
+variable (dps : SLang.DPSystem ℕ)
 variable (numBins : ℕ+)
 variable (B : Bins ℕ numBins)
 
