@@ -34,11 +34,11 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
 
     # Range of epsilon parameters to try
     den = 8
-    num_eps = 400
+    num_eps = 500
 
     # Number of attempts for each value of epsilon:
     warmup_attempts = 100
-    measured_attempts = 1500
+    measured_attempts = 2000
     num_attempts = warmup_attempts + measured_attempts
 
 
@@ -115,8 +115,8 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
     ax2.plot(eps, lap_mean, color='red', linewidth=1.0, linestyle="solid", label='DiscreteLaplaceSample')
     ax2.plot(eps, lap1_mean, color='blue', linewidth=1.0, linestyle="solid", label='DiscreteLaplaceSample\'')
     ax2.plot(eps, lapO_mean, color='black', linewidth=2.0, linestyle="solid", label='DiscreteLaplaceSampleOpt')
-    ax1.set_xlabel("Epsilon")
-    ax1.set_ylabel("Sampling Time (ms)")
+    ax2.set_xlabel("Epsilon")
+    ax2.set_ylabel("Sampling Time (ms)")
     plt.legend(loc = 'best')
     now = datetime.now()
     filename = 'LaplaceOptBenchmark' + now.strftime("%H%M%S") + '.pdf'
