@@ -89,9 +89,8 @@ def main : IO Unit := do
 
   IO.println s!"Repeated uniform sampling plop: {res3}"
 
+  let u : ℕ ← run <| UniformSample 15
+  IO.println s!"**4 Uniform sample: {u}"
 
-  -- let u : ℕ ← run <| UniformSample 5
-  -- IO.println s!"Uniform sample: {u}"
-
-  -- let u : Bool ← run <| BernoulliSample 1 2 (by aesop)
-  -- IO.println s!"Bernoulli sample: {u}"
+  let u : Bool ← run <| BernoulliSample 1 2 (by aesop)
+  IO.println s!"Bernoulli sample: {u}"
