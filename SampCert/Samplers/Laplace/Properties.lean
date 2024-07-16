@@ -1687,4 +1687,16 @@ theorem DiscreteLaplaceSampleOpt_apply (num den : PNat) (x : ℤ) :
   · exact DiscreteLaplaceSample_apply num den x
   · exact DiscreteLaplaceSample'_apply num den x
 
+/--
+Equivalence between discrete Laplace sampelrs
+-/
+lemma DiscreteLaplaceSampleOpt_equiv (num den : PNat) :
+    DiscreteLaplaceSampleOpt num den = DiscreteLaplaceSample num den := by
+  rw [DiscreteLaplaceSampleOpt]
+  simp only [Bind.bind, Pure.pure, bind_pure]
+  split
+  · rfl
+  · symm
+    apply DiscreteLaplaceSample_equiv
+
 end SLang
