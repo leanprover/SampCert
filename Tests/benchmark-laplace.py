@@ -9,7 +9,15 @@ import timeit
 import numpy
 from datetime import datetime
 
+# from diffprivlib.mechanisms import Laplace
+
+# source: https://github.com/IBM/discrete-gaussian-differential-privacy
+from fractions import Fraction
+from discretegauss import sample_dlaplace
+
+
 sampler = SampCert.SLang()
+
 
 if __name__ == "__main__":
     print("=========================================================================\n\
@@ -32,9 +40,13 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
     lapO_mean = []
     lapO_stdev = []
 
+    # Timing results for diffprivlib
+    ibm_mean = []
+    ibm_stdev = []
+
     # Range of epsilon parameters to try
     den = 8
-    num_eps = 500
+    num_eps = 250
 
     # Number of attempts for each value of epsilon:
     warmup_attempts = 100
@@ -43,12 +55,15 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
 
 
     for num in range(1, num_eps):
-        # print ("Sample {}/{}".format(num, num_eps))
+        print ("Sample {}/{}".format(num, num_eps))
+
+        # ibm_laplace = Laplace(epsilon=num/den, delta=0.0, sensitivity=1)
 
         eps.append(num/den)
         t_lap = []
         t_lap1 = []
         t_lapO = []
+        t_lapIBM = []
 
         # Time DiscreteLaplaceSample
         for i in range(num_attempts):
@@ -71,10 +86,19 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
             elapsedO = timeit.default_timer() - start_timeO
             t_lapO.append(elapsedO)
 
+        # Time IBM implementation
+        for i in range(num_attempts):
+            ep = Fraction(num/den)
+            start_timeIBM = timeit.default_timer()
+            sample_dlaplace(ep)
+            elapsedIBM = timeit.default_timer() - start_timeIBM
+            t_lapIBM.append(elapsedIBM)
+
         # Compute mean and stdev
         lap_measured = numpy.array(t_lap[-measured_attempts:])
         lap1_measured = numpy.array(t_lap1[-measured_attempts:])
         lapO_measured = numpy.array(t_lapO[-measured_attempts:])
+        lapIBM_measured = numpy.array(t_lapIBM[-measured_attempts:])
 
         # Convert s to ms
         lap_mean.append(lap_measured.mean() * 1000.0)
@@ -83,6 +107,8 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
         lap1_stdev.append(lap1_measured.std() * 1000.0)
         lapO_mean.append(lapO_measured.mean() * 1000.0)
         lapO_stdev.append(lapO_measured.std() * 1000.0)
+        ibm_mean.append(lapIBM_measured.mean() * 1000.0)
+        ibm_stdev.append(lapIBM_measured.std() * 1000.0)
 
 
     # Graph of the two laplace implementations, with threshold
@@ -108,13 +134,14 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
     plt.savefig(filename)
 
 
-    # Graph of LaplaceOpt vs the two implementations
+    # Graph of LaplaceOpt vs the two implementations, and IBM
     fig,ax2 = plt.subplots()
     ax2.fill_between(eps, numpy.array(lapO_mean)-0.5*numpy.array(lapO_stdev), numpy.array(lapO_mean)+0.5*numpy.array(lapO_stdev),
                      alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
     ax2.plot(eps, lap_mean, color='red', linewidth=1.0, linestyle="solid", label='DiscreteLaplaceSample')
     ax2.plot(eps, lap1_mean, color='blue', linewidth=1.0, linestyle="solid", label='DiscreteLaplaceSample\'')
     ax2.plot(eps, lapO_mean, color='black', linewidth=2.0, linestyle="solid", label='DiscreteLaplaceSampleOpt')
+    ax2.plot(eps, ibm_mean, color='purple', linewidth=1.0, linestyle="solid", label='IBM')
     ax2.set_xlabel("Epsilon")
     ax2.set_ylabel("Sampling Time (ms)")
     plt.legend(loc = 'best')
