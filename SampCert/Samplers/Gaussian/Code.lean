@@ -33,6 +33,7 @@ def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
 /--
 ``SLang`` term to sample a value from the Discrete Gaussian with variance ``(num/den)``^2.
 -/
+@[export DiscreteGaussianSample]
 def DiscreteGaussianSample (num : PNat) (den : PNat) : SLang ℤ := do
   let ti : Nat := num.val / den
   let t : PNat := ⟨ ti + 1 , by simp only [add_pos_iff, zero_lt_one, or_true] ⟩

@@ -31,3 +31,6 @@ extern_lib libleanffi pkg := do
 
 lean_exe test where
   root := `Main
+
+lean_lib Samplers where
+  defaultFacets := #[LeanLib.sharedFacet]
