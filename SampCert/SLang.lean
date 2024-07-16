@@ -115,6 +115,7 @@ def probWhile (cond : T → Bool) (body : T → SLang T) (init : T) : SLang T :=
 /--
 ``SLang`` value which rejects samples from ``body`` until they satisfy ``cond``.
 -/
+@[extern "prob_Until"]
 def probUntil (body : SLang T) (cond : T → Bool) : SLang T := do
   let v ← body
   probWhile (λ v : T => ¬ cond v) (λ _ : T => body) v

@@ -10,36 +10,50 @@ def comp (n : ℕ+) : SLang ℕ := do
 
 def main : IO Unit := do
 
-  let sampleSize : ℕ := 10
-  let sampleNum : ℕ := 1000
+  -- let sampleSize : ℕ := 10
+  -- let sampleNum : ℕ := 1000
 
-  let mut arr : Array ℕ := Array.mkArray (sampleSize) 0
-  for _ in [:sampleNum] do
-    let r ← run <| UniformPowerOfTwoSample ⟨ sampleSize , by aesop ⟩
-    let v := arr[r]!
-    arr := arr.set! r (v + 1)
+  -- let mut arr : Array ℕ := Array.mkArray (sampleSize) 0
+  -- for _ in [:sampleNum] do
+  --   let r ← run <| UniformPowerOfTwoSample ⟨ sampleSize , by aesop ⟩
+  --   let v := arr[r]!
+  --   arr := arr.set! r (v + 1)
 
-  let mut res : Array Float := Array.mkArray (sampleSize) 0.0
-  for i in [:sampleSize] do
-    let total : Float := arr[i]!.toFloat
-    let freq : Float := total / sampleNum.toFloat
-    res := res.set! i freq
+  -- let mut res : Array Float := Array.mkArray (sampleSize) 0.0
+  -- for i in [:sampleSize] do
+  --   let total : Float := arr[i]!.toFloat
+  --   let freq : Float := total / sampleNum.toFloat
+  --   res := res.set! i freq
 
-  IO.println s!"Repeated uniform sampling: {res}"
+  -- IO.println s!"Repeated uniform sampling: {res}"
 
-  let mut arr2 : Array ℕ := Array.mkArray (sampleSize) 0
-  for _ in [:sampleNum] do
-    let r ← run <| probWhile (fun x => x % 2 == 0) (fun _ => UniformPowerOfTwoSample ⟨ sampleSize , by aesop ⟩) 0
-    let v := arr2[r]!
-    arr2 := arr2.set! r (v + 1)
+  -- let mut arr2 : Array ℕ := Array.mkArray (sampleSize) 0
+  -- for _ in [:sampleNum] do
+  --   let r ← run <| probWhile (fun x => x % 2 == 0) (fun _ => UniformPowerOfTwoSample ⟨ sampleSize , by aesop ⟩) 0
+  --   let v := arr2[r]!
+  --   arr2 := arr2.set! r (v + 1)
 
-  let mut res2 : Array Float := Array.mkArray (sampleSize) 0.0
-  for i in [:sampleSize] do
-    let total : Float := arr2[i]!.toFloat
-    let freq : Float := total / sampleNum.toFloat
-    res2 := res2.set! i freq
+  -- let mut res2 : Array Float := Array.mkArray (sampleSize) 0.0
+  -- for i in [:sampleSize] do
+  --   let total : Float := arr2[i]!.toFloat
+  --   let freq : Float := total / sampleNum.toFloat
+  --   res2 := res2.set! i freq
 
-  IO.println s!"Repeated uniform sampling with filtering: {res2}"
+  -- IO.println s!"Repeated uniform sampling with filtering: {res2}"
+
+  -- let mut arr3 : Array ℕ := Array.mkArray (sampleSize) 0
+  -- for _ in [:sampleNum] do
+  --   let r ← run <| probUntil (UniformPowerOfTwoSample ⟨ sampleSize , by aesop ⟩) (fun x => x % 2 == 0)
+  --   let v := arr3[r]!
+  --   arr3 := arr3.set! r (v + 1)
+
+  -- let mut res3 : Array Float := Array.mkArray (sampleSize) 0.0
+  -- for i in [:sampleSize] do
+  --   let total : Float := arr3[i]!.toFloat
+  --   let freq : Float := total / sampleNum.toFloat
+  --   res3 := res3.set! i freq
+
+  -- IO.println s!"Repeated uniform sampling with filtering: {res3}"
 
   let u : ℕ ← run <| UniformSample 5
   IO.println s!"**1 Uniform sample: {u}"
