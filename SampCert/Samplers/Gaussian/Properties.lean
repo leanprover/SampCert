@@ -62,6 +62,7 @@ theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
   simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     SLang.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
     and_true, and_false, ↓reduceIte, add_zero, zero_add]
+  rw [DiscreteLaplaceSampleOpt_equiv]
   conv =>
     left
     right
@@ -111,7 +112,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
   (DiscreteGaussianSampleLoop num den t) (n, true)
     = ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1)) * ENNReal.ofReal (rexp (-(Int.natAbs n / t)) *
     rexp (-((Int.natAbs (Int.sub (|n| * t * den) ↑↑num)) ^ 2 / ((2 : ℕ+) * num * ↑↑t ^ 2 * den)))) := by
-  simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
+  simp only [DiscreteGaussianSampleLoop, DiscreteLaplaceSampleOpt_equiv, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     DiscreteLaplaceSample_apply, NNReal.coe_natCast, PNat.one_coe, cast_one, NNReal.coe_one,
     div_one, one_div, Int.cast_abs, SLang.pure_apply, Prod.mk.injEq, mul_ite,
     mul_one, mul_zero, tsum_bool, and_false, ↓reduceIte, and_true, BernoulliExpNegSample_apply_true,
