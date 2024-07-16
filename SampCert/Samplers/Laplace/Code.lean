@@ -23,8 +23,6 @@ The following identifiers violate our naming scheme, but are currently necessary
   - ``DiscreteLaplaceSample``
 -/
 
-noncomputable section
-
 namespace SLang
 
 def DiscreteLaplaceSampleLoopIn1Aux (t : PNat) : SLang (Nat × Bool) := do

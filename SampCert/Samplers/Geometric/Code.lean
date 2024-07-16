@@ -9,8 +9,6 @@ import SampCert.SLang
 # ``probGeometric`` Implementation
 -/
 
-noncomputable section
-
 namespace SLang
 
 section Geometric

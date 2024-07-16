@@ -7,8 +7,6 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 import SampCert.Samplers.Laplace.Code
 
-noncomputable section
-
 namespace SLang
 
 def DiscreteLaplaceGenSample (num : PNat) (den : PNat) (μ : ℤ) : SLang ℤ := do
