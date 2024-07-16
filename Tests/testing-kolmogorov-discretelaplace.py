@@ -18,11 +18,11 @@ N = 10000
 def sample_lap():
     return sampler.DiscreteLaplaceSample(num, den)
 
-# def sample_lap1():
-#     return sampler.DiscreteLaplaceSample_k(num, den)
-#
-# def sample_lapO():
-#     return sampler.DiscreteLaplaceSampleOpt(num, den)
+def sample_lap1():
+    return sampler.DiscreteLaplaceSample_k(num, den)
+
+def sample_lapO():
+    return sampler.DiscreteLaplaceSampleOpt(num, den)
 
 #################################
 ############ Testing ############
@@ -83,7 +83,7 @@ def cdf_eval(k):
 
 
 # Main test function
-def test_kolmogorov_dist(N, with_plots=False):
+def test_kolmogorov_dist(N, with_plots=False, sampler=0):
     """Takes as input a sample size N, the desired parameter epsilon for the
     discrete Laplace distribution, and whether the function should plot the empirical
     distribution and the cdf or not along the way.
@@ -92,7 +92,16 @@ def test_kolmogorov_dist(N, with_plots=False):
     CDF and the true CDF (value between 0 and 1).
     
     Note that this is a random variable, as the empirical CDF depends on the sample drawn."""
-    x = [sample_lap() for i in range(N)] # Draw the N samples from our discrete Laplace sampler
+    if sampler == 0:
+        x = [sample_lap() for i in range(N)]
+    elif sampler == 1:
+        x = [sample_lap1() for i in range(N)]
+    elif sampler == 2:
+        x = [sample_lapO() for i in range(N)]
+    else:
+        print("Invalid sampler")
+        exit(1)
+
     (v,c) = create_histogram(x)
     true_pmf = [pmf_eval(k) for k in v]
 
@@ -162,11 +171,22 @@ where 0 indicates equality and 1 maximal distance. \n\
         plt.show()
     else:  
         print("* Calling the 'test_kolmogorov_dist' function with N=1000 and location parameter eps=4 (without plots):")
-        diff = test_kolmogorov_dist(N)
+        diff = test_kolmogorov_dist(N, sampler=0)
+        diff1 = test_kolmogorov_dist(N, sampler=1)
+        diffO = test_kolmogorov_dist(N, sampler=2)
         if diff < 0.02:
-            print("Test passed!")
-            exit(0)
-        else: 
+            print("DiscreteLaplaceSample Test passed!")
+        else:
             print("Test failed!")
             exit(1)
-
+        if diff1 < 0.02:
+            print("DiscreteLaplaceSample' Test passed!")
+        else:
+            print("Test failed!")
+            exit(1)
+        if diffO < 0.02:
+            print("DiscreteLaplaceSampleOpt Test passed!")
+        else:
+            print("Test failed!")
+            exit(1)
+        exit(0)

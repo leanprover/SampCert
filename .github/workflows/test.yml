@@ -36,5 +36,5 @@ jobs:
       - name: run Discrete Gaussian test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretegaussian.py
 
-      - name: run Discrete Gaussian test
+      - name: run Discrete Laplace test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretelaplace.py
