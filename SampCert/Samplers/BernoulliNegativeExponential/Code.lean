@@ -24,9 +24,6 @@ The following identifiers violate our naming scheme, but are currently necessary
   - ``BernoulliExpNegSample``
 -/
 
-
-noncomputable section
-
 namespace SLang
 
 lemma halve_wf (num : Nat) (den st : PNat) (wf : num ≤ den) :

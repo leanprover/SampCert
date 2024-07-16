@@ -14,8 +14,6 @@ The identifier ``DiscreteGaussianGenSample`` violates our naming scheme, however
 this way for parity with ``DiscreteGaussianGen``.
 -/
 
-noncomputable section
-
 namespace SLang
 
 /--

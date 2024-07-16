@@ -1,6 +1,12 @@
 import SampCert
 import SampCert.Samplers.Uniform.Code
 import SampCert.Samplers.Bernoulli.Code
+import SampCert.Samplers.BernoulliNegativeExponential.Code
+import SampCert.Samplers.Laplace.Code
+import SampCert.Samplers.LaplaceGen.Code
+import SampCert.Samplers.Geometric.Code
+import SampCert.Samplers.Gaussian.Code
+import SampCert.Samplers.GaussianGen.Code
 
 open SLang Std
 
@@ -94,3 +100,21 @@ def main : IO Unit := do
 
   let u : Bool ← run <| BernoulliSample 1 2 (by aesop)
   IO.println s!"Bernoulli sample: {u}"
+
+  let u : Bool ← run <| BernoulliSample 1 100 (by aesop)
+  IO.println s!"Bernoulli sample: {u}"
+
+  let u : Bool ← run <| BernoulliExpNegSample 1 2
+  IO.println s!"Bernoulli NE sample: {u}"
+
+  let u : ℤ ← run <| DiscreteLaplaceSample 1 1
+  IO.println s!"Laplace sample: {u}"
+
+  let u : ℤ ← run <| DiscreteLaplaceGenSample 1 1 10
+  IO.println s!"Laplace Gen sample: {u}"
+
+  let u : ℤ ← run <| DiscreteGaussianSample 1 1
+  IO.println s!"Gaussian sample: {u}"
+
+  let u : ℤ ← run <| DiscreteGaussianGenSample 1 1 10
+  IO.println s!"Gaussian Gen sample: {u}"
