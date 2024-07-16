@@ -9,8 +9,8 @@ import argparse
 
 sampler = SampCert.SLang() 
 
-num = 1
-den = 4
+num = 4
+den = 1
 eps = float(num) / float(den)
 N = 10000
 
@@ -65,7 +65,7 @@ def pmf_eval(k):
     """Takes as input an integer kand returns the value of the
     discrete Laplace pmf evaluated at k.
     """
-    return np.exp(-1.0 * eps * abs(k)) * (np.exp(eps) - 1.0) / (np.exp(eps) + 1.0)
+    return np.exp(float(abs(k)) * (-1.0) / eps ) * (np.exp(1/eps) - 1.0) / (np.exp(1/eps) + 1.0)
 
 def cdf_eval(k):
     """Takes as input an integer k, and returns the value of the
@@ -74,7 +74,7 @@ def cdf_eval(k):
     # acc starts as the CDF at x = 0
     acc = 1.0/2.0 + pmf_eval(0) / 2.0
     if k < 0:
-        for i in range(1, (-k)+1):
+        for i in range(0, -k):
             acc -= pmf_eval(i)
     elif k > 0:
         for i in range(1, k+1):
@@ -94,7 +94,6 @@ def test_kolmogorov_dist(N, with_plots=False):
     Note that this is a random variable, as the empirical CDF depends on the sample drawn."""
     x = [sample_lap() for i in range(N)] # Draw the N samples from our discrete Laplace sampler
     (v,c) = create_histogram(x)
-    print(v)
     true_pmf = [pmf_eval(k) for k in v]
 
     # Compute the empirical CDF (from the histogram) and the true CDF evaluated at those points
@@ -135,12 +134,6 @@ The K-S statistic is the Kolmogorov distance (i.e., L_inf distance between \n\
 CDF) between the empirical and true distributions. It is a value in [0,1], \n\
 where 0 indicates equality and 1 maximal distance. \n\
 =========================================================================")
-
-    print("\n")
-    print(eps)
-    print(pmf_eval(0))
-    print(pmf_eval(1))
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', action="store_true", default=False)
     args = parser.parse_args()
@@ -169,7 +162,7 @@ where 0 indicates equality and 1 maximal distance. \n\
         plt.show()
     else:  
         print("* Calling the 'test_kolmogorov_dist' function with N=1000 and location parameter eps=4 (without plots):")
-        diff = test_kolmogorov_dist(N,True)
+        diff = test_kolmogorov_dist(N)
         if diff < 0.02:
             print("Test passed!")
             exit(0)
