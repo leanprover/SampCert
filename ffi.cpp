@@ -69,3 +69,14 @@ extern "C" lean_object * my_run(lean_object * a) {
     lean_object * res = lean_io_result_mk_ok(comp);
     return res;
 } 
+
+extern "C" uint32_t dirty_io_get(lean_object * a) {
+    lean_object * r1 = lean_apply_1(a,lean_box(0));
+    lean_object * r2 = lean_io_result_get_value(r1);
+    if (lean_is_scalar(r2)) {
+        size_t r3 = lean_unbox(r2);
+        return r3;
+    } else {
+        lean_internal_panic("dirty_io_get: value not scalar");
+    }
+}

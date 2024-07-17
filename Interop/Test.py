@@ -5,13 +5,14 @@ CDLL("/Users/trjohnb/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/l
 lean = CDLL("/Users/trjohnb/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libleanshared.dylib", RTLD_GLOBAL)
 
 # import-graph uses some Lake definitions that are available in the lake library, but 
-# Lean does produce a dynamic version
+# Lean does not produce a dynamic version
 # One needs to create the library
 # On Mac, it looks like: #clang++ -fpic -shared -Wl,-force_load libLake.a -o libLake_shared.dylib -L . -lleanshared
-# If you are in the lib directory of your toolchain
+# If you are in the lib/lean directory of your toolchain
 CDLL("/Users/trjohnb/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libLake_shared.dylib", RTLD_GLOBAL)
 
 # Loading Mathlic and its dependencies
+# To create the dynamic library, for each one of them, run lake build xxx:shared
 CDLL("/Users/trjohnb/Code/Lean/SampCert/.lake/build/lib/libleanffi.dylib", RTLD_GLOBAL) 
 CDLL("/Users/trjohnb/Code/Lean/SampCert/.lake/packages/cli/.lake/build/lib/libCli.dylib", RTLD_GLOBAL)
 CDLL("/Users/trjohnb/Code/Lean/SampCert/.lake/packages/batteries/.lake/build/lib/libBatteries.dylib", RTLD_GLOBAL)
@@ -40,8 +41,12 @@ lean.lean_io_mark_end_initialization()
 
 # Initialization complete
 
-res = samplers.my_test(c_uint32(42))
+r1 = samplers.my_test(c_uint32(42))
 
-print(res)
+print(r1)
 
-samplers.Discrete_Gaussian_Sample(c_uint32(40),c_uint32(1))
+samplers.dgs_print(c_uint32(40),c_uint32(1))
+
+r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
+
+print(r2)
