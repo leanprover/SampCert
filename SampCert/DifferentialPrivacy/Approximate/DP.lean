@@ -9,6 +9,7 @@ import SampCert.DifferentialPrivacy.Neighbours
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
+import SampCert.Util.Log
 
 noncomputable section
 
@@ -121,6 +122,112 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   replace h := h
 
 
-  sorry
+
+  -- Privacy loss random variable
+  -- Why isn't elog importing?
+  -- #check elog
+  let z (x : U) : ENNReal := (fun _ => 0) ((m l₁ x) / (m l₂ x))
+
+  -- Separate the indicator function
+  conv =>
+    enter [1, 1, a]
+    rw [<- mul_one ((m l₁) a)]
+    rw [<- mul_zero ((m l₁) a)]
+    rw [<- mul_ite]
+
+
+  -- Multiply by indicator function for z
+  have HK (x : U) : (1 : ENNReal) = (if (z x ≤ ENNReal.ofReal ε) then 1 else 0) + (if (z x > ENNReal.ofReal ε) then 1 else 0) := by
+    split
+    · simp
+      rw [ite_eq_right_iff.mpr]
+      · simp
+      · intro
+        exfalso
+        sorry
+    · simp
+      rw [ite_eq_left_iff.mpr]
+      simp
+      apply lt_of_not_ge
+      trivial
+  conv =>
+    enter [1, 1, a]
+    rw [<- mul_one (_ * _)]
+    rw [mul_assoc]
+    enter [2, 2]
+    rw [HK a]
+  clear HK
+
+  -- Distribute
+  conv =>
+    enter [1, 1, a]
+    rw [mul_add]
+    rw [mul_add]
+  rw [ENNReal.tsum_add]
+
+  -- Bound right term above
+  have HB :
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a > ENNReal.ofReal ε then 1 else 0) ≤
+      ∑' (a : U), (m l₁) a * (if z a > ENNReal.ofReal ε then 1 else 0) := by
+    apply ENNReal.tsum_le_tsum
+    intro x
+    apply mul_le_mul'
+    · rfl
+    split
+    · simp
+    · simp
+  apply (le_trans (add_le_add_left HB _))
+  clear HB
+
+  -- Don't actually need this (yet)
+  -- -- Later, we need the sum to be finite. Can we reduce?
+  -- cases (Classical.em (∑' (a : U), ((m l₁) a) * (if a ∈ S then 1 else 0) = ⊤))
+  -- · rename_i Ht
+  --   -- Not sure if this is provable but we might need to restruc this to PMFs anyways
+  --   sorry
+  -- rename_i Hnt
+
+  -- Bound right term above
+  -- FIXME: Refactor to lemma
+  have HMarkov : (∑' (a : U), (m l₁) a * if z a > ENNReal.ofReal ε then 1 else 0) ≤ δ := by
+    sorry
+  apply (le_trans (add_le_add_left HMarkov _))
+  clear HMarkov
+
+  -- -- Bound left term above (err.. no)
+  -- have HB :
+  --     ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≤ ENNReal.ofReal ε then 1 else 0) ≤
+  --     ∑' (a : U), (m l₁) a *  (if a ∈ S then 1 else 0) := by
+  --   apply ENNReal.tsum_le_tsum
+  --   intro x
+  --   apply mul_le_mul'
+  --   · rfl
+  --   rw [mul_comm]
+  --   split
+  --   · simp
+  --   · simp
+  -- apply (le_trans (add_le_add_right HB _))
+  -- clear HB
+
+  -- Bound left term above
+  have HDP :
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≤ ENNReal.ofReal ε then 1 else 0) ≤
+      ENNReal.ofReal (Real.exp ε) * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
+    -- How? Must come from a choice of α with the RD bound
+    sorry
+  apply (le_trans (add_le_add_right HDP _))
+  clear HDP
+
+  -- Conclude by simplification
+  rw [add_comm]
+  apply add_le_add_left
+  apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
+  case G1 =>
+    -- Doesn't work for ε = 0. Can I get this bound separately in this case?
+    sorry
+  case G2 => exact ENNReal.ofReal_ne_top
+  apply ENNReal.tsum_le_tsum
+  intro a
+  split <;> simp
 
 end SLang
