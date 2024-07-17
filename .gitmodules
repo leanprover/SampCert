@@ -1,0 +1,6 @@
+[submodule "Tests/Tests"]
+	path = Tests/Tests
+	url = https://github.com/IBM/discrete-gaussian-differential-privacy
+[submodule "Tests/IBM"]
+	path = Tests/IBM
+	url = https://github.com/IBM/discrete-gaussian-differential-privacy
