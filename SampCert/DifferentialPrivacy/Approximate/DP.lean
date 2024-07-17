@@ -121,7 +121,7 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   intros δ l₁ l₂ neighs S
   replace h := h
 
-
+  let α : Real := sorry
 
   -- Privacy loss random variable
   -- Why isn't elog importing?
@@ -190,7 +190,27 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   -- Bound right term above
   -- FIXME: Refactor to lemma
   have HMarkov : (∑' (a : U), (m l₁) a * if z a > ENNReal.ofReal ε then 1 else 0) ≤ δ := by
-    sorry
+
+    -- Maybe ask if there's an easier way to make a discrete measure tomorrow?
+
+    -- Make m l₁ into a measure on the discrete space (don't need it to be a PMF)
+    let m_meas : @MeasureTheory.Measure U ⊤ := by
+      -- #check instDiscreteMeasurableSpace
+      apply @MeasureTheory.Measure.mk U ⊤ ?G1 ?G2 ?G3
+      case G1 =>
+        #check @MeasureTheory.OuterMeasure.mk U (fun S => sorry)
+        sorry
+      case G2 => sorry
+      case G3 => sorry
+    have H :=
+      @MeasureTheory.mul_meas_ge_le_lintegral₀ _ ⊤ m_meas
+        (fun (x : U) => ENNReal.ofReal (Real.exp ((α - 1) * ENNReal.toReal (z x))))
+        ?HAEmeasurable
+        (ENNReal.ofReal (Real.exp ((α - 1) * ε)))
+    case HAEmeasurable =>
+      sorry
+
+    all_goals sorry
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
