@@ -17,9 +17,6 @@ The following identifiers violate our naming scheme, but are currently necessary
   - ``DiscreteGaussianSample``
 -/
 
-
-noncomputable section
-
 namespace SLang
 
 /--

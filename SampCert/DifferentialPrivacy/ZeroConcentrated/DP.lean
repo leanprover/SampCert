@@ -31,26 +31,36 @@ Inequality defining ``(ε^2)/2``-zCDP.
 All ``ε``-DP mechanisms satisfy this bound (though not all mechanisms
 satisfying this bound are ``ε``-DP).
 -/
-def zCDPBound (q : List T → SLang U) (ε : ℝ) : Prop :=
+def zCDPBound (q : List T → PMF U) (ε : ℝ) : Prop :=
   ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
-  RenyiDivergence (q l₁) (q l₂) α ≤ (1/2) * ε ^ 2 * α
-
-def NonTopNQ (nq : List T → SLang U) :=
-  ∀ l : List T, ∀ n : U, nq l n ≠ ⊤
+  RenyiDivergence (q l₁) (q l₂) α ≤ ENNReal.ofReal ((1/2) * ε ^ 2 * α)
 
 /--
-The Renyi divergence between neighbouring elements of the output of ``nq`` is finite.
+All neighbouring queries are absolutely continuous
 -/
-def NonTopRDNQ (nq : List T → SLang U) : Prop :=
-  ∀ α : ℝ, 1 < α → ∀ l₁ l₂ : List T, Neighbour l₁ l₂ →
-  ∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α) ≠ ⊤
+def ACNeighbour (p : List T -> PMF  U) : Prop := ∀ l₁ l₂, Neighbour l₁ l₂ -> AbsCts (p l₁) (p l₂)
 
 /--
 The mechanism ``q`` is ``(ε^2)/2``-zCDP
 -/
-def zCDP (q : List T → SLang U) (ε : ℝ) : Prop :=
-    zCDPBound q ε
-  ∧ NonZeroNQ q
-  ∧ NonTopSum q
-  ∧ NonTopNQ q
-  ∧ NonTopRDNQ q
+def zCDP (q : List T → PMF U) (ε : NNReal) : Prop := ACNeighbour q ∧ zCDPBound q ε
+
+lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε₂) (Hε : zCDP m ε₁) : zCDP m ε₂ := by
+  rcases Hε with ⟨ Hac , Hε ⟩
+  rw [zCDP] at *
+  apply And.intro
+  · assumption
+  · rw [zCDPBound] at *
+    intro α Hα l₁ l₂ N
+    apply (@le_trans _ _ _ (ENNReal.ofReal (1 / 2 * ↑ε₁ ^ 2 * α)) _ (Hε α Hα l₁ l₂ N))
+    apply ENNReal.coe_mono
+    refine (Real.toNNReal_le_toNNReal_iff ?a.hp).mpr ?a.a
+    · apply mul_nonneg
+      · apply mul_nonneg
+        · simp
+        · simp
+      · linarith
+    · repeat rw [mul_assoc]
+      apply (mul_le_mul_iff_of_pos_left (by simp)).mpr
+      apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr
+      apply pow_le_pow_left' H (OfNat.ofNat 2)

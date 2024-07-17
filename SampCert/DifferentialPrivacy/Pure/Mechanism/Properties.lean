@@ -7,32 +7,24 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.Pure.Mechanism.Code
 import SampCert.Samplers.LaplaceGen.Basic
 
+/-!
+# Properties of ``privNoisedQueryPure``
+
+This file proves pure differential privacy for ``privNoisedQueryPure``.
+-/
+
 noncomputable section
 
 open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-theorem NoisedQuery_NonZeroNQPureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) :
-  NonZeroNQ (privNoisedQueryPure query Δ ε₁ ε₂) := by
-  simp [NonZeroNQ, privNoisedQueryPure]
-  intro l n
-  apply Real.mul_pos
-  . rw [_root_.div_pos_iff]
-    left
-    constructor
-    . aesop
-    . have A : 0 < rexp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) := by
-        apply exp_pos
-      apply add_pos A Real.zero_lt_one
-  . apply exp_pos
-
-theorem natAbs_to_abs (a b : ℤ) :
+lemma natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
   rw [Int.cast_natAbs]
   simp only [cast_abs, Int.cast_sub]
 
-theorem normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
+lemma normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
   (rexp (ε₁ / (Δ * ε₂)) - 1) / (rexp (ε₁ / (Δ * ε₂)) + 1) ≠ 0 := by
   field_simp
   intro h
@@ -47,12 +39,17 @@ theorem normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
   rw [h] at C
   contradiction
 
-theorem NoisedQuery_PureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+/--
+Differential privacy bound for a ``privNoisedQueryPure``
+-/
+theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   DP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x
   simp [privNoisedQueryPure]
+  simp [DiscreteLaplaceGenSamplePMF]
+  simp [DFunLike.coe, PMF.instFunLike]
   rw [← ENNReal.ofReal_div_of_pos]
   . apply ofReal_le_ofReal
     rw [division_def]
@@ -117,12 +114,14 @@ theorem NoisedQuery_PureDP' (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bo
           exact (add_lt_add_iff_right 1).mpr A
     . apply exp_pos
 
-theorem NoisedQuery_PureDP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
-  PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
+
+/--
+Laplace noising mechanism ``privNoisedQueryPure`` produces a pure ``ε₁/ε₂``-DP mechanism from a Δ-sensitive query.
+-/
+theorem privNoisedQueryPure_DP (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
+  PureDP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : NNReal) / ε₂) := by
   simp [PureDP]
-  constructor
-  . apply NoisedQuery_PureDP'
-    apply bounded_sensitivity
-  . apply NoisedQuery_NonZeroNQPureDP
+  apply privNoisedQueryPure_DP_bound
+  apply bounded_sensitivity
 
 end SLang

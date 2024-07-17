@@ -20,10 +20,8 @@ def DP (m : Mechanism T U) (ε : ℝ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ S : Set U,
   (∑' x : U, if x ∈ S then m l₁ x else 0) / (∑' x : U, if x ∈ S then m l₂ x else 0) ≤ ENNReal.ofReal (Real.exp ε)
 
-def PureDP (m : Mechanism T U) (ε : ℝ) : Prop :=
+def PureDP (m : Mechanism T U) (ε : NNReal) : Prop :=
   DP m ε
- ∧ NonZeroNQ m
- -- ∧ NonTopSum m
 
 def DP_singleton (m : Mechanism T U) (ε : ℝ) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ x : U,
@@ -76,5 +74,17 @@ theorem event_eq_singleton (m : Mechanism T U) (ε : ℝ) :
   constructor
   . apply event_to_singleton
   . apply singleton_to_event
+
+lemma PureDP_mono {m : Mechanism T U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε₂) (Hε : PureDP m ε₁) : PureDP m ε₂ := by
+  rw [PureDP] at *
+  apply (event_eq_singleton _ _).mpr
+  apply (event_eq_singleton _ _).mp at Hε
+  simp [DP_singleton] at *
+  intro l₁ l₂ N x
+  apply (@le_trans _ _ _ (ENNReal.ofReal (Real.exp ↑ε₁)) _ (Hε l₁ l₂ N x))
+  apply ENNReal.coe_mono
+  refine (Real.toNNReal_le_toNNReal_iff ?a.hp).mpr ?a.a
+  · exact Real.exp_nonneg ↑ε₂
+  · exact Real.exp_le_exp.mpr H
 
 end SLang

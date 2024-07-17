@@ -22,8 +22,6 @@ space should be interpreted as discrete.
 
 open Classical Nat ENNReal PMF
 
-noncomputable section
-
 /--
 The monad of ``SLang`` values
 -/
@@ -64,11 +62,13 @@ def probZero : SLang T := λ _ : T => 0
 /--
 The Dirac distribution as a ``SLang``.
 -/
+@[extern "prob_Pure"]
 def probPure (a : T) : SLang T := fun a' => if a' = a then 1 else 0
 
 /--
 Monadic bind for ``SLang`` values.
 -/
+@[extern "prob_Bind"]
 def probBind (p : SLang T) (f : T → SLang U) : SLang U :=
   fun b => ∑' a, p a * f a b
 
@@ -81,9 +81,9 @@ instance : Monad SLang where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
 -- MARKUSDE: I would like to change this to ``probUniformP2`` once it doesn't break extraction.
+@[extern "prob_UniformP2"]
 def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
   toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
-  --((PMF.uniformOfFintype (Fin (2 ^ (log 2 n)))) : PMF ℕ).1
 
 /--
 ``SLang`` functional which executes ``body`` only when ``cond`` is ``false``.
@@ -108,14 +108,19 @@ def probWhileCut (cond : T → Bool) (body : T → SLang T) (n : Nat) (a : T) : 
 /--
 ``SLang`` value for an unbounded iteration of a loop.
 -/
+@[extern "prob_While"]
 def probWhile (cond : T → Bool) (body : T → SLang T) (init : T) : SLang T :=
   fun x => ⨆ (i : ℕ), (probWhileCut cond body i init x)
 
 /--
 ``SLang`` value which rejects samples from ``body`` until they satisfy ``cond``.
 -/
+--@[extern "prob_Until"]
 def probUntil (body : SLang T) (cond : T → Bool) : SLang T := do
   let v ← body
   probWhile (λ v : T => ¬ cond v) (λ _ : T => body) v
+
+@[extern "my_run"]
+opaque run (c : SLang T) : IO T
 
 end SLang
