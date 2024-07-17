@@ -52,7 +52,7 @@ becomes more efficient than DiscreteLaplaceSample'. \n\
 
     # Number of attempts for each value of epsilon:
     warmup_attempts = 100
-    measured_attempts = 2000
+    measured_attempts = 1000
     num_attempts = warmup_attempts + measured_attempts
 
     for num in tqdm.tqdm(range(1, num_eps)):
@@ -240,5 +240,5 @@ Benchmark: Discrete Gaussians \n\
     plt.savefig(filename)
 
 if __name__ == "__main__":
-    # laplace_benchmarks()
+    laplace_benchmarks()
     gaussian_benchmarks()
