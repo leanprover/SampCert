@@ -244,22 +244,21 @@ lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := b
   apply ofReal_le_ofReal
   assumption
 
--- True, and provable, but unused
--- lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
---   all_goals case_EReal_isENNReal w
---   all_goals case_EReal_isENNReal z
---   · exfalso
---     rename_i Hw' _
---     -- 0 <= w < 0
---     sorry
---   · exfalso
---     rename_i r Hw' Hr
---     -- 0 <= w < 0
---     sorry
---   · exfalso
---     rename_i r Hr Hz'
---     -- 0 <= w <= z < 0
---     sorry
+lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
+  all_goals case_EReal_isENNReal w
+  all_goals case_EReal_isENNReal z
+  · exfalso
+    rename_i Hw' _
+    -- 0 <= w < 0
+    sorry
+  · exfalso
+    rename_i r Hw' Hr
+    -- 0 <= w < 0
+    sorry
+  · exfalso
+    rename_i r Hr Hz'
+    -- 0 <= w <= z < 0
+    sorry
 
 
 

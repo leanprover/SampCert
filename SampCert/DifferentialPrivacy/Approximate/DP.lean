@@ -95,43 +95,47 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   simp [DP']
   intros δ l₁ l₂ neighs S
   replace h := h l₁ l₂ neighs S
-  cases (Classical.em ((∑' (x : U), if x ∈ S then (m l₂) x else 0) = ⊤))
-  · rename_i HT
-    rw [HT]
-    simp_all
-    rw [ENNReal.mul_top']
-    split <;> simp
-    -- Edge case: 0-DP with SLang term that doens't normalize
-    -- Does the same thing break the singleton event proof?
-    sorry
-  · rename_i HNT
-    rw [ENNReal.div_le_iff_le_mul ?G1 ?G2] at h
-    case G1 =>
-      right
-      simp
-    case G2 =>
-      left
-      apply HNT
-    apply le_trans h
+  rw [ENNReal.div_le_iff_le_mul ?G1 ?G2] at h
+  case G1 =>
+    right
     simp
+  case G2 =>
+    left
+    have H1 : (∑' (x : U), if x ∈ S then (m l₂) x else 0) ≤ (∑' (x : U), m l₂ x) := by
+      apply ENNReal.tsum_le_tsum
+      intro u
+      split <;> simp
+    rw [PMF.tsum_coe] at H1
+    intro HK
+    simp_all
+  apply le_trans h
+  simp
 
--- set_option pp.coercions false
+set_option pp.coercions false
 
 
-theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε) :
+theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
   ∀ δ : NNReal, DP' m ε δ := by
   simp [zCDPBound] at h
   simp [DP']
   intros δ l₁ l₂ neighs S
-  replace h := h
 
-  let α : Real := sorry
+  -- Different value of α from the paper, since our definition of ε-zCDP is their (1/2)ε^2-zCDP
+  let α : Real := (2 * ε + ε ^ 2 + ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) ^ (1 / 2)) / (2 * ε ^ 2)
+  have Hα : (1 < α) := by
+    sorry
+  have Hα' : (0 < α.toEReal - 1) := by sorry
+  have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε)) * ↑δ := by
+    sorry
+
+
 
   -- Privacy loss random variable
   -- Move to RenyiDivergence file?
   let z (x : U) : EReal := ENNReal.elog ((m l₁ x) / (m l₂ x))
   have Hz (x : U) : z x = ENNReal.elog ((m l₁ x) / (m l₂ x)) := by rfl
-  -- Instead of using an outer measure, I'll use a sum of Dirac measures, so we can turn the lintegral into a sum
+  -- Instead of using an outer measure (like in PMF.toMeasure) I'll use a sum of Dirac measures,
+  -- so we can turn the lintegral into a sum. The other wya might work too.
   let m1_measure_elt (u : U) : @MeasureTheory.Measure U ⊤ := m l₁ u • @MeasureTheory.Measure.dirac U ⊤ u
   let m1_measure : @MeasureTheory.Measure U ⊤ := MeasureTheory.Measure.sum m1_measure_elt
   have m1_measure_lintegral_sum (f : U -> ENNReal) :
@@ -166,7 +170,10 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
       · simp
       · intro
         exfalso
-        sorry
+        rename_i h1 h2
+        simp at h1
+        have C : z x < z x := by exact gt_of_ge_of_gt h2 h1
+        simp at C
     · simp
       rw [ite_eq_left_iff.mpr]
       simp
@@ -226,21 +233,27 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
           apply HK2
           simp only [ge_iff_le]
           have HK1' : ((α - 1) * ε ≤ (↑α - 1) * z u) := by exact ENNReal.eexp_mono_le.mpr HK1
-          have HK1'' : ↑ε ≤ z u  := by sorry
+          have HK1'' : ↑ε ≤ z u  := by
+            apply ENNReal.ereal_smul_le_left (α - 1) ?SC1 ?SC2 HK1'
+            case SC1 => apply Hα'
+            case SC2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
           simp
-          rw [max_eq_left ?G1]
-          case G1 =>
-            -- Assumption
-            sorry
+          rw [max_eq_left Hε]
           trivial
       · split
         · exfalso
           rename_i HK1 HK2
           apply HK1
           rw [ge_iff_le] at HK2
-          apply ENNReal.eexp_mono_le.mp at HK2
-          -- Doable
-          sorry
+          -- apply ENNReal.eexp_mono_le.mp at HK2
+          rw [<- ENNReal.eexp_ofReal]
+          apply ENNReal.eexp_mono_le.mp
+          simp
+          refine ENNReal.ereal_le_smul_left (α.toEReal - OfNat.ofNat 1) Hα' ?G1 ?G2
+          case G1 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+          simp only [EReal.coe_ennreal_ofReal] at HK2
+          rw [max_eq_left Hε] at HK2
+          trivial
         · rfl
     conv at HM =>
       enter [1, 2, 1, u, 2]
@@ -261,16 +274,50 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
     clear HM
 
     -- Rewrite z and simplify
-    have SC1 : OfNat.ofNat 0 ≤ α.toEReal - OfNat.ofNat 1 := by sorry
     conv =>
       enter [1, 1, u]
       rw [Hz]
-      rw [ENNReal.eexp_mul_nonneg SC1]
+      rw [ENNReal.eexp_mul_nonneg (le_of_lt Hα')]
       simp
 
     -- Apply Renyi divergence inequality
+    have h := h α Hα l₁ l₂ neighs
+    rw [RenyiDivergence] at h
+    apply (le_trans _ HαSpecial)
 
-    sorry
+    have H (u : U) : (m l₁) u * ((m l₁) u / (m l₂) u) ^ (α.toEReal - 1).toReal =
+                     ((m l₁) u) ^ α * ((m l₂) u) ^ (1 - α) := by sorry
+    conv =>
+      enter [1, 1, u]
+      rw [H u]
+    clear H
+    rw [<- RenyiDivergence_def_exp _ _ Hα]
+    apply ENNReal.eexp_mono_le.mp
+    refine ENNReal.ereal_le_smul_left (↑α - 1) ?Hr1 ?Hr2 ?H
+    case Hr1 => exact Hα'
+    case Hr2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    rw [<- ENNReal.ofEReal_ofReal_toENNReal] at h
+    apply ENNReal.ofEReal_le_mono_conv_nonneg at h
+    · apply (le_trans h)
+      rw [EReal.coe_mul]
+      rw [ENNReal.ofReal_mul ?G1]
+      case G1 => sorry
+      rw [ENNReal.ofReal_mul ?G1]
+      case G1 => sorry
+      rw [EReal.coe_mul]
+      simp
+      apply Eq.le
+      congr 1
+      · congr 1
+        rw [← EReal.coe_pow]
+        congr
+        rw [max_eq_left]
+        exact sq_nonneg ε
+      · congr 1
+        rw [max_eq_left]
+        linarith
+    · apply @RenyiDivergence_def_nonneg U ⊤ ?G1 _ (m l₁) (m l₂) (Hm l₁ l₂ neighs) _ Hα
+      sorry
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
@@ -282,6 +329,15 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
     rw [<- ENNReal.tsum_mul_left]
     apply ENNReal.tsum_le_tsum
     intro u
+
+    -- Eliminate edge case by absolute continuity
+    cases (Classical.em ((m l₂) u = 0))
+    · have Hz : (m l₁ u = 0) := by
+        rename_i h
+        exact Hm l₁ l₂ neighs u h
+      simp_all
+    rename_i hnz
+
     conv =>
       congr
       · rw [mul_comm]
@@ -298,20 +354,12 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
     apply ENNReal.eexp_mono_lt.mp at H
     simp only [ENNReal.elog_eexp] at H
     rw [mul_comm]
-    apply (ENNReal.div_le_iff ?G1 ?G2).mp
-    case G1 =>
-      -- Absolute continuity
-      sorry
-    case G2 =>
-      -- Can split this off by cases first
-      sorry
-
-    -- Coercions lemma for eexp (that I need to do for the other lemma anyways?)
+    cases (Classical.em (DFunLike.coe (m l₂) u = ⊤))
+    · simp_all
+    rename_i Hnt
+    apply (ENNReal.div_le_iff hnz Hnt).mp
     simp at H
-    rw [max_eq_left ?SC1] at H
-    case SC1 =>
-      -- epsilon ≥ 0
-      sorry
+    rw [max_eq_left Hε] at H
     exact le_of_lt H
   apply (le_trans (add_le_add_right HDP _))
   clear HDP
