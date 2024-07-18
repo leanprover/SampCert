@@ -180,12 +180,12 @@ where 0 indicates equality and 1 maximal distance. \n\
             print("Test failed!")
             exit(1)
         if diff1 < 0.02:
-            print("DiscreteLaplaceSample' Test passed!")
+            print("DiscreteLaplaceSampleOptimized Test passed!")
         else:
             print("Test failed!")
             exit(1)
         if diffO < 0.02:
-            print("DiscreteLaplaceSampleOpt Test passed!")
+            print("DiscreteLaplaceSampleMixed Test passed!")
         else:
             print("Test failed!")
             exit(1)
