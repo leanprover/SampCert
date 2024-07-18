@@ -29,66 +29,6 @@ def DP' (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
 def ApproximateDP (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
   DP' m ε δ
 
--- def ApproximateDP_singleton (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
---   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ x : U,
---   (m l₁ x) ≤ δ + ENNReal.ofReal (Real.exp ε) * (m l₂ x)
---
--- theorem ApproximateDP_singleton_to_event (m : Mechanism T U) (ε : ℝ) (δ : NNReal) (h : ApproximateDP_singleton m ε δ) :
---   ApproximateDP m ε δ := by
---   simp [ApproximateDP]
---   simp [ApproximateDP_singleton] at h
---   intros l₁ l₂ h1 S
---   replace h1 := h l₁ l₂ h1
---   have A : ∀ (x : U), (if x ∈ S then m l₁ x else 0)  ≤ δ + ENNReal.ofReal ε.exp * (if x ∈ S then m l₂ x else 0) := by
---     aesop
---   have B : ∀ b : ENNReal, b ≠ 0 ∨ ENNReal.ofReal ε.exp ≠ ⊤ := by
---     aesop
---   have C : ∀ b : ENNReal, b ≠ ⊤ ∨ ENNReal.ofReal ε.exp ≠ 0 := by
---     intro b
---     right
---     simp
---     exact Real.exp_pos ε
---   have E := fun x : U => (A x)
---   have F := ENNReal.tsum_le_tsum E
---   apply le_trans F
---   -- I'm doubtful that that this is true when |U| > 1
---   sorry
---   -- rw [ENNReal.tsum_mul_left] at F
---   -- rw [← ENNReal.div_le_iff_le_mul] at F
---   -- . clear h1 A B C D
---   --   trivial
---   -- . aesop
---   -- . right
---   --   simp
---   --   exact Real.exp_pos ε
---
--- theorem approximate_event_to_singleton (m : Mechanism T U) (ε : ℝ) (δ : NNReal) (h : ApproximateDP m ε δ) :
---   ApproximateDP_singleton m ε δ := by
---   sorry
---   -- simp [DP_singleton]
---   -- simp [DP] at h
---   -- intros l₁ l₂ h1 x
---   -- replace h1 := h l₁ l₂ h1 {x}
---   -- simp at h1
---   -- rw [tsum_eq_single x] at h1
---   -- . simp at h1
---   --   rw [tsum_eq_single x] at h1
---   --   . simp at h1
---   --     trivial
---   --   . aesop
---   -- . aesop
---
--- theorem approximate_event_eq_singleton (m : Mechanism T U) (ε : ℝ) (δ : NNReal) :
---   ApproximateDP m ε δ ↔ ApproximateDP_singleton m ε δ := by
---   sorry
---   -- constructor
---   -- . apply event_to_singleton
---   -- . apply singleton_to_event
-
-
-
-
-
 theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   ∀ δ : NNReal, DP' m ε δ := by
   simp [DP] at h
@@ -301,9 +241,12 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     · apply (le_trans h)
       rw [EReal.coe_mul]
       rw [ENNReal.ofReal_mul ?G1]
-      case G1 => sorry
+      case G1 =>
+        apply mul_nonneg
+        · simp
+        · exact sq_nonneg ε
       rw [ENNReal.ofReal_mul ?G1]
-      case G1 => sorry
+      case G1 => simp
       rw [EReal.coe_mul]
       simp
       apply Eq.le
@@ -317,7 +260,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
         rw [max_eq_left]
         linarith
     · apply @RenyiDivergence_def_nonneg U ⊤ ?G1 _ (m l₁) (m l₂) (Hm l₁ l₂ neighs) _ Hα
-      sorry
+      infer_instance
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
