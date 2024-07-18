@@ -244,22 +244,29 @@ lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := b
   apply ofReal_le_ofReal
   assumption
 
-lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
+lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hz : 0 ≤ z) (Hle : ofEReal w ≤ ofEReal z) : w ≤ z := by
   all_goals case_EReal_isENNReal w
   all_goals case_EReal_isENNReal z
   · exfalso
     rename_i Hw' _
-    -- 0 <= w < 0
-    sorry
+    have C := lt_of_le_of_lt Hw Hw'
+    simp at C
   · exfalso
     rename_i r Hw' Hr
-    -- 0 <= w < 0
-    sorry
+    have C := lt_of_le_of_lt Hw Hw'
+    simp at C
   · exfalso
     rename_i r Hr Hz'
-    -- 0 <= w <= z < 0
-    sorry
-
+    have H1 : 0 ≤ w := by exact le_of_le_of_eq Hw (id (Eq.symm Hr))
+    have H2 : w ≤ z := by
+      have H2' : r.toEReal <= (ofEReal z).toEReal := by exact coe_ennreal_le_coe_ennreal_iff.mpr Hle
+      rw [Hr]
+      rw [toEReal_ofENNReal_nonneg] at H2'
+      · apply H2'
+      · exact Hz
+    have H3 := le_trans H1 H2
+    have C := lt_of_le_of_lt H3 Hz'
+    simp at C
 
 
  @[simp]
@@ -584,35 +591,38 @@ lemma eexp_mono_le {w z : EReal} : (w <= z) <-> eexp w <= eexp z := by
       assumption
 
 
-lemma eexp_mul_nonneg {r w : EReal} (HR : 0 ≤ r) : eexp (r * w) = (eexp w) ^ (EReal.toReal r) := by
-  case_EReal_isReal w
-  -- Provable
-  all_goals sorry
-  -- · rename_i h1
-  --   rw [zero_rpow_def]
-  --   split
-  --   · simp [coe_mul_bot_of_pos (by trivial)]
-  --   · split
-  --     · simp_all
-  --     · rw [coe_mul_bot_of_neg ?G1]
-  --       case G1 =>sorry
-  --       simp
-  -- · rw [top_rpow_def]
-  --   split
-  --   · simp [coe_mul_top_of_pos (by trivial)]
-  --   · split
-  --     · simp_all
-  --     · rw [coe_mul_top_of_neg sorry]
-  --       simp
-  -- · rw [← EReal.coe_mul]
-  --   rw [eexp_ofReal]
-  --   rw [mul_comm]
-  --   rw [Real.exp_mul]
-  --   rw [ENNReal.ofReal_rpow_of_nonneg]
-  --   · apply exp_nonneg
-  --   · sorry
-
-
+lemma eexp_mul_nonneg {r w : EReal} (HR : 0 ≤ r) (HR2 : r ≠ ⊤) : eexp (r * w) = (eexp w) ^ (EReal.toReal r) := by
+  case_EReal_isReal w <;>
+  case_EReal_isReal r
+  · rw [zero_rpow_def]
+    split
+    · simp [coe_mul_bot_of_pos (by trivial)]
+    · split
+      · simp_all
+      · rw [coe_mul_bot_of_neg ?G1]
+        case G1 =>
+          cases (LE.le.lt_or_eq HR)
+          · trivial
+          · simp_all
+        simp
+  · rw [top_rpow_def]
+    split
+    · simp [coe_mul_top_of_pos (by trivial)]
+    · split
+      · simp_all
+      · rw [coe_mul_top_of_neg ?G1]
+        case G1 =>
+          cases (LE.le.lt_or_eq HR)
+          · trivial
+          · simp_all
+        simp
+  · rw [← EReal.coe_mul]
+    rw [eexp_ofReal]
+    rw [mul_comm]
+    rw [Real.exp_mul]
+    rw [ENNReal.ofReal_rpow_of_nonneg]
+    · apply exp_nonneg
+    · trivial
 
 
 lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by

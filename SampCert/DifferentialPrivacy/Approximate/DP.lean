@@ -64,7 +64,10 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
   let α : Real := (2 * ε + ε ^ 2 + ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) ^ (1 / 2)) / (2 * ε ^ 2)
   have Hα : (1 < α) := by
     sorry
-  have Hα' : (0 < α.toEReal - 1) := by sorry
+  have Hα' : (0 < α.toEReal - 1) := by
+    have Hα1 : 1 < α.toEReal := by
+      sorry
+    sorry
   have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε)) * ↑δ := by
     sorry
 
@@ -217,7 +220,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     conv =>
       enter [1, 1, u]
       rw [Hz]
-      rw [ENNReal.eexp_mul_nonneg (le_of_lt Hα')]
+      rw [ENNReal.eexp_mul_nonneg (le_of_lt Hα') (by exact Ne.symm (ne_of_beq_false rfl))]
       simp
 
     -- Apply Renyi divergence inequality
@@ -261,6 +264,16 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
         linarith
     · apply @RenyiDivergence_def_nonneg U ⊤ ?G1 _ (m l₁) (m l₂) (Hm l₁ l₂ neighs) _ Hα
       infer_instance
+    · simp
+      apply mul_nonneg
+      · apply mul_nonneg
+        · apply EReal.coe_nonneg.mpr
+          apply inv_nonneg_of_nonneg
+          exact zero_le_two
+        · rw [sq]
+          apply mul_nonneg <;> exact EReal.coe_nonneg.mpr Hε
+      · apply EReal.coe_nonneg.mpr
+        linarith
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
