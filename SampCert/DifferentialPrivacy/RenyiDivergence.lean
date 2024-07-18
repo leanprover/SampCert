@@ -1148,3 +1148,4 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     refine (ofEReal_nonneg_inj ?mpr.Hw H').mpr ?mpr.a
     · simp
     simp [H]
+

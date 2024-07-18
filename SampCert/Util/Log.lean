@@ -585,6 +585,36 @@ lemma eexp_mono_le {w z : EReal} : (w <= z) <-> eexp w <= eexp z := by
       assumption
 
 
+lemma eexp_mul_nonneg {r w : EReal} (HR : 0 ≤ r) : eexp (r * w) = (eexp w) ^ (EReal.toReal r) := by
+  case_EReal_isReal w
+  -- Provable
+  all_goals sorry
+  -- · rename_i h1
+  --   rw [zero_rpow_def]
+  --   split
+  --   · simp [coe_mul_bot_of_pos (by trivial)]
+  --   · split
+  --     · simp_all
+  --     · rw [coe_mul_bot_of_neg ?G1]
+  --       case G1 =>sorry
+  --       simp
+  -- · rw [top_rpow_def]
+  --   split
+  --   · simp [coe_mul_top_of_pos (by trivial)]
+  --   · split
+  --     · simp_all
+  --     · rw [coe_mul_top_of_neg sorry]
+  --       simp
+  -- · rw [← EReal.coe_mul]
+  --   rw [eexp_ofReal]
+  --   rw [mul_comm]
+  --   rw [Real.exp_mul]
+  --   rw [ENNReal.ofReal_rpow_of_nonneg]
+  --   · apply exp_nonneg
+  --   · sorry
+
+
+
 
 lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by
   apply Iff.intro
@@ -867,7 +897,7 @@ end ENNReal
 /-!
 ### Coercion from PNat to NNReal
 
-Really, we would want to coerce this to a posreal, but there is no posreal type in mathlib, so it would be a lot of work.
+Really, we would want to coerce this to a posreal, but there is no posreal type in mathlib, so it would be a lot of work. 
 -/
 @[simp]
 def NNReal.ofPNat (p : PNat) : NNReal := ⟨ p.1, Nat.cast_nonneg p.1 ⟩

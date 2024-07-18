@@ -11,6 +11,9 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.Util.Log
 
+
+set_option linter.unusedTactic false
+
 noncomputable section
 
 open Classical
@@ -112,6 +115,7 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
     apply le_trans h
     simp
 
+-- set_option pp.coercions false
 
 
 theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε) :
@@ -124,9 +128,27 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   let α : Real := sorry
 
   -- Privacy loss random variable
-  -- Why isn't elog importing?
-  -- #check elog
-  let z (x : U) : ENNReal := (fun _ => 0) ((m l₁ x) / (m l₂ x))
+  -- Move to RenyiDivergence file?
+  let z (x : U) : EReal := ENNReal.elog ((m l₁ x) / (m l₂ x))
+  have Hz (x : U) : z x = ENNReal.elog ((m l₁ x) / (m l₂ x)) := by rfl
+  -- Instead of using an outer measure, I'll use a sum of Dirac measures, so we can turn the lintegral into a sum
+  let m1_measure_elt (u : U) : @MeasureTheory.Measure U ⊤ := m l₁ u • @MeasureTheory.Measure.dirac U ⊤ u
+  let m1_measure : @MeasureTheory.Measure U ⊤ := MeasureTheory.Measure.sum m1_measure_elt
+  have m1_measure_lintegral_sum (f : U -> ENNReal) :
+       ∫⁻ (a : U), (f a) ∂m1_measure = ∑'(a : U), (m l₁ a * f a) := by
+    rw [MeasureTheory.lintegral_sum_measure]
+    apply tsum_congr
+    intro u
+    rw [MeasureTheory.lintegral_smul_measure]
+    rw [@MeasureTheory.lintegral_dirac _]
+  have m1_measure_eval (P : U -> Prop) :  m1_measure {x | P x} = ∑'(u : U), m l₁ u * if P u then 1 else 0 := by
+    rw [MeasureTheory.Measure.sum_apply m1_measure_elt trivial]
+    apply tsum_congr
+    intro u
+    rw [MeasureTheory.Measure.smul_apply]
+    simp only [MeasurableSpace.measurableSet_top, MeasureTheory.Measure.dirac_apply', smul_eq_mul]
+    rfl
+
 
   -- Separate the indicator function
   conv =>
@@ -137,7 +159,7 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
 
 
   -- Multiply by indicator function for z
-  have HK (x : U) : (1 : ENNReal) = (if (z x ≤ ENNReal.ofReal ε) then 1 else 0) + (if (z x > ENNReal.ofReal ε) then 1 else 0) := by
+  have HK (x : U) : (1 : ENNReal) = (if (z x < ENNReal.ofReal ε) then 1 else 0) + (if (z x ≥ ENNReal.ofReal ε) then 1 else 0) := by
     split
     · simp
       rw [ite_eq_right_iff.mpr]
@@ -148,7 +170,7 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
     · simp
       rw [ite_eq_left_iff.mpr]
       simp
-      apply lt_of_not_ge
+      apply le_of_not_lt
       trivial
   conv =>
     enter [1, 1, a]
@@ -167,8 +189,8 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
 
   -- Bound right term above
   have HB :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a > ENNReal.ofReal ε then 1 else 0) ≤
-      ∑' (a : U), (m l₁) a * (if z a > ENNReal.ofReal ε then 1 else 0) := by
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≥ ENNReal.ofReal ε then 1 else 0) ≤
+      ∑' (a : U), (m l₁) a * (if z a ≥ ENNReal.ofReal ε then 1 else 0) := by
     apply ENNReal.tsum_le_tsum
     intro x
     apply mul_le_mul'
@@ -179,38 +201,76 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   apply (le_trans (add_le_add_left HB _))
   clear HB
 
-  -- Don't actually need this (yet)
-  -- -- Later, we need the sum to be finite. Can we reduce?
-  -- cases (Classical.em (∑' (a : U), ((m l₁) a) * (if a ∈ S then 1 else 0) = ⊤))
-  -- · rename_i Ht
-  --   -- Not sure if this is provable but we might need to restruc this to PMFs anyways
-  --   sorry
-  -- rename_i Hnt
+  -- Bound right term above by Markov inequality
+  have HMarkov : (∑' (a : U), (m l₁) a * if z a ≥ ENNReal.ofReal ε then 1 else 0) ≤ δ := by
 
-  -- Bound right term above
-  -- FIXME: Refactor to lemma
-  have HMarkov : (∑' (a : U), (m l₁) a * if z a > ENNReal.ofReal ε then 1 else 0) ≤ δ := by
-
-    -- Maybe ask if there's an easier way to make a discrete measure tomorrow?
-
-    -- Make m l₁ into a measure on the discrete space (don't need it to be a PMF)
-    let m_meas : @MeasureTheory.Measure U ⊤ := by
-      -- #check instDiscreteMeasurableSpace
-      apply @MeasureTheory.Measure.mk U ⊤ ?G1 ?G2 ?G3
-      case G1 =>
-        #check @MeasureTheory.OuterMeasure.mk U (fun S => sorry)
-        sorry
-      case G2 => sorry
-      case G3 => sorry
-    have H :=
-      @MeasureTheory.mul_meas_ge_le_lintegral₀ _ ⊤ m_meas
-        (fun (x : U) => ENNReal.ofReal (Real.exp ((α - 1) * ENNReal.toReal (z x))))
+    -- Markov inequality, specialized to discrete measure (m l₁)
+    have HM :=
+      @MeasureTheory.mul_meas_ge_le_lintegral₀ _ ⊤ m1_measure
+        (fun (x : U) => ENNReal.eexp ((α - 1) * z x))
         ?HAEmeasurable
         (ENNReal.ofReal (Real.exp ((α - 1) * ε)))
-    case HAEmeasurable =>
-      sorry
+    case HAEmeasurable => exact Measurable.aemeasurable fun ⦃t⦄ a => trivial
+    rw [m1_measure_lintegral_sum] at HM
+    rw [m1_measure_eval] at HM
 
-    all_goals sorry
+    -- Convert between equivalent indicator functions
+    have H (u : U) D D' :
+        (@ite _ (ENNReal.ofReal (Real.exp ((α - 1) * ε)) ≤ ENNReal.eexp ((↑α - 1) * z u)) D (1 : ENNReal) 0) =
+        (@ite _ (z u ≥ ↑(ENNReal.ofReal ε)) D' (1 : ENNReal) 0) := by
+      split
+      · split
+        · rfl
+        · exfalso
+          rename_i HK1 HK2
+          apply HK2
+          simp only [ge_iff_le]
+          have HK1' : ((α - 1) * ε ≤ (↑α - 1) * z u) := by exact ENNReal.eexp_mono_le.mpr HK1
+          have HK1'' : ↑ε ≤ z u  := by sorry
+          simp
+          rw [max_eq_left ?G1]
+          case G1 =>
+            -- Assumption
+            sorry
+          trivial
+      · split
+        · exfalso
+          rename_i HK1 HK2
+          apply HK1
+          rw [ge_iff_le] at HK2
+          apply ENNReal.eexp_mono_le.mp at HK2
+          -- Doable
+          sorry
+        · rfl
+    conv at HM =>
+      enter [1, 2, 1, u, 2]
+      rw [H u]
+    clear H
+
+    -- Use the Markov inequality
+    suffices ENNReal.ofReal (Real.exp ((α - 1) * ε)) * (∑' (a : U), (m l₁) a * if z a ≥ ↑(ENNReal.ofReal ε) then 1 else 0) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε)) * ↑δ by
+      apply (ENNReal.mul_le_mul_left ?SC1 ?SC2).mp
+      apply this
+      case SC1 =>
+        simp
+        exact Real.exp_pos ((α - 1) * ε)
+      case SC2 => exact ENNReal.ofReal_ne_top
+    apply (le_trans ?G1 _)
+    case G1 => apply HM
+    clear HM
+    clear HM
+
+    -- Rewrite z and simplify
+    have SC1 : OfNat.ofNat 0 ≤ α.toEReal - OfNat.ofNat 1 := by sorry
+    conv =>
+      enter [1, 1, u]
+      rw [Hz]
+      rw [ENNReal.eexp_mul_nonneg SC1]
+      simp
+
+    -- Apply Renyi divergence inequality
+
+    sorry
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
@@ -231,7 +291,7 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
 
   -- Bound left term above
   have HDP :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≤ ENNReal.ofReal ε then 1 else 0) ≤
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε then 1 else 0) ≤
       ENNReal.ofReal (Real.exp ε) * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
     -- How? Must come from a choice of α with the RD bound
     sorry
@@ -241,11 +301,11 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   -- Conclude by simplification
   rw [add_comm]
   apply add_le_add_left
-  apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
-  case G1 =>
-    -- Doesn't work for ε = 0. Can I get this bound separately in this case?
+  apply (ENNReal.mul_le_mul_left ?G3 ?G4).mpr
+  case G3 =>
+    -- Doesn't work for ε = 0. Can I get this bound separately in this case or do I have to restrict?
     sorry
-  case G2 => exact ENNReal.ofReal_ne_top
+  case G4 => exact ENNReal.ofReal_ne_top
   apply ENNReal.tsum_le_tsum
   intro a
   split <;> simp
