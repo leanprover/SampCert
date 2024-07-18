@@ -57,8 +57,8 @@ lemma ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
 Gaussian sampling attempt is a proper distribution.
 -/
 @[simp]
-theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) :
-  ∑' x, (DiscreteGaussianSampleLoop num den t) x = 1 := by
+theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) (mix : ℕ) :
+  ∑' x, (DiscreteGaussianSampleLoop num den t mix) x = 1 := by
   simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     SLang.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
     and_true, and_false, ↓reduceIte, add_zero, zero_add]
@@ -108,8 +108,8 @@ lemma ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
 Evaluation of the discrete Gaussian sample loop distribution when the termination flag is ``true``.
 -/
 @[simp]
-theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) :
-  (DiscreteGaussianSampleLoop num den t) (n, true)
+theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) (mix : ℕ) :
+  (DiscreteGaussianSampleLoop num den t mix) (n, true)
     = ENNReal.ofReal ((rexp (t)⁻¹ - 1) / (rexp (t)⁻¹ + 1)) * ENNReal.ofReal (rexp (-(Int.natAbs n / t)) *
     rexp (-((Int.natAbs (Int.sub (|n| * t * den) ↑↑num)) ^ 2 / ((2 : ℕ+) * num * ↑↑t ^ 2 * den)))) := by
   simp only [DiscreteGaussianSampleLoop, DiscreteLaplaceSampleMixed_equiv, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
@@ -249,14 +249,14 @@ lemma Add1 (n : Nat) : 0 < n + 1 := by
 Closed form evaluation of the discrete Gaussian sampler
 -/
 @[simp]
-theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
-  (DiscreteGaussianSample num den) x =
+theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : ℤ) :
+  (DiscreteGaussianSample num den mix) x =
   ENNReal.ofReal (discrete_gaussian ((num : ℝ) / (den : ℝ)) 0 x) := by
   unfold discrete_gaussian
   unfold gauss_term_ℝ
   simp
   simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SLang.bind_apply]
-  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) }
+  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) } mix
 
   conv =>
     left
@@ -374,8 +374,8 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (x : ℤ) :
 Discrete Gaussian is a proper distribution
 -/
 @[simp]
-theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) :
-  ∑' x : ℤ, (DiscreteGaussianSample num den) x = 1 := by
+theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) (mix : ℕ) :
+  ∑' x : ℤ, (DiscreteGaussianSample num den mix) x = 1 := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
   conv =>

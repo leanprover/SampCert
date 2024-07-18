@@ -11,6 +11,7 @@ import numpy
 from datetime import datetime
 import tqdm as tqdm
 from decimal import Decimal
+import argparse
 
 from diffprivlib.mechanisms.base import bernoulli_neg_exp
 from diffprivlib.mechanisms import GaussianDiscrete
@@ -22,7 +23,7 @@ from discretegauss import sample_dlaplace, sample_dgauss
 sampler = SampCert.SLang()
 rng = secrets.SystemRandom()
 
-def gaussian_benchmarks():
+def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, step):
     print("=========================================================================\n\
 Benchmark: Discrete Gaussians \n\
 =========================================================================")
@@ -41,12 +42,9 @@ Benchmark: Discrete Gaussians \n\
     ibm_dpl_mean = []
     ibm_dpl_stdev = []
 
-    # Benchmark Parameters
-    warmup_attempts = 100
-    measured_attempts = 2000
     num_attempts = warmup_attempts + measured_attempts
 
-    for epsilon_times_100 in tqdm.tqdm(range(1, 500, 2)):
+    for epsilon_times_100 in tqdm.tqdm(range(lb, ub, step)):
         g = GaussianDiscrete(epsilon=0.01 * epsilon_times_100, delta=0.00001)
         sigma = g._scale
         sigmas += [sigma]
@@ -60,7 +58,7 @@ Benchmark: Discrete Gaussians \n\
 
         for i in range(num_attempts):
             start_time = timeit.default_timer()
-            sampler.DiscreteGaussianSample(sigma_num, sigma_denom)
+            sampler.DiscreteGaussianSample(sigma_num, sigma_denom, mix)
             elapsed = timeit.default_timer() - start_time
             t_dg.append(elapsed)
 
@@ -92,7 +90,7 @@ Benchmark: Discrete Gaussians \n\
 
     fig,ax1 = plt.subplots()
 
-    ax1.plot(sigmas, dg_mean, color='red', linewidth=1.0, label='DiscreteGaussianSample')
+    ax1.plot(sigmas, dg_mean, color='red', linewidth=1.0, label='DiscreteGaussianSample' + ' mix = ' + str(mix))
     ax1.fill_between(sigmas, numpy.array(dg_mean)-0.5*numpy.array(dg_stdev), numpy.array(dg_mean)+0.5*numpy.array(dg_stdev),
                      alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
 
@@ -112,4 +110,14 @@ Benchmark: Discrete Gaussians \n\
     plt.savefig(filename)
 
 if __name__ == "__main__":
-    gaussian_benchmarks()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mix", type=int, help="mix", default=0)
+    parser.add_argument("--warmup", type=int, help="warmup", default=0)
+    parser.add_argument("--trials", type=int, help="trials", default=1000)
+    parser.add_argument("--min", type=int, help="min", default=1)
+    parser.add_argument("--max", type=int, help="max", default=500)
+    parser.add_argument("--step", type=int, help="step", default=2)
+    args = parser.parse_args()
+
+    gaussian_benchmarks(args.mix,args.warmup,args.trials,args.min,args.max,args.step)
