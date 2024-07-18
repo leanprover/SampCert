@@ -85,8 +85,8 @@ based on (num/den).
 
 FIXME: Extractor breaks when we move 50 to an external constant, even when we specify @[always_inline]
 -/
-def DiscreteLaplaceSampleMixed (num den : PNat) : SLang ℤ := do
-  if num ≤ den * 7
+def DiscreteLaplaceSampleMixed (num den : PNat) (mix: ℕ) : SLang ℤ := do
+  if num ≤ den * mix
     then let v <- DiscreteLaplaceSample num den; return v
     else let v <- DiscreteLaplaceSampleOptimized num den; return v
 
