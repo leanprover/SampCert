@@ -53,20 +53,32 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
 
 
 theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
-  ∀ δ : NNReal, DP' m ε δ := by
+  exists ε', ∀ δ : NNReal, DP' m ε' δ := by
   simp [zCDPBound] at h
   simp [DP']
+  let ε' : ℝ := sorry
+  have Hε' : 1 < ε := by sorry
+
+  exists ε'
   intros δ l₁ l₂ neighs S
 
   -- Different value of α from the paper, since our definition of ε-zCDP is their (1/2)ε^2-zCDP
-  let α : Real := (2 * ε + ε ^ 2 + ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) ^ (1 / 2)) / (2 * ε ^ 2)
+  let α : Real := sorry -- (2 * ε + ε ^ 2 + ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) ^ (1 / 2)) / (2 * ε ^ 2)
   have Hα : (1 < α) := by
+      -- First
+      --    ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) > ε^4
+      -- So then
+      -- α > (2ε + ε ^ 2 + (ε^4) ^ (1 / 2)) / (2 * ε ^ 2)
+      --   = (ε ^ 2 + ε ^ 2) / (2 * ε ^ 2)
+      --   = 1
+
     sorry
   have Hα' : (0 < α.toEReal - 1) := by
     have Hα1 : 1 < α.toEReal := by
       sorry
     sorry
-  have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε)) * ↑δ := by
+  have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ := by
+
     sorry
 
 
@@ -104,7 +116,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
 
 
   -- Multiply by indicator function for z
-  have HK (x : U) : (1 : ENNReal) = (if (z x < ENNReal.ofReal ε) then 1 else 0) + (if (z x ≥ ENNReal.ofReal ε) then 1 else 0) := by
+  have HK (x : U) : (1 : ENNReal) = (if (z x < ENNReal.ofReal ε') then 1 else 0) + (if (z x ≥ ENNReal.ofReal ε') then 1 else 0) := by
     split
     · simp
       rw [ite_eq_right_iff.mpr]
@@ -137,8 +149,8 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
 
   -- Bound right term above
   have HB :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≥ ENNReal.ofReal ε then 1 else 0) ≤
-      ∑' (a : U), (m l₁) a * (if z a ≥ ENNReal.ofReal ε then 1 else 0) := by
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≥ ENNReal.ofReal ε' then 1 else 0) ≤
+      ∑' (a : U), (m l₁) a * (if z a ≥ ENNReal.ofReal ε' then 1 else 0) := by
     apply ENNReal.tsum_le_tsum
     intro x
     apply mul_le_mul'
@@ -150,22 +162,22 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
   clear HB
 
   -- Bound right term above by Markov inequality
-  have HMarkov : (∑' (a : U), (m l₁) a * if z a ≥ ENNReal.ofReal ε then 1 else 0) ≤ δ := by
+  have HMarkov : (∑' (a : U), (m l₁) a * if z a ≥ ENNReal.ofReal ε' then 1 else 0) ≤ δ := by
 
     -- Markov inequality, specialized to discrete measure (m l₁)
     have HM :=
       @MeasureTheory.mul_meas_ge_le_lintegral₀ _ ⊤ m1_measure
         (fun (x : U) => ENNReal.eexp ((α - 1) * z x))
         ?HAEmeasurable
-        (ENNReal.ofReal (Real.exp ((α - 1) * ε)))
+        (ENNReal.ofReal (Real.exp ((α - 1) * ε')))
     case HAEmeasurable => exact Measurable.aemeasurable fun ⦃t⦄ a => trivial
     rw [m1_measure_lintegral_sum] at HM
     rw [m1_measure_eval] at HM
 
     -- Convert between equivalent indicator functions
     have H (u : U) D D' :
-        (@ite _ (ENNReal.ofReal (Real.exp ((α - 1) * ε)) ≤ ENNReal.eexp ((↑α - 1) * z u)) D (1 : ENNReal) 0) =
-        (@ite _ (z u ≥ ↑(ENNReal.ofReal ε)) D' (1 : ENNReal) 0) := by
+        (@ite _ (ENNReal.ofReal (Real.exp ((α - 1) * ε')) ≤ ENNReal.eexp ((↑α - 1) * z u)) D (1 : ENNReal) 0) =
+        (@ite _ (z u ≥ ↑(ENNReal.ofReal ε')) D' (1 : ENNReal) 0) := by
       split
       · split
         · rfl
@@ -173,14 +185,15 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
           rename_i HK1 HK2
           apply HK2
           simp only [ge_iff_le]
-          have HK1' : ((α - 1) * ε ≤ (↑α - 1) * z u) := by exact ENNReal.eexp_mono_le.mpr HK1
-          have HK1'' : ↑ε ≤ z u  := by
+          have HK1' : ((α - 1) * ε' ≤ (↑α - 1) * z u) := by exact ENNReal.eexp_mono_le.mpr HK1
+          have HK1'' : ↑ε' ≤ z u  := by
             apply ENNReal.ereal_smul_le_left (α - 1) ?SC1 ?SC2 HK1'
             case SC1 => apply Hα'
             case SC2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
           simp
-          rw [max_eq_left Hε]
-          trivial
+          rw [max_eq_left]
+          · trivial
+          linarith
       · split
         · exfalso
           rename_i HK1 HK2
@@ -193,8 +206,9 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
           refine ENNReal.ereal_le_smul_left (α.toEReal - OfNat.ofNat 1) Hα' ?G1 ?G2
           case G1 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
           simp only [EReal.coe_ennreal_ofReal] at HK2
-          rw [max_eq_left Hε] at HK2
-          trivial
+          rw [max_eq_left] at HK2
+          · trivial
+          linarith
         · rfl
     conv at HM =>
       enter [1, 2, 1, u, 2]
@@ -202,12 +216,12 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     clear H
 
     -- Use the Markov inequality
-    suffices ENNReal.ofReal (Real.exp ((α - 1) * ε)) * (∑' (a : U), (m l₁) a * if z a ≥ ↑(ENNReal.ofReal ε) then 1 else 0) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε)) * ↑δ by
+    suffices ENNReal.ofReal (Real.exp ((α - 1) * ε')) * (∑' (a : U), (m l₁) a * if z a ≥ ↑(ENNReal.ofReal ε') then 1 else 0) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ by
       apply (ENNReal.mul_le_mul_left ?SC1 ?SC2).mp
       apply this
       case SC1 =>
         simp
-        exact Real.exp_pos ((α - 1) * ε)
+        apply Real.exp_pos
       case SC2 => exact ENNReal.ofReal_ne_top
     apply (le_trans ?G1 _)
     case G1 => apply HM
@@ -308,8 +322,8 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
 
   -- Bound left term above
   have HDP :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε then 1 else 0) ≤
-      ENNReal.ofReal (Real.exp ε) * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
+      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε' then 1 else 0) ≤
+      ENNReal.ofReal (Real.exp ε') * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
     -- Eliminate the indicator function
     rw [<- ENNReal.tsum_mul_left]
     apply ENNReal.tsum_le_tsum
@@ -341,10 +355,19 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     rw [mul_comm]
     cases (Classical.em (DFunLike.coe (m l₂) u = ⊤))
     · simp_all
+      rw [ENNReal.mul_top']
+      split
+      · exfalso
+        rename_i Hk
+        apply ENNReal.ofReal_eq_zero.mp at Hk
+        have Hk1 : 0 < Real.exp ε' := by exact Real.exp_pos ε'
+        linarith
+      · exact OrderTop.le_top ((m l₁) u)
     rename_i Hnt
     apply (ENNReal.div_le_iff hnz Hnt).mp
     simp at H
-    rw [max_eq_left Hε] at H
+    rw [max_eq_left ?G5] at H
+    case G5 => linarith
     exact le_of_lt H
   apply (le_trans (add_le_add_right HDP _))
   clear HDP
