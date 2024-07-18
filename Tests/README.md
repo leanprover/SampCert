@@ -11,5 +11,5 @@ Then,
 	```python3 Tests/SampCert-py/testing-kolmogorov-discretegaussian.py```
 - Calculate a KS stastic on the Discrete Laplace sampler: 
 	```python3 Tests/SampCert-py/testing-kolmogorov-discretelaplace.py```
-- Generate benchmarking plots for the Discrete Gaussian and Discrete Laplace samplers
+- Generate benchmarking plots for the Discrete Gaussian sampler
 	```python3 Tests/SampCert-py/benchmarks.py```

@@ -19,10 +19,10 @@ def sample_lap():
     return sampler.DiscreteLaplaceSample(num, den)
 
 def sample_lap1():
-    return sampler.DiscreteLaplaceSample_k(num, den)
+    return sampler.DiscreteLaplaceSampleMixed(num, den, 7)
 
 def sample_lapO():
-    return sampler.DiscreteLaplaceSampleOpt(num, den)
+    return sampler.DiscreteLaplaceSampleOptimized(num, den)
 
 #################################
 ############ Testing ############
@@ -180,12 +180,12 @@ where 0 indicates equality and 1 maximal distance. \n\
             print("Test failed!")
             exit(1)
         if diff1 < 0.02:
-            print("DiscreteLaplaceSample' Test passed!")
+            print("DiscreteLaplaceSampleOptimized Test passed!")
         else:
             print("Test failed!")
             exit(1)
         if diffO < 0.02:
-            print("DiscreteLaplaceSampleOpt Test passed!")
+            print("DiscreteLaplaceSampleMixed Test passed!")
         else:
             print("Test failed!")
             exit(1)

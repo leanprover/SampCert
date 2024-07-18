@@ -1642,15 +1642,15 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
 Equivalence between discrete Laplace sampelrs
 -/
 lemma DiscreteLaplaceSample_equiv (num den : PNat) :
-    DiscreteLaplaceSample num den = DiscreteLaplaceSample' num den := by
-  rw [DiscreteLaplaceSample, DiscreteLaplaceSample', DiscreteLaplaceSampleLoop_equiv]
+    DiscreteLaplaceSample num den = DiscreteLaplaceSampleOptimized num den := by
+  rw [DiscreteLaplaceSample, DiscreteLaplaceSampleOptimized, DiscreteLaplaceSampleLoop_equiv]
 
 /--
 ``SLang`` Laplace sampler is a proper distribution.
 -/
 @[simp]
-theorem DiscreteLaplaceSample'_normalizes (num den : PNat) :
-    ∑' x : ℤ, (DiscreteLaplaceSample' num den) x = 1 := by
+theorem DiscreteLaplaceSampleOptimized_normalizes (num den : PNat) :
+    ∑' x : ℤ, (DiscreteLaplaceSampleOptimized num den) x = 1 := by
   rw [<- DiscreteLaplaceSample_equiv]
   apply DiscreteLaplaceSample_normalizes
 
@@ -1658,8 +1658,8 @@ theorem DiscreteLaplaceSample'_normalizes (num den : PNat) :
 Closed form for the evaluation of the ``SLang`` Laplace sampler.
 -/
 @[simp]
-theorem DiscreteLaplaceSample'_apply (num den : PNat) (x : ℤ) :
-    (DiscreteLaplaceSample' num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
+theorem DiscreteLaplaceSampleOptimized_apply (num den : PNat) (x : ℤ) :
+    (DiscreteLaplaceSampleOptimized num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
   rw [<- DiscreteLaplaceSample_equiv]
   apply DiscreteLaplaceSample_apply
 
@@ -1667,32 +1667,32 @@ theorem DiscreteLaplaceSample'_apply (num den : PNat) (x : ℤ) :
 ``SLang`` Laplace sampler is a proper distribution.
 -/
 @[simp]
-theorem DiscreteLaplaceSampleOpt_normalizes (num den : PNat) :
-    ∑' x : ℤ, (DiscreteLaplaceSampleOpt num den) x = 1 := by
-  rw [DiscreteLaplaceSampleOpt]
+theorem DiscreteLaplaceSampleMixed_normalizes (num den : PNat) (mix : ℕ) :
+    ∑' x : ℤ, (DiscreteLaplaceSampleMixed num den mix) x = 1 := by
+  rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_normalizes num den
-  · exact DiscreteLaplaceSample'_normalizes num den
+  · exact DiscreteLaplaceSampleOptimized_normalizes num den
 
 /--
 Closed form for the evaluation of the ``SLang`` Laplace sampler.
 -/
 @[simp]
-theorem DiscreteLaplaceSampleOpt_apply (num den : PNat) (x : ℤ) :
-    (DiscreteLaplaceSampleOpt num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
-  rw [DiscreteLaplaceSampleOpt]
+theorem DiscreteLaplaceSampleMixed_apply (num den : PNat) (mix : ℕ) (x : ℤ) :
+    (DiscreteLaplaceSampleMixed num den mix) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
+  rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_apply num den x
-  · exact DiscreteLaplaceSample'_apply num den x
+  · exact DiscreteLaplaceSampleOptimized_apply num den x
 
 /--
 Equivalence between discrete Laplace sampelrs
 -/
-lemma DiscreteLaplaceSampleOpt_equiv (num den : PNat) :
-    DiscreteLaplaceSampleOpt num den = DiscreteLaplaceSample num den := by
-  rw [DiscreteLaplaceSampleOpt]
+lemma DiscreteLaplaceSampleMixed_equiv (num den : PNat) (mix : ℕ) :
+    DiscreteLaplaceSampleMixed num den mix = DiscreteLaplaceSample num den := by
+  rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · rfl
