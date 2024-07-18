@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-# Benchmarking the implementations of DiscreteLaplaceSample and DiscreteLaplaceSample'
-# Based on the benchmarks in Dafny-VMC
+# Benchmarking the discrete Gaussian sampler
 
 import SampCert
 import matplotlib.pyplot as plt
@@ -16,7 +15,6 @@ import argparse
 from diffprivlib.mechanisms.base import bernoulli_neg_exp
 from diffprivlib.mechanisms import GaussianDiscrete
 
-# source: https://github.com/IBM/discrete-gaussian-differential-privacy
 from fractions import Fraction
 from discretegauss import sample_dlaplace, sample_dgauss
 
@@ -24,9 +22,6 @@ sampler = SampCert.SLang()
 rng = secrets.SystemRandom()
 
 def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantity):
-    print("=========================================================================\n\
-Benchmark: Discrete Gaussians \n\
-=========================================================================")
     # Values of epsilon attempted
     sigmas = []
 
