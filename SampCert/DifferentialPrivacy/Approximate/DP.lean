@@ -274,40 +274,50 @@ theorem ApproximateDP_of_zCDP (m : Mechanism T U) (ε : ℝ) (h : zCDPBound m ε
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
-  -- -- Bound left term above (err.. no)
-  -- have HB :
-  --     ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≤ ENNReal.ofReal ε then 1 else 0) ≤
-  --     ∑' (a : U), (m l₁) a *  (if a ∈ S then 1 else 0) := by
-  --   apply ENNReal.tsum_le_tsum
-  --   intro x
-  --   apply mul_le_mul'
-  --   · rfl
-  --   rw [mul_comm]
-  --   split
-  --   · simp
-  --   · simp
-  -- apply (le_trans (add_le_add_right HB _))
-  -- clear HB
-
   -- Bound left term above
   have HDP :
       ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε then 1 else 0) ≤
       ENNReal.ofReal (Real.exp ε) * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
-    -- How? Must come from a choice of α with the RD bound
-    sorry
+    -- Eliminate the indicator function
+    rw [<- ENNReal.tsum_mul_left]
+    apply ENNReal.tsum_le_tsum
+    intro u
+    conv =>
+      congr
+      · rw [mul_comm]
+        rw [mul_assoc]
+      · rw [mul_comm]
+        enter [1]
+        rw [mul_comm]
+    rw [mul_assoc]
+    apply mul_le_mul'
+    · rfl
+    split <;> simp
+    rename_i H
+    rw [Hz] at H
+    apply ENNReal.eexp_mono_lt.mp at H
+    simp only [ENNReal.elog_eexp] at H
+    rw [mul_comm]
+    apply (ENNReal.div_le_iff ?G1 ?G2).mp
+    case G1 =>
+      -- Absolute continuity
+      sorry
+    case G2 =>
+      -- Can split this off by cases first
+      sorry
+
+    -- Coercions lemma for eexp (that I need to do for the other lemma anyways?)
+    simp at H
+    rw [max_eq_left ?SC1] at H
+    case SC1 =>
+      -- epsilon ≥ 0
+      sorry
+    exact le_of_lt H
   apply (le_trans (add_le_add_right HDP _))
   clear HDP
 
   -- Conclude by simplification
-  rw [add_comm]
-  apply add_le_add_left
-  apply (ENNReal.mul_le_mul_left ?G3 ?G4).mpr
-  case G3 =>
-    -- Doesn't work for ε = 0. Can I get this bound separately in this case or do I have to restrict?
-    sorry
-  case G4 => exact ENNReal.ofReal_ne_top
-  apply ENNReal.tsum_le_tsum
-  intro a
-  split <;> simp
+  simp [add_comm]
+
 
 end SLang
