@@ -103,15 +103,18 @@ Benchmark: Discrete Gaussians \n\
 
     fig,ax1 = plt.subplots()
 
-    ax1.plot(sigmas, means[0], color='red', linewidth=1.0, label='DiscreteGaussianSample' + ' mix = ' + str(mix))
-    ax1.fill_between(sigmas, np.array(means[0])-0.5*np.array(stdevs[0]), np.array(means[0])+0.5*np.array(stdevs[0]),
-                     alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
+    color = plt.cm.rainbow(np.linspace(0, 1, len(mix) + 2))
 
-    ax1.plot(sigmas, ibm_dg_mean, color='blue', linewidth=1.0, label='IBM sample_dgauss')
+    for m in range(len(mix)): 
+        ax1.plot(sigmas, means[m], color=color[2 + m], linewidth=1.0, label='DiscreteGaussianSample' + ' mix = ' + str(mix[m]))
+        ax1.fill_between(sigmas, np.array(means[m])-0.5*np.array(stdevs[m]), np.array(means[m])+0.5*np.array(stdevs[m]),
+                        alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
+
+    ax1.plot(sigmas, ibm_dg_mean, color=color[0], linewidth=1.0, label='IBM sample_dgauss')
     ax1.fill_between(sigmas, np.array(ibm_dg_mean)-0.5*np.array(ibm_dg_stdev), np.array(ibm_dg_mean)+0.5*np.array(ibm_dg_stdev),
                      alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
 
-    ax1.plot(sigmas, ibm_dpl_mean, color='green', linewidth=1.0, label='IBM diffprivlib')
+    ax1.plot(sigmas, ibm_dpl_mean, color=color[1], linewidth=1.0, label='IBM diffprivlib')
     ax1.fill_between(sigmas, np.array(ibm_dpl_mean)-0.5*np.array(ibm_dpl_stdev), np.array(ibm_dpl_mean)+0.5*np.array(ibm_dpl_stdev),
                      alpha=0.2, facecolor='k', linewidth=2, linestyle='dashdot', antialiased=True)
 
