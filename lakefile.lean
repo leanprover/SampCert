@@ -30,4 +30,4 @@ extern_lib libleanffi pkg := do
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
 lean_exe test where
-  root := `Main
+  root := `Test

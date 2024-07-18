@@ -113,7 +113,7 @@ def main : IO Unit := do
   let u : ℤ ← run <| DiscreteLaplaceGenSample 1 1 10
   IO.println s!"Laplace Gen sample: {u}"
 
-  let u : ℤ ← run <| DiscreteGaussianSample 1 1
+  let u : ℤ ← run <| DiscreteGaussianSample 1 1 7
   IO.println s!"Gaussian sample: {u}"
 
   let u : ℤ ← run <| DiscreteGaussianGenSample 1 1 10
