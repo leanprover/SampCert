@@ -17,7 +17,7 @@ sig2 = sig*sig
 N = 10000
 
 def sample_dgauss(): 
-    return sampler.DiscreteGaussianSample(num,den)
+    return sampler.DiscreteGaussianSample(num,den,0)
 
 #################################
 ############ Testing ############
