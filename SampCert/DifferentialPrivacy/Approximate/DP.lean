@@ -51,8 +51,6 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   apply le_trans h
   simp
 
-set_option pp.coercions false
-
 
 theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
   ∀ δ : NNReal, DP' m ε δ := by
@@ -229,7 +227,38 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     apply (le_trans _ HαSpecial)
 
     have H (u : U) : (m l₁) u * ((m l₁) u / (m l₂) u) ^ (α.toEReal - 1).toReal =
-                     ((m l₁) u) ^ α * ((m l₂) u) ^ (1 - α) := by sorry
+                     ((m l₁) u) ^ α * ((m l₂) u) ^ (1 - α) := by
+      cases (Classical.em ((m l₂) u = 0))
+      · rename_i HZ2
+        have HZ1 : (m l₁ u = 0) := by exact Hm l₁ l₂ neighs u HZ2
+        simp [HZ2, HZ1]
+        left
+        linarith
+      · rw [division_def]
+        rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G3]
+        case G1 => exact PMF.apply_ne_top (m l₁) u
+        case G3 =>
+          apply ENNReal.inv_ne_top.mpr
+          trivial
+        rw [<- mul_assoc]
+        congr 1
+        · conv =>
+            enter [1, 1]
+            rw [<- ENNReal.rpow_one ((m l₁) u)]
+          rw [<- (ENNReal.rpow_add 1 _ ?G1 ?G3)]
+          case G1 =>
+            intro HK
+            rename_i HK1
+            apply HK1
+            apply (Hm l₂ l₁ (Neighbour_symm l₁ l₂ neighs))
+            trivial
+          case G3 => exact PMF.apply_ne_top (m l₁) u
+          congr
+          sorry
+        · rw [<- ENNReal.rpow_neg_one]
+          rw [← ENNReal.rpow_mul]
+          congr
+          sorry
     conv =>
       enter [1, 1, u]
       rw [H u]
