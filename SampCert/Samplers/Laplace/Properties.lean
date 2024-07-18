@@ -1667,8 +1667,8 @@ theorem DiscreteLaplaceSampleOptimized_apply (num den : PNat) (x : ℤ) :
 ``SLang`` Laplace sampler is a proper distribution.
 -/
 @[simp]
-theorem DiscreteLaplaceSampleMixed_normalizes (num den : PNat) :
-    ∑' x : ℤ, (DiscreteLaplaceSampleMixed num den) x = 1 := by
+theorem DiscreteLaplaceSampleMixed_normalizes (num den : PNat) (mix : ℕ) :
+    ∑' x : ℤ, (DiscreteLaplaceSampleMixed num den mix) x = 1 := by
   rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split
@@ -1679,8 +1679,8 @@ theorem DiscreteLaplaceSampleMixed_normalizes (num den : PNat) :
 Closed form for the evaluation of the ``SLang`` Laplace sampler.
 -/
 @[simp]
-theorem DiscreteLaplaceSampleMixed_apply (num den : PNat) (x : ℤ) :
-    (DiscreteLaplaceSampleMixed num den) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
+theorem DiscreteLaplaceSampleMixed_apply (num den : PNat) (mix : ℕ) (x : ℤ) :
+    (DiscreteLaplaceSampleMixed num den mix) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
   rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split
@@ -1690,8 +1690,8 @@ theorem DiscreteLaplaceSampleMixed_apply (num den : PNat) (x : ℤ) :
 /--
 Equivalence between discrete Laplace sampelrs
 -/
-lemma DiscreteLaplaceSampleMixed_equiv (num den : PNat) :
-    DiscreteLaplaceSampleMixed num den = DiscreteLaplaceSample num den := by
+lemma DiscreteLaplaceSampleMixed_equiv (num den : PNat) (mix : ℕ) :
+    DiscreteLaplaceSampleMixed num den mix = DiscreteLaplaceSample num den := by
   rw [DiscreteLaplaceSampleMixed]
   simp only [Bind.bind, Pure.pure, bind_pure]
   split

@@ -23,7 +23,7 @@ namespace SLang
 Sample a candidate for the Discrete Gaussian with variance ``num/den``.
 -/
 def DiscreteGaussianSampleLoop (num den t : PNat) : SLang (Int × Bool) := do
-  let Y : Int ← DiscreteLaplaceSampleMixed t 1
+  let Y : Int ← DiscreteLaplaceSampleMixed t 1 7
   let y : Nat := Int.natAbs Y
   let n : Nat := (Int.natAbs (Int.sub (y * t * den) num))^2
   let d : PNat := 2 * num * t^2 * den
