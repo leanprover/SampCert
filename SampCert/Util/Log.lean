@@ -252,7 +252,7 @@ lemma ofEReal_le_mono_conv_nonneg {w z : EReal} (Hw : 0 ≤ w) (Hz : 0 ≤ z) (H
     have C := lt_of_le_of_lt Hw Hw'
     simp at C
   · exfalso
-    rename_i r Hw' Hr
+    rename_i r Hw' _
     have C := lt_of_le_of_lt Hw Hw'
     simp at C
   · exfalso

@@ -27,6 +27,13 @@ import SampCert.DifferentialPrivacy.Approximate.DP
 This file defines zero concentrated differential privacy (zCDP).
 -/
 
+open Classical
+
+variable { T : Type }
+
+noncomputable section
+
+namespace SLang
 
 /--
 Inequality defining ``(ε^2)/2``-zCDP.
@@ -67,15 +74,6 @@ lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε�
       apply (mul_le_mul_iff_of_pos_left (by simp)).mpr
       apply (mul_le_mul_iff_of_pos_right (by linarith)).mpr
       apply pow_le_pow_left' H (OfNat.ofNat 2)
-
-
-open Classical
-
-variable { T : Type }
-
-noncomputable section
-
-namespace SLang
 
 /--
 Obtain an approximate DP bound from a zCDP bound, when ε > 0 and δ < 1
