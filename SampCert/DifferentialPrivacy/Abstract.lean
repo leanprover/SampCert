@@ -7,6 +7,7 @@ import SampCert.SLang
 import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.Foundations.Basic
+import SampCert.DifferentialPrivacy.Approximate.DP
 
 /-!
 # Differential Privacy
