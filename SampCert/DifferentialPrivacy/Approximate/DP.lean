@@ -48,11 +48,12 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   apply le_trans h
   simp
 
-
+/--
+Obtain an approximate DP bound from a zCDP bound, when ε > 0
+-/
 theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
   (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
   ∀ δ : NNReal, (0 < (δ : ℝ)) -> ((δ : ℝ) < 1) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
-  -- FIXME: Can I reduce the δ = 0 or the δ ≥ 1 cases or the ε=0 case?
   have Hε : 0 ≤ ε := by exact le_of_lt Hε_pos
   intro δ Hδ0 Hδ1
   generalize Dε' : (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) = ε'
