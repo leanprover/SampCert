@@ -11,7 +11,7 @@ import SampCert.SLang
 import SampCert.Samplers.GaussianGen.Basic
 import SampCert.DifferentialPrivacy.Neighbours
 import SampCert.DifferentialPrivacy.Sensitivity
-import SampCert.DifferentialPrivacy.Abstract
+import SampCert.DifferentialPrivacy.Generic
 import Mathlib.MeasureTheory.MeasurableSpace.Basic
 import Mathlib.MeasureTheory.Measure.Count
 import Mathlib.Probability.ProbabilityMassFunction.Integrals
