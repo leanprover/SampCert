@@ -5,7 +5,7 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Queries.Histogram.Code
 import SampCert.DifferentialPrivacy.Sensitivity
-import SampCert.DifferentialPrivacy.Abstract
+import SampCert.DifferentialPrivacy.Abstract -- OK
 
 /-!
 # ``privHistogram`` Properties
