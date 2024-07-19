@@ -83,12 +83,28 @@ def estimateMean (hist : IntHistogram) : IO Float := do
     acc := acc + Float.ofInt (hist.repr.get! i) * Float.ofInt (hist.index i)
   return acc / (hist.size).toFloat
 
-def estimateVariance (hist : IntHistogram) (mean : Float) : IO Float := do
+/--
+  Moment estimate, unadjusted
+-/
+def estimateMoment (hist : IntHistogram) (mean : Float) (moment : ℕ) : IO Float := do
+  if moment < 2 then
+    panic "estimateMoment: moment must be at least 2"
   let mut acc : Float := 0
   for i in [:hist.repr.size] do
     for _ in [:hist.repr.get! i] do
-      acc := acc + (Float.ofInt (hist.index i) - mean)^2
-  return acc / ((hist.size).toFloat - 1)
+      acc := acc + (Float.ofInt (hist.index i) - mean)^moment.toFloat
+  return acc / (hist.size).toFloat
+
+def estimateVariance (hist : IntHistogram) (mean : Float) : IO Float := do
+  estimateMoment hist mean 2
+
+def estimateSkewness (hist : IntHistogram) (mean : Float) (variance : Float) : IO Float := do
+  let μ₃ ← estimateMoment hist mean 3
+  return μ₃ / (variance^(1.5))
+
+def estimateKurtosis (hist : IntHistogram) (mean : Float) (variance : Float) : IO Float := do
+  let μ₃ ← estimateMoment hist mean 4
+  return μ₃ / (variance^2)
 
 /--
   Not ideal to reuse IntHistogram for the CDF
@@ -108,5 +124,7 @@ def main : IO Unit := do
   let hist ← histogram samples min max
   let mean ← estimateMean hist
   let variance ← estimateVariance hist mean
+  let skewness ← estimateSkewness hist mean variance
+  let kurtosis ← estimateSkewness hist mean variance
   let cdf ← estimateCDF hist
-  IO.println s!"{mean} {variance}\n{hist}\n{cdf}"
+  IO.println s!"{mean} {variance} {skewness} {kurtosis}\n{hist}\n{cdf}"
