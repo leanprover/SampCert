@@ -26,6 +26,30 @@ def DP' (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
 def ApproximateDP (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
   DP' m ε δ
 
+/--
+Approximate DP is trivial with δ ≥ 1
+-/
+theorem ApproximateDP_gt1 (m : Mechanism T U) (ε : ℝ) {δ : NNReal} (Hδ : 1 ≤ δ) : ApproximateDP m ε δ := by
+  rw [ApproximateDP]
+  rw [DP']
+  intros l₁ l₂ N S
+  have H1 : (∑' (x : U), if x ∈ S then (m l₁) x else 0) ≤ 1 := by
+    rw [<- PMF.tsum_coe (m l₁)]
+    apply ENNReal.tsum_le_tsum
+    intro u
+    split <;> simp
+  apply le_trans H1
+  conv =>
+    left
+    rw [<- add_zero 1]
+  apply add_le_add
+  · simp
+    trivial
+  · apply mul_nonneg
+    · exact zero_le (ENNReal.ofReal (Real.exp ε))
+    · exact zero_le (∑' (x : U), if x ∈ S then (m l₂) x else 0)
+
+
 theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   ∀ δ : NNReal, DP' m ε δ := by
   simp [DP] at h
@@ -49,9 +73,9 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   simp
 
 /--
-Obtain an approximate DP bound from a zCDP bound, when ε > 0
+Obtain an approximate DP bound from a zCDP bound, when ε > 0 and δ < 1
 -/
-theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
+lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
   (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
   ∀ δ : NNReal, (0 < (δ : ℝ)) -> ((δ : ℝ) < 1) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
   have Hε : 0 ≤ ε := by exact le_of_lt Hε_pos
@@ -607,5 +631,23 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
 
   -- Conclude by simplification
   simp [add_comm]
+
+
+
+/--
+Obtain an approximate DP bound from a zCDP bound, when ε > 0
+-/
+lemma ApproximateDP_of_zCDP_pos [Countable U] (m : Mechanism T U)
+  (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
+  ∀ δ : NNReal, (0 < (δ : ℝ)) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
+  intro δ Hδ0
+  cases (Classical.em (δ < 1))
+  · intro Hδ1
+    apply ApproximateDP_of_zCDP_pos_lt_one m ε Hε_pos h Hm δ Hδ0
+    trivial
+  · apply ApproximateDP_gt1
+    apply le_of_not_lt
+    trivial
+
 
 end SLang
