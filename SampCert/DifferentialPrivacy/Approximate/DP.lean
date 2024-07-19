@@ -11,9 +11,6 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.ZeroConcentrated.DP
 import SampCert.Util.Log
 
-
-set_option linter.unusedTactic false
-
 noncomputable section
 
 open Classical
@@ -51,8 +48,6 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   apply le_trans h
   simp
 
-
-set_option pp.coercions false
 
 theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
   (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
@@ -163,7 +158,22 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
     congr 1
     simp only [Real.toNNReal_coe]
     rw [max_eq_left ?G5]
-    case G5 => sorry
+    case G5 =>
+      apply mul_nonneg
+      · apply mul_nonneg
+        · simp
+        · apply sq_nonneg
+      · apply add_nonneg
+        · apply mul_nonneg
+          · apply inv_nonneg_of_nonneg
+            trivial
+          · apply Real.rpow_nonneg
+            apply mul_nonneg
+            · simp
+            · apply Real.log_nonneg
+              apply one_le_inv Hδ0
+              exact le_of_lt Hδ1
+        · simp
     skip
     rw [<- Dε']
     simp
@@ -484,11 +494,16 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
             trivial
           case G3 => exact PMF.apply_ne_top (m l₁) u
           congr 1
-          sorry
+          exact add_eq_of_eq_sub' rfl
         · rw [<- ENNReal.rpow_neg_one]
           rw [← ENNReal.rpow_mul]
           congr
-          sorry
+          simp
+          rw [neg_eq_iff_add_eq_zero]
+          rw [EReal.toReal_sub]
+          all_goals (try simp)
+          · exact ne_of_beq_false rfl
+          · exact EReal.add_top_iff_ne_bot.mp rfl
     conv =>
       enter [1, 1, u]
       rw [H u]
