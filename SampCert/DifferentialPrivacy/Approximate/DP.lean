@@ -52,35 +52,248 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   simp
 
 
-theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
-  exists ε', ∀ δ : NNReal, DP' m ε' δ := by
+set_option pp.coercions false
+
+theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
+  (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
+  ∀ δ : NNReal, (0 < (δ : ℝ)) -> ((δ : ℝ) < 1) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
+  -- FIXME: Can I reduce the δ = 0 or the δ ≥ 1 cases or the ε=0 case?
+  have Hε : 0 ≤ ε := by exact le_of_lt Hε_pos
+  intro δ Hδ0 Hδ1
+  generalize Dε' : (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) = ε'
   simp [zCDPBound] at h
   simp [DP']
-  let ε' : ℝ := sorry
-  have Hε' : 1 < ε := by sorry
+  have Hε' : 0 ≤ ε' := by
+    rw [<- Dε']
+    apply add_nonneg
+    · apply div_nonneg
+      · apply sq_nonneg
+      · simp
+    · apply mul_nonneg
+      · trivial
+      · apply Real.rpow_nonneg
+        apply mul_nonneg
+        · simp
+        · apply Real.log_nonneg
+          apply one_le_one_div Hδ0
+          exact le_of_lt Hδ1
+  intros l₁ l₂ neighs S
 
-  exists ε'
-  intros δ l₁ l₂ neighs S
 
   -- Different value of α from the paper, since our definition of ε-zCDP is their (1/2)ε^2-zCDP
-  let α : Real := sorry -- (2 * ε + ε ^ 2 + ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) ^ (1 / 2)) / (2 * ε ^ 2)
+  let α : Real := ((1 / ε) * (2*Real.log (1/δ))^(1/2 : ℝ)) + 1
+  have Dα : α = (((1 / ε) * (2*Real.log (1/δ))^(1/2 : ℝ)) + 1 : ℝ) := by rfl
   have Hα : (1 < α) := by
-      -- First
-      --    ((2 * ε + ε^2) ^ 2 - 4 * ε^2 * (2*ε^2 + 2 * Real.log δ)) > ε^4
-      -- So then
-      -- α > (2ε + ε ^ 2 + (ε^4) ^ (1 / 2)) / (2 * ε ^ 2)
-      --   = (ε ^ 2 + ε ^ 2) / (2 * ε ^ 2)
-      --   = 1
-
-    sorry
+    rw [Dα]
+    conv =>
+      lhs
+      rw [<- zero_add 1]
+    apply (add_lt_add_iff_right 1).mpr
+    conv =>
+      lhs
+      rw [<- mul_zero 0]
+    apply mul_lt_mul_of_nonneg_of_pos
+    · apply one_div_pos.mpr
+      trivial
+    · apply Real.rpow_nonneg
+      apply mul_nonneg
+      · simp
+      · apply Real.log_nonneg
+        apply one_le_one_div Hδ0
+        exact le_of_lt Hδ1
+    · simp
+    · apply Real.rpow_pos_of_pos
+      apply Real.mul_pos
+      · simp
+      · apply Real.log_pos
+        apply one_lt_one_div
+        · apply Hδ0
+        · trivial
   have Hα' : (0 < α.toEReal - 1) := by
-    have Hα1 : 1 < α.toEReal := by
-      sorry
-    sorry
+    rw [EReal.coe_add]
+    simp only [one_div, mul_neg, EReal.coe_mul, EReal.coe_one]
+    rw [add_sub_assoc]
+    have HZ : (1 - 1 : EReal) = 0 := by
+      rw [← EReal.coe_one]
+      rw [← EReal.coe_sub]
+      simp
+    rw [HZ]
+    simp only [mul_neg, add_zero, gt_iff_lt]
+    apply EReal.mul_pos
+    · apply EReal.coe_pos.mpr
+      exact inv_pos_of_pos Hε_pos
+    · apply EReal.coe_pos.mpr
+      apply Real.rpow_pos_of_pos
+      apply Real.mul_pos
+      · simp
+      · apply Real.log_pos
+        exact one_lt_inv Hδ0 Hδ1
   have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ := by
+    apply Eq.le
+    rw [Dα]
+    -- Cancel 1 - 1
+    conv =>
+      enter [1, 1, 1]
+      simp
+      rw [add_sub_assoc]
+      rw [← EReal.coe_one]
+      rw [← EReal.coe_sub]
+      simp
+    conv =>
+      enter [2, 1, 1, 1, 1]
+      simp
+    simp only [one_div, EReal.coe_ennreal_ofReal]
+    repeat rw [← EReal.coe_mul]
+    rw [ENNReal.eexp_ofReal]
+    rw [ENNReal.ofReal]
+    rw [ENNReal.ofReal]
+    rw [← ENNReal.coe_mul]
+    congr 1
+    rw [<- @Real.toNNReal_coe δ]
+    rw [<- Real.toNNReal_mul ?G1]
+    case G1 => apply Real.exp_nonneg
+    congr 1
+    skip
+    conv =>
+      enter [2, 2]
+      rw [<- @Real.exp_log (δ.toReal) Hδ0]
+    conv =>
+      enter [2]
+      rw [<- Real.exp_add]
+    congr 1
+    simp only [Real.toNNReal_coe]
+    rw [max_eq_left ?G5]
+    case G5 => sorry
+    skip
+    rw [<- Dε']
+    simp
+    repeat rw [mul_add]
 
-    sorry
 
+    have SC1 : 0 < -(2 * Real.log δ.toReal) := by
+      simp
+      apply mul_neg_of_pos_of_neg
+      · simp
+      · exact Real.log_neg Hδ0 Hδ1
+
+    -- Cancel square roots
+    conv =>
+      congr
+      · congr
+        · skip
+          rw [mul_comm]
+          repeat rw [mul_assoc]
+          enter [2, 2, 2]
+          rw [mul_comm]
+          rw [mul_assoc]
+          enter [2]
+          rw [<- Real.rpow_add SC1]
+          rw [<- two_mul]
+          simp
+        · simp
+      · enter [1, 2]
+        repeat rw [mul_assoc]
+        enter [2]
+        rw [mul_comm]
+        rw [mul_assoc]
+        enter [2]
+        rw [<- Real.rpow_add SC1]
+        rw [<- two_mul]
+        simp
+    clear SC1
+
+    have SC1 : ε ≠ 0 := by linarith
+    conv =>
+      congr
+      · congr
+        · enter [2]
+          repeat rw [<- mul_assoc]
+          enter [1]
+          rw [sq]
+          simp
+          rw [mul_inv_cancel SC1]
+        · rw [sq]
+          rw [mul_comm]
+          repeat rw [mul_assoc]
+          enter [2, 2]
+          repeat rw [<- mul_assoc]
+          enter [1]
+          rw [mul_inv_cancel SC1]
+          skip
+      · enter [1]
+        congr
+        · rw [division_def]
+          rw [sq]
+          repeat rw [mul_assoc]
+          rw [mul_comm]
+          rw [mul_assoc]
+          enter [2]
+          rw [mul_comm]
+          repeat rw [<- mul_assoc]
+          enter [1, 1]
+          rw [inv_mul_cancel SC1]
+          skip
+        · repeat rw [<- mul_assoc]
+          rw [inv_mul_cancel SC1]
+          simp
+    clear SC1
+    simp
+
+    -- Quality of life
+    have R1 : (-(2 * Real.log δ.toReal)) = 2 * Real.log (1/δ.toReal) := by simp
+    rw [R1]
+    have R2 : (-Real.log δ.toReal) = Real.log (1/δ.toReal) := by simp
+    rw [R2]
+    generalize HD : Real.log (1 / δ.toReal) = D
+    have HDnn : 0 ≤ D := by
+      rw [<- HD]
+      apply Real.log_nonneg
+      apply one_le_one_div Hδ0
+      exact le_of_lt Hδ1
+    clear R1 R2
+
+    -- Simplify more
+    conv =>
+      congr
+      · rw [Real.mul_rpow (by simp) HDnn]
+        enter [2]
+        repeat rw [<- mul_assoc]
+        enter [1]
+        rw [mul_comm]
+        rw [<- mul_assoc]
+        enter [1]
+        rw [<- Real.rpow_neg_one]
+        rw [<- Real.rpow_add (by simp)]
+      · rw [Real.mul_rpow (by simp) HDnn]
+        enter [1, 1]
+        rw [mul_comm]
+        repeat rw [mul_assoc]
+        enter [2]
+        repeat rw [<- mul_assoc]
+        enter [1]
+        rw [<- Real.rpow_neg_one]
+        rw [<- Real.rpow_add (by simp)]
+        rw [add_comm]
+
+    generalize HW : (2 : ℝ) ^ ((2 : ℝ) ^ (-(1 : ℝ)) + -(1 : ℝ) : ℝ) = W
+    -- Cancel the ε * W * D terms
+    conv =>
+      enter [1]
+      rw [add_comm]
+      enter [1, 1]
+      rw [mul_comm]
+    conv =>
+      enter [2, 1, 1]
+      repeat rw [<- mul_assoc]
+    rw [add_assoc]
+    congr 1
+    clear HW W
+
+    -- Cancel the D terms
+    rw [<- one_add_one_eq_two]
+    rw [add_mul]
+    rw [<- HD]
+    simp
 
 
   -- Privacy loss random variable
@@ -162,6 +375,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
   clear HB
 
   -- Bound right term above by Markov inequality
+  --  Pr[Z > ε'] ≤ δ
   have HMarkov : (∑' (a : U), (m l₁) a * if z a ≥ ENNReal.ofReal ε' then 1 else 0) ≤ δ := by
 
     -- Markov inequality, specialized to discrete measure (m l₁)
@@ -240,6 +454,8 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     rw [RenyiDivergence] at h
     apply (le_trans _ HαSpecial)
 
+    -- After this point the bound should be as tight as it's going to get
+
     have H (u : U) : (m l₁) u * ((m l₁) u / (m l₂) u) ^ (α.toEReal - 1).toReal =
                      ((m l₁) u) ^ α * ((m l₂) u) ^ (1 - α) := by
       cases (Classical.em ((m l₂) u = 0))
@@ -267,7 +483,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
             apply (Hm l₂ l₁ (Neighbour_symm l₁ l₂ neighs))
             trivial
           case G3 => exact PMF.apply_ne_top (m l₁) u
-          congr
+          congr 1
           sorry
         · rw [<- ENNReal.rpow_neg_one]
           rw [← ENNReal.rpow_mul]
@@ -320,6 +536,9 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
   apply (le_trans (add_le_add_left HMarkov _))
   clear HMarkov
 
+
+
+
   -- Bound left term above
   have HDP :
       ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε' then 1 else 0) ≤
@@ -355,14 +574,14 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
     rw [mul_comm]
     cases (Classical.em (DFunLike.coe (m l₂) u = ⊤))
     · simp_all
-      rw [ENNReal.mul_top']
-      split
-      · exfalso
-        rename_i Hk
-        apply ENNReal.ofReal_eq_zero.mp at Hk
-        have Hk1 : 0 < Real.exp ε' := by exact Real.exp_pos ε'
-        linarith
-      · exact OrderTop.le_top ((m l₁) u)
+      -- rw [ENNReal.mul_top']
+      -- split
+      -- · exfalso
+      --   rename_i Hk
+      --   apply ENNReal.ofReal_eq_zero.mp at Hk
+      --   have Hk1 : 0 < Real.exp ε' := by exact Real.exp_pos ε'
+      --   linarith
+      -- · exact OrderTop.le_top ((m l₁) u)
     rename_i Hnt
     apply (ENNReal.div_le_iff hnz Hnt).mp
     simp at H
@@ -374,6 +593,5 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U) (ε : ℝ) (Hε 
 
   -- Conclude by simplification
   simp [add_comm]
-
 
 end SLang
