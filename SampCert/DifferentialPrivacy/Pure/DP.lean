@@ -112,4 +112,16 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   simp
 
 
+lemma pure_ApproximateDP [Countable U] {m : Mechanism T U} :
+    ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
+     (DP m (degrade δ ε') -> ApproximateDP m ε' δ) := by
+  let degrade (_ : NNReal) (ε' : NNReal) : NNReal := ε'
+  exists degrade
+  intro δ _ ε' HDP
+  rw [ApproximateDP]
+  apply ApproximateDP_of_DP
+  have R1 : degrade δ ε' = ε' := by simp
+  rw [R1] at HDP
+  trivial
+
 end SLang

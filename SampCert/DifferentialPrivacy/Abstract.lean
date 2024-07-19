@@ -26,9 +26,17 @@ Abstract definition of a differentially private systemm.
 -/
 class DPSystem (T : Type) where
   /--
-  Differential privacy proposition, with one real paramater (ε-DP, ε-zCDP, etc)
+  Differential privacy proposition, with one real parameter (ε-DP, ε-zCDP, etc)
   -/
   prop : Mechanism T Z → NNReal → Prop
+
+  /--
+  For any δ, prop implies ``ApproximateDP δ ε`` up to a sufficient degradation
+  of the privacy parameter.
+  -/
+  prop_adp [Countable Z] {m : Mechanism T Z} :
+    ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
+    /- Monotone (degrade δ) ∧ -/ (prop m (degrade δ ε') -> ApproximateDP m ε' δ)
   /--
   DP is monotonic
   -/

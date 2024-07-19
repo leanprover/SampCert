@@ -667,4 +667,21 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
     case G2 => exact Hm l₁ l₂ HN
     simp
 
+lemma zCDP_ApproximateDP [Countable U] {m : Mechanism T U} :
+    ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
+     (zCDP m (degrade δ ε') -> ApproximateDP m ε' δ) := by
+  let degrade (δ : NNReal) (ε' : NNReal) : NNReal :=
+    ((2 * Real.log (1/δ) + 2 * ε')^(1/2 : ℝ) - (2 * Real.log (1/δ))^(1/2 : ℝ)).toNNReal
+  exists degrade
+  intro δ Hδ ε' ⟨ HN , HB ⟩
+  rw [ApproximateDP]
+  have R := ApproximateDP_of_zCDP m (degrade δ ε') (by simp) HB HN δ Hδ
+
+  have Hdegrade : ((degrade δ ε') ^ 2) / 2 + (degrade δ ε') * (2 * Real.log (1 / δ))^(1/2 : ℝ) = ε' := by
+
+    sorry
+  rw [Hdegrade] at R
+  trivial
+
+
 end SLang
