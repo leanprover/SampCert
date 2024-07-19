@@ -32,7 +32,7 @@ Approximate DP is trivial with δ ≥ 1
 theorem ApproximateDP_gt1 (m : Mechanism T U) (ε : ℝ) {δ : NNReal} (Hδ : 1 ≤ δ) : ApproximateDP m ε δ := by
   rw [ApproximateDP]
   rw [DP']
-  intros l₁ l₂ N S
+  intros l₁ l₂ _ S
   have H1 : (∑' (x : U), if x ∈ S then (m l₁) x else 0) ≤ 1 := by
     rw [<- PMF.tsum_coe (m l₁)]
     apply ENNReal.tsum_le_tsum
@@ -612,14 +612,6 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
     rw [mul_comm]
     cases (Classical.em (DFunLike.coe (m l₂) u = ⊤))
     · simp_all
-      -- rw [ENNReal.mul_top']
-      -- split
-      -- · exfalso
-      --   rename_i Hk
-      --   apply ENNReal.ofReal_eq_zero.mp at Hk
-      --   have Hk1 : 0 < Real.exp ε' := by exact Real.exp_pos ε'
-      --   linarith
-      -- · exact OrderTop.le_top ((m l₁) u)
     rename_i Hnt
     apply (ENNReal.div_le_iff hnz Hnt).mp
     simp at H
@@ -638,8 +630,8 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
 Obtain an approximate DP bound from a zCDP bound, when ε > 0
 -/
 lemma ApproximateDP_of_zCDP_pos [Countable U] (m : Mechanism T U)
-  (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
-  ∀ δ : NNReal, (0 < (δ : ℝ)) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
+    (ε : ℝ) (Hε_pos : 0 < ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
+    ∀ δ : NNReal, (0 < (δ : ℝ)) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
   intro δ Hδ0
   cases (Classical.em (δ < 1))
   · intro Hδ1
@@ -649,5 +641,27 @@ lemma ApproximateDP_of_zCDP_pos [Countable U] (m : Mechanism T U)
     apply le_of_not_lt
     trivial
 
+/--
+Obtain an approximate DP bound from a zCDP bound
+-/
+theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
+    (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ε) (Hm : ACNeighbour m) :
+    ∀ δ : NNReal, (0 < (δ : ℝ)) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
+  cases LE.le.lt_or_eq Hε
+  · rename_i Hε
+    intro δ a
+    exact ApproximateDP_of_zCDP_pos m ε Hε h Hm δ a
+  · rename_i Hε'
+    intro δ Hδ
+    rw [<- Hε']
+    rw [<- Hε'] at h
+    rw [zCDPBound] at h
+    simp at *
+    intro l₁ l₂ HN S
+    have h := h 2 (by simp) l₁ l₂ HN
+    rw [(@RenyiDivergence_aux_zero U ⊤ ?G1 _ (m l₁) (m l₂) 2 (by simp) ?G2).mpr h]
+    case G1 => infer_instance
+    case G2 => exact Hm l₁ l₂ HN
+    simp
 
 end SLang
