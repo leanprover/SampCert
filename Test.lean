@@ -108,9 +108,9 @@ def estimateKurtosis (hist : IntHistogram) (mean : Float) (variance : Float) : I
 
 /--
   Not ideal to reuse IntHistogram for the CDF
+  Warning: unnormalized
 -/
 def estimateCDF (hist : IntHistogram) : IO IntHistogram := do
-  IO.println s!"{hist}"
   if hist.size = 0 then
     panic "estimateCDF: empty histogram"
   let mut cdf : Array ℕ := mkArray hist.repr.size 0
@@ -119,12 +119,43 @@ def estimateCDF (hist : IntHistogram) : IO IntHistogram := do
     cdf := cdf.set! i <| cdf.get! (i - 1) + hist.repr.get! i
   return { repr := cdf, min := hist.min, size := hist.size }
 
+def evalUnnormalizedGaussianPDF (x : ℤ) (num den : ℕ+) : IO Float := do
+  return Float.exp <| (- (Float.ofInt x)^2) / (2 * ((num : ℕ).toFloat^2 / (den : ℕ).toFloat^2))
+
+def sumTo (bound : ℤ) (tob : ℤ) (num den : ℕ+) : IO Float := do
+  let mut acc : Float := 0
+  let dist := Int.natAbs (tob - bound)
+  for x in [:dist + 1] do
+    let mass ← evalUnnormalizedGaussianPDF (x + bound) num den
+    acc := acc + mass
+  return acc
+
+def approxNormalizerGaussianPDF (num den : ℕ+) (bound : ℤ) : IO Float := do
+  sumTo (-bound) bound num den
+
+def KolmogorovDistance (hist : IntHistogram) (num den : ℕ+) : IO Float := do
+  let mut max : Float := 0
+  let bound : ℕ := 50 * num^2 -- We should do better when Init has rationals
+  let norm : Float ← approxNormalizerGaussianPDF num den bound
+  for i in [:hist.repr.size] do
+    let sample := hist.index i
+    let refCDFUnnormed ← sumTo (- bound) sample num den
+    let refCDF := refCDFUnnormed / norm
+    let estCDF : Float := (Float.ofNat (hist.repr.get! i)) / (Float.ofInt hist.size)
+    let d := (refCDF - estCDF).abs
+    if max < d then
+      max := d
+  return max
+
 def main : IO Unit := do
-  let (samples, min, max) ← sample (DiscreteGaussianSample 1 1 7) 10000
+  let num : ℕ+ := 1
+  let den : ℕ+ := 1
+  let (samples, min, max) ← sample (DiscreteGaussianSample num den 7) 10000
   let hist ← histogram samples min max
   let mean ← estimateMean hist
   let variance ← estimateVariance hist mean
   let skewness ← estimateSkewness hist mean variance
   let kurtosis ← estimateSkewness hist mean variance
   let cdf ← estimateCDF hist
-  IO.println s!"{mean} {variance} {skewness} {kurtosis}\n{hist}\n{cdf}"
+  let D ← KolmogorovDistance cdf num den
+  IO.println s!"{mean} {variance} {skewness} {kurtosis} {D}\n {cdf}"
