@@ -148,7 +148,6 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
     rw [<- Real.toNNReal_mul ?G1]
     case G1 => apply Real.exp_nonneg
     congr 1
-    skip
     conv =>
       enter [2, 2]
       rw [<- @Real.exp_log (δ.toReal) Hδ0]
@@ -174,7 +173,6 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
               apply one_le_inv Hδ0
               exact le_of_lt Hδ1
         · simp
-    skip
     rw [<- Dε']
     simp
     repeat rw [mul_add]
@@ -394,7 +392,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
         (fun (x : U) => ENNReal.eexp ((α - 1) * z x))
         ?HAEmeasurable
         (ENNReal.ofReal (Real.exp ((α - 1) * ε')))
-    case HAEmeasurable => exact Measurable.aemeasurable fun ⦃t⦄ a => trivial
+    case HAEmeasurable => exact Measurable.aemeasurable fun ⦃t⦄ _ => trivial
     rw [m1_measure_lintegral_sum] at HM
     rw [m1_measure_eval] at HM
 
