@@ -38,3 +38,6 @@ jobs:
 
       - name: run Discrete Laplace test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretelaplace.py
+
+      - name: run Lean tests
+        run: lake exe test
