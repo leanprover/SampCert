@@ -18,6 +18,24 @@ open SLang Std Int Array
 structure IntHistogram where
   repr : Array ℕ
   min : ℤ
+  size : ℕ
+  deriving Repr, DecidableEq
+
+def IntHistogram.index (hist : IntHistogram) (i : ℤ) : ℤ := Id.run do
+  if i - hist.min < 0 then
+    panic "IntHistogram.get!: index lower than min"
+  i + hist.min
+
+def histToSTring (hist : IntHistogram) : String  := Id.run do
+  let mut str := ""
+  for i in [:hist.repr.size] do
+    str := str ++ s!"({hist.index i},{hist.repr.get! i})  "
+  return str
+
+instance : ToString IntHistogram where
+  toString := histToSTring
+
+
 
 /--
   sample `numSamples` times from `dist` into an array and keep track
@@ -45,27 +63,10 @@ def sample (dist : SLang ℤ) (numSamples : ℕ) : IO ((Array ℤ) × ℤ × ℤ
       max := s
   return (samples,min,max)
 
-def estimateMean (samples : Array ℤ) : Float := Id.run do
-  let mut acc : Float := 0
-  for s in samples do
-    acc := acc + Float.ofInt s
-  return acc / (samples.size).toFloat
-
-def estimateVariance (samples : Array ℤ) (mean : Float) : Float := Id.run do
-  let mut acc : Float := 0
-  for s in samples do
-    acc := acc + (Float.ofInt s - mean)^2
-  return acc / ((samples.size).toFloat - 1)
-
-instance : DecidableRel Int.le := by
-  simp [DecidableRel]
-  intros a b
-  apply Int.decLe
-
 /--
   compute histogram of `samples`
 -/
-def histogram (samples : Array ℤ) (min max : ℤ) : IntHistogram :=  Id.run do
+def histogram (samples : Array ℤ) (min max : ℤ) : IO IntHistogram := do
   if max < min then
     panic "histogram: max less than min"
   let mut hist : Array ℕ := mkArray (1 + max - min).toNat 0
@@ -74,11 +75,38 @@ def histogram (samples : Array ℤ) (min max : ℤ) : IntHistogram :=  Id.run do
     if idx < 0 then
       panic "histogram: index less than 0"
     hist := hist.set! idx.toNat (hist.get! idx.toNat + 1)
-  return { repr := hist, min := min }
+  return { repr := hist, min := min, size := samples.size }
+
+def estimateMean (hist : IntHistogram) : IO Float := do
+  let mut acc : Float := 0
+  for i in [:hist.repr.size] do
+    acc := acc + Float.ofInt (hist.repr.get! i) * Float.ofInt (hist.index i)
+  return acc / (hist.size).toFloat
+
+def estimateVariance (hist : IntHistogram) (mean : Float) : IO Float := do
+  let mut acc : Float := 0
+  for i in [:hist.repr.size] do
+    for _ in [:hist.repr.get! i] do
+      acc := acc + (Float.ofInt (hist.index i) - mean)^2
+  return acc / ((hist.size).toFloat - 1)
+
+/--
+  Not ideal to reuse IntHistogram for the CDF
+-/
+def estimateCDF (hist : IntHistogram) : IO IntHistogram := do
+  IO.println s!"{hist}"
+  if hist.size = 0 then
+    panic "estimateCDF: empty histogram"
+  let mut cdf : Array ℕ := mkArray hist.repr.size 0
+  cdf := cdf.set! 0 <| hist.repr.get! 0
+  for i in [1:cdf.size] do
+    cdf := cdf.set! i <| cdf.get! (i - 1) + hist.repr.get! i
+  return { repr := cdf, min := hist.min, size := hist.size }
 
 def main : IO Unit := do
   let (samples, min, max) ← sample (DiscreteGaussianSample 1 1 7) 10000
-  let mean := estimateMean samples
-  let variance := estimateVariance samples mean
-  let hist := histogram samples min max
-  IO.println s!"{mean} {variance} {hist.repr.size}"
+  let hist ← histogram samples min max
+  let mean ← estimateMean hist
+  let variance ← estimateVariance hist mean
+  let cdf ← estimateCDF hist
+  IO.println s!"{mean} {variance}\n{hist}\n{cdf}"
