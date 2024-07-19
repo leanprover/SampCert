@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import SampCert.SLang
+import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.Foundations.Basic
 
@@ -19,9 +20,9 @@ open Classical Nat Int Real ENNReal
 
 namespace SLang
 
-abbrev Query (T U : Type) := List T → U
+-- abbrev Query (T U : Type) := List T → U
 
-abbrev Mechanism (T U : Type) := List T → PMF U
+-- abbrev Mechanism (T U : Type) := List T → PMF U
 
 /--
 General (value-dependent) composition of mechanisms
@@ -79,18 +80,6 @@ def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : PMF (
   let A ← nq1 l
   let B ← nq2 l
   return (A,B)
-
-/--
-Mechanism obtained by applying a post-processing function to a mechanism.
--/
-def privPostProcess (nq : Mechanism T U) (pp : U → V) (l : List T) : PMF V := do
-  let A ← nq l
-  return pp A
-
-/--
-Constant mechanism
--/
-def privConst (u : U) : Mechanism T U := fun _ => PMF.pure u
 
 
 /--
