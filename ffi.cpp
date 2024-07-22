@@ -4,17 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 */
 #include <lean/lean.h>
-#include <iostream> 
-#include <bit>
-#include <chrono>
 #include <random>
-using namespace std; 
 
-typedef std::chrono::high_resolution_clock myclock;
-myclock::time_point beginning = myclock::now();
-myclock::duration d = myclock::now() - beginning;
-unsigned seed = d.count();
-mt19937_64 generator(seed);
+std::mt19937_64 generator(time(NULL));
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
@@ -23,10 +15,10 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
         if (n == 0) {
             lean_internal_panic("prob_UniformP2: n == 0");
         } else {
-            int lz = __countl_zero(n);
+            int lz = std::__countl_zero(n);
             int bitlength = (8*sizeof n) - lz - 1;
             size_t bound = 1 << bitlength; 
-            uniform_int_distribution<int> distribution(0,bound-1);
+            std::uniform_int_distribution<int> distribution(0,bound-1);
             size_t r = distribution(generator);
             lean_dec(a); 
             return lean_box(r);

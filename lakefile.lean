@@ -22,7 +22,7 @@ target ffi.o pkg : FilePath := do
   let oFile := pkg.buildDir / "ffi.o"
   let srcJob ← inputTextFile <| pkg.dir / "ffi.cpp"
   let weakArgs := #["-I", (← getLeanIncludeDir).toString]
-  buildO oFile srcJob weakArgs #["-fPIC"] "c++" getLeanTrace
+  buildO oFile srcJob weakArgs #["-fPIC"] "g++" getLeanTrace
 
 extern_lib libleanffi pkg := do
   let ffiO ← ffi.o.fetch
@@ -30,4 +30,4 @@ extern_lib libleanffi pkg := do
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
 lean_exe test where
-  root := `Main
+  root := `Test
