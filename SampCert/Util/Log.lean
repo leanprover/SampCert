@@ -906,7 +906,7 @@ end ENNReal
 /-!
 ### Coercion from PNat to NNReal
 
-Really, we would want to coerce this to a posreal, but there is no posreal type in mathlib, so it would be a lot of work. 
+Really, we would want to coerce this to a posreal, but there is no posreal type in mathlib, so it would be a lot of work.
 -/
 @[simp]
 def NNReal.ofPNat (p : PNat) : NNReal := ⟨ p.1, Nat.cast_nonneg p.1 ⟩

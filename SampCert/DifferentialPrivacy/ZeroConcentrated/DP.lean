@@ -667,6 +667,9 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
     case G2 => exact Hm l₁ l₂ HN
     simp
 
+/--
+zCDP is no weaker than approximate DP, up to a loss of parameters.
+-/
 lemma zCDP_ApproximateDP [Countable U] {m : Mechanism T U} :
     ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
      (zCDP m (degrade δ ε') -> ApproximateDP m ε' δ) := by

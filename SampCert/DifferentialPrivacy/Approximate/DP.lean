@@ -18,10 +18,16 @@ variable { T : Type }
 
 namespace SLang
 
+/--
+Approximate differential privacy bound
+-/
 def DP' (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
   ∀ l₁ l₂ : List T, Neighbour l₁ l₂ → ∀ S : Set U,
   (∑' x : U, if x ∈ S then m l₁ x else 0) ≤ δ + ENNReal.ofReal (Real.exp ε) * (∑' x : U, if x ∈ S then m l₂ x else 0)
 
+/--
+Approximate differential privacy
+-/
 def ApproximateDP (m : Mechanism T U) (ε : ℝ) (δ : NNReal) : Prop :=
   DP' m ε δ
 

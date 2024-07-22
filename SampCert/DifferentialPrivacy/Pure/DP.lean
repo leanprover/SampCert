@@ -111,7 +111,9 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   apply le_trans h
   simp
 
-
+/--
+Pure DP is no weaker than approximate DP, up to a loss of parameters
+-/
 lemma pure_ApproximateDP [Countable U] {m : Mechanism T U} :
     ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
      (DP m (degrade δ ε') -> ApproximateDP m ε' δ) := by

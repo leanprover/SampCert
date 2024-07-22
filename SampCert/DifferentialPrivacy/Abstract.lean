@@ -36,7 +36,7 @@ class DPSystem (T : Type) where
   -/
   prop_adp [Countable Z] {m : Mechanism T Z} :
     ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
-    /- Monotone (degrade δ) ∧ -/ (prop m (degrade δ ε') -> ApproximateDP m ε' δ)
+    (prop m (degrade δ ε') -> ApproximateDP m ε' δ)
   /--
   DP is monotonic
   -/
