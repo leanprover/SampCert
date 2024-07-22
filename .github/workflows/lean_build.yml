@@ -9,10 +9,10 @@ name: Verify
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean-action@v1-beta
+      - uses: leanprover/lean-action@v1
         with:
           test: false
           build-args: "-R -Kwerror"
