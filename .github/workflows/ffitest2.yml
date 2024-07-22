@@ -11,14 +11,14 @@ jobs:
         name: Build
         runs-on: ubuntu-latest
         steps:
+          - uses: actions/checkout@v4
           - uses: leanprover/lean-action@v1
             with:
               test: false
               use-mathlib-cache: true
               use-github-cache: false
               build-args: "-R -Kwerror"
-  
-          - uses: actions/checkout@v4
+
   
           - name: run Lean tests
             run: lake exe test
