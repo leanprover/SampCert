@@ -4,16 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import SampCert
-import SampCert.Samplers.Uniform.Code
-import SampCert.Samplers.Bernoulli.Code
-import SampCert.Samplers.BernoulliNegativeExponential.Code
-import SampCert.Samplers.Laplace.Code
-import SampCert.Samplers.LaplaceGen.Code
-import SampCert.Samplers.Geometric.Code
-import SampCert.Samplers.Gaussian.Code
-import SampCert.Samplers.GaussianGen.Code
+import SampCert.SLang
+import SampCert.Samplers.Gaussian.Properties
 
-open SLang Std Int Array
+open SLang Std Int Array PMF
 
 structure IntHistogram where
   repr : Array ℕ
@@ -41,7 +35,7 @@ instance : ToString IntHistogram where
   sample `numSamples` times from `dist` into an array and keep track
   of the minimum and maximum sample value
 -/
-def sample (dist : SLang ℤ) (numSamples : ℕ) : IO ((Array ℤ) × ℤ × ℤ) := do
+def sample (dist : PMF ℤ) (numSamples : ℕ) : IO ((Array ℤ) × ℤ × ℤ) := do
   if numSamples < 2 then
     panic! "sample: 2 samples at least required"
   let mut samples : Array ℤ := mkArray numSamples 0
@@ -148,7 +142,7 @@ def KolmogorovDistance (hist : IntHistogram) (num den : ℕ+) : IO Float := do
   return max
 
 def test (num den : ℕ+) (mix numSamples : ℕ) (threshold : Float) : IO Unit := do
-  let (samples, min, max) ← sample (DiscreteGaussianSample num den mix) numSamples
+  let (samples, min, max) ← sample (DiscreteGaussianPMF num den mix) numSamples
   let hist ← histogram samples min max
   let mean ← estimateMean hist
   let variance ← estimateVariance hist mean

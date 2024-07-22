@@ -120,7 +120,11 @@ def probUntil (body : SLang T) (cond : T → Bool) : SLang T := do
   let v ← body
   probWhile (λ v : T => ¬ cond v) (λ _ : T => body) v
 
-@[extern "my_run"]
-opaque run (c : SLang T) : IO T
-
 end SLang
+
+namespace PMF
+
+@[extern "my_run"]
+opaque run (c : PMF T) : IO T
+
+end PMF
