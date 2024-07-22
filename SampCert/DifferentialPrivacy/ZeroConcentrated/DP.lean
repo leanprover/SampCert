@@ -671,15 +671,61 @@ lemma zCDP_ApproximateDP [Countable U] {m : Mechanism T U} :
     ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
      (zCDP m (degrade δ ε') -> ApproximateDP m ε' δ) := by
   let degrade (δ : NNReal) (ε' : NNReal) : NNReal :=
-    ((2 * Real.log (1/δ) + 2 * ε')^(1/2 : ℝ) - (2 * Real.log (1/δ))^(1/2 : ℝ)).toNNReal
+    (√(2 * Real.log (1/δ) + 2 * ε') - √(2 * Real.log (1/δ))).toNNReal
+  have HDdegrade δ ε' : degrade δ ε' = (√(2 * Real.log (1/δ) + 2 * ε') - √(2 * Real.log (1/δ))).toNNReal := by rfl
   exists degrade
   intro δ Hδ ε' ⟨ HN , HB ⟩
+
+  cases Classical.em (1 ≤ δ)
+  · rename_i Hδ1
+    exact ApproximateDP_gt1 m (↑ε') Hδ1
+
+  rename_i Hδ1
   rw [ApproximateDP]
   have R := ApproximateDP_of_zCDP m (degrade δ ε') (by simp) HB HN δ Hδ
 
   have Hdegrade : ((degrade δ ε') ^ 2) / 2 + (degrade δ ε') * (2 * Real.log (1 / δ))^(1/2 : ℝ) = ε' := by
-
-    sorry
+    rw [HDdegrade]
+    generalize HD : Real.log (1 / δ) = D
+    have HDnn : 0 ≤ D := by
+      rw [<- HD]
+      apply Real.log_nonneg
+      apply one_le_one_div Hδ
+      exact le_of_not_ge Hδ1
+    simp only [Real.coe_toNNReal']
+    rw [max_eq_left ?G1]
+    case G1 =>
+      apply sub_nonneg_of_le
+      apply Real.sqrt_le_sqrt
+      simp
+    rw [sub_sq']
+    rw [Real.sq_sqrt ?G1]
+    case G1 =>
+      apply add_nonneg
+      · simp
+        trivial
+      · simp
+    rw [Real.sq_sqrt ?G1]
+    case G1 =>
+      simp
+      trivial
+    rw [← Real.sqrt_eq_rpow]
+    rw [mul_sub_right_distrib]
+    rw [<- sq]
+    rw [Real.sq_sqrt ?G1]
+    case G1 =>
+      simp
+      trivial
+    generalize HW : √(2 * D + 2 * ↑ε') * √(2 * D) = W
+    conv =>
+      enter [1, 1, 1, 2]
+      rw [mul_assoc]
+      rw [HW]
+    rw [sub_div]
+    rw [add_div]
+    rw [add_div]
+    simp
+    linarith
   rw [Hdegrade] at R
   trivial
 
