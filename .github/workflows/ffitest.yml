@@ -4,7 +4,7 @@ on:
       - 'main'
   pull_request:
   
-  name: Test FFI
+name: Test FFI
 
 jobs:
     build:
