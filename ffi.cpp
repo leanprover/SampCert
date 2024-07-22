@@ -10,11 +10,11 @@ Authors: Jean-Baptiste Tristan
 #include <random>
 using namespace std; 
 
-typedef std::chrono::high_resolution_clock myclock;
-myclock::time_point beginning = myclock::now();
-myclock::duration d = myclock::now() - beginning;
-unsigned seed = d.count();
-mt19937_64 generator(seed);
+// typedef std::chrono::high_resolution_clock myclock;
+// myclock::time_point beginning = myclock::now();
+// myclock::duration d = myclock::now() - beginning;
+// unsigned seed = d.count();
+mt19937_64 generator(time(NULL));
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
