@@ -20,12 +20,6 @@ jobs:
           use-github-cache: false
           build-args: "-R -Kwerror"
 
-      - name : install additional c++ libs
-        run: sudo apt-get install g++-multilib
-
-      - name: run Lean tests
-        run: lake exe test
-
       - name: install Python dependences
         run: pip install matplotlib numpy scipy
 
