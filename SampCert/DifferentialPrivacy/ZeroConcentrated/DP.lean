@@ -111,8 +111,22 @@ lemma β_le_one {x : U} : β ε p q x ≤ 1 := by
   · simp
   · apply Hqp
 
+lemma β_ne_top : β ε p q x ≠ ⊤ := by
+  unfold β
+  intro HK
+  apply ENNReal.div_eq_top.mp at HK
+  cases HK
+  · rename_i HK
+    rcases HK with ⟨ _ , HK' ⟩
+    rw [<- ENNReal.ofReal_sub] at HK'
+    · simp at HK'
+      apply not_le.mpr Hε HK'
+    · apply Real.exp_nonneg
+  · rename_i HK
+    rcases HK with ⟨ HK', _ ⟩
+    apply ENNReal.sub_eq_top_iff.mp at HK'
+    simp at HK'
 
-lemma β_ne_top : β ε p q x ≠ ⊤ := by sorry
 
 lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
     ((p x / q x) - ENNReal.ofReal (Real.exp (-ε)) ) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
@@ -148,7 +162,9 @@ lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
     apply Hpq
 
 
-lemma sub_one_β_ne_top : (1 - β ε p q x) ≠ ⊤ := by sorry
+lemma sub_one_β_ne_top : (1 - β ε p q x) ≠ ⊤ := by
+  apply ENNReal.sub_ne_top
+  simp
 
 
 /--
@@ -215,9 +231,19 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
   case G1 =>
     intros
     rw [<- HC]
-    -- From absolute continuity
-    sorry
+    have Hac := Hac x
+    intro HK
+    apply ENNReal.div_eq_top.mp at HK
+    cases HK
+    · simp_all only [imp_false, not_true_eq_false]
+    · rename_i HK'
+      cases HK'
+      apply PMF.apply_ne_top p x
+      trivial
+
+  -- Arithmetic
   skip
+
   sorry
 
 
@@ -271,6 +297,7 @@ lemma A_jensen {α : ℝ} (Hα : 1 < α) (x : U) :
   have SC2 (b : Bool) : (A_pmf ε p q Hqp x) b ≠ ⊤ := by
     cases b <;> simp only [A_pmf, DFunLike.coe, PMF.instFunLike]
     · apply β_ne_top
+      apply Hε
     · apply sub_one_β_ne_top
 
   apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
