@@ -14,15 +14,13 @@ The identifier ``DiscreteGaussianGenSample`` violates our naming scheme, however
 this way for parity with ``DiscreteGaussianGen``.
 -/
 
-noncomputable section
-
 namespace SLang
 
 /--
 ``SLang`` implementation of a discrete gaussian with mean ``μ`` and variance ``(num/den)^2``.
 -/
 def DiscreteGaussianGenSample (num : PNat) (den : PNat) (μ : ℤ) : SLang ℤ := do
-  let s ← DiscreteGaussianSample num den
+  let s ← DiscreteGaussianSample num den 7
   return s + μ
 
 end SLang

@@ -5,7 +5,7 @@ package «sampcert» where
   -- add any package configuration options here
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.9.0"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.10.0-rc2"
 
 @[default_target]
 lean_lib «SampCert» where
@@ -17,3 +17,17 @@ lean_lib «VMC» where
 -- From doc-gen4
 meta if get_config? env = some "doc" then
 require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "main"
+
+target ffi.o pkg : FilePath := do
+  let oFile := pkg.buildDir / "ffi.o"
+  let srcJob ← inputTextFile <| pkg.dir / "ffi.cpp"
+  let weakArgs := #["-I", (← getLeanIncludeDir).toString]
+  buildO oFile srcJob weakArgs #["-fPIC"] "c++" getLeanTrace
+
+extern_lib libleanffi pkg := do
+  let ffiO ← ffi.o.fetch
+  let name := nameToStaticLib "leanffi"
+  buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
+
+lean_exe test where
+  root := `Main

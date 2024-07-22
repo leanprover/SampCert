@@ -14,8 +14,6 @@ This file contains the implementation for a uniform sampler over a finite set.
 ``UniformSample`` violates our naming scheme, but this is currently necessary for extraction.
 -/
 
-noncomputable section
-
 namespace SLang
 
 /-- ``Slang`` term for a uniform sample over [0, n). Implemented using rejection sampling on

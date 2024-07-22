@@ -28,7 +28,6 @@ theorem privConst_DP_Bound {u : U} : DP (privConst u : Mechanism T U) 0 := by
   rw [DP_singleton]
   intros
   simp [privConst]
-  split <;> simp
 
 /--
 ``privComposeAdaptive`` satisfies zCDP
