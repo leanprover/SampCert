@@ -112,6 +112,7 @@ lemma β_le_one {x : U} : β ε p q x ≤ 1 := by
   · apply Hqp
 
 
+lemma β_ne_top : β ε p q x ≠ ⊤ := by sorry
 
 lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
     ((p x / q x) - ENNReal.ofReal (Real.exp (-ε)) ) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
@@ -145,6 +146,10 @@ lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
   case G2 =>
     rw [<- HD, <- HC]
     apply Hpq
+
+
+lemma sub_one_β_ne_top : (1 - β ε p q x) ≠ ⊤ := by sorry
+
 
 /--
 Value of the random variable A
@@ -219,7 +224,7 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
 /--
 Jensen's inequality for the random variable A: real reduct
 -/
-lemma A_jensen_real (α : ℝ) (Hα : 1 < α) (x : U) :
+lemma A_jensen_real {α : ℝ} (Hα : 1 < α) (x : U) :
     (∑'(b : Bool), (A_val ε b).toReal * (A_pmf ε p q Hqp x b).toReal) ^ α ≤ (∑'(b : Bool), ((A_val ε b).toReal)^α * (A_pmf ε p q Hqp x b).toReal) := by
   have HJensen := @ConvexOn.map_integral_le _ _ ⊤ _ _ _ _ _ (fun b => (A_val ε b).toReal) _
           (PMF.toMeasure.isProbabilityMeasure (A_pmf ε p q Hqp x))
@@ -259,11 +264,75 @@ lemma A_jensen_real (α : ℝ) (Hα : 1 < α) (x : U) :
 /--
 Jensen's inequality for the random variable A
 -/
-lemma A_jensen (α : ℝ) (Hα : 1 < α) (x : U) :
+lemma A_jensen {α : ℝ} (Hα : 1 < α) (x : U) :
     (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) ^ α ≤ (∑'(b : Bool), (A_val ε b)^α * A_pmf ε p q Hqp x b) := by
 
+  have SC1 (b : Bool) : A_val ε b ≠ ⊤ := by cases b <;> simp [A_val]
+  have SC2 (b : Bool) : (A_pmf ε p q Hqp x) b ≠ ⊤ := by
+    cases b <;> simp only [A_pmf, DFunLike.coe, PMF.instFunLike]
+    · apply β_ne_top
+    · apply sub_one_β_ne_top
 
-  sorry
+  apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
+  case G1 =>
+    apply ENNReal.rpow_ne_top_of_nonneg
+    · linarith
+    · rw [tsum_bool]
+      apply ENNReal.add_ne_top.mpr
+      apply And.intro
+      · apply ENNReal.mul_ne_top
+        · apply (SC1 false)
+        · apply (SC2 false)
+      · apply ENNReal.mul_ne_top
+        · apply (SC1 true)
+        · apply (SC2 true)
+  case G2 =>
+    rw [tsum_bool]
+    apply ENNReal.add_ne_top.mpr
+    apply And.intro
+    · apply ENNReal.mul_ne_top
+      · apply ENNReal.rpow_ne_top_of_nonneg
+        · linarith
+        apply (SC1 false)
+      · apply (SC2 false)
+    · apply ENNReal.mul_ne_top
+      · apply ENNReal.rpow_ne_top_of_nonneg
+        · linarith
+        apply (SC1 true)
+      · apply (SC2 true)
+  rw [tsum_bool, tsum_bool]
+  rw [← ENNReal.toReal_rpow]
+  rw [ENNReal.toReal_add ?G1 ?G2]
+  case G1 =>
+    apply ENNReal.mul_ne_top
+    · apply (SC1 false)
+    · apply (SC2 false)
+  case G2 =>
+    apply ENNReal.mul_ne_top
+    · apply (SC1 true)
+    · apply (SC2 true)
+  rw [ENNReal.toReal_mul]
+  rw [ENNReal.toReal_mul]
+  rw [ENNReal.toReal_add ?G1 ?G2]
+  case G1 =>
+    apply ENNReal.mul_ne_top
+    · apply ENNReal.rpow_ne_top_of_nonneg
+      · linarith
+      apply (SC1 false)
+    · apply (SC2 false)
+  case G2 =>
+    apply ENNReal.mul_ne_top
+    · apply ENNReal.rpow_ne_top_of_nonneg
+      · linarith
+      apply (SC1 true)
+    · apply (SC2 true)
+  rw [ENNReal.toReal_mul]
+  rw [ENNReal.toReal_mul]
+  rw [← ENNReal.toReal_rpow]
+  rw [← ENNReal.toReal_rpow]
+  have HJR := A_jensen_real ε p q Hqp Hα x
+  rw [tsum_bool, tsum_bool] at HJR
+  trivial
 
 noncomputable def B : PMF Bool := q >>= A_pmf ε p q Hqp
 
