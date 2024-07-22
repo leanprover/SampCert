@@ -22,7 +22,7 @@ target ffi.o pkg : FilePath := do
   let oFile := pkg.buildDir / "ffi.o"
   let srcJob ← inputTextFile <| pkg.dir / "ffi.cpp"
   let weakArgs := #["-I", (← getLeanIncludeDir).toString]
-  buildO oFile srcJob weakArgs #["-fPIC", "-lstdc++"] "clang++" getLeanTrace
+  buildO oFile srcJob weakArgs #["-fPIC"] "c++" getLeanTrace
 
 extern_lib libleanffi pkg := do
   let ffiO ← ffi.o.fetch

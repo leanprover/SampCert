@@ -13,18 +13,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: install Dafny
-        run: wget https://github.com/dafny-lang/dafny/releases/download/v4.4.0/dafny-4.4.0-x64-ubuntu-20.04.zip ; unzip dafny-4.4.0-x64-ubuntu-20.04.zip
-
-      - name: install Python dependences
-        run: pip install matplotlib numpy scipy
-
       - uses: leanprover/lean-action@v1-beta
         with:
           test: false
           use-mathlib-cache: true
           use-github-cache: false
           build-args: "-R -Kwerror"
+
+      - name : install additional c++ libs
+        run: sudo apt-get install g++-multilib
+
+      - name: run Lean tests
+        run: lake exe test
+
+      - name: install Python dependences
+        run: pip install matplotlib numpy scipy
+
+      - name: install Dafny
+        run: wget https://github.com/dafny-lang/dafny/releases/download/v4.4.0/dafny-4.4.0-x64-ubuntu-20.04.zip ; unzip dafny-4.4.0-x64-ubuntu-20.04.zip
 
       - name: build FastExtract
         run: |
@@ -39,5 +45,3 @@ jobs:
       - name: run Discrete Laplace test
         run: python3 Tests/SampCert-py/testing-kolmogorov-discretelaplace.py
 
-      - name: run Lean tests
-        run: lake exe test
