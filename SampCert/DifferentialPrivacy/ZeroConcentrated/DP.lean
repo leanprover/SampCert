@@ -215,11 +215,54 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
   skip
   sorry
 
+
+/--
+Jensen's inequality for the random variable A: real reduct
+-/
+lemma A_jensen_real (α : ℝ) (Hα : 1 < α) (x : U) :
+    (∑'(b : Bool), (A_val ε b).toReal * (A_pmf ε p q Hqp x b).toReal) ^ α ≤ (∑'(b : Bool), ((A_val ε b).toReal)^α * (A_pmf ε p q Hqp x b).toReal) := by
+  have HJensen := @ConvexOn.map_integral_le _ _ ⊤ _ _ _ _ _ (fun b => (A_val ε b).toReal) _
+          (PMF.toMeasure.isProbabilityMeasure (A_pmf ε p q Hqp x))
+          (@convexOn_rpow α (le_of_lt Hα))
+          ?G1 ?G2 ?G3 ?G4 ?G5
+  case G1 =>
+    apply ContinuousOn.rpow
+    · exact continuousOn_id' (Set.Ici 0)
+    · exact continuousOn_const
+    · intro _ _
+      right
+      linarith
+  case G2 =>
+    exact isClosed_Ici
+  case G3 =>
+    apply MeasureTheory.ae_of_all
+    intro b
+    cases b <;> simp
+  case G4 => simp
+  case G5 => apply MeasureTheory.Integrable.of_finite
+
+  rw [PMF.integral_eq_tsum _ _ ?G4] at HJensen
+  case G4 => simp
+  rw [PMF.integral_eq_tsum _ _ ?G5] at HJensen
+  case G5 => apply MeasureTheory.Integrable.of_finite
+
+  simp at HJensen
+  conv at HJensen =>
+    congr
+    · enter [1, 1, a]
+      rw [mul_comm]
+    · enter [1, a]
+      rw [mul_comm]
+  trivial
+
+
 /--
 Jensen's inequality for the random variable A
 -/
-lemma A_jensen (α : ℝ) (x : U) :
+lemma A_jensen (α : ℝ) (Hα : 1 < α) (x : U) :
     (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) ^ α ≤ (∑'(b : Bool), (A_val ε b)^α * A_pmf ε p q Hqp x b) := by
+
+
   sorry
 
 noncomputable def B : PMF Bool := q >>= A_pmf ε p q Hqp
@@ -259,7 +302,7 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
 
-  -- Reduction to (q l₂) nonzero case? (easy reduction by abs. continuity.)
+  -- Reduction to (q l₂) nonzero case? See if this reduction is necessary by filling out all the prior lemmas
 
   -- Suffices le exp sum by monotonicity
   -- Rewrite RD exp sum lemma
