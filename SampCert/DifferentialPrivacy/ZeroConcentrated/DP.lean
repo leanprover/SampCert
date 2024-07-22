@@ -89,32 +89,62 @@ lemma ACNeighbour_of_DP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q 
 ## Auxiliary definitions used in the proof of the (ε^2 / 2) bound
 -/
 section ofDP_bound
-variable (ε : NNReal) (Hε : ε ≤ 1)
+variable (ε : NNReal) (Hε : 0 < ε)
 variable (p q : PMF U)
+variable (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x )
 variable (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε)))
+variable (Hac : AbsCts p q)
 
 
 noncomputable def β (x : U) : ENNReal :=
-  ((p x / q x) - ENNReal.ofReal (Real.exp ε)) / (ENNReal.ofReal (Real.exp (- ε)) - ENNReal.ofReal (Real.exp ε))
-
-
-
-lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
-    (ENNReal.ofReal (Real.exp (-ε)) - (p x / q x) ) / (ENNReal.ofReal (Real.exp (- ε)) - ENNReal.ofReal (Real.exp ε)) := by
-  sorry
+  (ENNReal.ofReal (Real.exp ε) - (p x / q x)) / (ENNReal.ofReal (Real.exp (ε)) - ENNReal.ofReal (Real.exp (- ε)))
 
 lemma β_le_one {x : U} : β ε p q x ≤ 1 := by
   unfold β
   apply ENNReal.div_le_of_le_mul
   simp
-  rw [tsub_add_eq_max]
-  rw [max_eq_right ?G1]
-  case G1 =>
-    apply ENNReal.ofReal_le_ofReal
+  rw [← tsub_le_iff_right]
+  refine (ENNReal.sub_le_sub_iff_left ?h.h ?h.h').mpr ?h.a
+  · apply ENNReal.ofReal_le_ofReal
     apply Real.exp_le_exp.mpr
     simp
-  apply Hpq
+  · simp
+  · apply Hqp
 
+
+
+lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
+    ((p x / q x) - ENNReal.ofReal (Real.exp (-ε)) ) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
+  unfold β
+  generalize HC : (p x / q x) = C
+  generalize HD : (ENNReal.ofReal (Real.exp ε)) = D
+  generalize HE : (ENNReal.ofReal (Real.exp (- ε))) = E
+  have H1 : (D - E ≠ 0) := by
+    rw [<- HD, <- HE]
+    rw [<- ENNReal.ofReal_sub]
+    · simp
+      trivial
+    · apply Real.exp_nonneg
+  have H2 : (D - E ≠ ⊤) := by simp [<- HD, <- HE]
+  apply (@ENNReal.mul_eq_mul_right _ _ (D - E) H1 H2).mp
+  rw [ENNReal.sub_mul ?G1]
+  case G1 =>
+    intros
+    trivial
+  conv =>
+    congr
+    · rw [ENNReal.mul_comm_div]
+      rw [ENNReal.div_eq_inv_mul]
+    · rw [ENNReal.mul_comm_div]
+      rw [ENNReal.div_eq_inv_mul]
+  simp [ENNReal.inv_mul_cancel H1 H2]
+  rw [tsub_tsub]
+  rw [tsub_add_eq_tsub_tsub_swap]
+  rw [ENNReal.sub_sub_cancel ?G1 ?G2]
+  case G1 => simp [<- HD]
+  case G2 =>
+    rw [<- HD, <- HC]
+    apply Hpq
 
 /--
 Value of the random variable A
@@ -132,36 +162,72 @@ noncomputable def A_pmf (x : U) : PMF Bool :=
         match b with
         | false => β ε p q x
         | true => 1 - β ε p q x,
-    sorry ⟩
+    by
+       simp [(Summable.hasSum_iff ENNReal.summable), tsum_bool, add_tsub_cancel_iff_le]
+       apply β_le_one
+       trivial ⟩
 
 /--
 Expectation for the random variable A at each point x
 -/
-lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q x b = p x / q x := by
-  -- rw [tsum_bool]
-  -- unfold A
-  -- simp [DFunLike.coe, PMF.instFunLike]
-  -- conv =>
-  --   lhs
-  --   congr
-  --   · unfold β
-  --   · rw [one_sub_β]
-  -- skip
+lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b = p x / q x := by
+  rw [tsum_bool]
+  unfold A_pmf
+  rw [A_val, A_val, DFunLike.coe, PMF.instFunLike]
+  simp only []
+  conv =>
+    lhs
+    congr
+    · unfold β
+    · rw [one_sub_β _ Hε _ _ Hpq]
+  generalize HC : (p x / q x) = C
+  generalize HD : (ENNReal.ofReal (Real.exp ε)) = D
+  generalize HE : (ENNReal.ofReal (Real.exp (- ε))) = E
+  have H1 : (D - E ≠ 0) := by
+    rw [<- HD, <- HE]
+    rw [<- ENNReal.ofReal_sub]
+    · simp
+      trivial
+    · apply Real.exp_nonneg
+  have H2 : (D - E ≠ ⊤) := by simp [<- HD, <- HE]
+  apply (@ENNReal.mul_eq_mul_right _ _ (D - E) H1 H2).mp
+  rw [add_mul]
+  rw [division_def]
+  rw [division_def]
+  repeat rw [mul_assoc]
+  simp [ENNReal.inv_mul_cancel H1 H2]
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intros
+    rw [<- HE]
+    simp
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intros
+    rw [<- HD]
+    simp
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intros
+    rw [<- HC]
+    -- From absolute continuity
+    sorry
+  skip
   sorry
 
 /--
 Jensen's inequality for the random variable A
 -/
 lemma A_jensen (α : ℝ) (x : U) :
-    (∑'(b : Bool), A_val ε b * A_pmf ε p q x b) ^ α ≤ (∑'(b : Bool), (A_val ε b)^α * A_pmf ε p q x b) := by
+    (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) ^ α ≤ (∑'(b : Bool), (A_val ε b)^α * A_pmf ε p q Hqp x b) := by
   sorry
 
-noncomputable def B : PMF Bool := q >>= A_pmf ε p q
+noncomputable def B : PMF Bool := q >>= A_pmf ε p q Hqp
 
 /--
 Formula for B which shows up in the main derivation
 -/
-lemma B_eval_open (b : Bool) : B ε p q b = ∑'(x : U), A_pmf ε p q x b * q x := by
+lemma B_eval_open (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x b * q x := by
   unfold B
   simp
   apply tsum_congr
@@ -171,12 +237,12 @@ lemma B_eval_open (b : Bool) : B ε p q b = ∑'(x : U), A_pmf ε p q x b * q x 
 /--
 closed form for B false
 -/
-lemma B_eval_false : B ε p q false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
+lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
 
 /--
 closed form for B true
 -/
-lemma B_eval_true : B ε p q true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
+lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
 
 
 end ofDP_bound
@@ -190,6 +256,17 @@ Convert ε-DP bound to `(1/2)ε²`-zCDP bound.
 Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 -/
 lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDPBound q ε := by
+  rw [zCDPBound]
+  intro α Hα l₁ l₂ HN
+
+  -- Reduction to (q l₂) nonzero case? (easy reduction by abs. continuity.)
+
+  -- Suffices le exp sum by monotonicity
+  -- Rewrite RD exp sum lemma
+  -- Have (RD sum) le (split in terms of A)
+  --
+
+
   sorry
 
 /-
