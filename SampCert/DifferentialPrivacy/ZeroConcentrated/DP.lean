@@ -241,10 +241,98 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
       apply PMF.apply_ne_top p x
       trivial
 
-  -- Arithmetic
-  skip
+  conv =>
+    enter [1, 2, 2]
+    rw [mul_comm]
 
-  sorry
+  -- Arithmetic
+  -- ENNReal subtraction is difficult
+  -- Handle ⊤ cases to convert to NNReal
+  generalize HED : (E * D) = ED
+  cases ED
+  · exfalso
+    apply ENNReal.mul_eq_top.mp at HED
+    cases HED
+    · rename_i h
+      rcases h with ⟨ _ , h ⟩
+      rw [<- HD] at h
+      simp at h
+    · exfalso
+      rename_i h
+      rcases h with ⟨ h , _ ⟩
+      rw [<- HE] at h
+      simp at h
+  rename_i ED
+
+  conv =>
+    enter [1, 1, 2]
+    rw [mul_comm]
+  generalize HCE : (C * E) = CE
+  cases CE
+  · simp
+    apply ENNReal.mul_eq_top.mp at HCE
+    cases HCE
+    · exfalso
+      rename_i h
+      rcases h with ⟨ _ , h ⟩
+      rw [<- HE] at h
+      simp at h
+    · rename_i h
+      rcases h with ⟨ h , _ ⟩
+      exfalso
+      rw [<- HC] at h
+      apply ENNReal.div_eq_top.mp at h
+      cases h
+      · rename_i h'
+        rcases h' with ⟨ h1, h2 ⟩
+        apply h1
+        apply Hac
+        apply h2
+      · rename_i h
+        rcases h with ⟨ h, _ ⟩
+        apply PMF.apply_ne_top p x h
+  rename_i CE
+  conv =>
+    enter [1, 2, 1]
+    rw [mul_comm]
+  generalize HCD : (C * D) = CD
+  cases CD
+  · simp
+  rename_i CD
+  rw [ENNReal.ofNNReal]
+  repeat rw [<- WithTop.coe_sub]
+  repeat rw [<- WithTop.coe_add]
+  congr
+
+  -- Now convert to Real substraction
+  repeat rw [NNReal.sub_def]
+  rw [<- Real.toNNReal_add ?G1 ?G2]
+  case G1 =>
+    rw [sub_nonneg]
+    apply (ENNReal.ofReal_le_ofReal_iff ?G3).mp
+    case G3 => exact NNReal.zero_le_coe
+    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HCE]
+    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HED]
+    rw [mul_comm]
+    apply mul_le_mul'
+    · rfl
+    rw [<- HC, <- HD]
+    apply Hpq
+  case G2 =>
+    rw [sub_nonneg]
+    apply (ENNReal.ofReal_le_ofReal_iff ?G3).mp
+    case G3 => exact NNReal.zero_le_coe
+    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HED]
+    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HCD]
+    apply mul_le_mul'
+    · rw [<- HE, <- HC]
+      apply Hqp
+    · rfl
+
+  -- Real subtraction is easier
+  congr 1
+  linarith
+
 
 
 /--
@@ -376,16 +464,16 @@ lemma B_eval_open (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x 
 /--
 closed form for B false
 -/
-lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
+lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
+  sorry
 
 /--
 closed form for B true
 -/
-lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by sorry
-
+lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
+  sorry
 
 end ofDP_bound
-
 
 
 
@@ -398,14 +486,32 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
 
-  -- Reduction to (q l₂) nonzero case? See if this reduction is necessary by filling out all the prior lemmas
+  -- Open RenyiDivergence
+  rw [RenyiDivergence]
+  rw [<- ENNReal.ofEReal_ofReal_toENNReal]
+  apply ENNReal.ofEReal_le_mono
 
-  -- Suffices le exp sum by monotonicity
-  -- Rewrite RD exp sum lemma
+  -- Change LHS to sum by monotonicity
+  suffices ENNReal.eexp ((α - 1) * RenyiDivergence_def (q l₁) (q l₂) α) ≤ ENNReal.eexp ((α - 1) * Real.toEReal (1 / 2 * ↑ε ^ 2 * α)) by
+    apply (ENNReal.ereal_smul_le_left (α - 1) ?G1 ?G2)
+    case G1 => sorry -- Annoying
+    case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    apply ENNReal.eexp_mono_le.mpr
+    trivial
+  rw [RenyiDivergence_def_exp _ _ Hα]
+
+  -- Rewrite to conditional expectation
+  rw [RenyiDivergenceExpectation _ _ Hα (ACNeighbour_of_DP _ _ H _ _ HN)]
+
+  -- Rewrite to A
+  -- !! Make sure I don't need to reduce q first !!
+
+
+
+
+
   -- Have (RD sum) le (split in terms of A)
   --
-
-
   sorry
 
 /-
