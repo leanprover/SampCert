@@ -500,13 +500,33 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
     trivial
   rw [RenyiDivergence_def_exp _ _ Hα]
 
-  -- Rewrite to conditional expectation
+  -- Next step won't work with ε=0
+  cases (Classical.em (ε = 0))
+  · sorry
+  rename_i Hε'
+  have Hε : 0 < ε := by sorry
+
+  -- Rewrite to conditional expectation, and then to A
+  -- have Hpq := (ACNeighbour_of_DP _ _ H _ _ HN)
+  -- have Hqp := (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
+  have Hqp : ∀ (x : U), ENNReal.ofReal (Real.exp (-↑ε)) ≤ (q l₁) x / (q l₂) x := sorry
+  have Hpq : ∀ (x : U), (q l₁) x / (q l₂) x ≤ ENNReal.ofReal (Real.exp ↑ε) := sorry
   rw [RenyiDivergenceExpectation _ _ Hα (ACNeighbour_of_DP _ _ H _ _ HN)]
+  conv =>
+    enter [1, 1, x]
+    rw [<- A_expectation ε Hε (q l₁) (q l₂) Hqp Hpq (ACNeighbour_of_DP _ _ H _ _ HN) x]
 
-  -- Rewrite to A
-  -- !! Make sure I don't need to reduce q first !!
-
-
+  -- Apply Jensen's inequality
+  apply (@le_trans _ _ _ (∑' (x : U), (∑' (b : Bool), (A_val ε b)^α * (A_pmf ε (q l₁) (q l₂) Hqp x) b) * (q l₂) x))
+  · apply ENNReal.tsum_le_tsum
+    intro a
+    cases (Classical.em ((q l₂) a = 0))
+    · simp_all
+    rename_i Hqnz
+    apply (ENNReal.mul_le_mul_right ?G1 ?G2).mpr
+    case G1 => trivial
+    case G2 => exact PMF.apply_ne_top (q l₂) a
+    exact A_jensen ε Hε (q l₁) (q l₂) Hqp Hα a
 
 
 
