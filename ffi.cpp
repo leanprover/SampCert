@@ -4,13 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 */
 #include <lean/lean.h>
+#include <iostream>
 #include <random>
 
-std::mt19937_64 generator(time(NULL));
-
-extern lean_object * super_sampler(lean_object *,lean_object *);
+std::random_device generator;
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
+    printf("p2\n");
     lean_dec(eta);
     if (lean_is_scalar(a)) {
         size_t n = lean_unbox(a);
@@ -20,14 +20,61 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
             int lz = std::__countl_zero(n);
             int bitlength = (8*sizeof n) - lz - 1;
             size_t bound = 1 << bitlength; 
-            std::uniform_int_distribution<int> distribution(0,bound-1);
+            std::uniform_int_distribution<size_t> distribution(0,bound-1);
             size_t r = distribution(generator);
             lean_dec(a); 
             return lean_box(r);
         }
     } else {
-        printf("What is gong on?");
-        return super_sampler(a,lean_box(0));
+        printf("A\n");
+        lean_object * res = lean_usize_to_nat(0);
+        printf("B\n");
+        do {
+            //printf("C\n");
+            a = lean_nat_sub(a,lean_box(LEAN_MAX_SMALL_NAT));
+            //printf("D\n");
+            std::uniform_int_distribution<size_t> distribution(0,LEAN_MAX_SMALL_NAT-1);
+            //printf("E\n");
+            size_t rdm = distribution(generator);
+            //printf("F\n");
+            lean_object * acc = lean_usize_to_nat(rdm);
+            //printf("G\n");
+            res = lean_nat_add(res,acc);
+        } while(lean_nat_le(lean_box(LEAN_MAX_SMALL_NAT),a));
+        //printf("H\n");
+        lean_object * rem = prob_UniformP2(a,lean_box(0));
+        printf("I\n");
+        return lean_nat_add(res,rem);
+        
+        // printf("let's go\n");
+        // //lean_inc(a);
+        // lean_object * d = lean_nat_div(a,lean_box(LEAN_MAX_SMALL_NAT));
+        // if (!lean_is_scalar(d)) {
+        //     lean_internal_panic("prob_UniformP2: giagantic number, must be an error");
+        // }
+        // printf("now generate\n");
+        // lean_object * res = lean_usize_to_nat(0);
+        // for (int i = 0 ; i < lean_unbox(d) ; ++i) {
+        //     printf("Loop start\n");
+        //     std::uniform_int_distribution<size_t> distribution(0,LEAN_MAX_SMALL_NAT-1);
+        //     printf("Loop 1\n");
+        //     size_t rdm = distribution(generator);
+        //     printf("Loop 2\n");
+        //     lean_object * acc = lean_usize_to_nat(rdm);
+        //     printf("Loop 3\n");
+        //     //lean_inc(res);
+        //     //lean_inc(res);
+        //     //lean_inc(acc);
+        //     printf("Loop 4\n");
+        //     res = lean_nat_add(res,acc);
+        //     printf("Loop end\n");
+        // }
+        // printf("done\n");
+        // lean_object * r = lean_nat_mod(a,lean_box(LEAN_MAX_SMALL_NAT));
+        // lean_object * rem = prob_UniformP2(r,lean_box(0));
+        // printf("finished\n");
+        // //lean_inc(res);
+        // return lean_nat_add(res,rem);
     }
 }
 

@@ -1,15 +1,15 @@
-import SampCert
-import SampCert.SLang
+def numBits (n : Nat) : Nat :=
+  let left := n / 2
+  if left = 0 then 1 else 1 + numBits left
 
-open BitVec
 --@[export super_sampler]
 def foo (n : Nat) : IO Nat := do
   if n = 0 then
     panic s!"Cannot sample 0 bits"
   -- from least significant to most significant
-  let bits := n.bits
+  let numbits := numBits n
   --IO.println s!"Representation = {bits}"
-  let want := bits.length - 1
+  let want := numbits - 1
   --IO.println s!"Number of bits I want = {want}"
   let nbytes := want / 8 + 1
   --IO.println s!"Number of requested bytes = {nbytes}"
@@ -18,7 +18,7 @@ def foo (n : Nat) : IO Nat := do
   --   IO.println s!"{b.toNat.bits}"
   let head := (rbytes.get! 0).toNat
   --IO.println s!"Head = {head}"
-  let toomuch := 8 - (bits.length - 1) % 8
+  let toomuch := 8 - (numbits - 1) % 8
   --IO.println s!"Bits overhead = {toomuch}"
   let overhead := 2^toomuch
   --IO.println s!"Overhead = {overhead}"
@@ -29,7 +29,14 @@ def foo (n : Nat) : IO Nat := do
     rnat := rnat * 2^8 + b.toNat
   return rnat
 
+
+
 def main : IO Unit := do
-  let choice := 2050
-  for _ in [:10000] do
-    IO.println s!"{← foo choice}"
+  -- for i in [0:1000] do
+  --   IO.println s!"{i} -> {numBits i}"
+  -- let choice := 2050
+  -- for _ in [:10000] do
+  --   IO.println s!"{← foo choice}"
+  let x : Nat := 100000000000000000000
+  let y : Nat := 9223372036854775807
+  IO.println s!"{x / y} {x % y} {10 * y + x % y}"
