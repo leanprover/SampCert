@@ -187,4 +187,4 @@ def main : IO Unit := do
   ]
   for (num,den,mix) in tests do
     IO.println s!"num = {(num : ℕ)}, den = {(den : ℕ)}, mix = {mix}"
-    test num den mix 100000 0.1
+    test num den mix 1000000 0.1
