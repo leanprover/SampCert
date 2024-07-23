@@ -702,9 +702,25 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   case G2 => sorry
   case G3 => sorry
 
+  -- Simplify the eexp
+  rw [sq]
+  rw [<- EReal.coe_mul]
+  rw [<- sq]
+  have X : (α.toEReal - OfNat.ofNat 1) = (α - 1 : ℝ).toEReal := by rfl
+  rw [X]
+  clear X
+  rw [<- EReal.coe_mul]
+  rw [<- EReal.coe_mul]
+  rw [<- EReal.coe_mul]
+  rw [ENNReal.eexp, Real.toEReal]
   simp
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => sorry
+  apply Eq.le
+  congr 1
+  linarith
 
-  sorry
+
 
 /-
 Convert ε-DP to `(1/2)ε²`-zCDP.
