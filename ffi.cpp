@@ -26,8 +26,8 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
             return lean_box(r);
         }
     } else {
-        //super_sampler(a,lean_box(0));
-        lean_internal_panic("prob_UniformP2: not handling very large values yet ");
+        printf("What is gong on?");
+        return super_sampler(a,lean_box(0));
     }
 }
 

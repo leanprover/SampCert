@@ -9,7 +9,7 @@ require mathlib from git
 
 @[default_target]
 lean_lib «SampCert» where
-  extraDepTargets := #[`libleanffi]
+  extraDepTargets := #[`libleanffi,`libP2Sampler]
   moreLinkArgs := #["-L.lake/build/lib", "-lleanffi", "-lP2Sampler"]
 
 lean_lib «FastExtract» where
@@ -29,7 +29,8 @@ target ffi.o pkg : FilePath := do
 target libleanffi pkg : FilePath := do
   let ffiO ← ffi.o.fetch
   let name := nameToStaticLib "leanffi"
-  buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
+  discard <| buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
+  buildLeanSharedLib (pkg.nativeLibDir / name) #[ffiO]
 
 lean_lib P2Sampler where
   defaultFacets := #[LeanLib.sharedFacet, LeanLib.staticFacet, LeanLib.staticExportFacet]
@@ -38,10 +39,10 @@ target libP2Sampler : FilePath := do (← P2Sampler.get).static.fetch
 
 lean_exe test where
   root := `Test
-  extraDepTargets := #[`libP2Sampler]
+  extraDepTargets := #[`libP2Sampler,`libleanffi]
   moreLinkArgs := #["-L.lake/build/lib", "-lleanffi", "-lP2Sampler"]
 
 lean_exe more where
   root := `More
-  extraDepTargets := #[`libP2Sampler]
+  extraDepTargets := #[`libP2Sampler,`libleanffi]
   moreLinkArgs := #["-L.lake/build/lib", "-lleanffi", "-lP2Sampler"]
