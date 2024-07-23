@@ -18,7 +18,7 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
             int lz = std::__countl_zero(n);
             int bitlength = (8*sizeof n) - lz - 1;
             size_t bound = 1 << bitlength; 
-            std::uniform_int_distribution<int> distribution(0,bound-1);
+            std::uniform_int_distribution<size_t> distribution(0,bound-1);
             size_t r = distribution(generator);
             lean_dec(a); 
             return lean_box(r);
