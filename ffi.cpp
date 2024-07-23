@@ -6,7 +6,11 @@ Authors: Jean-Baptiste Tristan
 #include <lean/lean.h>
 #include <random>
 
-std::mt19937_64 generator(time(NULL));
+#ifdef __APPLE__
+    std::random_device generator;
+#else
+    std::mt19937_64 generator(time(NULL));
+#endif
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
