@@ -543,16 +543,8 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   clear X
 
 
-
-
-  sorry
-
-
-
-  /-
-
   -- Change LHS to sum by monotonicity
-  suffices ENNReal.eexp ((α - 1) * RenyiDivergence_def (q l₁) (q l₂) α) ≤ ENNReal.eexp ((α - 1) * Real.toEReal (1 / 2 * ↑ε ^ 2 * α)) by
+  suffices ENNReal.eexp ((α - 1) * RenyiDivergence_def p q α) ≤ ENNReal.eexp ((α - 1) * Real.toEReal (1 / 2 * ↑ε ^ 2 * α)) by
     apply (ENNReal.ereal_smul_le_left (α - 1) ?G1 ?G2)
     case G1 =>
       rw [← EReal.coe_one]
@@ -564,13 +556,30 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     trivial
   rw [RenyiDivergence_def_exp _ _ Hα]
 
-  -- Rewrite to conditional expectation, and then to A
-  have Hacpq := (ACNeighbour_of_DP _ _ H _ _ HN)
-  have Hacqp := (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
-  have Hqp : ∀ (x : U), ENNReal.ofReal (Real.exp (-↑ε)) ≤ (q l₁) x / (q l₂) x := by
+
+  -- Derive absolute continuity facts from the pure DP bound
+  have Hacpq : AbsCts p q := by
+    dsimp [p, q]
+    simp [DFunLike.coe, PMF.instFunLike]
+    intro u' Hu'
+    rcases u' with ⟨ u'' , _ ⟩
+    simp
+    apply (ACNeighbour_of_DP _ _ H _ _ HN)
+    trivial
+
+  have Hacqp : AbsCts q p := by
+    dsimp [p, q]
+    simp [DFunLike.coe, PMF.instFunLike]
+    intro u' Hu'
+    rcases u' with ⟨ u'' , _ ⟩
+    simp
+    apply (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
+    trivial
+
+  have Hqp : ∀ (x : U'), ENNReal.ofReal (Real.exp (-↑ε)) ≤ p x / q x := by
     rw [SLang.PureDP] at H
     apply SLang.event_to_singleton at H
-    suffices (∀ (x : U), (q l₂) x / (q l₁) x ≤ ENNReal.ofReal (Real.exp ↑ε)) by
+    suffices (∀ (x : U'), q x / p x ≤ ENNReal.ofReal (Real.exp ↑ε)) by
       intro x
       apply ENNReal.inv_le_inv.mp
       rw [<- ENNReal.ofReal_inv_of_pos ?G4]
@@ -585,7 +594,11 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
         apply ENNReal.inv_ne_top.mpr
         apply ENNReal.div_ne_zero.mpr
         apply And.intro
-        · sorry -- AC is not enough, we need nonzero
+        · dsimp [p]
+          simp [DFunLike.coe, PMF.instFunLike]
+          rcases x with ⟨ x', Hx' ⟩
+          simp
+          trivial
         · apply PMF.apply_ne_top
       case G5 =>
         intro HK
@@ -593,8 +606,9 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
         cases HK
         · rename_i h
           rcases h with ⟨ h1 , h2 ⟩
-          apply h1
-          apply Hacqp
+          dsimp [p] at h2
+          simp [DFunLike.coe, PMF.instFunLike] at h2
+          rcases x with ⟨ x' , Hx' ⟩
           trivial
         · rename_i h
           rcases h with ⟨ h , _ ⟩
@@ -602,17 +616,24 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       rw [ENNReal.toReal_inv]
       repeat rw [ENNReal.toReal_div]
       rw [inv_div]
-    apply H
-    apply Neighbour_symm
-    trivial
-  have Hpq : ∀ (x : U), (q l₁) x / (q l₂) x ≤ ENNReal.ofReal (Real.exp ↑ε) := by
+    intro x
+    rcases x with ⟨ x' , _ ⟩
+    apply (le_trans _ (H _ _ (Neighbour_symm _ _ HN) x'))
+    simp [DFunLike.coe, PMF.instFunLike]
+
+  have Hpq : ∀ (x : U'), p x / q x ≤ ENNReal.ofReal (Real.exp ↑ε) := by
     rw [SLang.PureDP] at H
     apply SLang.event_to_singleton at H
-    apply H
-    trivial
-  rw [RenyiDivergenceExpectation _ _ Hα (ACNeighbour_of_DP _ _ H _ _ HN)]
+    intro x
+    rcases x with ⟨ x' , _ ⟩
+    apply (le_trans _ (H _ _ HN x'))
+    simp [DFunLike.coe, PMF.instFunLike]
 
-  -- Next step won't work with ε=0
+  -- Rewrite to conditional expectation
+  rw [RenyiDivergenceExpectation _ _ Hα Hacpq]
+
+  -- Rewrite to A
+  -- Next step won't work with ε=0, must separate the case.
   cases (Classical.em (ε = 0))
   · -- Follows from the DP bound
     simp_all
@@ -621,18 +642,19 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     rw [SLang.DP_singleton] at H
     have H := H l₁ l₂ HN
     simp at H
-    apply (@le_trans _ _ _ (∑' (x : U), 1 ^ α * (q l₂) x))
+    apply (@le_trans _ _ _ (∑' (x : U'), 1 ^ α * q x))
     · apply ENNReal.tsum_le_tsum
       intro i
-      cases (Classical.em ((q l₂) i = 0))
-      · rename_i Hz
-        rw [Hz]
-        simp_all
       apply (ENNReal.mul_le_mul_right ?G1 ?G2).mpr
-      case G1 => trivial
-      case G2 => exact PMF.apply_ne_top (q l₂) i
-      apply ENNReal.rpow_le_rpow (Hpq i)
-      linarith
+      case G1 =>
+        intro HK
+        have HK' := Hacpq _ HK
+        rcases i
+        trivial
+      case G2 => apply PMF.apply_ne_top
+      apply ENNReal.rpow_le_rpow
+      · exact Hpq i.val i.property
+      · linarith
     · simp
   rename_i Hε'
 
@@ -640,7 +662,11 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
 
   conv =>
     enter [1, 1, x]
-    rw [<- A_expectation ε Hε (q l₁) (q l₂) Hqp Hpq (ACNeighbour_of_DP _ _ H _ _ HN) x]
+    rw [<- A_expectation ε Hε p q Hqp Hpq Hacpq x]
+
+  sorry
+
+  /-
 
   -- Apply Jensen's inequality
   apply (@le_trans _ _ _ (∑' (x : U), (∑' (b : Bool), (A_val ε b)^α * (A_pmf ε (q l₁) (q l₂) Hqp x) b) * (q l₂) x))
