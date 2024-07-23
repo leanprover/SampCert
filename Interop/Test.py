@@ -16,19 +16,21 @@ CDLL(home +  "/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libLake
 
 # Loading Mathlib and its dependencies
 # To create the dynamic library, for each one of them, run lake build xxx:shared
-CDLL("../.lake/build/lib/libleanffi.dylib", RTLD_GLOBAL) 
 CDLL("../.lake/packages/cli/.lake/build/lib/libCli.dylib", RTLD_GLOBAL)
 CDLL("../.lake/packages/batteries/.lake/build/lib/libBatteries.dylib", RTLD_GLOBAL)
 CDLL("../.lake/packages/aesop/.lake/build/lib/libAesop.dylib", RTLD_GLOBAL)
 CDLL("../.lake/packages/proofwidgets/.lake/build/lib/libProofWidgets.dylib", RTLD_GLOBAL)
 CDLL("../.lake/packages/qq/.lake/build/lib/libQq.dylib", RTLD_GLOBAL)
 CDLL("../.lake/packages/importGraph/.lake/build/lib/libImportGraph.dylib", RTLD_GLOBAL)
-
-# Loading SampCert's FFI
 CDLL("../.lake/packages/mathlib/.lake/build/lib/libMathlib.dylib", RTLD_GLOBAL)
 
-# Loading SampCert
-samplers = CDLL("../.lake/build/lib/libSamplers.dylib", RTLD_GLOBAL) 
+
+# Loading SampCert's FFI
+CDLL("../.lake/build/lib/libleanffi.dylib", RTLD_GLOBAL) 
+
+# # Loading SampCert
+samplers = CDLL("../.lake/build/lib/libSampCert.dylib", RTLD_GLOBAL) 
+# samplers = CDLL("../.lake/build/lib/libSamplers.dylib", RTLD_GLOBAL) 
 
 # Initialization
 lean.lean_initialize_runtime_module()
@@ -38,18 +40,18 @@ builtin = c_uint8(1)
 # Because of static inlines in lean.h, we have to unfold everything
 lean_io_mk_world = c_uint64(1)
 
-res = samplers.initialize_Samplers(builtin, lean_io_mk_world)
+res = samplers.initialize_SampCert(builtin, lean_io_mk_world)
 
 lean.lean_io_mark_end_initialization()
 
 # Initialization complete
 
-r1 = samplers.my_test(c_uint32(42))
+#r1 = samplers.my_test(c_uint32(42))
 
-print(r1)
+# print(r1)
 
 samplers.dgs_print(c_uint32(40),c_uint32(1))
 
-r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
+# r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
 
-print(r2)
+# print(r2)

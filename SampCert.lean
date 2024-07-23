@@ -9,8 +9,9 @@ import SampCert.DifferentialPrivacy.Queries.Histogram.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 import SampCert.DifferentialPrivacy.Pure.System
 import SampCert.DifferentialPrivacy.Queries.HistogramMean.Properties
+import SampCert.Samplers.Gaussian.Properties
 
-open SLang
+open SLang PMF
 
 def combineConcentrated := @privNoisedBoundedMean_DP gaussian_zCDPSystem
 def combinePure := @privNoisedBoundedMean_DP PureDPSystem
@@ -42,3 +43,8 @@ noncomputable def combineMeanHistogram : Mechanism ℕ (Option ℚ) :=
   privMeanHistogram PureDPSystem numBins { bin } unbin 1 20 2 1 20
 
 end histogramMeanExample
+
+@[export dgs_print]
+def DiscreteGaussianSamplePrint (num den : UInt32) : IO Unit := do
+  let z ← run <| DiscreteGaussianPMF ⟨ num.toNat , sorry ⟩ ⟨ den.toNat , sorry ⟩ 7
+  IO.println s!"Result = {z}"
