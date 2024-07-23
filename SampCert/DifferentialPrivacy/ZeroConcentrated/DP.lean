@@ -481,15 +481,14 @@ lemma sinh_inequality {x y : ℝ} (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
   sorry
 
-
 set_option pp.coercions false
 
 /--
-Convert ε-DP bound to `(1/2)ε²`-zCDP bound.
+Convert ε-DP bound to `(1/2)ε²`-zCDP bound
 
 Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 -/
-lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDPBound q ε := by
+lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) : zCDPBound q' ε := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
 
@@ -498,10 +497,68 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   rw [<- ENNReal.ofEReal_ofReal_toENNReal]
   apply ENNReal.ofEReal_le_mono
 
+  -- Reduction to the nonzero case here
+  have K1 : Function.support (fun (x : U) => DFunLike.coe (q' l₁) x ) ⊆ { u : U | q' l₁ u ≠ 0 } := by simp [Function.support]
+  have Hp_pre := PMF.tsum_coe (q' l₁)
+  rw [<- tsum_subtype_eq_of_support_subset K1 ] at Hp_pre
+  simp only [Set.coe_setOf, Set.mem_setOf_eq] at Hp_pre
+  have K2 : Function.support (fun (x : U) => DFunLike.coe (q' l₂) x ) ⊆ { u : U | q' l₁ u ≠ 0 } := by
+    simp [Function.support]
+    intro a Ha Hk
+    apply Ha
+    apply (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
+    apply Hk
+  have Hq_pre := PMF.tsum_coe (q' l₂)
+  rw [<- tsum_subtype_eq_of_support_subset K2 ] at Hq_pre
+  simp only [Set.coe_setOf, Set.mem_setOf_eq] at Hq_pre
+  let U' : Type := { x // DFunLike.coe (q' l₁) x ≠ 0 }
+
+  let p : PMF U' :=
+    ⟨ fun u => (q' l₁) u,
+      by
+        rw [<- Hp_pre]
+        apply Summable.hasSum
+        exact ENNReal.summable ⟩
+  let q : PMF U' :=
+    ⟨ fun u => (q' l₂) u,
+      by
+        rw [<- Hq_pre]
+        apply Summable.hasSum
+        exact ENNReal.summable ⟩
+  clear K1 K2
+
+  have X : RenyiDivergence_def (q' l₁) (q' l₂) α =  RenyiDivergence_def p q α := by
+    rw [RenyiDivergence_def]
+    rw [RenyiDivergence_def]
+    congr 2
+    have K3 : Function.support (fun (x : U) =>  DFunLike.coe (q' l₁) x ^ α * DFunLike.coe (q' l₂) x ^ (OfNat.ofNat 1 - α)) ⊆ { u : U | q' l₁ u ≠ 0 } := by
+      simp [Function.support]
+      intro u H1 _ _ _ H5
+      have H5 := H1 H5
+      linarith
+    rw [<- tsum_subtype_eq_of_support_subset K3]
+    dsimp [p, q]
+    rfl
+  rw [X]
+  clear X
+
+
+
+
+  sorry
+
+
+
+  /-
+
   -- Change LHS to sum by monotonicity
   suffices ENNReal.eexp ((α - 1) * RenyiDivergence_def (q l₁) (q l₂) α) ≤ ENNReal.eexp ((α - 1) * Real.toEReal (1 / 2 * ↑ε ^ 2 * α)) by
     apply (ENNReal.ereal_smul_le_left (α - 1) ?G1 ?G2)
-    case G1 => sorry -- Annoying
+    case G1 =>
+      rw [← EReal.coe_one]
+      rw [<- EReal.coe_sub]
+      apply EReal.coe_pos.mpr
+      linarith
     case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
     apply ENNReal.eexp_mono_le.mpr
     trivial
@@ -522,9 +579,29 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
       simp
       apply (le_trans _ (this x))
       apply Eq.le
-      -- Cases on if they're (both, by AC) zero, apply some rewrite
-      rw [ENNReal.div_eq_inv_mul]
-      sorry
+
+      apply (ENNReal.toReal_eq_toReal ?G4 ?G5).mp
+      case G4 =>
+        apply ENNReal.inv_ne_top.mpr
+        apply ENNReal.div_ne_zero.mpr
+        apply And.intro
+        · sorry -- AC is not enough, we need nonzero
+        · apply PMF.apply_ne_top
+      case G5 =>
+        intro HK
+        apply ENNReal.div_eq_top.mp at HK
+        cases HK
+        · rename_i h
+          rcases h with ⟨ h1 , h2 ⟩
+          apply h1
+          apply Hacqp
+          trivial
+        · rename_i h
+          rcases h with ⟨ h , _ ⟩
+          apply (PMF.apply_ne_top _ _ h)
+      rw [ENNReal.toReal_inv]
+      repeat rw [ENNReal.toReal_div]
+      rw [inv_div]
     apply H
     apply Neighbour_symm
     trivial
@@ -719,7 +796,7 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   apply Eq.le
   congr 1
   linarith
-
+  -/
 
 
 /-
