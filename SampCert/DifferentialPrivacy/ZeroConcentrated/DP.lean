@@ -528,10 +528,28 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
     case G2 => exact PMF.apply_ne_top (q l₂) a
     exact A_jensen ε Hε (q l₁) (q l₂) Hqp Hα a
 
+  -- Exchange the summations
+  conv =>
+    enter [1, 1, x]
+    rw [<- ENNReal.tsum_mul_right]
+  rw [ENNReal.tsum_comm]
 
+  -- Pull out constant from inner series
+  -- Rewrite in terms of B
+  -- Evaluate A_val and B to a closed form
+  conv =>
+    enter [1, 1, b, 1, u]
+    rw [mul_assoc]
+  conv =>
+    enter [1, 1, b]
+    rw [ENNReal.tsum_mul_left]
+    rw [<- B_eval_open]
+  rw [tsum_bool]
+  rw [B_eval_false]
+  rw [B_eval_true]
+  simp only [A_val]
 
-  -- Have (RD sum) le (split in terms of A)
-  --
+  -- Prove trig lemma, convert to taht form
   sorry
 
 /-
