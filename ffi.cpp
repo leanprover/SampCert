@@ -8,6 +8,8 @@ Authors: Jean-Baptiste Tristan
 
 std::mt19937_64 generator(time(NULL));
 
+extern lean_object * super_sampler(lean_object *,lean_object *);
+
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
     if (lean_is_scalar(a)) {
@@ -24,7 +26,8 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
             return lean_box(r);
         }
     } else {
-        lean_internal_panic("prob_UniformP2: not handling very large values yet");
+        super_sampler(a,lean_box(0));
+        lean_internal_panic("prob_UniformP2: not handling very large values yet ");
     }
 }
 

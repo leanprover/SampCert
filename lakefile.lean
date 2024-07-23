@@ -31,3 +31,10 @@ extern_lib libleanffi pkg := do
 
 lean_exe test where
   root := `Test
+
+lean_lib P2Sampler where
+  defaultFacets := #[LeanLib.sharedFacet, LeanLib.staticFacet, LeanLib.staticExportFacet]
+
+lean_exe more where
+  root := `More
+  moreLinkArgs := #["-L.lake/build/lib", "-lP2Sampler"]
