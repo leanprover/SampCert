@@ -24,7 +24,16 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
             return lean_box(r);
         }
     } else {
-        lean_internal_panic("prob_UniformP2: not handling very large values yet");
+        lean_object * res = lean_usize_to_nat(0);
+        do {
+            a = lean_nat_sub(a,lean_box(LEAN_MAX_SMALL_NAT));
+            std::uniform_int_distribution<size_t> distribution(0,LEAN_MAX_SMALL_NAT-1);
+            size_t rdm = distribution(generator);
+            lean_object * acc = lean_usize_to_nat(rdm);
+            res = lean_nat_add(res,acc);
+        } while(lean_nat_le(lean_box(LEAN_MAX_SMALL_NAT),a));
+        lean_object * rem = prob_UniformP2(a,lean_box(0));
+        return lean_nat_add(res,rem);
     }
 }
 
