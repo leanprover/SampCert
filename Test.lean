@@ -175,14 +175,14 @@ def test (num den : ℕ+) (mix numSamples : ℕ) (threshold : Float) : IO Unit :
 
 def main : IO Unit := do
   let tests : List (ℕ+ × ℕ+ × ℕ) := [
-    (1,1,0),
-    -- (1,1,7),
+    -- (1,1,0),
+    (1,1,7),
     -- (1,1,10000000),
     -- (1,2,0),
-    -- (1,2,7),
+    (1,2,7),
     -- (1,2,10000000),
     -- (2,1,0),
-    -- (2,1,7),
+    (2,1,7),
     -- (2,1,10000000),
   ]
   for (num,den,mix) in tests do
