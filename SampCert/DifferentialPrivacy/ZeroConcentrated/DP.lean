@@ -477,6 +477,13 @@ end ofDP_bound
 
 
 
+lemma sinh_inequality {x y : ℝ} (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
+    (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
+  sorry
+
+
+set_option pp.coercions false
+
 /--
 Convert ε-DP bound to `(1/2)ε²`-zCDP bound.
 
@@ -591,7 +598,112 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   rw [B_eval_true]
   simp only [A_val]
 
-  -- Prove trig lemma, convert to that form
+
+  -- Convert to real-valued inequality, simplify the left-hand side
+  apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
+  case G1 => sorry -- True, annoying
+  case G2 => sorry --True, annoying
+  simp
+  rw [ENNReal.toReal_add ?G1 ?G2]
+  case G1 => sorry -- True, annoying
+  case G2 => sorry -- True, annoying
+  rw [ENNReal.toReal_mul]
+  rw [ENNReal.toReal_mul]
+  rw [ENNReal.toReal_div]
+  rw [ENNReal.toReal_div]
+  rw [← ENNReal.toReal_rpow]
+  rw [← ENNReal.toReal_rpow]
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply Real.exp_nonneg
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply Real.exp_nonneg
+  skip
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 => sorry
+  case G2 => sorry
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 => sorry
+  case G2 => sorry
+  rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
+  case G1 => sorry
+  case G2 => simp
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply Real.exp_nonneg
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply Real.exp_nonneg
+  simp
+
+  -- Combine the fractions
+  rw [division_def]
+  rw [division_def]
+  repeat rw [<- mul_assoc]
+  rw [<- add_mul]
+
+  -- Distribute, rearrange
+  rw [mul_sub]
+  rw [mul_sub]
+  simp only [mul_one]
+  repeat rw [<- Real.exp_mul]
+  repeat rw [<- Real.exp_add]
+
+  -- Rewrite to apply sinh lemma (combine these steps)
+  have X : (Real.exp (-ε.toReal * α + ε.toReal) - Real.exp (-ε.toReal * α) + (Real.exp (ε.toReal * α) - Real.exp (ε.toReal * α + -ε.toReal))) =
+           (Real.exp (-ε.toReal * α + ε.toReal) - Real.exp (ε.toReal * α + -ε.toReal)) + ((Real.exp (ε.toReal * α) - Real.exp (-ε.toReal * α))) := by
+    linarith
+  rw [X]
+  clear X
+  have X : ε.toReal * α + -ε.toReal = (ε.toReal * (α - 1)) := by linarith
+  rw [X]
+  clear X
+  have X : (-ε.toReal * α + ε.toReal) = -(ε.toReal * (α - 1)) := by linarith
+  rw [X]
+  clear X
+  have X : (-ε.toReal * α) = -(ε.toReal * α) := by linarith
+  rw [X]
+  clear X
+  have X : (Real.exp (-(ε.toReal * (α - OfNat.ofNat 1))) - Real.exp (ε.toReal * (α - OfNat.ofNat 1)) +
+              (Real.exp (ε.toReal * α) - Real.exp (-(ε.toReal * α)))) =
+           ((Real.exp (ε.toReal * α) - Real.exp (-(ε.toReal * α))) -
+             (Real.exp (ε.toReal * (α - OfNat.ofNat 1)) - Real.exp (-(ε.toReal * (α - OfNat.ofNat 1))))) := by
+    linarith
+  rw [X]
+  clear X
+
+  have Hsinh (x : ℝ) : (Real.exp x - Real.exp (-x)) = 2 * Real.sinh x := by
+    rw [Real.sinh_eq]
+    linarith
+  rw [Hsinh]
+  rw [Hsinh]
+  rw [Hsinh]
+  have X : (OfNat.ofNat 2 * Real.sinh (ε.toReal * α) - OfNat.ofNat 2 * Real.sinh (ε.toReal * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (OfNat.ofNat 2 * Real.sinh ε.toReal)⁻¹ =
+           (Real.sinh (ε.toReal * α) - Real.sinh (ε.toReal * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (Real.sinh ε.toReal)⁻¹ := by
+    rw [mul_inv]
+    repeat rw [<- mul_assoc]
+    congr 1
+    rw [mul_comm]
+    rw [mul_sub]
+    repeat rw [<- mul_assoc]
+    rw [inv_mul_cancel ?G1]
+    case G1 => simp
+    simp
+  rw [X]
+  clear X
+  rw [<- division_def]
+  simp
+
+  -- Apply the sinh inequality
+  have W : ε.toReal = (ε.toReal * α) - ((ε.toReal * (α - 1))) := by linarith
+  conv =>
+    enter [1, 2]
+    rw [W]
+  clear W
+  apply (le_trans (sinh_inequality ?G1 ?G2 ?G3))
+  case G1 => sorry
+  case G2 => sorry
+  case G3 => sorry
+
+  simp
+
   sorry
 
 /-
