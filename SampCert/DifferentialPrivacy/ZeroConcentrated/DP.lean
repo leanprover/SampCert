@@ -500,18 +500,60 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
     trivial
   rw [RenyiDivergence_def_exp _ _ Hα]
 
+  -- Rewrite to conditional expectation, and then to A
+  have Hacpq := (ACNeighbour_of_DP _ _ H _ _ HN)
+  have Hacqp := (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
+  have Hqp : ∀ (x : U), ENNReal.ofReal (Real.exp (-↑ε)) ≤ (q l₁) x / (q l₂) x := by
+    rw [SLang.PureDP] at H
+    apply SLang.event_to_singleton at H
+    suffices (∀ (x : U), (q l₂) x / (q l₁) x ≤ ENNReal.ofReal (Real.exp ↑ε)) by
+      intro x
+      apply ENNReal.inv_le_inv.mp
+      rw [<- ENNReal.ofReal_inv_of_pos ?G4]
+      case G4 => apply Real.exp_pos
+      rw [<- Real.exp_neg]
+      simp
+      apply (le_trans _ (this x))
+      apply Eq.le
+      -- Cases on if they're (both, by AC) zero, apply some rewrite
+      rw [ENNReal.div_eq_inv_mul]
+      sorry
+    apply H
+    apply Neighbour_symm
+    trivial
+  have Hpq : ∀ (x : U), (q l₁) x / (q l₂) x ≤ ENNReal.ofReal (Real.exp ↑ε) := by
+    rw [SLang.PureDP] at H
+    apply SLang.event_to_singleton at H
+    apply H
+    trivial
+  rw [RenyiDivergenceExpectation _ _ Hα (ACNeighbour_of_DP _ _ H _ _ HN)]
+
   -- Next step won't work with ε=0
   cases (Classical.em (ε = 0))
-  · sorry
+  · -- Follows from the DP bound
+    simp_all
+    rw [SLang.PureDP] at H
+    apply SLang.event_to_singleton at H
+    rw [SLang.DP_singleton] at H
+    have H := H l₁ l₂ HN
+    simp at H
+    apply (@le_trans _ _ _ (∑' (x : U), 1 ^ α * (q l₂) x))
+    · apply ENNReal.tsum_le_tsum
+      intro i
+      cases (Classical.em ((q l₂) i = 0))
+      · rename_i Hz
+        rw [Hz]
+        simp_all
+      apply (ENNReal.mul_le_mul_right ?G1 ?G2).mpr
+      case G1 => trivial
+      case G2 => exact PMF.apply_ne_top (q l₂) i
+      apply ENNReal.rpow_le_rpow (Hpq i)
+      linarith
+    · simp
   rename_i Hε'
-  have Hε : 0 < ε := by sorry
 
-  -- Rewrite to conditional expectation, and then to A
-  -- have Hpq := (ACNeighbour_of_DP _ _ H _ _ HN)
-  -- have Hqp := (ACNeighbour_of_DP _ _ H _ _ (Neighbour_symm _ _ HN))
-  have Hqp : ∀ (x : U), ENNReal.ofReal (Real.exp (-↑ε)) ≤ (q l₁) x / (q l₂) x := sorry
-  have Hpq : ∀ (x : U), (q l₁) x / (q l₂) x ≤ ENNReal.ofReal (Real.exp ↑ε) := sorry
-  rw [RenyiDivergenceExpectation _ _ Hα (ACNeighbour_of_DP _ _ H _ _ HN)]
+  have Hε : 0 < ε := by exact pos_iff_ne_zero.mpr Hε'
+
   conv =>
     enter [1, 1, x]
     rw [<- A_expectation ε Hε (q l₁) (q l₂) Hqp Hpq (ACNeighbour_of_DP _ _ H _ _ HN) x]
@@ -549,7 +591,7 @@ lemma ofDP_bound (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : z
   rw [B_eval_true]
   simp only [A_val]
 
-  -- Prove trig lemma, convert to taht form
+  -- Prove trig lemma, convert to that form
   sorry
 
 /-
