@@ -1148,3 +1148,16 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     refine (ofEReal_nonneg_inj ?mpr.Hw H').mpr ?mpr.a
     · simp
     simp [H]
+
+
+
+/--
+Renyi divergence is bounded above by the Max Divergence ε
+
+MARKUSDE: Unfold SLang.pureDP at usage and move to RenyiDivergence?
+-/
+lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (Hα : 1 < α)
+    (Hac : AbsCts p q) (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
+    RenyiDivergence p q α ≤ ε := by
+
+  sorry

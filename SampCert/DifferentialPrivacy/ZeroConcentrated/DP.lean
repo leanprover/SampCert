@@ -481,6 +481,7 @@ lemma sinh_inequality {x y : ℝ} (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
   sorry
 
+
 /--
 Convert ε-DP bound to `(1/2)ε²`-zCDP bound
 
@@ -494,8 +495,15 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   cases (Classical.em (ε * α > 2))
   · rename_i Hεα
     have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
-      -- Need the monotonicity proof?
-      sorry
+      apply RenyiDivergence_le_MaxDivergence
+      · trivial
+      · apply ACNeighbour_of_DP _ _ H
+        trivial
+      · intro x
+        apply SLang.event_to_singleton at H
+        rw [SLang.DP_singleton] at H
+        apply (le_trans (H _ _ HN x))
+        simp [ENNReal.toEReal]
     apply (le_trans H1)
     apply ENNReal.ofReal_le_ofReal_iff'.mpr
     left
