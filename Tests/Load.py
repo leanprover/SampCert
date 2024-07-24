@@ -46,12 +46,6 @@ lean.lean_io_mark_end_initialization()
 
 # Initialization complete
 
-#r1 = samplers.my_test(c_uint32(42))
-
-# print(r1)
-
-samplers.dgs_print(c_uint32(40),c_uint32(1))
-
-r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
-
-print(r2)
+if __name__ == "__main__":
+    r = samplers.dgs_get(c_uint32(40),c_uint32(1),c_uint32(0))
+    print(r)
