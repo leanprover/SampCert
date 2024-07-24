@@ -664,21 +664,24 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     enter [1, 1, x]
     rw [<- A_expectation ε Hε p q Hqp Hpq Hacpq x]
 
-  sorry
-
-  /-
 
   -- Apply Jensen's inequality
-  apply (@le_trans _ _ _ (∑' (x : U), (∑' (b : Bool), (A_val ε b)^α * (A_pmf ε (q l₁) (q l₂) Hqp x) b) * (q l₂) x))
+  apply (@le_trans _ _ _ (∑' (x : U'), (∑' (b : Bool), (A_val ε b)^α * (A_pmf ε p q Hqp x) b) * q x))
   · apply ENNReal.tsum_le_tsum
     intro a
-    cases (Classical.em ((q l₂) a = 0))
-    · simp_all
-    rename_i Hqnz
     apply (ENNReal.mul_le_mul_right ?G1 ?G2).mpr
-    case G1 => trivial
-    case G2 => exact PMF.apply_ne_top (q l₂) a
-    exact A_jensen ε Hε (q l₁) (q l₂) Hqp Hα a
+    case G1 =>
+      have HK1 : p a ≠ 0 := by
+        rcases a
+        dsimp [p]
+        simp [DFunLike.coe, PMF.instFunLike]
+        trivial
+      intro HK
+      apply HK1
+      apply Hacpq
+      trivial
+    case G2 => apply PMF.apply_ne_top
+    apply A_jensen _ Hε _ _ _ Hα
 
   -- Exchange the summations
   conv =>
@@ -822,7 +825,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   apply Eq.le
   congr 1
   linarith
-  -/
 
 
 /-
