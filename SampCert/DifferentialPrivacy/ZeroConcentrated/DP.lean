@@ -481,8 +481,6 @@ lemma sinh_inequality {x y : ℝ} (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
   sorry
 
-set_option pp.coercions false
-
 /--
 Convert ε-DP bound to `(1/2)ε²`-zCDP bound
 
@@ -491,6 +489,36 @@ Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) : zCDPBound q' ε := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
+
+  -- Special case: (εα/2 > 1)
+  cases (Classical.em (ε * α > 2))
+  · rename_i Hεα
+    have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
+      -- Need the monotonicity proof?
+      sorry
+    apply (le_trans H1)
+    apply ENNReal.ofReal_le_ofReal_iff'.mpr
+    left
+    rw [sq]
+    rw [mul_assoc]
+    have H2 : (1 / 2 * (↑ε * 2)) ≤ (1 / 2 * (↑ε * ↑ε * α)) := by
+      apply mul_le_mul
+      · rfl
+      · rw [mul_assoc]
+        apply mul_le_mul
+        · rfl
+        · apply GT.gt.lt at Hεα
+          apply LT.lt.le at Hεα
+          assumption
+        · simp
+        · exact NNReal.zero_le_coe
+      · apply mul_nonneg
+        · exact NNReal.zero_le_coe
+        · simp
+      · simp
+    linarith
+  rename_i Hεα
+  apply le_of_not_gt at Hεα
 
   -- Open RenyiDivergence
   rw [RenyiDivergence]
@@ -804,9 +832,15 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     rw [W]
   clear W
   apply (le_trans (sinh_inequality ?G1 ?G2 ?G3))
-  case G1 => sorry
-  case G2 => sorry
-  case G3 => sorry
+  case G1 =>
+    apply mul_nonneg
+    · exact NNReal.zero_le_coe
+    linarith
+  case G2 =>
+    apply (mul_lt_mul_of_pos_left)
+    · exact sub_one_lt α
+    · trivial
+  case G3 => linarith
 
   -- Simplify the eexp
   rw [sq]
@@ -821,7 +855,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   rw [ENNReal.eexp, Real.toEReal]
   simp
   rw [ENNReal.toReal_ofReal ?G1]
-  case G1 => sorry
+  case G1 => apply Real.exp_nonneg
   apply Eq.le
   congr 1
   linarith
