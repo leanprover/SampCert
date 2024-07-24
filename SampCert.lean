@@ -3,13 +3,13 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
-
 import SampCert.DifferentialPrivacy.Queries.BoundedMean.Basic
 import SampCert.DifferentialPrivacy.Queries.Histogram.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 import SampCert.DifferentialPrivacy.Pure.System
 import SampCert.DifferentialPrivacy.Queries.HistogramMean.Properties
 import SampCert.Samplers.Gaussian.Properties
+import Init.Data.UInt.Lemmas
 
 open SLang PMF
 
@@ -49,7 +49,22 @@ end histogramMeanExample
 @[extern "dirty_io_get"]
 opaque DirtyIOGet(x : IO ℤ) : UInt32
 
+lemma UInt32.toNa_of_non_zero {n : UInt32} (h : n ≠ 0) :
+  0 < n.toNat := by
+  have A : n.toNat ≠ 0 := by
+    rw [← UInt32.zero_toNat]
+    by_contra
+    rename_i h'
+    have B := UInt32.toNat.inj h'
+    contradiction
+  exact Nat.zero_lt_of_ne_zero A
+
 @[export dgs_get]
 def DiscreteGaussianSampleGet (num den : UInt32) (mix: UInt32) : UInt32 := Id.run do
-  let z : IO ℤ ← run <| DiscreteGaussianPMF ⟨ num.toNat , sorry ⟩ ⟨ den.toNat , sorry ⟩ mix.toNat
-  return DirtyIOGet z
+  if h₁ : num = 0 then
+    panic "DiscreteGaussianSampleGet was called with num = 0"
+  else if h₂ : den = 0 then
+    panic "DiscreteGaussianSampleGet was called with den = 0"
+  else
+    let z : IO ℤ ← run <| DiscreteGaussianPMF ⟨ num.toNat , UInt32.toNa_of_non_zero h₁ ⟩ ⟨ den.toNat , UInt32.toNa_of_non_zero h₂ ⟩ mix.toNat
+    return DirtyIOGet z
