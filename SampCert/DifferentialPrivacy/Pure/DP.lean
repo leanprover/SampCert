@@ -4,9 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import SampCert.SLang
-import SampCert.DifferentialPrivacy.Abstract
+import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Neighbours
 import SampCert.DifferentialPrivacy.Sensitivity
+import SampCert.DifferentialPrivacy.Approximate.DP
 
 noncomputable section
 
@@ -86,5 +87,43 @@ lemma PureDP_mono {m : Mechanism T U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε�
   refine (Real.toNNReal_le_toNNReal_iff ?a.hp).mpr ?a.a
   · exact Real.exp_nonneg ↑ε₂
   · exact Real.exp_le_exp.mpr H
+
+
+theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
+  ∀ δ : NNReal, DP' m ε δ := by
+  simp [DP] at h
+  simp [DP']
+  intros δ l₁ l₂ neighs S
+  replace h := h l₁ l₂ neighs S
+  rw [ENNReal.div_le_iff_le_mul ?G1 ?G2] at h
+  case G1 =>
+    right
+    simp
+  case G2 =>
+    left
+    have H1 : (∑' (x : U), if x ∈ S then (m l₂) x else 0) ≤ (∑' (x : U), m l₂ x) := by
+      apply ENNReal.tsum_le_tsum
+      intro u
+      split <;> simp
+    rw [PMF.tsum_coe] at H1
+    intro HK
+    simp_all
+  apply le_trans h
+  simp
+
+/--
+Pure DP is no weaker than approximate DP, up to a loss of parameters
+-/
+lemma pure_ApproximateDP [Countable U] {m : Mechanism T U} :
+    ∃ (degrade : (δ : NNReal) -> (ε' : NNReal) -> NNReal), ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
+     (DP m (degrade δ ε') -> ApproximateDP m ε' δ) := by
+  let degrade (_ : NNReal) (ε' : NNReal) : NNReal := ε'
+  exists degrade
+  intro δ _ ε' HDP
+  rw [ApproximateDP]
+  apply ApproximateDP_of_DP
+  have R1 : degrade δ ε' = ε' := by simp
+  rw [R1] at HDP
+  trivial
 
 end SLang
