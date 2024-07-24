@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: leanprover/lean-action@v1-beta
+      - uses: leanprover/lean-action@v1
         with:
           test: false
-          build-args: "-Kwerror"
+          build-args: "-R -Kwerror"
           use-mathlib-cache: true
-          use-github-cache: true
+          use-github-cache: false

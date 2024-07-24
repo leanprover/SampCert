@@ -36,6 +36,9 @@ attribute [export_dafny] DiscreteLaplaceSampleLoopIn1
 attribute [export_dafny] DiscreteLaplaceSampleLoopIn2Aux
 attribute [export_dafny] DiscreteLaplaceSampleLoopIn2
 attribute [export_dafny] DiscreteLaplaceSampleLoop
+attribute [export_dafny] DiscreteLaplaceSampleLoop'
 attribute [export_dafny] DiscreteLaplaceSample
+attribute [export_dafny] DiscreteLaplaceSampleOptimized
+attribute [export_dafny] DiscreteLaplaceSampleMixed
 attribute [export_dafny] DiscreteGaussianSampleLoop
 attribute [export_dafny] DiscreteGaussianSample

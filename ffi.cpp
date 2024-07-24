@@ -4,17 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 */
 #include <lean/lean.h>
-#include <iostream> 
-#include <bit>
-#include <chrono>
 #include <random>
-using namespace std; 
 
-typedef std::chrono::high_resolution_clock myclock;
-myclock::time_point beginning = myclock::now();
-myclock::duration d = myclock::now() - beginning;
-unsigned seed = d.count();
-mt19937_64 generator(seed);
+#ifdef __APPLE__
+    std::random_device generator;
+#else
+    std::mt19937_64 generator(time(NULL));
+#endif
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
@@ -23,16 +19,25 @@ extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
         if (n == 0) {
             lean_internal_panic("prob_UniformP2: n == 0");
         } else {
-            int lz = __countl_zero(n);
+            int lz = std::__countl_zero(n);
             int bitlength = (8*sizeof n) - lz - 1;
             size_t bound = 1 << bitlength; 
-            uniform_int_distribution<int> distribution(0,bound-1);
+            std::uniform_int_distribution<size_t> distribution(0,bound-1);
             size_t r = distribution(generator);
             lean_dec(a); 
             return lean_box(r);
         }
     } else {
-        lean_internal_panic("prob_UniformP2: not handling very large values yet");
+        lean_object * res = lean_usize_to_nat(0);
+        do {
+            a = lean_nat_sub(a,lean_box(LEAN_MAX_SMALL_NAT));
+            std::uniform_int_distribution<size_t> distribution(0,LEAN_MAX_SMALL_NAT-1);
+            size_t rdm = distribution(generator);
+            lean_object * acc = lean_usize_to_nat(rdm);
+            res = lean_nat_add(res,acc);
+        } while(lean_nat_le(lean_box(LEAN_MAX_SMALL_NAT),a));
+        lean_object * rem = prob_UniformP2(a,lean_box(0));
+        return lean_nat_add(res,rem);
     }
 }
 
@@ -69,3 +74,14 @@ extern "C" lean_object * my_run(lean_object * a) {
     lean_object * res = lean_io_result_mk_ok(comp);
     return res;
 } 
+
+extern "C" uint32_t dirty_io_get(lean_object * a) {
+    lean_object * r1 = lean_apply_1(a,lean_box(0));
+    lean_object * r2 = lean_io_result_get_value(r1);
+    if (lean_is_scalar(r2)) {
+        size_t r3 = lean_unbox(r2);
+        return r3;
+    } else {
+        lean_internal_panic("dirty_io_get: value not scalar");
+    }
+}
