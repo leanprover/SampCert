@@ -162,58 +162,53 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
 /--
 Renyi Divergence series written as a conditional expectation, conditioned on p.
 -/
-theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts q p) :
+theorem RenyiDivergenceExpectation' (p q : PMF T) {α : ℝ} (h : 1 < α) :
     (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^(α - 1)  * (p x) := by
 
-  have K1 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | p t ≠ 0 } := by
+  have K1 : Function.support (fun x : T => (p x / q x)^(α - 1) * p x) ⊆ { t : T | p t ≠ 0 } := by
     simp [Function.support]
-    intro a _ _ H1 H2
-    apply H1
-    apply H _ H2
+  rw [<- tsum_subtype_eq_of_support_subset K1]
+  clear K1
 
-  -- rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
+  have K2 : Function.support (fun x : T => (p x)^α * (q x)^(1 - α)) ⊆ { t : T | p t ≠ 0 } := by
+    simp [Function.support]
+    intro a H0 _ _ _ H2
+    suffices (α ≤ 0) by linarith
+    apply H0
+    apply H2
+  rw [<- tsum_subtype_eq_of_support_subset K2]
+  clear K2
 
-  sorry
-
-
-  /-
-  -- Rewrite to conditional expectation on p (not q)
-  have H : (∑' (x : T), p x ^ α * q x ^ (1 - α)) = (∑' (x : T), (p x / q x) ^ (α - 1) * p x) := by
-
-    -- Reduce to obtain p nonzero here
-    -- Unless nonzero is needed lower down as well, in which case, do it there
-
-    apply tsum_congr
-    intro x
-    rw [division_def]
-    rw [mul_rpow_eq_ite]
-    split
-    · rename_i h
-      rcases h with ⟨ HA , HB ⟩ | ⟨ HA , HB ⟩
-      · simp_all
-      · simp_all
-        rw [ENNReal.top_rpow_of_pos]
-        · simp
-        · linarith
-    simp_all
-    rw [mul_right_comm]
+  apply tsum_congr
+  intro x
+  rcases x with ⟨ x', Hx' ⟩
+  simp
+  rw [division_def]
+  rw [mul_rpow_eq_ite]
+  simp
+  split
+  · exfalso
+    rename_i h
+    rcases h with ⟨ _, h ⟩
+    linarith
+  · rw [mul_assoc]
     conv =>
-      enter [2, 1, 2]
-      rw [<- ENNReal.rpow_one (p x)]
+      enter [2]
+      rw [mul_comm]
+      enter [1, 2]
+      rw [<- ENNReal.rpow_one (p x')]
+    rw [mul_assoc]
     rw [<- ENNReal.rpow_add _ _ ?G1 ?G2]
     case G1 =>
-      rename_i h
-      -- Requires p x to be nonzero
-      sorry
-    case G2 => exact apply_ne_top p x
+      simp at Hx'
+      trivial
+    case G2 => apply PMF.apply_ne_top
     rw [ENNReal.inv_rpow]
     rw [← ENNReal.rpow_neg]
-    simp
-  rw [H]
-  clear H
-  -/
-
-
+    rw [mul_comm]
+    congr
+    · linarith
+    · linarith
 
 /-!
 ## Jensen's inequality
@@ -1208,10 +1203,9 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
 /--
 Renyi divergence is bounded above by the Max Divergence ε
 
-MARKUSDE: Unfold SLang.pureDP at usage and move to RenyiDivergence?
 -/
 lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (Hα : 1 < α)
-    (Hac : AbsCts q p) (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
+    (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
     RenyiDivergence p q α ≤ ε := by
   rw [RenyiDivergence]
   conv =>
@@ -1229,7 +1223,7 @@ lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (
   case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
   apply ENNReal.eexp_mono_le.mpr
   rw [RenyiDivergence_def_exp p q Hα]
-  rw [RenyiDivergenceExpectation' (DFunLike.coe p) (DFunLike.coe q) Hα Hac]
+  rw [RenyiDivergenceExpectation' p q Hα]
 
   -- Pointwise bound
   have H : ∑' (x : T), (p x / q x) ^ (α - 1) * p x  ≤ ∑' (x : T), (eexp ε) ^ (α - 1) * p x  := by

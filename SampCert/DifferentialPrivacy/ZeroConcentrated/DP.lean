@@ -497,8 +497,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
       apply RenyiDivergence_le_MaxDivergence
       · trivial
-      · apply (ACNeighbour_of_DP _ _ H l₂ l₁)
-        exact Neighbour_symm l₁ l₂ HN
       · intro x
         apply SLang.event_to_singleton at H
         rw [SLang.DP_singleton] at H
