@@ -52,6 +52,6 @@ lean.lean_io_mark_end_initialization()
 
 samplers.dgs_print(c_uint32(40),c_uint32(1))
 
-# r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
+r2 = samplers.dgs_get(c_uint32(40),c_uint32(1))
 
-# print(r2)
+print(r2)

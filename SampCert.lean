@@ -44,7 +44,12 @@ noncomputable def combineMeanHistogram : Mechanism ℕ (Option ℚ) :=
 
 end histogramMeanExample
 
-@[export dgs_print]
-def DiscreteGaussianSamplePrint (num den : UInt32) : IO Unit := do
-  let z ← run <| DiscreteGaussianPMF ⟨ num.toNat , sorry ⟩ ⟨ den.toNat , sorry ⟩ 7
-  IO.println s!"Result = {z}"
+-- The following is unsound and should NOT be part of the code
+-- We are using it for now until the Python FFI is richer
+@[extern "dirty_io_get"]
+opaque DirtyIOGet(x : IO ℤ) : UInt32
+
+@[export dgs_get]
+def DiscreteGaussianSampleGet (num den : UInt32) (mix: UInt32) : UInt32 := Id.run do
+  let z : IO ℤ ← run <| DiscreteGaussianPMF ⟨ num.toNat , sorry ⟩ ⟨ den.toNat , sorry ⟩ mix.toNat
+  return DirtyIOGet z
