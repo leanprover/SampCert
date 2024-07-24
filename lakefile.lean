@@ -39,3 +39,8 @@ lean_exe test where
   root := `Test
   extraDepTargets := #[`libleanffi]
   moreLinkArgs := #["-L.lake/build/lib", "-lleanffi"]
+
+lean_exe scratch where
+  root := `Scratch
+  extraDepTargets := #[`libleanffi]
+  moreLinkArgs := #["-L.lake/build/lib", "-lleanffi"]

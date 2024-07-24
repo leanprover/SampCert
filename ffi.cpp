@@ -12,6 +12,16 @@ Authors: Jean-Baptiste Tristan
     std::mt19937_64 generator(time(NULL));
 #endif
 
+
+extern "C" lean_object * prob_UniformByteArray(lean_object * a, lean_object * eta) {
+    // Figure out array repr
+    // Pack array repr
+    // Test
+    exit(1);
+}
+
+
+
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
     if (lean_is_scalar(a)) {

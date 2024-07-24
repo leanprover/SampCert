@@ -76,11 +76,18 @@ instance : Monad SLang where
   pure a := probPure a
   bind pa pb := pa.probBind pb
 
+
+/--
+Uniform distribution on n-byte arrays
+-/
+@[extern "prob_UniformByteArray"]
+def UniformByteArray (n : ℕ+) : PMF (Array UInt8) :=
+  ⟨ fun _ => 1 / (n * UInt8.size), sorry ⟩
+
 /--
 ``SLang`` value for the uniform distribution over ``m`` elements, where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
--- MARKUSDE: I would like to change this to ``probUniformP2`` once it doesn't break extraction.
 @[extern "prob_UniformP2"]
 def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
   toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
