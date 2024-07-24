@@ -9,8 +9,9 @@ import SampCert.DifferentialPrivacy.Queries.Histogram.Basic
 import SampCert.DifferentialPrivacy.ZeroConcentrated.System
 import SampCert.DifferentialPrivacy.Pure.System
 import SampCert.DifferentialPrivacy.Queries.HistogramMean.Properties
+import SampCert.Samplers.Gaussian.Properties
 
-open SLang
+open SLang PMF
 
 def combineConcentrated := @privNoisedBoundedMean_DP gaussian_zCDPSystem
 def combinePure := @privNoisedBoundedMean_DP PureDPSystem
@@ -42,3 +43,13 @@ noncomputable def combineMeanHistogram : Mechanism ℕ (Option ℚ) :=
   privMeanHistogram PureDPSystem numBins { bin } unbin 1 20 2 1 20
 
 end histogramMeanExample
+
+-- The following is unsound and should NOT be part of the code
+-- We are using it for now until the Python FFI is richer
+@[extern "dirty_io_get"]
+opaque DirtyIOGet(x : IO ℤ) : UInt32
+
+@[export dgs_get]
+def DiscreteGaussianSampleGet (num den : UInt32) (mix: UInt32) : UInt32 := Id.run do
+  let z : IO ℤ ← run <| DiscreteGaussianPMF ⟨ num.toNat , sorry ⟩ ⟨ den.toNat , sorry ⟩ mix.toNat
+  return DirtyIOGet z
