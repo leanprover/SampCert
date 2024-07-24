@@ -99,7 +99,7 @@ The Renyi divergence is monotonic in the value of its sum.
 --  · linarith
 
 /--
-Renyi Divergence series written as a conditional expectation.
+Renyi Divergence series written as a conditional expectation, conditioned on q.
 -/
 theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^α  * (q x) := by
@@ -157,6 +157,50 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
             . apply le_of_lt (lt_trans Real.zero_lt_one h )
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_eq_zero]
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_ne_top]
+
+
+/--
+Renyi Divergence series written as a conditional expectation, conditioned on p.
+-/
+theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
+  (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^(α - 1)  * (p x) := by sorry
+  /-
+  -- Rewrite to conditional expectation on p (not q)
+  have H : (∑' (x : T), p x ^ α * q x ^ (1 - α)) = (∑' (x : T), (p x / q x) ^ (α - 1) * p x) := by
+
+    -- Reduce to obtain p nonzero here
+    -- Unless nonzero is needed lower down as well, in which case, do it there
+
+    apply tsum_congr
+    intro x
+    rw [division_def]
+    rw [mul_rpow_eq_ite]
+    split
+    · rename_i h
+      rcases h with ⟨ HA , HB ⟩ | ⟨ HA , HB ⟩
+      · simp_all
+      · simp_all
+        rw [ENNReal.top_rpow_of_pos]
+        · simp
+        · linarith
+    simp_all
+    rw [mul_right_comm]
+    conv =>
+      enter [2, 1, 2]
+      rw [<- ENNReal.rpow_one (p x)]
+    rw [<- ENNReal.rpow_add _ _ ?G1 ?G2]
+    case G1 =>
+      rename_i h
+      -- Requires p x to be nonzero
+      sorry
+    case G2 => exact apply_ne_top p x
+    rw [ENNReal.inv_rpow]
+    rw [← ENNReal.rpow_neg]
+    simp
+  rw [H]
+  clear H
+  -/
+
 
 
 /-!
@@ -1149,7 +1193,7 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     · simp
     simp [H]
 
-
+-- set_option pp.coercions false
 
 /--
 Renyi divergence is bounded above by the Max Divergence ε
@@ -1159,5 +1203,39 @@ MARKUSDE: Unfold SLang.pureDP at usage and move to RenyiDivergence?
 lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (Hα : 1 < α)
     (Hac : AbsCts p q) (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
     RenyiDivergence p q α ≤ ε := by
+  rw [RenyiDivergence]
+  conv =>
+    rhs
+    rw [<- @ofEReal_toENNReal ε]
+  apply ofEReal_le_mono
+
+  -- Rewrite to expectation conditioned on q
+  apply (ENNReal.ereal_smul_le_left (α - 1) ?G1 ?G2)
+  case G1 =>
+    rw [← EReal.coe_one]
+    rw [<- EReal.coe_sub]
+    apply EReal.coe_pos.mpr
+    linarith
+  case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+  apply ENNReal.eexp_mono_le.mpr
+  rw [RenyiDivergence_def_exp p q Hα]
+  rw [RenyiDivergenceExpectation' (DFunLike.coe p) (DFunLike.coe q) Hα Hac]
+
+  -- Pointwise bound
+  have H : ∑' (x : T), (p x / q x) ^ (α - 1) * p x  ≤ ∑' (x : T), (eexp ε) ^ (α - 1) * p x  := by
+    apply ENNReal.tsum_le_tsum
+    intro x
+    apply mul_le_mul
+    · apply ENNReal.rpow_le_rpow (Hmax_divergence x)
+      linarith
+    · rfl
+    · apply _root_.zero_le
+    · apply _root_.zero_le
+  apply (le_trans H)
+  rw [ENNReal.tsum_mul_left]
+  rw [tsum_coe]
+
+  -- Simplify
+
 
   sorry
