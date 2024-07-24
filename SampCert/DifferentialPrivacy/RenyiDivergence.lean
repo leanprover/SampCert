@@ -162,8 +162,20 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
 /--
 Renyi Divergence series written as a conditional expectation, conditioned on p.
 -/
-theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
-  (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^(α - 1)  * (p x) := by sorry
+theorem RenyiDivergenceExpectation' (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts q p) :
+    (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^(α - 1)  * (p x) := by
+
+  have K1 : Function.support (fun x : T => (p x / q x)^α * q x) ⊆ { t : T | p t ≠ 0 } := by
+    simp [Function.support]
+    intro a _ _ H1 H2
+    apply H1
+    apply H _ H2
+
+  -- rw [<- tsum_subtype_eq_of_support_subset K1] at Hsumeq
+
+  sorry
+
+
   /-
   -- Rewrite to conditional expectation on p (not q)
   have H : (∑' (x : T), p x ^ α * q x ^ (1 - α)) = (∑' (x : T), (p x / q x) ^ (α - 1) * p x) := by
@@ -1193,15 +1205,13 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     · simp
     simp [H]
 
--- set_option pp.coercions false
-
 /--
 Renyi divergence is bounded above by the Max Divergence ε
 
 MARKUSDE: Unfold SLang.pureDP at usage and move to RenyiDivergence?
 -/
 lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (Hα : 1 < α)
-    (Hac : AbsCts p q) (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
+    (Hac : AbsCts q p) (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
     RenyiDivergence p q α ≤ ε := by
   rw [RenyiDivergence]
   conv =>
@@ -1234,8 +1244,28 @@ lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (
   apply (le_trans H)
   rw [ENNReal.tsum_mul_left]
   rw [tsum_coe]
+  simp
+  have H : eexp ε.toEReal ^ (α - OfNat.ofNat 1) = eexp (ε * (α - OfNat.ofNat 1)) := by
+    rcases ε
+    · simp
+      rw [EReal.top_mul_of_pos ?G1]
+      case G1 =>
+        rw [← EReal.coe_one]
+        rw [<- EReal.coe_sub]
+        apply EReal.coe_pos.mpr
+        linarith
+      simp
+      trivial
+    simp
+    rw [ENNReal.ofNNReal]
+    rw [ENNReal.toEReal]
+    simp
+    rw [ENNReal.ofReal_rpow_of_pos ?G1]
+    case G1 => apply exp_pos
+    rw [<- Real.exp_mul]
+    rfl
+  rw [H]
+  clear H
 
-  -- Simplify
-
-
-  sorry
+  apply eexp_mono_le.mp
+  rw [mul_comm]
