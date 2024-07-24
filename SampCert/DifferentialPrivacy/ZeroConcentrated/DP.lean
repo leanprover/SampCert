@@ -734,13 +734,46 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
 
 
   -- Convert to real-valued inequality, simplify the left-hand side
+  have SC0 : ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)) ≠ 0 := by
+    apply ne_of_gt
+    simp
+    apply ENNReal.ofReal_lt_ofReal_iff'.mpr
+    apply And.intro
+    · apply Real.exp_lt_exp.mpr
+      simp
+      trivial
+    · apply Real.exp_pos
+  have SC1 : ENNReal.ofReal (Real.exp (-↑ε)) ^ α * ((ENNReal.ofReal (Real.exp ↑ε) - 1) / (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
+    apply ENNReal.mul_ne_top
+    · apply ENNReal.rpow_ne_top_of_nonneg
+      · linarith
+      · exact ENNReal.ofReal_ne_top
+    apply lt_top_iff_ne_top.mp
+    apply ENNReal.div_lt_top
+    · exact Ne.symm (ne_of_beq_false rfl)
+    · apply SC0
+  have SC2 : ENNReal.ofReal (Real.exp ↑ε) ^ α * ((1 - ENNReal.ofReal (Real.exp (-↑ε))) / (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
+    apply ENNReal.mul_ne_top
+    · apply ENNReal.rpow_ne_top_of_nonneg
+      · linarith
+      · exact ENNReal.ofReal_ne_top
+    apply lt_top_iff_ne_top.mp
+    apply ENNReal.div_lt_top
+    · exact Ne.symm (ne_of_beq_false rfl)
+    · apply SC0
   apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
-  case G1 => sorry -- True, annoying
-  case G2 => sorry --True, annoying
+  case G1 =>
+    apply ENNReal.add_ne_top.mpr
+    apply And.intro
+    · trivial
+    · trivial
+  case G2 =>  exact Ne.symm (ne_of_beq_false rfl)
+
   simp
   rw [ENNReal.toReal_add ?G1 ?G2]
-  case G1 => sorry -- True, annoying
-  case G2 => sorry -- True, annoying
+  case G1 => apply SC1
+  case G2 => apply SC2
+  clear SC0 SC1 SC2
   rw [ENNReal.toReal_mul]
   rw [ENNReal.toReal_mul]
   rw [ENNReal.toReal_div]
@@ -753,13 +786,23 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   case G1 => apply Real.exp_nonneg
   skip
   rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
-  case G1 => sorry
-  case G2 => sorry
+  case G1 =>
+    apply ENNReal.one_le_ofReal.mpr
+    apply Real.one_le_exp
+    simp only [NNReal.zero_le_coe]
+  case G2 => exact ENNReal.ofReal_ne_top
   rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
-  case G1 => sorry
-  case G2 => sorry
+  case G1 =>
+    apply ENNReal.ofReal_le_ofReal_iff'.mpr
+    left
+    apply Real.exp_le_exp.mpr
+    simp
+  case G2 => exact ENNReal.ofReal_ne_top
   rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
-  case G1 => sorry
+  case G1 =>
+    apply ENNReal.ofReal_le_one.mpr
+    apply Real.exp_le_one_iff.mpr
+    simp
   case G2 => simp
   rw [ENNReal.toReal_ofReal ?G1]
   case G1 => apply Real.exp_nonneg
