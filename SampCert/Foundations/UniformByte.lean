@@ -126,40 +126,38 @@ def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
   sorry
 
 
--- /--
--- Evaluates the ``probUniformP2`` distribution at a point inside of its support.
--- -/
--- @[simp]
--- theorem probUniformP2_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
---     (probUniformP2 n) x = 1 / (2 ^ (log 2 n)) := by
---   sorry
---
--- /--
--- Evaluates the ``probUniformP2`` distribution at a point outside of its support
--- -/
--- @[simp]
--- theorem probUniformP2_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
---   UniformPowerOfTwoSample n x = 0 := by
+/--
+Evaluates the ``probUniformP2`` distribution at a point inside of its support.
+-/
+@[simp]
+theorem UniformPowerOfTwoSample'_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
+    UniformPowerOfTwoSample' n x = 1 / (2 ^ (log 2 n)) := by
+  rw [UniformPowerOfTwoSample']
+  rw [probUniformP2_eval_support h]
 
+/--
+Evaluates the ``probUniformP2`` distribution at a point outside of its support
+-/
+@[simp]
+theorem UniformPowerOfTwoSample'_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
+    UniformPowerOfTwoSample' n x = 0 := by
+  rw [UniformPowerOfTwoSample']
+  apply probUniformP2_eval_zero
+  linarith
 
--- FIXME: Make this proof independent of probUniform so that we can delete it if we want
--- /--
--- Equivalence between uniform samplers
--- -/
--- def probUniform_probUniform'_equiv (n : ℕ+) : UniformPowerOfTwoSample n = UniformPowerOfTwoSample' n := by
---   apply SLang.ext
---   intro x
---   cases (Classical.em (x < 2 ^ (log 2 n)))
---   · rename_i h
---     rw [probUniformP2_apply _ _ (by linarith)]
---     rw [UniformPowerOfTwoSample']
---     rw [probUniformP2_eval_support h]
---   · rename_i h
---     rw [probUniformP2_apply' _ _ (by linarith)]
---     rw [UniformPowerOfTwoSample']
---     symm
---     apply probUniformP2_eval_zero
---     linarith
-
+/--
+Equivalence between uniform samplers
+-/
+def probUniform_probUniform'_equiv (n : ℕ+) : UniformPowerOfTwoSample n = UniformPowerOfTwoSample' n := by
+  apply SLang.ext
+  intro x
+  cases (Classical.em (x < 2 ^ (log 2 n)))
+  · rename_i h
+    rw [UniformPowerOfTwoSample_apply n x h]
+    rw [← UniformPowerOfTwoSample'_apply n x h]
+  · rename_i h'
+    have h : x ≥ 2 ^ (log 2 n) := by linarith
+    rw [UniformPowerOfTwoSample_apply' n x h]
+    rw [← UniformPowerOfTwoSample'_apply' n x h]
 
 end SLang
