@@ -6,20 +6,21 @@ Authors: Jean-Baptiste Tristan
 #include <lean/lean.h>
 #include <random>
 
+#include <iostream>
+
 #ifdef __APPLE__
     std::random_device generator;
 #else
     std::mt19937_64 generator(time(NULL));
 #endif
 
+std::uniform_int_distribution<uint8_t> distrib(0, UINT8_MAX - 1);
 
-extern "C" lean_object * prob_UniformByteArray(lean_object * a, lean_object * eta) {
-    // Figure out array repr
-    // Pack array repr
-    // Test
-    exit(1);
+// I wonder if there's a way to avoid boxing-- The byte examples in Lean
+// itself don't have to, but when I do it, the values change.
+extern "C" lean_object * prob_UniformByte () {
+    return lean_box(distrib(generator));
 }
-
 
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {

@@ -78,11 +78,10 @@ instance : Monad SLang where
 
 
 /--
-Uniform distribution on n-byte arrays
+Uniform distribution on a byte
 -/
-@[extern "prob_UniformByteArray"]
-def UniformByteArray (n : ℕ+) : PMF (Array UInt8) :=
-  ⟨ fun _ => 1 / (n * UInt8.size), sorry ⟩
+@[extern "prob_UniformByte"]
+def UniformByte : SLang Uint8 := (fun _ => 1 / UInt8.size)
 
 /--
 ``SLang`` value for the uniform distribution over ``m`` elements, where

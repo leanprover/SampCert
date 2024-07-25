@@ -5,12 +5,26 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert
 import SampCert.SLang
+import Mathlib.Data.ByteArray
 
 open SLang Std Int Array PMF
 
 
--- MARKUSDE: Remove this file, and the Scratch build target, before merging
 
+-- MARKUSDE: Remove this file, and the Scratch build target, before merging
 def main : IO Unit := do
-  let x : Array UInt8 <- run <| SLang.UniformByteArray 5
-  IO.print "Hello SampCert"
+  IO.println "Goodbye SampCert"
+  -- let _ ← run <| (DiscreteGaussianPMF 1 2 2)
+  let x <- run <| (⟨SLang.UniformByte, sorry⟩ : PMF UInt8)
+  IO.println "Hello SampCert"
+  IO.println x
+
+--   toSLang ⟨ fun _ => ,
+--             by
+--               rw [Summable.hasSum_iff ENNReal.summable]
+--               rw [division_def]
+--               rw [ENNReal.tsum_mul_right]
+--               rw [tsum_eq_finsum]
+--               · sorry
+--               · sorry
+--             ⟩
