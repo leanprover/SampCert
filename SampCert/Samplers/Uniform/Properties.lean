@@ -79,7 +79,7 @@ lemma rw_ite (n : PNat) (x : Nat) :
   (if x < n then (UniformPowerOfTwoSample (2 * n)) x else 0)
   = if x < n then 1 / 2 ^ log 2 ((2 : PNat) * n) else 0 := by
   split
-  rw [probUniformP2_apply]
+  rw [UniformPowerOfTwoSample_apply]
   simp only [PNat.mul_coe, one_div]
   apply double_large_enough
   trivial
@@ -100,7 +100,7 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
     = ∑' (i : ℕ), if i < ↑n then UniformPowerOfTwoSample (2 * n) i else 0 := by
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then UniformPowerOfTwoSample (2 * n) i else 0) +
     (∑' (i : ℕ), if decide (↑n ≤ i) = false then UniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
-    have A := probUniformP2_normalizes (2 * n)
+    have A := UniformPowerOfTwoSample_normalizes (2 * n)
     have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => UniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
@@ -114,7 +114,7 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
     trivial
   apply ENNReal.sub_eq_of_eq_add_rev
   . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
-    rw [probUniformP2_normalizes (2 * n)] at Y
+    rw [UniformPowerOfTwoSample_normalizes (2 * n)] at Y
     simp at Y
     clear X
     by_contra

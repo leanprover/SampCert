@@ -84,12 +84,40 @@ Uniform distribution on a byte
 def probUniformByte : SLang UInt8 := (fun _ => 1 / UInt8.size)
 
 /--
+Upper i bits from a unifomly sampled byte
+-/
+def probUniformByteUpperBits (i : ℕ) : SLang ℕ := do
+  let w <- probUniformByte
+  return w.toNat.shiftRight (8 - i)
+
+/--
+Uniform distribution on the set [0, 2^i) ⊆ ℕ
+-/
+def probUniformP2 (i : ℕ) : SLang ℕ :=
+  if (i < 8)
+  then probUniformByteUpperBits i
+  else do
+    let v <- probUniformByte
+    let w <- probUniformP2 (i - 8)
+    return UInt8.size * w + v.toNat
+
+/--
 ``SLang`` value for the uniform distribution over ``m`` elements, where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
 @[extern "prob_UniformP2"]
 def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
   toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
+
+
+/--
+``SLang`` value for the uniform distribution over ``m`` elements, where
+the number``m`` is the largest power of two that is at most ``n``.
+
+This implementation derives its samples from probUniformByte.
+-/
+def UniformPowerOfTwoSample' (n : ℕ+) : SLang ℕ := probUniformP2 (log 2 n)
+
 
 /--
 ``SLang`` functional which executes ``body`` only when ``cond`` is ``false``.
