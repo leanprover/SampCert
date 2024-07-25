@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 */
 #include <lean/lean.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <random>
-
-#include <iostream>
 
 #ifdef __APPLE__
     std::random_device generator;
@@ -14,12 +14,13 @@ Authors: Jean-Baptiste Tristan
     std::mt19937_64 generator(time(NULL));
 #endif
 
-std::uniform_int_distribution<uint8_t> distrib(0, UINT8_MAX - 1);
-
-// I wonder if there's a way to avoid boxing-- The byte examples in Lean
-// itself don't have to, but when I do it, the values change.
+// Remove boxing?
 extern "C" lean_object * prob_UniformByte () {
-    return lean_box(distrib(generator));
+    char r;
+    int urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+    read(urandom, &r,1);
+    close(urandom);
+    return lean_box(r);
 }
 
 
