@@ -9,6 +9,7 @@ The principal developer of SampCert is [Jean-Baptiste Tristan](https://jtristan.
 Other people have contributed important ideas or tools for deployment including (in no particular order): Leo de Moura, Anjali Joshi, Joseph Tassarotti, Stefan Zetzsche, Aws Albharghouti, Muhammad Naveed, Tristan Ravitch.
 
 To cite SampCert you can currently use the following reference:
+```
 @software{Tristan_SampCert_Verified_2024,
 author = {Tristan, Jean-Baptiste},
 doi = {10.5281/zenodo.11204806},
@@ -18,3 +19,4 @@ url = {https://github.com/leanprover/SampCert},
 version = {1.0.0},
 year = {2024}
 }
+```
