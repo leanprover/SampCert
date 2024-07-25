@@ -23,7 +23,7 @@ extern "C" lean_object * prob_UniformByte (lean_object * eta) {
     }
     read(urandom, &r,1);
     close(urandom);
-    return lean_box(r);
+    return lean_box((size_t) r);
 }
 
 
