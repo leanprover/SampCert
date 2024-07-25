@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 */
 #include <lean/lean.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <random>
 
 #ifdef __APPLE__
@@ -11,6 +13,19 @@ Authors: Jean-Baptiste Tristan
 #else
     std::mt19937_64 generator(time(NULL));
 #endif
+
+extern "C" lean_object * prob_UniformByte (lean_object * eta) {
+    lean_dec(eta);
+    unsigned char r;
+    int urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+    if (urandom == -1) {
+        lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
+    }
+    read(urandom, &r,1);
+    close(urandom);
+    return lean_box((size_t) r);
+}
+
 
 extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
     lean_dec(eta);
