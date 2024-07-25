@@ -6,7 +6,7 @@ SampCert is deployed and used in the [AWS Clean Rooms Differential Privacy servi
 
 The principal developer of SampCert is [Jean-Baptiste Tristan](https://jtristan.github.io/). It is also developed by [Markus de Medeiros](https://www.markusde.ca/). 
 
-Other people have contributed important ideas or tools for deployment including (in no particular order): Leo de Moura, Anjali Joshi, Joseph Tassarotti, Stefan Zetzsche, Aws Albharghouti, Muhammad Naveed, Tristan Ravitch, Fabian Zaiser.
+Other people have contributed important ideas or tools for deployment including (in no particular order): Leo de Moura, Anjali Joshi, Joseph Tassarotti, Stefan Zetzsche, Aws Albharghouti, Muhammad Naveed, Tristan Ravitch, Fabian Zaiser, Tomas Skrivan.
 
 To cite SampCert you can currently use the following reference:
 ```
