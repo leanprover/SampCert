@@ -104,7 +104,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
 
     -- Rewrite to real sum
     -- Simplify me
-    suffices ENNReal.toReal (∑' (a : T), 1) = ENNReal.toReal (2 ^ (8 - i)) by
+    suffices ENNReal.toReal (∑' (_ : T), 1) = ENNReal.toReal (2 ^ (8 - i)) by
       refine (ENNReal.toReal_eq_toReal_iff' ?G1 ?G2).mp this
       case G1 =>
         rw [tsum_eq_finsum ?G1]
