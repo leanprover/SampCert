@@ -3,6 +3,7 @@ Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
+import SampCert.Util.Util
 import SampCert.Foundations.Basic
 import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
@@ -1286,53 +1287,6 @@ lemma geo_div_geo (k n : ℕ) (p : ENNReal) (Hp : p < 1) (Hn : 0 < n) :
     congr
     exact succ_mul k n
 
-
-/--
-Specialize Euclidean division from ℤ to ℕ
--/
-lemma euclidean_division (n : ℕ) {D : ℕ} (HD : 0 < D) :
-  ∃ q r : ℕ, (r < D) ∧ n = r + D * q := by
-  exists (n / D)
-  exists (n % D)
-  apply And.intro
-  · exact mod_lt n HD
-  · apply ((@Nat.cast_inj ℤ).mp)
-    simp
-    conv =>
-      lhs
-      rw [<- EuclideanDomain.mod_add_div (n : ℤ) (D : ℤ)]
-
-/--
-Euclidiean division is unique
--/
-lemma euclidean_division_uniquness (r1 r2 q1 q2 : ℕ) {D : ℕ} (HD : 0 < D) (Hr1 : r1 < D) (Hr2 : r2 < D) :
-    r1 + D * q1 = r2 + D * q2 <-> (r1 = r2 ∧ q1 = q2) := by
-  apply Iff.intro
-  · intro H
-    cases (Classical.em (r1 = r2))
-    · aesop
-    cases (Classical.em (q1 = q2))
-    · aesop
-    rename_i Hne1 Hne2
-    exfalso
-
-    have Contra1 (W X Y Z : ℕ) (HY : Y < D) (HK : W < X) : (Y + D * W < Z + D * X) := by
-      suffices (D * W < D * X) by
-        have A : (1 + W ≤ X) := by exact one_add_le_iff.mpr HK
-        have _ : (D * (1 + W) ≤ D * X) := by exact Nat.mul_le_mul_left D A
-        have _ : (D + D * W ≤ D * X) := by linarith
-        have _ : (Y + D * W < D * X) := by linarith
-        have _ : (Y + D * W < Z + D * X) := by linarith
-        assumption
-      exact Nat.mul_lt_mul_of_pos_left HK HD
-
-    rcases (lt_trichotomy q1 q2) with HK' | ⟨ HK' | HK' ⟩
-    · exact (LT.lt.ne (Contra1 q1 q2 r1 r2 Hr1 HK') H)
-    · exact Hne2 HK'
-    · apply (LT.lt.ne (Contra1 q2 q1 r2 r1 Hr2 HK') (Eq.symm H))
-
-  · intro ⟨ _, _ ⟩
-    simp_all
 
 /--
 Equivalence between sampling loops

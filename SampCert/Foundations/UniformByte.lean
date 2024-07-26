@@ -110,13 +110,173 @@ def probUniformByteUpperBits_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ (min 8 i)) :
     simp_all
     linarith
 
+
+lemma UIint8_cast_lt_size (a : UInt8) : a.toNat < UInt8.size := by
+  rcases a with ⟨ ⟨ a', Ha' ⟩ ⟩
+  rw [UInt8.toNat]
+  simp
+  apply Ha'
+
+
 /--
 Evaluation of ``probUniformP2`` for inside the support
 -/
 def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
     probUniformP2 i x = (1 / 2 ^ i) := by
-  sorry
--- Want: strong induction. How to do in Lean?
+  revert x
+  induction' i using Nat.strong_induction_on with i ih
+  rw [probUniformP2]
+  split
+  · intro x Hx'
+    rename_i h
+    rw [probUniformByteUpperBits_eval_support]
+    · rw [UInt8.size]
+      have X : 256 = 2^8 := by simp
+      rw [X]
+      clear X
+      rw [cast_pow]
+      apply (ENNReal.div_eq_div_iff _ _ _ _).mpr <;> try simp
+      rw [← pow_add]
+      congr 1
+      rw [add_tsub_cancel_iff_le]
+      linarith
+    · rw [min_eq_right ?G1]
+      case G1 => linarith
+      assumption
+  · intro x Hx'
+    simp [probUniformByte]
+
+    -- Simplify, rewrite to indicator function
+    conv =>
+      enter [1, 1, a]
+      rw [<- ENNReal.tsum_mul_left]
+      enter [1, b]
+      rw [<- mul_one (probUniformP2 (i - 8) b)]
+      rw [<- mul_zero (probUniformP2 (i - 8) b)]
+      rw [<- mul_ite]
+      rw [<- mul_assoc]
+
+    -- Similar to the Laplace proof: use Euclidean division to rewrite
+    -- to product of indicator functions
+    rcases @euclidean_division x UInt8.size (by simp) with ⟨ p, q, Hq, Hx ⟩
+    have X (a : UInt8) (b : ℕ) D :
+        (@ite _ (q + UInt8.size * p = UInt8.size * b + a.toNat) D (1 : ENNReal) 0) =
+        (if p = b then (1 : ENNReal) else 0) * (if q = a.toNat then (1 : ENNReal) else 0) := by
+      split
+      · rename_i He
+        conv at He =>
+          enter [2]
+          rw [add_comm]
+        have R := (euclidean_division_uniquness _ _ _ _ (by simp) Hq ?G3).mp He
+        case G3 => apply UIint8_cast_lt_size
+        rcases R with ⟨ R1 , R2 ⟩
+        simp_all
+      · rename_i He
+        suffices (p ≠ b) ∨ (q ≠ a.toNat) by
+          rcases this with Ht | Ht
+          · rw [ite_eq_right_iff.mpr]
+            · simp
+            · intro Hk
+              exfalso
+              apply Ht Hk
+          · rw [mul_comm]
+            rw [ite_eq_right_iff.mpr]
+            · simp
+            · intro Hk
+              exfalso
+              apply Ht Hk
+        simp
+        apply (Decidable.not_and_iff_or_not (p = b) (q = a.toNat)).mp
+        intro HK
+        apply He
+        rw [And.comm] at HK
+        have R := (euclidean_division_uniquness _ _ _ _ (by simp) Hq ?G3).mpr HK
+        case G3 => apply UIint8_cast_lt_size
+        linarith
+    conv =>
+      enter [1, 1, a, 1, b]
+      rw [Hx]
+      rw [X a b]
+    clear X
+
+    -- Separate the sums
+    conv =>
+      enter [1, 1, a, 1, b]
+      repeat rw [mul_assoc]
+    conv =>
+      enter [1, 1, a]
+      rw [ENNReal.tsum_mul_left]
+    rw [ENNReal.tsum_mul_left]
+    conv =>
+      enter [1, 2, 1, a, 1, b]
+      rw [<- mul_assoc]
+      rw [mul_comm]
+    conv =>
+      enter [1, 2, 1, a]
+      rw [ENNReal.tsum_mul_left]
+    conv =>
+      enter [1, 2]
+      rw [ENNReal.tsum_mul_right]
+    simp
+
+    -- Simplify the singleton sums
+    rw [tsum_eq_single p ?G1]
+    case G1 =>
+      intro _ HK
+      simp
+      intro HK'
+      exfalso
+      exact HK (id (Eq.symm HK'))
+    have X : (UInt8.ofNatCore q Hq).toNat = q := by
+      rw [UInt8.ofNatCore, UInt8.toNat]
+    rw [tsum_eq_single (UInt8.ofNatCore q Hq) ?G1]
+    case G1 =>
+      simp
+      intro b HK' HK''
+      apply HK'
+      rw [UInt8.ofNatCore]
+      rcases b with ⟨ ⟨ b' , Hb' ⟩ ⟩
+      congr
+      rw [HK'']
+      rw [UInt8.toNat]
+    rw [X]
+    clear X
+    simp
+
+    -- Apply the IH
+    rw [ih]
+    · simp
+      rw [<- ENNReal.mul_inv ?G1 ?G2]
+      case G1 => simp
+      case G2 => simp
+      congr 1
+      have H256 : (256 : ENNReal) = (256 : ℕ) := by simp
+      rw [H256]
+      have X : (256 : ℕ) = 2^8 := by simp
+      rw [X]
+      rw [cast_pow]
+      rw [cast_two]
+      rw [← pow_add]
+      congr 1
+      apply add_sub_of_le
+      linarith
+    · simp
+      linarith
+    · rw [Hx] at Hx'
+      have Hx'' : UInt8.size * p < OfNat.ofNat 2 ^ i := by
+        apply Classical.byContradiction
+        intro HK
+        linarith
+      rw [UInt8.size] at Hx''
+      have Y : 256 = 2^8 := by simp
+      rw [Y] at Hx''
+      clear Y
+      have W := (Nat.lt_div_iff_mul_lt ?G1 _).mpr Hx''
+      case G1 =>
+        apply Nat.pow_dvd_pow (OfNat.ofNat 2)
+        linarith
+      apply (LT.lt.trans_eq W)
+      apply Nat.pow_div <;> linarith
 
 /--
 Evaluation of ``probUniformP2`` for zero-shifts outside of the support
