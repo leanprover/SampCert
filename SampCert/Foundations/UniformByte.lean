@@ -22,6 +22,16 @@ open Classical Nat PMF
 
 namespace SLang
 
+
+local instance : Finite UInt8 := by
+  constructor
+  · apply Equiv.ofBijective (fun v => v.val)
+    apply Function.bijective_iff_has_inverse.mpr
+    exists (fun v => {val := v : UInt8})
+    simp [Function.RightInverse, Function.LeftInverse]
+
+
+
 /--
 ProbUniformByte is a proper distribution
 -/
@@ -35,7 +45,9 @@ def probUniformByte_normalizes : HasSum probUniformByte 1 := by
   simp only [ENNReal.toReal_mul]
   rw [ENNReal.tsum_toReal_eq ?G1]
   case G1 => simp
-  simp only [ENNReal.one_toReal, tsum_const, nsmul_eq_mul, mul_one]
+  simp only [ENNReal.one_toReal]
+  simp only [tsum_const]
+  simp only [nsmul_eq_mul, mul_one]
   rw [@Nat.card_eq_of_equiv_fin UInt8 256 ?G1]
   case G1 =>
     apply Equiv.ofBijective (fun v => v.val)
@@ -63,7 +75,6 @@ def probUniformByte_PMF : PMF UInt8 := ⟨ probUniformByte, probUniformByte_norm
 -- def probUniformByteUpperBits_eval_overshift_nil {i x : ℕ} (Hi : 8 ≤ i) (Hx : x ≥ UInt8.size) :
 --     probUniformByteUpperBits i x = 0 := sorry
 
-
 /--
 Evaluation of ``probUniformByteUpperBits`` for inside the support
 -/
@@ -72,9 +83,98 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
   simp [probUniformByteUpperBits]
   rw [Nat.sub_eq_max_sub]
   simp [SLang.probBind, SLang.probPure, probUniformByte]
+  cases (Classical.em (i < 8))
 
-  -- Nat.shiftRight_eq_div_pow
-  sorry
+  · -- Simplify body
+    rw [max_eq_left (by linarith)]
+    rw [min_eq_right (by linarith)] at Hx
+    conv =>
+      enter [1, 1, a]
+      rw [Nat.shiftRight_eq_div_pow]
+    conv =>
+      enter [1, 1, a]
+      rw [<- mul_one (256)⁻¹]
+      rw [<- mul_zero (256)⁻¹]
+      rw [<- mul_ite]
+    rw [ENNReal.tsum_mul_left]
+    rw [division_def]
+    rw [mul_comm]
+    congr 1
+
+    -- Restruct sum to type where body is constant
+    rw [<- (@tsum_subtype_eq_of_support_subset  _ _ _ _ _ { i_1 : UInt8 |  x = i_1.toNat / 2 ^ (8 - i) } ?G1)]
+    case G1 => simp [Function.support]
+    generalize HT : { i_1 : UInt8 |  x = i_1.toNat / 2 ^ (8 - i) } = T
+    have H (x1 : T) : (@ite _ (x = (x1 : UInt8).toNat / 2 ^ (8 - i)) _ (1 : ENNReal) (0 : ENNReal)) = 1 := by
+      apply ite_eq_iff.mpr
+      simp
+      rcases x1
+      rename_i h val property
+      subst HT
+      simp_all only
+      simp_all only [Set.mem_setOf_eq]
+    conv =>
+      enter [1, 1, a]
+      rw [H a]
+    clear H
+
+    -- Rewrite to real sum
+    -- Simplify me
+    suffices ENNReal.toReal (∑' (a : T), 1) = ENNReal.toReal (2 ^ (8 - i)) by
+      refine (ENNReal.toReal_eq_toReal_iff' ?G1 ?G2).mp this
+      case G1 =>
+        rw [tsum_eq_finsum ?G1]
+        case G1 =>
+          simp [Function.support]
+          apply Set.finite_univ_iff.mpr
+          apply Subtype.finite
+        simp
+        have R := @finsum_induction ENNReal T _ (fun _ => 1) (fun z => z ≠ ⊤) (by simp) (by aesop) (by simp)
+        simp at R
+        trivial
+      case G2 => simp
+
+    -- Rewrite to set cardinality
+    rw [ENNReal.tsum_toReal_eq ?G1]
+    case G1 => simp
+    simp [tsum_const]
+
+    -- Evaluate set cardinality using bijection
+    rw [@Nat.card_eq_of_equiv_fin T (2^(8 - i)) ?G1]
+    case G1 =>
+      rw [<- HT]
+      simp
+      -- Apply Euclidean division in order to construct the functions
+      let f (t : { i_1 // x = (i_1 : UInt8).toNat / 2 ^ (8 - i) }) : Fin (2^(8-i)) :=
+        let ⟨ t', HT' ⟩ := t
+        sorry
+      let g (t : Fin (2^(8-i))) : { i_1 // x = (i_1 : UInt8).toNat / 2 ^ (8 - i) } := sorry
+      apply Equiv.ofBijective f
+      apply Function.bijective_iff_has_inverse.mpr
+      exists g
+      dsimp [Function.RightInverse, Function.LeftInverse, f, g]
+      sorry
+    simp
+  · rw [max_eq_right (by linarith)]
+    rw [min_eq_left (by linarith)] at Hx
+    rw [tsum_eq_single (UInt8.ofNatCore x Hx) ?G1]
+    case G1 =>
+      intro b' Hb'
+      simp
+      intro Hx'
+      exfalso
+      apply Hb'
+      rcases b' with ⟨ ⟨ b'', Hb'' ⟩ ⟩
+      simp [UInt8.ofNatCore]
+      congr
+      rw [Hx']
+      simp [UInt8.toNat]
+    simp
+    intro HK
+    exfalso
+    apply HK
+    rfl
+
 
 /--
 Evaluation of ``probUniformByteUpperBits`` for zero-shifts outside of the support
@@ -283,7 +383,28 @@ Evaluation of ``probUniformP2`` for zero-shifts outside of the support
 -/
 def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
     probUniformP2 i x = 0 := by
-  sorry
+  revert x
+  induction' i using Nat.strong_induction_on with i ih
+  intro x Hk
+  rw [probUniformP2]
+  split
+  · apply probUniformByteUpperBits_eval_zero
+    rw [min_eq_right]
+    · trivial
+    · linarith
+  · simp
+    intro i1
+    right
+    intro i2 Hi
+    apply ih
+    · sorry
+    · rw [Hi] at Hk
+      apply Classical.byContradiction
+      intro Hk'
+      simp_all
+      -- ??
+
+      sorry
 
 
 /--
