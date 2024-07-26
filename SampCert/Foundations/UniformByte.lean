@@ -479,23 +479,4 @@ def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
       have W := (euclidean_division_uniquness _ _ _ _ (by simp) Hq (by simp)).mp Heuc'
       simp_all
 
-/--
-Evaluates the ``probUniformP2`` distribution at a point inside of its support.
--/
-@[simp]
-theorem UniformPowerOfTwoSample'_apply (n : PNat) (x : Nat) (h : x < 2 ^ (log 2 n)) :
-    UniformPowerOfTwoSample' n x = 1 / (2 ^ (log 2 n)) := by
-  rw [UniformPowerOfTwoSample']
-  rw [probUniformP2_eval_support h]
-
-/--
-Evaluates the ``probUniformP2`` distribution at a point outside of its support
--/
-@[simp]
-theorem UniformPowerOfTwoSample'_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 2 n)) :
-    UniformPowerOfTwoSample' n x = 0 := by
-  rw [UniformPowerOfTwoSample']
-  apply probUniformP2_eval_zero
-  linarith
-
 end SLang

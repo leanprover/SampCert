@@ -107,16 +107,6 @@ the number``m`` is the largest power of two that is at most ``n``.
 -/
 def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
   probUniformP2 (log 2 n)
-  -- toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
-
-
-/--
-``SLang`` value for the uniform distribution over ``m`` elements, where
-the number``m`` is the largest power of two that is at most ``n``.
-
-This implementation derives its samples from probUniformByte.
--/
-def UniformPowerOfTwoSample' (n : ℕ+) : SLang ℕ := probUniformP2 (log 2 n)
 
 
 /--
