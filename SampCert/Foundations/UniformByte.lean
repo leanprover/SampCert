@@ -148,6 +148,9 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
               rw [← Nat.sub_mul]
               simp ⟩
       apply Function.bijective_iff_has_inverse.mpr
+
+      -- Set up the bijections
+      -- Is there a simpler way to do this?
       exists ?G1
       case G1 =>
         intro f
@@ -195,9 +198,8 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
         apply Nat.sub_add_cancel
         rw [Hx'']
         rw [UInt8.toNat]
+        apply (Nat.le_div_iff_mul_le (by simp)).mp
         simp
-
-        sorry
       · intro x'
         rcases x' with ⟨ x'', Hx'' ⟩
         simp [UInt8.ofNatCore]
