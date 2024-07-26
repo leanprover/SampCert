@@ -125,21 +125,84 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
     case G1 => simp
     simp [tsum_const]
 
+
     -- Evaluate set cardinality using bijection
+    -- Simplify me!
     rw [@Nat.card_eq_of_equiv_fin T (2^(8 - i)) ?G1]
     case G1 =>
       rw [<- HT]
       simp
-      -- Apply Euclidean division in order to construct the functions
-      let f (t : { i_1 // x = (i_1 : UInt8).toNat / 2 ^ (8 - i) }) : Fin (2^(8-i)) :=
-        let ⟨ t', HT' ⟩ := t
-        sorry
-      let g (t : Fin (2^(8-i))) : { i_1 // x = (i_1 : UInt8).toNat / 2 ^ (8 - i) } := sorry
-      apply Equiv.ofBijective f
+      apply Equiv.ofBijective
+      case f =>
+        intro v
+        rcases v with ⟨ v', Hv' ⟩
+        exact
+          ⟨ v'.toNat - x * (2 ^ (8 - i)),
+            by
+              have W := (Nat.le_div_iff_mul_le' (by simp)).mp (Eq.le Hv')
+              have W' := (Nat.div_lt_iff_lt_mul (by simp)).mp (Nat.lt_succ_iff.mpr (Eq.le (Eq.symm Hv')))
+              have W'' : v'.toNat - x * 2 ^ (8 - i) < x.succ * 2 ^ (8 - i) - x * 2 ^ (8 - i) := by
+                exact Nat.sub_lt_sub_right W W'
+              suffices  (x.succ * 2 ^ (8 - i) - x * 2 ^ (8 - i)) ≤  2 ^ (8 - i) by
+                exact Nat.lt_of_lt_of_le W'' this
+              rw [← Nat.sub_mul]
+              simp ⟩
       apply Function.bijective_iff_has_inverse.mpr
-      exists g
-      dsimp [Function.RightInverse, Function.LeftInverse, f, g]
-      sorry
+      exists ?G1
+      case G1 =>
+        intro f
+        rcases f with ⟨ f', Hf' ⟩
+        exact
+          ⟨ UInt8.ofNatCore (f' + x * 2^(8-i))
+            (by
+              rw [UInt8.size]
+              apply (@LT.lt.trans_le _ _ _ (2^(8-i) + x * 2^(8-i)))
+              · exact Nat.add_lt_add_right Hf' (x * 2 ^ (8 - i))
+              · conv =>
+                  enter [1, 1]
+                  rw [<- one_mul (2^(8-i))]
+                rw [<- add_mul]
+                have Z : (1 + x) ≤ 2^i := by linarith
+                have Z' : (1 + x) * (2^(8-i)) ≤ 2^i * (2^(8-i)) := by
+                  exact Nat.mul_le_mul_right (2 ^ (8 - i)) Z
+                apply le_trans Z'
+                apply Eq.le
+                rw [<- pow_add]
+                have H256 : 256 = 2^8 := by simp
+                rw [H256]
+                clear H256
+                congr 1
+                apply add_sub_of_le
+                apply le_of_succ_le
+                trivial
+              ),
+            (by
+              unfold UInt8.ofNatCore
+              unfold UInt8.toNat
+              simp
+              apply (nat_div_eq_le_lt_iff (by simp)).mpr
+              apply And.intro
+              · exact Nat.le_add_left (x * 2 ^ (8 - i)) f'
+              · linarith )⟩
+      dsimp [Function.RightInverse, Function.LeftInverse]
+      apply And.intro
+      · intro x'
+        rcases x' with ⟨ ⟨ x'', H2x'' ⟩, Hx'' ⟩
+        unfold UInt8.ofNatCore
+        unfold UInt8.toNat
+        simp
+        congr
+        apply Nat.sub_add_cancel
+        rw [Hx'']
+        rw [UInt8.toNat]
+        simp
+
+        sorry
+      · intro x'
+        rcases x' with ⟨ x'', Hx'' ⟩
+        simp [UInt8.ofNatCore]
+        rw [UInt8.toNat]
+        simp
     simp
   · rw [max_eq_right (by linarith)]
     rw [min_eq_left (by linarith)] at Hx

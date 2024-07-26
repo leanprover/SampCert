@@ -1076,24 +1076,6 @@ lemma partial_geometric_series {p : ENNReal} (HP2 : p < 1) (B : ℕ) :
     rfl
 
 
-lemma nat_div_eq_le_lt_iff {a b c : ℕ} (Hc : 0 < c) : a = b / c <-> (a * c ≤ b ∧ b < (a +  1) * c) := by
-  apply Iff.intro
-  · intro H
-    apply And.intro
-    · apply (Nat.le_div_iff_mul_le Hc).mp
-      exact Nat.le_of_eq H
-    · apply (Nat.div_lt_iff_lt_mul Hc).mp
-      apply Nat.lt_succ_iff.mpr
-      exact Nat.le_of_eq (id (Eq.symm H))
-  · intro ⟨ H1, H2 ⟩
-    apply LE.le.antisymm
-    · apply (Nat.le_div_iff_mul_le Hc).mpr
-      apply H1
-    · apply Nat.lt_succ_iff.mp
-      simp
-      apply (Nat.div_lt_iff_lt_mul Hc).mpr
-      apply H2
-
 /--
 Integer division of a geometric distribution is a geometric distribution
 -/
