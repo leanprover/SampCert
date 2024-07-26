@@ -61,20 +61,6 @@ ProbUniformByte as a PMF
 -/
 def probUniformByte_PMF : PMF UInt8 := ⟨ probUniformByte, probUniformByte_normalizes ⟩
 
--- Might not be used
-
--- /-
--- Evaluation of ``probUniformByteUpperBits`` for zero-shifts inside the support
--- -/
--- def probUniformByteUpperBits_eval_overshift_support {i x : ℕ} (Hi : 8 ≤ i) (Hx : x < UInt8.size) :
---     probUniformByteUpperBits i x = 1 / UInt8.size := sorry
---
--- /-
--- Evaluation of ``probUniformByteUpperBits`` for zero-shifts outside of the support
--- -/
--- def probUniformByteUpperBits_eval_overshift_nil {i x : ℕ} (Hi : 8 ≤ i) (Hx : x ≥ UInt8.size) :
---     probUniformByteUpperBits i x = 0 := sorry
-
 /--
 Evaluation of ``probUniformByteUpperBits`` for inside the support
 -/
@@ -290,7 +276,7 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
         intro HK
         apply He
         rw [And.comm] at HK
-        have R := (euclidean_division_uniquness _ _ _ _ (by simp) Hq ?G3).mpr HK
+        have _ := (euclidean_division_uniquness _ _ _ _ (by simp) Hq ?G3).mpr HK
         case G3 => apply UIint8_cast_lt_size
         linarith
     conv =>
@@ -397,15 +383,31 @@ def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
     right
     intro i2 Hi
     apply ih
-    · sorry
+    · apply sub_lt
+      · linarith
+      · simp
     · rw [Hi] at Hk
-      apply Classical.byContradiction
-      intro Hk'
       simp_all
-      -- ??
+      suffices 2^ i ≤ UInt8.size * i2 by
+        rw [UInt8.size] at this
+        rw [← Nat.pow_div (by trivial) ?G1]
+        case G1 => simp
+        exact Nat.div_le_of_le_mul this
+      have H : (i1.toNat < UInt8.size) := by exact UIint8_cast_lt_size i1
 
-      sorry
-
+      -- Establish this bound by the uniqueness of Euclidean division
+      rcases @euclidean_division (2^i) (2^8) (by simp) with ⟨ p, q, Hq, H ⟩
+      have Hple : (p ≤ i2) := by linarith
+      have Heuc' : q + 2 ^ 8 * p = 0 + 2 ^ 8 * (2 ^ (i - 8)) := by
+        rw [<- H]
+        rw [zero_add]
+        rw [<- pow_add]
+        congr 1
+        symm
+        apply add_sub_of_le
+        trivial
+      have W := (euclidean_division_uniquness _ _ _ _ (by simp) Hq (by simp)).mp Heuc'
+      simp_all
 
 /--
 Evaluates the ``probUniformP2`` distribution at a point inside of its support.
