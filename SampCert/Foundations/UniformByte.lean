@@ -45,9 +45,7 @@ def probUniformByte_normalizes : HasSum probUniformByte 1 := by
   simp only [ENNReal.toReal_mul]
   rw [ENNReal.tsum_toReal_eq ?G1]
   case G1 => simp
-  simp only [ENNReal.one_toReal]
-  simp only [tsum_const]
-  simp only [nsmul_eq_mul, mul_one]
+  simp only [ENNReal.one_toReal, tsum_const, nsmul_eq_mul, mul_one]
   rw [@Nat.card_eq_of_equiv_fin UInt8 256 ?G1]
   case G1 =>
     apply Equiv.ofBijective (fun v => v.val)

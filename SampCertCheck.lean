@@ -10,6 +10,7 @@ import SampCert.SLang
 
 def main : IO Unit := do
   -- Check if FFI is working
-  IO.print "Sampling byte: "
-  let x <- PMF.run <| SLang.probUniformByte_PMF
-  IO.println x
+  IO.print "Sampling bytes: "
+  for _ in [:10000] do
+    let x <- PMF.run <| SLang.probUniformByte_PMF
+    IO.println x

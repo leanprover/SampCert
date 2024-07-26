@@ -9,7 +9,6 @@ import SampCert.Samplers.Bernoulli.Basic
 import SampCert.Samplers.BernoulliNegativeExponential.Basic
 import SampCert.Samplers.Laplace.Basic
 import SampCert.Samplers.Gaussian.Basic
-import SampCert.DiffPrivacy.ConcentratedBound
 import SampCert.Extraction
 import SampCert.Extractor.VMC
 
