@@ -105,9 +105,9 @@ def probUniformP2 (i : ℕ) : SLang ℕ :=
 ``SLang`` value for the uniform distribution over ``m`` elements, where
 the number``m`` is the largest power of two that is at most ``n``.
 -/
-@[extern "prob_UniformP2"]
 def UniformPowerOfTwoSample (n : ℕ+) : SLang ℕ :=
-  toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
+  probUniformP2 (log 2 n)
+  -- toSLang (PMF.uniformOfFintype (Fin (2 ^ (log 2 n))))
 
 
 /--

@@ -6,7 +6,10 @@ Authors: Jean-Baptiste Tristan
 import SampCert.SLang
 import SampCert.Util.Util
 import SampCert.Foundations.Auto
-import SampCert.Foundations.UniformP2
+import Mathlib.Probability.Distributions.Uniform
+import Mathlib.Data.Nat.Log
+import SampCert.Foundations.Monad
+
 
 /-!
 # ``probUniformByte`` Properties
@@ -20,7 +23,11 @@ It also contains the derivation that ``probUniformP2`` is a uniform distribution
 
 open Classical Nat PMF
 
+
+
 namespace SLang
+
+
 
 
 local instance : Finite UInt8 := by
@@ -490,20 +497,5 @@ theorem UniformPowerOfTwoSample'_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log
   rw [UniformPowerOfTwoSample']
   apply probUniformP2_eval_zero
   linarith
-
-/--
-Equivalence between uniform samplers
--/
-def probUniform_probUniform'_equiv (n : ℕ+) : UniformPowerOfTwoSample n = UniformPowerOfTwoSample' n := by
-  apply SLang.ext
-  intro x
-  cases (Classical.em (x < 2 ^ (log 2 n)))
-  · rename_i h
-    rw [UniformPowerOfTwoSample_apply n x h]
-    rw [← UniformPowerOfTwoSample'_apply n x h]
-  · rename_i h'
-    have h : x ≥ 2 ^ (log 2 n) := by linarith
-    rw [UniformPowerOfTwoSample_apply' n x h]
-    rw [← UniformPowerOfTwoSample'_apply' n x h]
 
 end SLang
