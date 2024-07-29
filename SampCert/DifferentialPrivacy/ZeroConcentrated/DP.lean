@@ -476,11 +476,69 @@ lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) /
 end ofDP_bound
 
 
+/-
+## Prove trig inequality B.1
+-/
 
-lemma sinh_inequality {x y : ℝ} (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
-    (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
+section sinh_inequality
+
+lemma lemma_cosh_add {w z : ℝ} : Real.cosh (w + z) = Real.cosh w * Real.cosh z * (1 + Real.tanh w * Real.tanh z) :=
+  let L {a : ℝ} : Real.sinh a = Real.cosh a * Real.tanh a := by
+    rw [Real.tanh_eq_sinh_div_cosh]
+    rw [division_def, mul_comm, mul_assoc]
+    rw [inv_mul_cancel]
+    · simp
+    · linarith [Real.cosh_pos a]
+  calc Real.cosh (w + z)
+    _ = Real.cosh w * Real.cosh z + Real.sinh w * Real.sinh z := Real.cosh_add w z
+    _ = Real.cosh w * Real.cosh z + ((Real.cosh w * Real.tanh w) * (Real.cosh z * Real.tanh z)) := by rw [L, L]
+    _ = Real.cosh w * Real.cosh z * (1 + Real.tanh w * Real.tanh z) := by linarith
+
+variable (x y : ℝ)
+variable (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2)
+
+noncomputable def C := 2 * Real.sinh ((x - y) / 2) * Real.cosh (x / 2) * Real.cosh (y / 2)
+
+noncomputable def t := Real.tanh (x / 2) * Real.tanh (y / 2)
+
+lemma lemma_sinh_sub : Real.sinh (x - y) = (C x y) * (1 - t x y) :=
   sorry
 
+lemma lemma_sub_sinh : Real.sinh x - Real.sinh y = C x y * (1 + t x y) :=
+  sorry
+
+lemma C_ne_zero : C x y ≠ 0 :=
+  sorry
+
+lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) :=
+  sorry
+
+lemma t_nonneg : 0 ≤ t x y :=
+  sorry
+
+lemma t_le_one : t x y < 1 :=
+  sorry
+
+lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) :=
+  sorry
+
+
+lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) :=
+  -- Apply MVT
+  sorry
+
+lemma sinh_inequality :
+    (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
+  -- Temp usage of hypothesis so Lean doesn't freak out
+  have _ := Hy
+  have _ := Hyx
+  have _ := Hx
+  rw [lemma_step_1]
+  apply lemma_step_2
+  unfold t
+  apply lemma_step_3
+
+end sinh_inequality
 
 /--
 Convert ε-DP bound to `(1/2)ε²`-zCDP bound
@@ -880,7 +938,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     enter [1, 2]
     rw [W]
   clear W
-  apply (le_trans (sinh_inequality ?G1 ?G2 ?G3))
+  apply (le_trans (sinh_inequality _ _ ?G1 ?G2 ?G3))
   case G1 =>
     apply mul_nonneg
     · exact NNReal.zero_le_coe
