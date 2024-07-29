@@ -568,8 +568,13 @@ lemma C_ne_zero : C x y ≠ 0 := by
   · linarith [Real.cosh_pos (x / 2)]
   · linarith [Real.cosh_pos (y / 2)]
 
-lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) :=
-  sorry
+lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) := by
+  rw [lemma_sinh_sub]
+  rw [lemma_sub_sinh]
+  rw [mul_div_mul_comm]
+  rw [div_self]
+  · simp
+  · apply C_ne_zero
 
 lemma t_nonneg : 0 ≤ t x y :=
   sorry
