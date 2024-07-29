@@ -502,7 +502,40 @@ noncomputable def C := 2 * Real.sinh ((x - y) / 2) * Real.cosh (x / 2) * Real.co
 noncomputable def t := Real.tanh (x / 2) * Real.tanh (y / 2)
 
 lemma lemma_sinh_sub : Real.sinh (x - y) = (C x y) * (1 - t x y) :=
-  sorry
+  calc Real.sinh (x - y)
+    _ = (Real.exp (x - y) - Real.exp (-(x-y))) / 2 := by
+      rw [Real.sinh_eq]
+    _ = ((Real.exp ((x - y) / 2) - (Real.exp (- ((x - y) / 2)))) * (Real.exp ((x - y) / 2) + (Real.exp (- ((x - y) / 2))))) / 2 := by
+      congr 1
+      ring_nf
+      simp
+      rw [← Real.exp_nsmul]
+      rw [← Real.exp_nsmul]
+      rw [nsmul_eq_mul]
+      simp
+      congr 2
+      · ring_nf
+      · ring_nf
+    _ = 2 * Real.sinh ((x - y) / 2) * Real.cosh ((x - y) / 2) := by
+      rw [Real.sinh_eq]
+      rw [Real.cosh_eq]
+      ring_nf
+    _ = (C x y) * (1 - t x y) := by
+      unfold C
+      unfold t
+      repeat rw [mul_assoc]
+      congr 2
+      have T1 : (1 - Real.tanh (x / 2) * Real.tanh (y / 2)) = (1 + Real.tanh (x / 2) * Real.tanh (-(y / 2))) := by
+        rw [Real.tanh_neg (y / 2)]
+        linarith
+      have T2 : Real.cosh (y / 2) = Real.cosh (-(y / 2)) := by
+        exact Eq.symm (Real.cosh_neg (y / 2))
+      rw [T1, T2]
+      clear T1 T2
+      repeat rw [<- mul_assoc]
+      rw [<- lemma_cosh_add]
+      congr
+      linarith
 
 lemma lemma_sub_sinh : Real.sinh x - Real.sinh y = C x y * (1 + t x y) :=
   sorry
