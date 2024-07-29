@@ -591,8 +591,35 @@ lemma t_nonneg : 0 ≤ t x y := by
       linarith
     · linarith [Real.cosh_pos (y / 2)]
 
-lemma t_le_one : t x y < 1 :=
-  sorry
+
+-- Upstream?
+lemma tanh_lt_1 (w : ℝ) : Real.tanh w < 1 := by
+  rw [Real.tanh_eq_sinh_div_cosh]
+  apply (div_lt_one ?hb).mpr
+  · rw [Real.sinh_eq, Real.cosh_eq]
+    apply div_lt_div_of_pos_right
+    · linarith [Real.exp_pos (-w)]
+    · simp
+  · apply Real.cosh_pos
+
+-- Upstream?
+lemma tanh_nonneg {w : ℝ} (HW : 0 ≤ w) : 0 ≤ Real.tanh w := by
+  rw [Real.tanh_eq_sinh_div_cosh]
+  apply div_nonneg
+  · exact Real.sinh_nonneg_iff.mpr HW
+  · exact (LT.lt.le (Real.cosh_pos w))
+
+lemma t_le_one : t x y < 1 := by
+  unfold t
+  conv =>
+    enter [2]
+    rw [<- mul_one 1]
+  apply (mul_lt_mul'' (tanh_lt_1 (x / 2)) (tanh_lt_1 (y / 2)))
+  · apply tanh_nonneg
+    linarith
+  · apply tanh_nonneg
+    linarith
+
 
 lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) :=
   sorry
