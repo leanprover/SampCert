@@ -575,9 +575,21 @@ lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x 
   rw [div_self]
   · simp
   · apply C_ne_zero
+    linarith
 
-lemma t_nonneg : 0 ≤ t x y :=
-  sorry
+lemma t_nonneg : 0 ≤ t x y := by
+  unfold t
+  apply mul_nonneg
+  · rw [Real.tanh_eq_sinh_div_cosh]
+    apply div_nonneg
+    · apply Real.sinh_nonneg_iff.mpr
+      linarith
+    · linarith [Real.cosh_pos (x / 2)]
+  · rw [Real.tanh_eq_sinh_div_cosh]
+    apply div_nonneg
+    · apply Real.sinh_nonneg_iff.mpr
+      linarith
+    · linarith [Real.cosh_pos (y / 2)]
 
 lemma t_le_one : t x y < 1 :=
   sorry
@@ -594,9 +606,8 @@ lemma sinh_inequality :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
   -- Temp usage of hypothesis so Lean doesn't freak out
   have _ := Hy
-  have _ := Hyx
   have _ := Hx
-  rw [lemma_step_1]
+  rw [lemma_step_1 _ _ Hyx]
   apply lemma_step_2
   unfold t
   apply lemma_step_3
