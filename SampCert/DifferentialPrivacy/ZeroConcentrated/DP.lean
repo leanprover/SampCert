@@ -538,7 +538,26 @@ lemma lemma_sinh_sub : Real.sinh (x - y) = (C x y) * (1 - t x y) :=
       linarith
 
 lemma lemma_sub_sinh : Real.sinh x - Real.sinh y = C x y * (1 + t x y) :=
-  sorry
+  calc Real.sinh x - Real.sinh y
+    _ = (Real.exp x - Real.exp (-x) - Real.exp y + Real.exp (-y)) / 2 := by
+      simp [Real.sinh_eq, Real.sinh_eq]
+      ring_nf
+    _ = ((Real.exp ((x - y) / 2) - Real.exp (-((x - y) / 2))) * (Real.exp ((x + y) / 2) + Real.exp (-((x + y) / 2))) ) / 2:= by
+      congr 1
+      ring_nf
+      simp [<- Real.exp_add]
+      ring_nf
+    _ = 2 * Real.sinh ((x - y)/2) * Real.cosh ((x+y)/2) := by
+      rw [Real.sinh_eq, Real.cosh_eq]
+      linarith
+    _ = C x y * (1 + t x y) := by
+      unfold C
+      unfold t
+      conv =>
+        enter [1, 2, 1]
+        rw [add_div]
+      rw [lemma_cosh_add]
+      linarith
 
 lemma C_ne_zero : C x y ≠ 0 :=
   sorry
