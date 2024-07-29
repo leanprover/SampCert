@@ -559,8 +559,14 @@ lemma lemma_sub_sinh : Real.sinh x - Real.sinh y = C x y * (1 + t x y) :=
       rw [lemma_cosh_add]
       linarith
 
-lemma C_ne_zero : C x y ≠ 0 :=
-  sorry
+lemma C_ne_zero : C x y ≠ 0 := by
+  unfold C
+  repeat apply mul_ne_zero
+  · simp
+  · apply Real.sinh_ne_zero.mpr
+    linarith
+  · linarith [Real.cosh_pos (x / 2)]
+  · linarith [Real.cosh_pos (y / 2)]
 
 lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) :=
   sorry
