@@ -621,8 +621,55 @@ lemma t_le_one : t x y < 1 := by
     linarith
 
 
-lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) :=
-  sorry
+lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) := by
+  apply div_le_of_nonneg_of_le_mul
+  · linarith [t_le_one x y Hy Hyx]
+  · apply Real.exp_nonneg
+  rw [mul_sub]
+  simp
+  apply (add_le_add_iff_right (Real.exp (x * y / 2) * t x y)).mp
+  rw [sub_add_cancel]
+  apply (add_le_add_iff_left (-1)).mp
+  repeat rw [<- add_assoc]
+  rw [Ring.add_left_neg, zero_add]
+  conv =>
+    enter [1, 1]
+    rw [<- one_mul (t x y)]
+  rw [<- add_mul]
+  apply (le_div_iff' ?G1).mp
+  case G1 =>
+    apply add_pos
+    · simp
+    · apply Real.exp_pos
+  apply le_trans H
+  apply Eq.le
+  rw [Real.tanh_eq_sinh_div_cosh]
+  rw [Real.sinh_eq, Real.cosh_eq]
+  rw [div_div_div_comm]
+  have R1 : (Real.exp (x * y / 4) - Real.exp (-(x * y / 4))) = (Real.exp (-(x * y / 4)) *  (Real.exp (x * y / 2) - 1)) := by
+    rw [mul_sub]
+    rw [<- Real.exp_add]
+    simp
+    linarith
+  rw [R1]
+  clear R1
+  have R2 : (Real.exp (x * y / 4) + Real.exp (-(x * y / 4))) = (Real.exp (-(x * y / 4)) *(Real.exp (x * y / 2) + 1)) := by
+    rw [mul_add]
+    rw [<- Real.exp_add]
+    simp
+    linarith
+  rw [R2]
+  clear R2
+  simp
+  rw [mul_div_mul_comm]
+  have R3 : Real.exp (-(x * y / 4)) / Real.exp (-(x * y / 4)) = 1 := by
+    apply div_self
+    apply Real.exp_ne_zero
+  rw [R3]
+  simp
+  congr 1
+  · linarith
+  · linarith
 
 
 lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) :=
@@ -635,7 +682,7 @@ lemma sinh_inequality :
   have _ := Hy
   have _ := Hx
   rw [lemma_step_1 _ _ Hyx]
-  apply lemma_step_2
+  apply (lemma_step_2 _ _ Hy Hyx)
   unfold t
   apply lemma_step_3
 
