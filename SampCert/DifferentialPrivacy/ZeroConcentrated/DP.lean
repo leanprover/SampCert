@@ -19,8 +19,6 @@ import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 import Mathlib.Analysis.Convex.Integral
 import SampCert.DifferentialPrivacy.Pure.DP
 
-set_option linter.unusedTactic false
-
 /-!
 # Zero Concentrated Differential Privacy
 
@@ -461,19 +459,203 @@ lemma B_eval_open (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x 
   intro
   rw [mul_comm]
 
+
 /--
 closed form for B false
 -/
-lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
-  sorry
+lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
+  have H1 : (1 - (B ε p q Hqp) false) = B ε p q Hqp true := by
+    apply ENNReal.sub_eq_of_eq_add ?G1
+    case G1 => apply PMF.apply_ne_top
+    rw [<- PMF.tsum_coe (B ε p q Hqp)]
+    rw [tsum_bool]
+    rw [add_comm]
+
+  suffices (ENNReal.ofReal (Real.exp (- ε)) * B ε p q Hqp false + ENNReal.ofReal (Real.exp ε) * (1 - B ε p q Hqp false) = 1) by
+    conv =>
+      enter [2, 1, 2]
+      rw [<- this]
+
+    -- Quality of life
+    generalize HE1 : (Real.exp ε.toReal) = E1
+    generalize HE2 : (Real.exp (-ε.toReal)) = E2
+    generalize HB : DFunLike.coe (B ε p q Hqp) false = B
+
+    -- Convert to Real types
+    apply (ENNReal.toReal_eq_toReal ?G1 ?G2).mp
+    case G1 =>
+      rw [<- HB]
+      apply PMF.apply_ne_top
+    case G2 =>
+      apply lt_top_iff_ne_top.mp
+      apply ENNReal.div_lt_top
+      · apply ENNReal.sub_ne_top
+        apply ENNReal.ofReal_ne_top
+      · intro HK
+        rw [<- ENNReal.ofReal_sub _ ?G3] at HK
+        case G3 =>
+          rw [<- HE2]
+          apply Real.exp_nonneg
+        simp at HK
+        rw [<- HE1, <- HE2] at HK
+        apply Real.exp_le_exp.mp at HK
+        simp at HK
+        apply LE.le.not_lt at HK
+        apply HK
+        trivial
+    rw [ENNReal.toReal_div]
+    rw [<- ENNReal.ofReal_sub _ ?G1]
+    case G1 =>
+      rw [<- HE2]
+      apply Real.exp_nonneg
+    rw [ENNReal.toReal_ofReal ?G1]
+    case G1 =>
+      simp
+      rw [<- HE2, <- HE1]
+      apply Real.exp_le_exp.mpr
+      simp
+    rw [ENNReal.mul_sub ?G1]
+    case G1 =>
+      intros
+      apply ENNReal.ofReal_ne_top
+    have HHB : B = ENNReal.ofReal (ENNReal.toReal B) := by
+      rw [ENNReal.ofReal_toReal]
+      rw [<- HB]
+      apply PMF.apply_ne_top
+    rw [HHB]
+    rw [<- ENNReal.ofReal_mul ?G1]
+    case G1 =>
+      rw [<- HE2]
+      apply Real.exp_nonneg
+    rw [<- ENNReal.ofReal_mul ?G1]
+    case G1 =>
+      rw [<- HE1]
+      apply Real.exp_nonneg
+    simp
+    rw [<- ENNReal.ofReal_sub _ ?G1]
+    case G1 =>
+      apply mul_nonneg
+      · rw [<- HE1]
+        apply Real.exp_nonneg
+      · apply ENNReal.toReal_nonneg
+
+    have SC1 : 0 ≤ E1 - E1 * B.toReal := by
+      simp
+      conv =>
+        rhs
+        rw [<- mul_one E1]
+      apply mul_le_mul
+      · simp
+      · rw [<- HB]
+        apply ENNReal.ofReal_le_one.mp
+        rw [ENNReal.ofReal_toReal ?G1]
+        case G1 => apply PMF.apply_ne_top
+        apply PMF.coe_le_one
+      · apply ENNReal.toReal_nonneg
+      · rw [<- HE1]
+        apply Real.exp_nonneg
+    have SC2 : 0 ≤ E2 * B.toReal + (E1 - E1 * B.toReal) := by
+      apply add_nonneg
+      · apply mul_nonneg
+        · rw [<- HE2]
+          apply Real.exp_nonneg
+        · rw [<- HB]
+          apply ENNReal.toReal_nonneg
+      · apply SC1
+    have SC3 : 0 ≤ E1 - (E2 * B.toReal + (E1 - E1 * B.toReal)) := by
+      rw [tsub_add_eq_tsub_tsub_swap]
+      rw [sub_nonneg]
+      simp
+      rw [<- HE2, <- HE1]
+      apply mul_le_mul
+      · apply Real.exp_le_exp.mpr
+        simp
+      · simp
+      · apply ENNReal.toReal_nonneg
+      · apply Real.exp_nonneg
+    rw [<- ENNReal.ofReal_add ?G1 ?G2]
+    case G1 =>
+      apply mul_nonneg
+      · rw [<- HE2]
+        apply Real.exp_nonneg
+      · apply ENNReal.toReal_nonneg
+    case G2 => apply SC1
+    rw [<- ENNReal.ofReal_sub _ ?G1]
+    case G1 => apply SC2
+    rw [ENNReal.toReal_ofReal ?G1]
+    case G1 => apply SC3
+    apply eq_div_of_mul_eq
+    · apply sub_ne_zero.mpr
+      symm
+      apply LT.lt.ne
+      rw [<- HE1, <- HE2]
+      apply Real.exp_lt_exp.mpr
+      simp
+      trivial
+    ring_nf
+
+  suffices ∑'(x : U), (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) * q x = 1 by
+    conv at this =>
+      enter [1, 1, x]
+      rw [<- ENNReal.tsum_mul_right]
+    rw [ENNReal.tsum_comm] at this
+    rw [tsum_bool] at this
+    conv at this =>
+      lhs
+      congr
+      · enter [1, a]
+        rw [mul_assoc]
+      · enter [1, a]
+        rw [mul_assoc]
+    rw [ENNReal.tsum_mul_left] at this
+    rw [ENNReal.tsum_mul_left] at this
+    rw [<- B_eval_open] at this
+    rw [<- B_eval_open] at this
+    conv =>
+      rhs
+      rw [<- this]
+    congr
+
+  conv =>
+    enter [1, 1, x]
+    rw [A_expectation _ Hε _ _ Hqp Hpq Hac]
+  suffices ∑' (x : U), p x / q x * q x = ∑'(x : U), p x by
+    rw [this]
+    apply PMF.tsum_coe
+  apply tsum_eq_tsum_of_ne_zero_bij (fun x => x.val)
+  · simp [Function.Injective]
+  · intro x Hx
+    simp [Function.support] at Hx
+    simp_all only [Subtype.range_coe_subtype, Function.mem_support, ne_eq, Set.mem_setOf_eq, not_false_eq_true]
+  · simp [Function.support]
+    intros x _
+    rw [PMF_mul_mul_inv_eq_mul_cancel p q Hac x]
+
+
 
 /--
 closed form for B true
 -/
 lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
+  have H1 : (1 - (B ε p q Hqp) false) = B ε p q Hqp true := by
+    apply ENNReal.sub_eq_of_eq_add ?G1
+    case G1 => apply PMF.apply_ne_top
+    rw [<- PMF.tsum_coe (B ε p q Hqp)]
+    rw [tsum_bool]
+    rw [add_comm]
+
+  rw [<- H1]
+  rw [B_eval_false] <;> try trivial
+  apply (ENNReal.eq_div_iff ?G1 ?G2).mpr
+  case G1 => sorry
+  case G2 => sorry
   sorry
 
 end ofDP_bound
+
+
+/-
+
 
 
 /-
@@ -1385,7 +1567,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   apply Eq.le
   congr 1
   linarith
-
+-/
 
 /-
 Convert ε-DP to `(1/2)ε²`-zCDP.
@@ -1393,6 +1575,9 @@ Convert ε-DP to `(1/2)ε²`-zCDP.
 Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 -/
 lemma ofDP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDP q ε := by
+  sorry
+  /-
   constructor
   · exact ACNeighbour_of_DP ε q H
   · exact ofDP_bound ε q H
+  -/
