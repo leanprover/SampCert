@@ -671,10 +671,241 @@ lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t 
   · linarith
   · linarith
 
+lemma Differentiable.differentiable_tanh :  Differentiable ℝ Real.tanh := by
+  conv =>
+    enter [2, y]
+    rw [Real.tanh_eq_sinh_div_cosh]
+  apply Differentiable.div
+  · apply Real.differentiable_sinh
+  · apply Real.differentiable_cosh
+  · intro z
+    have _ := Real.cosh_pos z
+    linarith
 
-lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) :=
-  -- Apply MVT
+lemma Real.continuous_tanh : Continuous Real.tanh := by
+  conv =>
+    enter [1, y]
+    rw [Real.tanh_eq_sinh_div_cosh]
+  apply Continuous.div
+  · apply Real.continuous_sinh
+  · apply Real.continuous_cosh
+  · intro z
+    have _ := Real.cosh_pos z
+    linarith
+
+lemma deriv.deriv_tanh (x : ℝ) : deriv Real.tanh x = 1 / (Real.cosh x) ^ 2 := by
+  have W : Real.tanh = fun z => Real.sinh z / Real.cosh z := by
+    apply funext
+    intro
+    rw [Real.tanh_eq_sinh_div_cosh]
+  conv =>
+    enter [1, 1]
+    rw [W]
+  clear W
+  rw [deriv_div ?G1 ?G2 ?G3]
+  case G1 =>
+    apply Differentiable.differentiableAt
+    apply Real.differentiable_sinh
+  case G2 =>
+    apply Differentiable.differentiableAt
+    apply Real.differentiable_cosh
+  case G3 =>
+    have _ := Real.cosh_pos x
+    linarith
+  congr 1
+  rw [Real.deriv_sinh]
+  rw [Real.deriv_cosh]
+  rw [← Real.cosh_sub]
+  simp
+
+lemma tanh_lt_id_nonneg {x : ℝ} (Hx : 0 ≤ x) : Real.tanh x ≤ x := by
   sorry
+
+
+-- This proof is repetitive and can be cleaned up
+lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) := by
+  let f (z : ℝ) :=  Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)
+  suffices 0 ≤ f y by
+    dsimp [f] at this
+    linarith
+  have _ : 0 ≤ f 0 := by
+    dsimp [f]
+    simp
+  suffices 0 * (y - 0) ≤ f y - f 0 by
+    dsimp [f] at this
+    simp at this
+    dsimp [f]
+    simp
+    trivial
+  have Hdiff : DifferentiableOn ℝ f (interior (Set.Icc 0 2)) := by
+    apply Differentiable.differentiableOn
+    dsimp [f]
+    apply Differentiable.add
+    · have Hfunc : (fun y => Real.tanh (x * y / 4)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => x * z / 4)) := by
+        rw [Function.comp_def]
+      rw [Hfunc]
+      clear Hfunc
+      apply Differentiable.comp
+      · apply Differentiable.differentiable_tanh
+      · apply Differentiable.mul_const
+        apply Differentiable.const_mul
+        apply differentiable_id'
+    · apply Differentiable.neg
+      apply Differentiable.const_mul
+      have Hfunc : (fun y => Real.tanh (y / 2)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => z / 2)) := by rw [Function.comp_def]
+      rw [Hfunc]
+      apply Differentiable.comp
+      · apply Differentiable.differentiable_tanh
+      · apply Differentiable.mul_const
+        apply differentiable_id'
+
+  -- Can't see a way to derive this from Hdiff but it might be out there
+  have Hcts : ContinuousOn f (Set.Icc 0 2) := by
+    apply Continuous.continuousOn
+    dsimp [f]
+    apply Continuous.add
+    · have Hfunc : (fun y => Real.tanh (x * y / 4)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => x * z / 4)) := by rw [Function.comp_def]
+      rw [Hfunc]
+      clear Hfunc
+      apply Continuous.comp
+      · apply Real.continuous_tanh
+      · apply Continuous.mul
+        · apply continuous_mul_left
+        · apply continuous_const
+    · apply Continuous.neg
+      apply Continuous.mul
+      · apply continuous_const
+      · have Hfunc : (fun y => Real.tanh (y / 2)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => z / 2)) := by rw [Function.comp_def]
+        rw [Hfunc]
+        apply Continuous.comp
+        · apply Real.continuous_tanh
+        · apply continuous_mul_right
+
+  apply Convex.mul_sub_le_image_sub_of_le_deriv (convex_Icc 0 2)
+  · trivial
+  · trivial
+  · simp
+    intros z Hz0 _
+    dsimp [f]
+    have Hfunc_xz4 : (fun z => Real.tanh (x * z / 4)) = Real.tanh ∘ (fun z => x * z / 4) := by rw [Function.comp_def]
+    have Hfunc_z2 : (fun z => Real.tanh (z / 2)) = Real.tanh ∘ (fun z => z / 2) := by rw [Function.comp_def]
+
+    -- Rewrite f back into derivative bound
+    rw [deriv_sub ?G1 ?G2]
+    case G1 =>
+      apply Differentiable.differentiableAt
+      rw [Hfunc_xz4]
+      apply Differentiable.comp
+      · apply Differentiable.differentiable_tanh
+      · apply Differentiable.mul_const
+        apply Differentiable.const_mul
+        apply differentiable_id'
+    case G2 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.const_mul
+      rw [Hfunc_z2]
+      apply Differentiable.comp
+      · apply Differentiable.differentiable_tanh
+      · apply Differentiable.mul_const
+        apply differentiable_id'
+    rw [sub_nonneg]
+
+    -- Compute derivatives
+    simp
+    rw [Hfunc_xz4]
+    rw [Hfunc_z2]
+    rw [deriv.comp _ ?G1 ?G2]
+    case G1 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.differentiable_tanh
+    case G2 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.mul_const
+      apply differentiable_id'
+    simp
+    rw [deriv.comp _ ?G1 ?G2]
+    case G1 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.differentiable_tanh
+    case G2 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.mul_const
+      apply Differentiable.const_mul
+      apply differentiable_id'
+    simp
+    rw [deriv_const_mul _ ?G1]
+    case G1 =>
+      apply Differentiable.differentiableAt
+      apply differentiable_id'
+    simp
+    rw [deriv.deriv_tanh]
+    rw [deriv.deriv_tanh]
+
+    -- Apply the tanh bound
+    suffices ((x / 2) * (1 / Real.cosh (z / 2) ^ 2 * 2⁻¹) ≤ 1 / Real.cosh (x * z / 4) ^ 2 * (x / 4)) by
+      apply (le_trans _ this)
+      apply mul_le_mul
+      · apply tanh_lt_id_nonneg
+        linarith
+      · apply Eq.le
+        rfl
+      · apply mul_nonneg
+        · apply div_nonneg
+          · simp
+          · apply sq_nonneg
+        · simp
+      · linarith
+
+    -- Simplify
+    conv =>
+      enter [1]
+      rw [mul_comm]
+      rw [mul_assoc]
+      enter [2]
+      rw [mul_comm]
+      rw [<- division_def]
+      rw [div_div]
+    apply mul_le_mul
+    · apply (div_le_div_left _ _ _).mpr
+      · apply sq_le_sq'
+        · apply (@le_trans _ _ _ 0)
+          · apply neg_nonneg.mp
+            simp
+            apply (LT.lt.le (Real.cosh_pos _))
+          · apply (LT.lt.le (Real.cosh_pos _))
+        · apply Real.cosh_le_cosh.mpr
+          apply abs_le_abs
+          · apply (div_le_div_iff (by simp) (by simp)).mpr
+            rw [mul_assoc]
+            rw [mul_comm]
+            rw [mul_assoc]
+            apply mul_le_mul <;> linarith
+          · apply (@le_trans _ _ _ 0)
+            · apply neg_nonneg.mp
+              simp
+              apply div_nonneg
+              · apply mul_nonneg
+                · linarith
+                · linarith
+              · simp
+            · linarith
+      · simp
+      · apply sq_pos_of_pos
+        apply Real.cosh_pos
+      · apply sq_pos_of_pos
+        apply Real.cosh_pos
+    · apply Eq.le
+      congr
+      linarith
+    · apply div_nonneg <;> linarith
+    · apply div_nonneg
+      · linarith
+      apply sq_nonneg
+  · simp
+  · simp
+    apply And.intro <;> linarith
+  · linarith
+
 
 lemma sinh_inequality :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
@@ -684,7 +915,8 @@ lemma sinh_inequality :
   rw [lemma_step_1 _ _ Hyx]
   apply (lemma_step_2 _ _ Hy Hyx)
   unfold t
-  apply lemma_step_3
+  apply lemma_step_3 _ _ Hy Hyx Hx
+
 
 end sinh_inequality
 
