@@ -719,7 +719,49 @@ lemma deriv.deriv_tanh (x : ℝ) : deriv Real.tanh x = 1 / (Real.cosh x) ^ 2 := 
   simp
 
 lemma tanh_lt_id_nonneg {x : ℝ} (Hx : 0 ≤ x) : Real.tanh x ≤ x := by
-  sorry
+  let f (x : ℝ) := x - Real.tanh x
+  suffices 0 * (x - 0) ≤ f x - f 0 by
+    dsimp [f] at this
+    simp at this
+    trivial
+  have Hdiff : DifferentiableOn ℝ f (interior (Set.Ici 0)) := by
+    apply Differentiable.differentiableOn
+    dsimp [f]
+    apply Differentiable.sub
+    · apply differentiable_id'
+    · apply Differentiable.differentiable_tanh
+  have Hcts : ContinuousOn f (Set.Ici 0) := by
+    apply Continuous.continuousOn
+    dsimp [f]
+    apply Continuous.sub
+    · apply continuous_id'
+    · apply Real.continuous_tanh
+  apply Convex.mul_sub_le_image_sub_of_le_deriv (convex_Ici 0)
+  · trivial
+  · trivial
+  · simp
+    intro y _
+    dsimp [f]
+    -- Calculate the derivative
+    rw [deriv_sub ?G1 ?G2]
+    case G1 =>
+      apply Differentiable.differentiableAt
+      apply differentiable_id'
+    case G2 =>
+      apply Differentiable.differentiableAt
+      apply Differentiable.differentiable_tanh
+    rw [deriv.deriv_tanh]
+    simp
+    apply inv_le_one_iff.mpr
+    right
+    apply (one_le_sq_iff _).mpr
+    · apply Real.one_le_cosh
+    · apply (LT.lt.le (Real.cosh_pos _))
+  · simp
+  · simp
+    trivial
+  · trivial
+
 
 
 -- This proof is repetitive and can be cleaned up
@@ -728,9 +770,6 @@ lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y 
   suffices 0 ≤ f y by
     dsimp [f] at this
     linarith
-  have _ : 0 ≤ f 0 := by
-    dsimp [f]
-    simp
   suffices 0 * (y - 0) ≤ f y - f 0 by
     dsimp [f] at this
     simp at this
