@@ -643,19 +643,78 @@ lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) /
     rw [<- PMF.tsum_coe (B ε p q Hqp)]
     rw [tsum_bool]
     rw [add_comm]
-
   rw [<- H1]
   rw [B_eval_false] <;> try trivial
+
+  -- Quality of life
+  generalize HE1 : (Real.exp ε.toReal) = E1
+  generalize HE2 : (Real.exp (-ε.toReal)) = E2
+
   apply (ENNReal.eq_div_iff ?G1 ?G2).mpr
-  case G1 => sorry
-  case G2 => sorry
-  sorry
+  case G1 =>
+    rw [<- ENNReal.ofReal_sub _ ?G3]
+    case G3 =>
+      rw [<- HE2]
+      apply Real.exp_nonneg
+    simp
+    rw [<- HE2, <- HE1]
+    apply Real.exp_lt_exp.mpr
+    simp
+    trivial
+  case G2 =>
+    rw [<- ENNReal.ofReal_sub _ ?G3]
+    case G3 =>
+      rw [<- HE2]
+      apply Real.exp_nonneg
+    simp
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intros
+    exact Ne.symm (ne_of_beq_false rfl)
+  simp
+  rw [division_def]
+  rw [<- mul_assoc]
+  conv =>
+    enter [1, 2, 1]
+    rw [mul_comm]
+  rw [mul_assoc]
+  rw [ENNReal.mul_inv_cancel ?G1 ?G2]
+  case G1 =>
+    rw [<- ENNReal.ofReal_sub _ ?G3]
+    case G3 =>
+      rw [<- HE2]
+      apply Real.exp_nonneg
+    simp
+    rw [<- HE2, <- HE1]
+    apply Real.exp_lt_exp.mpr
+    simp
+    trivial
+  case G2 => exact Ne.symm (ne_of_beq_false rfl)
+  simp
+
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 =>
+    rw [<- HE2]
+    apply Real.exp_nonneg
+  have X : (1 : ENNReal) = (ENNReal.ofReal (1 : ℝ)) := by simp
+  conv =>
+    enter [1, 2, 2]
+    rw [X]
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 => simp
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 =>
+    simp
+    rw [<- HE1]
+    apply Real.one_le_exp
+    apply NNReal.zero_le_coe
+  congr 1
+  simp
+  rw [max_eq_left]
+  rw [<- HE2]
+  apply Real.exp_nonneg
 
 end ofDP_bound
-
-
-/-
-
 
 
 /-
@@ -1149,7 +1208,6 @@ Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) : zCDPBound q' ε := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
-
   -- Special case: (εα/2 > 1)
   cases (Classical.em (ε * α > 2))
   · rename_i Hεα
@@ -1393,8 +1451,9 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     rw [ENNReal.tsum_mul_left]
     rw [<- B_eval_open]
   rw [tsum_bool]
-  rw [B_eval_false]
-  rw [B_eval_true]
+
+  rw [B_eval_false] <;> try trivial
+  rw [B_eval_true] <;> try trivial
   simp only [A_val]
 
 
@@ -1449,7 +1508,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   case G1 => apply Real.exp_nonneg
   rw [ENNReal.toReal_ofReal ?G1]
   case G1 => apply Real.exp_nonneg
-  skip
   rw [ENNReal.toReal_sub_of_le ?G1 ?G2]
   case G1 =>
     apply ENNReal.one_le_ofReal.mpr
@@ -1567,7 +1625,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   apply Eq.le
   congr 1
   linarith
--/
+
 
 /-
 Convert ε-DP to `(1/2)ε²`-zCDP.
@@ -1575,9 +1633,6 @@ Convert ε-DP to `(1/2)ε²`-zCDP.
 Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 -/
 lemma ofDP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q ε) : zCDP q ε := by
-  sorry
-  /-
   constructor
   · exact ACNeighbour_of_DP ε q H
   · exact ofDP_bound ε q H
-  -/
