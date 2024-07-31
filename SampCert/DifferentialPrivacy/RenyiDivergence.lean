@@ -99,7 +99,7 @@ The Renyi divergence is monotonic in the value of its sum.
 --  · linarith
 
 /--
-Renyi Divergence series written as a conditional expectation.
+Renyi Divergence series written as a conditional expectation, conditioned on q.
 -/
 theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^α  * (q x) := by
@@ -158,6 +158,57 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_eq_zero]
           · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_ne_top]
 
+
+/--
+Renyi Divergence series written as a conditional expectation, conditioned on p.
+-/
+theorem RenyiDivergenceExpectation' (p q : PMF T) {α : ℝ} (h : 1 < α) :
+    (∑' x : T, (p x)^α  * (q x)^(1 - α)) = ∑' x: T, (p x / q x)^(α - 1)  * (p x) := by
+
+  have K1 : Function.support (fun x : T => (p x / q x)^(α - 1) * p x) ⊆ { t : T | p t ≠ 0 } := by
+    simp [Function.support]
+  rw [<- tsum_subtype_eq_of_support_subset K1]
+  clear K1
+
+  have K2 : Function.support (fun x : T => (p x)^α * (q x)^(1 - α)) ⊆ { t : T | p t ≠ 0 } := by
+    simp [Function.support]
+    intro a H0 _ _ _ H2
+    suffices (α ≤ 0) by linarith
+    apply H0
+    apply H2
+  rw [<- tsum_subtype_eq_of_support_subset K2]
+  clear K2
+
+  apply tsum_congr
+  intro x
+  rcases x with ⟨ x', Hx' ⟩
+  simp
+  rw [division_def]
+  rw [mul_rpow_eq_ite]
+  simp
+  split
+  · exfalso
+    rename_i h
+    rcases h with ⟨ _, h ⟩
+    linarith
+  · rw [mul_assoc]
+    conv =>
+      enter [2]
+      rw [mul_comm]
+      enter [1, 2]
+      rw [<- ENNReal.rpow_one (p x')]
+    rw [mul_assoc]
+    rw [<- ENNReal.rpow_add _ _ ?G1 ?G2]
+    case G1 =>
+      simp at Hx'
+      trivial
+    case G2 => apply PMF.apply_ne_top
+    rw [ENNReal.inv_rpow]
+    rw [← ENNReal.rpow_neg]
+    rw [mul_comm]
+    congr
+    · linarith
+    · linarith
 
 /-!
 ## Jensen's inequality
@@ -1148,3 +1199,67 @@ theorem RenyiDivergence_aux_zero [MeasurableSpace T] [MeasurableSingletonClass T
     refine (ofEReal_nonneg_inj ?mpr.Hw H').mpr ?mpr.a
     · simp
     simp [H]
+
+/--
+Renyi divergence is bounded above by the Max Divergence ε
+
+-/
+lemma RenyiDivergence_le_MaxDivergence {p q : PMF T} {ε : ENNReal} {α : ℝ} (Hα : 1 < α)
+    (Hmax_divergence : ∀ t : T, (p t / q t) ≤ ENNReal.eexp ε) :
+    RenyiDivergence p q α ≤ ε := by
+  rw [RenyiDivergence]
+  conv =>
+    rhs
+    rw [<- @ofEReal_toENNReal ε]
+  apply ofEReal_le_mono
+
+  -- Rewrite to expectation conditioned on q
+  apply (ENNReal.ereal_smul_le_left (α - 1) ?G1 ?G2)
+  case G1 =>
+    rw [← EReal.coe_one]
+    rw [<- EReal.coe_sub]
+    apply EReal.coe_pos.mpr
+    linarith
+  case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+  apply ENNReal.eexp_mono_le.mpr
+  rw [RenyiDivergence_def_exp p q Hα]
+  rw [RenyiDivergenceExpectation' p q Hα]
+
+  -- Pointwise bound
+  have H : ∑' (x : T), (p x / q x) ^ (α - 1) * p x  ≤ ∑' (x : T), (eexp ε) ^ (α - 1) * p x  := by
+    apply ENNReal.tsum_le_tsum
+    intro x
+    apply mul_le_mul
+    · apply ENNReal.rpow_le_rpow (Hmax_divergence x)
+      linarith
+    · rfl
+    · apply _root_.zero_le
+    · apply _root_.zero_le
+  apply (le_trans H)
+  rw [ENNReal.tsum_mul_left]
+  rw [tsum_coe]
+  simp
+  have H : eexp ε.toEReal ^ (α - OfNat.ofNat 1) = eexp (ε * (α - OfNat.ofNat 1)) := by
+    rcases ε
+    · simp
+      rw [EReal.top_mul_of_pos ?G1]
+      case G1 =>
+        rw [← EReal.coe_one]
+        rw [<- EReal.coe_sub]
+        apply EReal.coe_pos.mpr
+        linarith
+      simp
+      trivial
+    simp
+    rw [ENNReal.ofNNReal]
+    rw [ENNReal.toEReal]
+    simp
+    rw [ENNReal.ofReal_rpow_of_pos ?G1]
+    case G1 => apply exp_pos
+    rw [<- Real.exp_mul]
+    rfl
+  rw [H]
+  clear H
+
+  apply eexp_mono_le.mp
+  rw [mul_comm]
