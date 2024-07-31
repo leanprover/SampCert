@@ -9,6 +9,7 @@ require mathlib from git
 
 @[default_target]
 lean_lib «SampCert» where
+  extraDepTargets := #[`libleanffi,`libleanffidyn]
 
 lean_lib «FastExtract» where
 
@@ -22,12 +23,24 @@ target ffi.o pkg : FilePath := do
   let oFile := pkg.buildDir / "ffi.o"
   let srcJob ← inputTextFile <| pkg.dir / "ffi.cpp"
   let weakArgs := #["-I", (← getLeanIncludeDir).toString]
-  buildO oFile srcJob weakArgs #["-fPIC"] "c++" getLeanTrace
+  buildO oFile srcJob weakArgs #["-fPIC"] "g++" getLeanTrace
 
-extern_lib libleanffi pkg := do
+target libleanffi pkg : FilePath := do
   let ffiO ← ffi.o.fetch
   let name := nameToStaticLib "leanffi"
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
+target libleanffidyn pkg : FilePath := do
+  let ffiO ← ffi.o.fetch
+  let name := nameToSharedLib "leanffi"
+  buildLeanSharedLib (pkg.nativeLibDir / name) #[ffiO]
+
 lean_exe test where
-  root := `Main
+  root := `Test
+  extraDepTargets := #[`libleanffi]
+  moreLinkArgs := #["-L.lake/build/lib", "-lleanffi"]
+
+lean_exe check where
+  root := `SampCertCheck
+  extraDepTargets := #[`libleanffi]
+  moreLinkArgs := #["-L.lake/build/lib", "-lleanffi"]

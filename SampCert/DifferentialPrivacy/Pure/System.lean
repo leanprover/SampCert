@@ -24,6 +24,7 @@ Pure ε-DP with noise drawn from the discrete Laplace distribution.
 -/
 noncomputable instance PureDPSystem : DPSystem T where
   prop := PureDP
+  prop_adp := pure_ApproximateDP
   prop_mono := PureDP_mono
   noise := privNoisedQueryPure
   noise_prop := privNoisedQueryPure_DP

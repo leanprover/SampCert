@@ -391,4 +391,12 @@ theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) (mix : ℕ) 
     apply discrete_gaussian_nonneg A 0 n
   . apply discrete_gaussian_summable A
 
+theorem DiscreteGaussianSample_HasSum1 (num : PNat) (den : PNat) (mix : ℕ) :
+  HasSum (DiscreteGaussianSample num den mix) 1 := by
+  rw [Summable.hasSum_iff ENNReal.summable]
+  apply DiscreteGaussianSample_normalizes
+
+def DiscreteGaussianPMF (num : PNat) (den : PNat) (mix : ℕ) : PMF ℤ :=
+  ⟨ DiscreteGaussianSample num den mix , DiscreteGaussianSample_HasSum1 num den mix ⟩
+
 end SLang
