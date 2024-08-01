@@ -74,10 +74,8 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
 /--
 Product of mechanisms.
 -/
-def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : PMF (U × V) := do
-  let A ← nq1 l
-  let B ← nq2 l
-  return (A,B)
+def privCompose (nq1 : Mechanism T U) (nq2 : Mechanism T V) (l : List T) : PMF (U × V) :=
+  privComposeAdaptive nq1 (fun _ => nq2) l
 
 /--
 Mechanism obtained by applying a post-processing function to a mechanism.

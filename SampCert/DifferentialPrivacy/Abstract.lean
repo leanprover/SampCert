@@ -51,12 +51,6 @@ class DPSystem (T : Type) where
   -/
   noise_prop : ∀ q : List T → ℤ, ∀ Δ εn εd : ℕ+, sensitivity q Δ → prop (noise q Δ εn εd) (εn / εd)
   /--
-  Privacy composes by addition.
-  -/
-  compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] →
-    ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : NNReal,
-    prop m₁ ε₁ → prop m₂ ε₂ → prop (privCompose m₁ m₂) (ε₁ + ε₂)
-  /--
   Privacy adaptively composes by addition.
   -/
   adaptive_compose_prop : {U V : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] → [Inhabited U] → [MeasurableSpace V] → [Countable V] → [DiscreteMeasurableSpace V] → [Inhabited V] → ∀ m₁ : Mechanism T U, ∀ m₂ : U -> Mechanism T V,
@@ -74,6 +68,21 @@ class DPSystem (T : Type) where
   const_prop : {U : Type} → [MeasurableSpace U] → [Countable U] → [DiscreteMeasurableSpace U] -> (u : U) -> prop (privConst u) (0 : NNReal)
 
 
+namespace DPSystem
+
+/-
+Non-adaptive privacy composes by addition.
+-/
+lemma compose_prop {U V : Type} [dps : DPSystem T] [MeasurableSpace U] [Countable U] [DiscreteMeasurableSpace U] [Inhabited U] [MeasurableSpace V] [Countable V] [DiscreteMeasurableSpace V] [Inhabited V] :
+    ∀ m₁ : Mechanism T U, ∀ m₂ : Mechanism T V, ∀ ε₁ ε₂ : NNReal,
+    dps.prop m₁ ε₁ → dps.prop m₂ ε₂ → dps.prop (privCompose m₁ m₂) (ε₁ + ε₂) := by
+  intros m₁ m₂ ε₁ ε₂ p1 p2
+  unfold privCompose
+  exact adaptive_compose_prop m₁ (fun _ => m₂) ε₁ ε₂ p1 fun _ => p2
+
+end DPSystem
+
+
 lemma DPSystem_prop_ext [dps : DPSystem T] {ε₁ ε₂ : NNReal} (m : Mechanism T U) (Hε : ε₁ = ε₂) (H : dps.prop m ε₁) :
     dps.prop m ε₂ := by
   rw [<- Hε]
@@ -85,6 +94,6 @@ lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → P
     (fun l => (p l) >>= (fun a : U => (q l) >>= fun b : V => h a b)) =
     fun l => (privCompose p q l) >>= (fun z => h z.1 z.2) := by
   ext l x
-  simp [privCompose, tsum_prod']
+  simp [privCompose, privComposeAdaptive, tsum_prod']
 
 end SLang

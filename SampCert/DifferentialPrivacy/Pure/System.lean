@@ -6,7 +6,6 @@ Authors: Jean-Baptiste Tristan
 import SampCert.DifferentialPrivacy.Abstract
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.Pure.Mechanism.Basic
-import SampCert.DifferentialPrivacy.Pure.Composition
 import SampCert.DifferentialPrivacy.Pure.AdaptiveComposition
 import SampCert.DifferentialPrivacy.Pure.Postprocessing
 import SampCert.DifferentialPrivacy.Pure.Const
@@ -28,7 +27,6 @@ noncomputable instance PureDPSystem : DPSystem T where
   prop_mono := PureDP_mono
   noise := privNoisedQueryPure
   noise_prop := privNoisedQueryPure_DP
-  compose_prop := privCompose_DP
   adaptive_compose_prop := PureDP_ComposeAdaptive'
   postprocess_prop := PureDP_PostProcess
   const_prop := PureDP_privConst
