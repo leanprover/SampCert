@@ -43,7 +43,7 @@ Noise the constant 0 value using the abstract noise function.
 
 This looks strange, but will specialize to Lap(ε₁/ε₂, 0) in the pure DP case.
 -/
-def privNoiseZero (ε₁ ε₂ : ℕ+) : SLang ℤ :=  dps.noise (fun _ => 0) 1 ε₁ ε₂ []
+def privNoiseZero (ε₁ ε₂ : ℕ+) : SLang ℤ := dps.noise (fun _ => 0) 1 ε₁ ε₂ []
 
 /--
 Return the maximum element in the list, with some amount of noising.
@@ -75,7 +75,6 @@ privMax is a PMF.
 
 Using the Laplace mechanism, privMax is (ε₁/ε₂)-DP.
 -/
-
 def privMaxPMF (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℕ :=
   ⟨ privMax_eval ε₁ ε₂ l,
     sorry⟩
