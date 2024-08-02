@@ -14,15 +14,12 @@ Authors: Jean-Baptiste Tristan
     std::mt19937_64 generator(time(NULL));
 #endif
 
+int urandom;
+
 extern "C" lean_object * prob_UniformByte (lean_object * eta) {
     lean_dec(eta);
     unsigned char r;
-    int urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
-    if (urandom == -1) {
-        lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
-    }
     read(urandom, &r,1);
-    close(urandom);
     return lean_box((size_t) r);
 }
 
@@ -55,8 +52,13 @@ extern "C" lean_object * prob_While(lean_object * condition, lean_object * body,
 }
 
 extern "C" lean_object * my_run(lean_object * a) {
+    urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+    if (urandom == -1) {
+        lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
+    }
     lean_object * comp = lean_apply_1(a,lean_box(0));
     lean_object * res = lean_io_result_mk_ok(comp);
+    close(urandom);
     return res;
 } 
 
