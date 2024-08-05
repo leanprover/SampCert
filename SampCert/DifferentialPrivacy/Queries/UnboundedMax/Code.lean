@@ -46,28 +46,40 @@ This looks strange, but will specialize to Lap(ε₁/ε₂, 0) in the pure DP ca
 def privNoiseZero (ε₁ ε₂ : ℕ+) : SLang ℤ := dps.noise (fun _ => 0) 1 ε₁ ε₂ []
 
 /--
-Return the maximum element in the list, with some amount of noising.
+privMax main loop guard
+
+Terminate when exactDiffSum k l + vk >= τ
+Continue  when exactDiffSum k l + vk < τ
 -/
-def privMax_eval (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
-  let τ <- privNoiseZero ε₁ (2 * ε₂)
-  let (k, _) <-
-    -- Invariant: When the loop state is (i, vi), we are about
-    -- to check if i is the noised max.
+def privMaxC (τ : ℤ) (l : List ℕ) (x : ℕ × ℤ) : Bool :=
+  decide (exactDiffSum x.1 l + x.2 < τ)
 
-    probWhile
-      -- Terminate when exactDiffSum k l + vk >= τ
-      -- Continue  when exactDiffSum k l + vk < τ
-      (fun (k, vk) => exactDiffSum k l + vk < τ)
+/--
+privMax main loop body
 
-      -- Increase k, and sample the next vk
-      (fun (km1, _) => do
+Increase k, and sample the next vk
+-/
+def privMaxF (ε₁ ε₂ : ℕ+) : ℕ × ℤ -> SLang (ℕ × ℤ) :=
+  (fun (km1, _) => do
         let k := km1 + 1
         let vk <- privNoiseZero ε₁ (4 * ε₂)
         return (k, vk))
 
-      -- Start with 0, v0
-      (0, <- privNoiseZero ε₁ (4 * ε₂))
-  return k
+
+/--
+Return the maximum element in the list, with some amount of noising.
+-/
+def privMax_eval (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  let τ <- privNoiseZero ε₁ (2 * ε₂)
+  let v0 <- privNoiseZero ε₁ (4 * ε₂)
+  let r <-
+    -- Invariant: When the loop state is (i, vi), we are about
+    -- to check if i is the noised max.
+    probWhile
+      (privMaxC τ l)
+      (privMaxF ε₁ ε₂)
+      (0, v0)
+  return r.1
 
 
 /--

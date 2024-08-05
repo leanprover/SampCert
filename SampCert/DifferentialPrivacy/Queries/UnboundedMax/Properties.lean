@@ -154,67 +154,119 @@ lemma probWhileSplit_succ_r (cond : T → Bool) (body : T → SLang T) (n : Nat)
     rw [H]
 
 
+
+
+
 /--
 privMax unrolled at most k times
 -/
 def privMax_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) : SLang ℕ := do
   let τ <- privNoiseZero ε₁ (2 * ε₂)
-  let (k, _) <-
-    (probWhileCut
-      (fun (k, vk) => exactDiffSum k l + vk < τ)
-      (fun (km1, _) => do
-        let k := km1 + 1
-        let vk <- privNoiseZero ε₁ (4 * ε₂)
-        return (k, vk))
-      N
-      ((0 : ℕ), <- privNoiseZero ε₁ (4 * ε₂)))
-  return k
+  let v0 <- privNoiseZero ε₁ (4 * ε₂)
+  let r <- (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N (0, v0))
+  return r.1
 
 
--- lemma privMax_cut_zero (ε₁ ε₂ : ℕ+) (l : List ℕ) (v : ℤ) :
---     privMax_cut ε₁ ε₂ l 0 v = 0 := by
---   simp [privMax_cut]
---   aesop
+lemma privMax_cut_loop_0 (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (init : ℕ × ℤ) :
+    probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) 0 init = probZero := by
+  simp [probWhileCut]
+
+/--
+Move one iterate from a probWhileCut out to a probWhileSplit
+
+MARKUSDE: We probably want the other direction: moving into init
+-/
+lemma privMax_cut_loop_succ_l (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N : ℕ) (init : ℕ × ℤ) :
+    probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) (Nat.succ N) init =
+    probWhileSplit (privMaxC τ l) (privMaxF ε₁ ε₂) (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N) 1 init := by
+  simp [probWhileCut, probWhileFunctional, probWhileSplit]
+
+/--
+Separate the first N iterates from probMax_cut:
+Do n iterates inside a probWhileSplit, and the remaining M iterates inside probWhileCut
+-/
+lemma privMax_cut_loop_add_l (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N M : ℕ) (init : ℕ × ℤ) :
+    probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) (N + M) init =
+    probWhileSplit (privMaxC τ l) (privMaxF ε₁ ε₂) (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N) M init := by
+  revert init
+  induction N
+  · intro init
+    simp [probWhileCut]
+    rw [probWhileCut_probWhileSplit_zero]
+  · intro init
+    rename_i N' IH
+    rw [add_assoc, add_comm, add_assoc, add_comm]
+    rw [privMax_cut_loop_succ_l]
+    rw [add_comm]
+    rw [funext IH]
+    rw [(funext (privMax_cut_loop_succ_l _ _ _ _ _))]
+    rw [<- probWhileSplit_add_l]
+    rw [<- probWhileSplit_add_l]
+    rw [add_comm]
 
 
--- Trickier to prove than the general case, probably
+/--
+Boundary of the support of the privMax_cut loop:
+If we start in state (N, ?), for any k, (N + K + 1) will be zero after K steps.
+ie. We step zero times, (N + 0 + 1) = N and beyond is still zero (since it starts with zero distribution)
+     We step two times, (N + 2) and beyond is zero.
+-/
+lemma privMax_cut_loop_support_bound (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (K N : ℕ) (vp: ℤ) (vi : ℤ)  :
+    probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) K (N, vi) (N + K, vp) = 0 := by
+  revert vi vp
+  induction K
+  · -- Exact boundary
+    induction N <;> simp [probWhileCut]
+  · rename_i K' IH
+    induction N
+    · sorry
+    · rename_i N' IH'
+      intro vp vi
+      simp [probWhileCut, probWhileFunctional]
+      split
+      · simp
+        simp at *
+        rename_i H
+        intro a b
+        simp [privMaxF]
+        have Ha : a ≠ N' + 1 + 1 := by sorry
+        right
+        have IH := IH vp vi
+        -- This is not helping
+        sorry
+      · simp
 
--- /-
--- Threshold (in terms of N and v) for the support of privMax_cut, namely, N = v
--- -/
--- lemma privMax_cut_boundary (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) :
---     privMax_cut ε₁ ε₂ l N N = 0 := by
---   simp [privMax_cut]
---   intro τ
---   right
---   intro v0
---   right
---   intro r vr Hr
---   subst Hr
---
---   -- The condition itself does not matter to this proof, and it holds for
---   -- any starting value
---   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
---   clear HC
---   revert v0
---
---   rw [probWhileCut_probWhileSplit_zero]
---   induction N
---   · aesop
---   · rename_i N' IH
---     intro v0
---
---     -- Same as doing 1 iteration and then N' iterations
---     rw [probWhileSplit_succ_l]
---     simp [probWhileSplit]
---     split
---     · simp
---       intro v1
---       right
---
---
---       sorry
---     · simp
+    -- intros vp vi
+    -- simp [probWhileCut, probWhileFunctional]
+    -- split
+    -- · simp
+    --   revert vi vp
+    --   induction N
+    --   · intro vi vp Hc a b
+    --     simp [privMaxF]
+    --     simp at IH
+
+    --     have Ha : a ≠ 1 := by admit -- Could use full support of Laplace to get this if we need it
+    --     right
+
+    --     -- What we need to finish this proof is the relationship between taking a step
+    --     -- and the support changing, which for some reaons, is proving to be difficult.
+    --     -- Are my definitions correct?
+
+
+    --     -- So lost
+    --     sorry
+
+
+    --   · sorry
+
+    --   -- intro a b
+    --   -- right
+    --   -- revert a b -- vp vi
+
+    -- · simp
+
+
 
 /--
 Support of privMax_cut is bounded abouve by the cut number
@@ -229,8 +281,7 @@ lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
   intro r vr Hr
   subst Hr
 
-  -- The condition itself does not matter to this proof, and it holds for
-  -- any starting value
+  -- The condition itself does not matter to this proof
   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
   clear HC
   rw [probWhileCut_probWhileSplit_zero]
@@ -243,9 +294,6 @@ lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
   · intros N v0
     rename_i K' IH
     have IH := IH N v0
-
-    -- The more I think about it, do I even need this?
-
 
     sorry
 
@@ -304,34 +352,35 @@ lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
 /--
 privMax_cut is eventually constant (at every point N, it is constant after N terms).
 -/
-lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) (VN : ℤ) :
-    probWhileCut (fun x => decide (exactDiffSum x.1 l + x.2 < τ))
+lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N K : ℕ) (VN : ℤ) :
+    probWhileCut (privMaxC τ l)
       (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) (N + K) (0, v0) (N, VN) =
-    probWhileCut (fun x => decide (exactDiffSum x.1 l + x.2 < τ))
+    probWhileCut (privMaxC τ l)
       (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) N (0, v0) (N, VN) := by
 
   rw [probWhileCut_probWhileSplit_zero]
   rw [probWhileCut_probWhileSplit_zero]
 
   -- Induction: Reduce from (... N + K) to (... N + 1)
-  -- induction K
-  -- · simp
-  -- · intro (r, vr)
-  --   rename_i K' IH
-  --   conv =>
-  --     enter [1, 4]
-  --     rw [<- add_assoc]
-  --   rw [probWhileSplit_succ_l]
-  --   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
-  --   generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
-  --   rw [HC] at IH
-  --   rw [HF] at IH
-  --   rw [<- IH]
-  --   rw [<- probWhileSplit_succ_l]
-  --   simp only []
+  induction K
+  · simp
+  · rename_i K' IH
+    conv =>
+      enter [1, 4]
+      rw [<- add_assoc]
+    rw [probWhileSplit_succ_l]
+    generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
+    rw [HF] at IH
+    rw [<- IH]
+    rw [<- probWhileSplit_succ_l]
 
-  --   sorry
-  sorry
+    -- Split it up into the first N terms, and the remaining K' or K'+1 terms in the contiunation
+    -- The "extra branches" should all be 0 when evaluated at N, their initial values all start higher than N.
+
+
+    -- FIXME: Actually do this step to make sure the lemmas I'm trying to prove are the right ones.
+
+    sorry
 
 
 
@@ -366,7 +415,9 @@ lemma privMax_eval_limit {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
   apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ k)
   intro i Hi
   rw [<- Nat.add_sub_cancel' Hi]
-  apply privMax_cut_support_eventually_constant
+  apply (@privMax_cut_support_eventually_constant v0 ε₁ ε₂ τ l k (i - k) vr)
+
+
 
 
 
