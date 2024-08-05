@@ -304,43 +304,34 @@ lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
 /--
 privMax_cut is eventually constant (at every point N, it is constant after N terms).
 -/
-lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
-    privMax_cut ε₁ ε₂ l (N + K) N = privMax_cut ε₁ ε₂ l N N := by
-  simp [privMax_cut]
-  apply tsum_congr
-  intro τ
-  congr
-  apply funext
-  intro v0
-  congr
-  apply funext
+lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) (VN : ℤ) :
+    probWhileCut (fun x => decide (exactDiffSum x.1 l + x.2 < τ))
+      (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) (N + K) (0, v0) (N, VN) =
+    probWhileCut (fun x => decide (exactDiffSum x.1 l + x.2 < τ))
+      (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) N (0, v0) (N, VN) := by
 
-  intro x
-  split <;> try simp
-  rename_i HN
-  subst HN
   rw [probWhileCut_probWhileSplit_zero]
   rw [probWhileCut_probWhileSplit_zero]
-  revert x
 
   -- Induction: Reduce from (... N + K) to (... N + 1)
-  induction K
-  · simp
-  · intro (r, vr)
-    rename_i K' IH
-    conv =>
-      enter [1, 4]
-      rw [<- add_assoc]
-    rw [probWhileSplit_succ_l]
-    generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
-    generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
-    rw [HC] at IH
-    rw [HF] at IH
-    rw [<- IH]
-    rw [<- probWhileSplit_succ_l]
-    simp only []
+  -- induction K
+  -- · simp
+  -- · intro (r, vr)
+  --   rename_i K' IH
+  --   conv =>
+  --     enter [1, 4]
+  --     rw [<- add_assoc]
+  --   rw [probWhileSplit_succ_l]
+  --   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
+  --   generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
+  --   rw [HC] at IH
+  --   rw [HF] at IH
+  --   rw [<- IH]
+  --   rw [<- probWhileSplit_succ_l]
+  --   simp only []
 
-    sorry
+  --   sorry
+  sorry
 
 
 
@@ -355,10 +346,27 @@ lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (l : List ℕ
 -- Then, there should be a lemma about the limits of eventually constant sequences, which
 -- alongside probWhile_apply, should be able to rewrite
 --  privMax ... k = (let τ <- ..., privMax_cut ... k k)
+lemma privMax_eval_limit {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
+    @privMax_eval PureDPSystem ε₁ ε₂ l k = privMax_cut ε₁ ε₂ l k k := by
+  simp [privMax_eval, privMax_cut]
+  apply tsum_congr
+  intro τ
+  congr 1
+  apply tsum_congr
+  intro v0
+  congr 1
+  apply tsum_congr
+  intro (r, vr)
+  split <;> try simp
+  rename_i Hk
+  subst Hk
+  apply probWhile_apply
 
-lemma privMax_eval_unroll {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
-    @privMax_eval PureDPSystem ε₁ ε₂ l k = 0 := by
-  sorry
+  -- Evaluate the filter
+  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ k)
+  intro i Hi
+  rw [<- Nat.add_sub_cancel' Hi]
+  apply privMax_cut_support_eventually_constant
 
 
 
