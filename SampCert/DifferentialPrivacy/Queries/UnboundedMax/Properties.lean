@@ -176,11 +176,51 @@ def privMax_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) : SLang ℕ := do
 --   simp [privMax_cut]
 --   aesop
 
+
+-- Trickier to prove than the general case, probably
+
+-- /-
+-- Threshold (in terms of N and v) for the support of privMax_cut, namely, N = v
+-- -/
+-- lemma privMax_cut_boundary (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) :
+--     privMax_cut ε₁ ε₂ l N N = 0 := by
+--   simp [privMax_cut]
+--   intro τ
+--   right
+--   intro v0
+--   right
+--   intro r vr Hr
+--   subst Hr
+--
+--   -- The condition itself does not matter to this proof, and it holds for
+--   -- any starting value
+--   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
+--   clear HC
+--   revert v0
+--
+--   rw [probWhileCut_probWhileSplit_zero]
+--   induction N
+--   · aesop
+--   · rename_i N' IH
+--     intro v0
+--
+--     -- Same as doing 1 iteration and then N' iterations
+--     rw [probWhileSplit_succ_l]
+--     simp [probWhileSplit]
+--     split
+--     · simp
+--       intro v1
+--       right
+--
+--
+--       sorry
+--     · simp
+
 /--
-Threshold (in terms of N and v) for the support of privMax_cut, namely, N = v
+Support of privMax_cut is bounded abouve by the cut number
 -/
-lemma privMax_cut_boundary (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) :
-    privMax_cut ε₁ ε₂ l N N = 0 := by
+lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
+    privMax_cut ε₁ ε₂ l N (N + K) = 0 := by
   simp [privMax_cut]
   intro τ
   right
@@ -188,47 +228,69 @@ lemma privMax_cut_boundary (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) :
   right
   intro r vr Hr
   subst Hr
-  induction N
-  · aesop
-  · rename_i n' IH
-    -- rw [probWhileCut_unfold_1]
-    -- simp
-    -- simp
+
+  -- The condition itself does not matter to this proof, and it holds for
+  -- any starting value
+  generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
+  clear HC
+  rw [probWhileCut_probWhileSplit_zero]
+  revert v0 N
+  induction K
+  · intros N v0
+    simp
+    -- Equality case. Hmm.
     sorry
+  · intros N v0
+    rename_i K' IH
+    have IH := IH N v0
 
-/--
-Support of privMax_cut is bounded abouve by the cut number
--/
-lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) (HKN : N ≤ K) :
-    privMax_cut ε₁ ε₂ l N K = 0 := by
-  induction N
-  · -- intro K HK HNK
-
-    induction K
-    · sorry
-    · sorry
-
-    -- simp_all only [CharP.cast_eq_zero]
-    -- rcases (lt_trichotomy K 0) with _ | ⟨H | _⟩ <;> try linarith
-    -- subst H
-    -- apply privMax_cut_boundary
-    -- simp
-  · rename_i n IH
-
-    -- -- intro K HK_nz HK_n'
-    -- unfold privMax_cut
-    -- simp
-    -- intro i
-    -- right
-    -- intro i'
-    -- right
-    -- intro a b HK
-    -- rw [probWhileCut_unfold_1]
-
+    -- The more I think about it, do I even need this?
 
 
     sorry
 
+  -- -- Am I inducting on the wrong thing?
+  -- induction N
+  -- · aesop
+  -- · rename_i N' IH
+  --   intro K v0
+
+  --   -- Same as doing 1 iteration and then N' iterations
+  --   rw [probWhileSplit_succ_l]
+  --   simp [probWhileSplit]
+  --   split
+  --   · simp
+  --     intro v1
+  --     right
+  --     rw [<- IH K v1]
+
+  --     -- Need a shifting lemma
+
+  --     -- Err... the shifting lemma might not be provable
+  --     -- Because the condition depends on the start value
+
+  --     -- Incremeting the start condition just shifts the final distribution
+  --     -- Simplify irrelevant the expression for quality of life
+  --     generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
+  --     conv =>
+  --       enter [1, 6, 1]
+  --       rw [add_comm]
+  --       rw [<- add_assoc]
+  --       enter [1]
+  --       rw [add_comm]
+  --     generalize HD : (N' + K) = D
+  --     clear HD
+  --     clear IH
+  --     induction N'
+  --     · simp [probWhileSplit]
+  --     · rename_i N'' IH''
+  --       conv =>
+  --         enter [1]
+  --         rw [probWhileSplit_succ_l]
+  --       rw [probWhileSplit_succ_l]
+  --       simp [probWhileSplit]
+  --       sorry
+  --   · simp
 
 
 
@@ -237,9 +299,56 @@ lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) (
 -- we should be able to prove that for all N ≥ K ≥ 0
 --   privMaxCut _ _ _ N K = 0
 
+
+
+/--
+privMax_cut is eventually constant (at every point N, it is constant after N terms).
+-/
+lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
+    privMax_cut ε₁ ε₂ l (N + K) N = privMax_cut ε₁ ε₂ l N N := by
+  simp [privMax_cut]
+  apply tsum_congr
+  intro τ
+  congr
+  apply funext
+  intro v0
+  congr
+  apply funext
+
+  intro x
+  split <;> try simp
+  rename_i HN
+  subst HN
+  rw [probWhileCut_probWhileSplit_zero]
+  rw [probWhileCut_probWhileSplit_zero]
+  revert x
+
+  -- Induction: Reduce from (... N + K) to (... N + 1)
+  induction K
+  · simp
+  · intro (r, vr)
+    rename_i K' IH
+    conv =>
+      enter [1, 4]
+      rw [<- add_assoc]
+    rw [probWhileSplit_succ_l]
+    generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
+    generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
+    rw [HC] at IH
+    rw [HF] at IH
+    rw [<- IH]
+    rw [<- probWhileSplit_succ_l]
+    simp only []
+
+    sorry
+
+
+
 -- This can be used in a lemma to show that it's eventually constant, ie
 -- for all N ≥ S k:
 --    privMaxCut _ _ _ (N + 1) k = privMaxCut _ _ _ N k
+
+
 -- This is because, if we do more unrollings, it just adds more branches
 -- into a paths which all return values greater than k, by the lemma before.
 
