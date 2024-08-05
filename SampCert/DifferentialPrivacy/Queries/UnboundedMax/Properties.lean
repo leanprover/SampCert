@@ -19,8 +19,6 @@ to generalize the privacy proof to the abstract DP case.
 
 Follows the proof given for Algorithm 1 pp. 57 "The Sparse Vector Technique"
 in "The Algorithmic Foundations of Differential Privacy", Dwork & Roth.
-
-
 -/
 
 open Classical Nat Int Real
@@ -70,40 +68,47 @@ lemma privMax_eval_unroll {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
 
 -- Now we have to evaluate privMaxCut _ _ _ k k into a closed form.
 
--- We can define the G random variable, and inductively show that it
--- equals a simple program which samples τ and (G l) and tests an inequality between them.
+-- We can define the G quantity. This is not a random variable!
+-- equals a simple program which samples τ and vk, computes (G l) and tests an inequality between them.
 
+-- To do this, we will rewrite into "GD form" which is
+--    - Compute the max from the first k-1 unrollings
+--    - Compute G k from that
+--    - Do that last iteration comparing to GD
 -- Since (privMaxCut _ _ _ k) only returns k after exactly k iterations, this should
 -- be provable by induction.
 
--- FIXME: Define it the right way: A SLang ℤ for the probability,
--- and a function from Z -> ℕ for the value?
-
-/-
-The random variable G is the maximum value of (exactDiffSum i l + vi) for i < k
--/
-def G (k : ℕ) (l : List ℕ) (ε₁ ε₂ : ℕ+) : SLang ℤ :=
-  match k with
-  | Nat.zero => DiscreteLaplaceGenSample ε₁ (4 * ε₂) (exactDiffSum 0 l)
-  | Nat.succ n' => do
-    let z' <- G n' l ε₁ ε₂
-    let v <- DiscreteLaplaceGenSample ε₁ (4 * ε₂) (exactDiffSum (Nat.succ n') l)
-    return (max z' v)
+-- Then, we can generalize over GD, to mimic the determinstic definition from the paper.
+-- To do this, we need to know that
+--    - G(D) is a positive natural number
+--    - |G(D) - G(D')| < ε/4
 
 
+-- /-
+-- The maximum value of (exactDiffSum i l + vi) for i < k (not right?)
+-- -/
+-- def G (k : ℕ) (l : List ℕ) (ε₁ ε₂ : ℕ+) : SLang ℤ :=
+--   match k with
+--   | Nat.zero => DiscreteLaplaceGenSample ε₁ (4 * ε₂) (exactDiffSum 0 l)
+--   | Nat.succ n' => do
+--     let z' <- G n' l ε₁ ε₂
+--     let v <- DiscreteLaplaceGenSample ε₁ (4 * ε₂) (exactDiffSum (Nat.succ n') l)
+--     return (max z' v)
 
--- With this inequality program in hand, we move onto the main proof.
+-- G(D) form: Program that equals privMax_unroll in terms of G(D)
 
--- FIXME: What are the real definitions I unfold to? Write out this part of the proof in more detail on Monday.
--- FIXME: Define G random variable first.
-
--- How does this actually work, concretely?
-
--- Unfold the inequality program, we should get something of the form
+-- Now this program should have only two random events, leading us to
 -- ∑'(a : ℤ), ∑'(b : ℤ), (distrib. τ) a * (distrib. v_k) b * (indic. (inequality for a b (G l k)))
--- Using the change of variables, change to
--- ∑'(a : ℤ), ∑'(b : ℤ), (distrib. τ) a' * (distrib. v_k) b' * (indic. (inequality for a b (G l k)) in terms of a' b')
--- The exponential comes out of the dstib functions, and then fold back up.
+
+-- The next step is a change of variables (see pencil and paper)
+-- Allowed, since we can shift sums over ℤ by any determistic amount.
+-- THen we bound the new difference terms by ε/2 and 2ε/4 resp.
+
+-- Finally we are in G(D')-form
+-- We can fold back up to privMax_eval_unroll for D'
+-- Then the limits are equal up to e^ε, since they are pointwise equal
+-- Then the values of probWhile are equal up to e^ε, since they equal the limit
+-- Then the DP property holds
 
 
 
