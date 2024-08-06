@@ -434,6 +434,26 @@ lemma privMax_eval_limit {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
 -- Since (privMaxCut _ _ _ k) only returns k after exactly k iterations, this should
 -- be provable by induction.
 
+/--
+privMax unrolled at most k times
+-/
+def privMax_G_form (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) : SLang ℕ := do
+  let τ <- privNoiseZero ε₁ (2 * ε₂)
+  let v0 <- privNoiseZero ε₁ (4 * ε₂)
+  let (r, vr) <- (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N (0, v0))
+  if (privMaxC τ l (r, vr))
+    then
+      let (v, _) <- (privMaxF ε₁ ε₂ r)
+      return v
+    else
+      return r
+
+
+
+
+
+
+
 -- Then, we can generalize over GD, to mimic the determinstic definition from the paper.
 -- To do this, we need to know that
 --    - G(D) is a positive natural number
@@ -465,6 +485,53 @@ lemma privMax_eval_limit {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
 -- Then the limits are equal up to e^ε, since they are pointwise equal
 -- Then the values of probWhile are equal up to e^ε, since they equal the limit
 -- Then the DP property holds
+
+
+
+
+-- New idea: Is there a form which is easier to prove about, and which we can turn into
+-- a probWhile after the fact?
+
+
+
+-- Maximum noised diffSum of the first vis.length entries
+def G (l : List ℕ) (vis : List ℤ) (Hvis : 0 < vis.length) : ℤ :=
+  let vis' := (List.mapIdx (fun i vi => exactDiffSum i l + vi) vis)
+  let Hvis' : 0 < vis'.length := by
+    dsimp [vis']
+    rw [List.length_mapIdx]
+    trivial
+  List.maximum_of_length_pos Hvis'
+
+def privMax_eval_alt_body (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang { v : List ℤ // 0 < v.length } := do
+  let candidate <- privNoiseZero ε₁ (4 * ε₂)
+  return ⟨ history ++ [candidate], by simp ⟩
+
+-- The loop continues when the maximum value so far does not exceed τ.
+-- Once it is false once, it is false forever.
+def privMax_G_continue_alt (l : List ℕ) (τ : ℤ) (history : { v : List ℤ // 0 < v.length }) : Bool :=
+  G l history (by cases history ; simp ; trivial ) < τ
+
+def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang {v : List ℤ // 0 < v.length} := do
+  probWhile
+    (fun history => privMax_G_continue_alt l τ history)
+    (fun history => privMax_eval_alt_body ε₁ ε₂ history)
+    (<- privMax_eval_alt_body ε₁ ε₂ [])
+
+def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  -- Pick the threshold
+  let τ <- privNoiseZero ε₁ (2 * ε₂)
+
+  -- State is the list of all the noises up to this point, unchecked
+  let final_history : { v : List ℤ // 0 < v.length } <- privMax_eval_alt_loop ε₁ ε₂ l τ
+  -- The first index which exceeds the threshold
+  return final_history.1.length
+
+
+
+
+
+
 
 
 
