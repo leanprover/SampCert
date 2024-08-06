@@ -503,66 +503,134 @@ def G (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) : ℤ :=
     trivial
   List.maximum_of_length_pos Hvis'
 
-def privMax_eval_alt_body (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang { v : List ℤ // 0 < v.length } := do
-  let candidate <- privNoiseZero ε₁ (4 * ε₂)
-  return ⟨ history ++ [candidate], by simp ⟩
+/--
+G is an upper bound on all fuzzed elements
+-/
+lemma G_spec (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) (i : ℕ) (Hi : i < vis.1.length) : True := sorry
+
+
+/--
+G only increases as we extend it
+-/
+lemma G_mono (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) (c : ℤ) pf :
+    G l vis ≤ G l ⟨ vis.1 ++ [c], pf ⟩ := by
+  simp [G]
+  apply List.maximum_le_of_forall_le
+  intro a Ha
+  apply List.le_maximum_of_mem'
+  rw [List.mapIdx_append_one]
+  rw [List.mem_append]
+  left
+  trivial
+
+
+
+
+
+
 
 -- The loop continues when the maximum value so far does not exceed τ.
 -- Once it is false once, it is false forever.
-def privMax_G_continue_alt (l : List ℕ) (τ : ℤ) (history : { v : List ℤ // 0 < v.length }) : Bool :=
-  G l history < τ
+def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : List ℤ) : Bool :=
+  match history with
+  | [] => true
+  | (h :: hs) => G l ⟨ h :: hs, by simp ⟩ < τ
 
-def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : {v : List ℤ // 0 < v.length}) : Bool :=
-  privMax_G_continue_alt l τ history
+/--
+Once a history terminates the loop, any hypothetical future loop conditions are also aware that it terminates
+-/
+lemma privMax_G_continue_alt_mono (l : List ℕ) (τ : ℤ) (history : List ℤ) (future : ℤ) :
+    ¬ privMax_eval_alt_cond l τ history -> ¬ privMax_eval_alt_cond l τ (history ++ [future]):= by
+  unfold privMax_eval_alt_cond
+  cases history
+  · simp
+  rename_i a b
+  simp only [decide_eq_true_eq, List.cons_append]
+  intro H1 H2
+  apply H1
+  apply LE.le.trans_lt _ H2
+  apply G_mono
 
-def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : {v : List ℤ // 0 < v.length}) : SLang {v : List ℤ // 0 < v.length} :=
-   privMax_eval_alt_body ε₁ ε₂ history
+-- NOTE Somehow, this could help us do induction on the branches the program never explores.
+-- Inductively rewriting branches that are never executed seems like overkill, but the alternative
+-- (with the splittting, for example) proved to be quite hard.
 
-def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang {v : List ℤ // 0 < v.length} := do
+
+
+
+
+def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang (List ℤ) := do
+  let candidate <- privNoiseZero ε₁ (4 * ε₂)
+  return history ++ [candidate]
+
+/--
+Support of privMaxEval_alt_body is contained in the extensions of the history by one element
+-/
+lemma privMaxEval_alt_body_supp (ε₁ ε₂ : ℕ+) history eval :
+    (privMax_eval_alt_F ε₁ ε₂ history eval) ≠ 0 -> ∃ z, eval = history ++ [z] := by
+  simp [privMax_eval_alt_F ]
+  intro x Heval _
+  exists x
+
+
+
+def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang (List ℤ) := do
   probWhile
     (privMax_eval_alt_cond l τ)
     (privMax_eval_alt_F ε₁ ε₂)
-    (<- privMax_eval_alt_body ε₁ ε₂ [])
+    (<- privMax_eval_alt_F ε₁ ε₂ [])
 
--- -1st reduction: Go from complete history-tracking sampler to the sampler I have implemented in code
---  (how?)
+
+
+
+
+
+
+
+
+
+-- 0th reduction: Go from complete history-tracking sampler to the sampler I have implemented in code
+--  (how do I do this?)
 
 def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
   let τ <- privNoiseZero ε₁ (2 * ε₂)
-  let final_history : { v : List ℤ // 0 < v.length } <- privMax_eval_alt_loop ε₁ ε₂ l τ
-  return final_history.1.length
+  let final_history <- privMax_eval_alt_loop ε₁ ε₂ l τ
+  return final_history.length
+
+
 
 
 
 -- 1st reduction: Pointwise bound on the number of loop iterates
-def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang {v : List ℤ // 0 < v.length} := do
+def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
   probWhileCut
     (privMax_eval_alt_cond l τ)
     (privMax_eval_alt_F ε₁ ε₂)
     N
-    (<- privMax_eval_alt_body ε₁ ε₂ [])
+    (<- privMax_eval_alt_F ε₁ ε₂ [])
 
-
+-- Evaluates a point ℕ by evaluating at most N iterates
 def privMax_eval_alt_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
   (do
     let τ <- privNoiseZero ε₁ (2 * ε₂)
-    let final_history : { v : List ℤ // 0 < v.length } <- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
-    return final_history.1.length) N)
+    let final_history<- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
+    return final_history.length) N)
 
 
 lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     privMax_eval_alt ε₁ ε₂ l = privMax_eval_alt_cut ε₁ ε₂ l := by
-
-  -- Reduce to just the loop differences
+  -- Want to show that the eval (unbounded at each point) equals the cut version (cut to N at each point)
   apply SLang.ext
-  intro evaluated_point
+  intro cutoff
   simp [privMax_eval_alt, privMax_eval_alt_cut]
   apply tsum_congr
   intro initial_point
   congr
   apply funext
+  -- Loop should be the same evaluated at every history whose length is equal to cutoff
   intro evaluated_history
-  congr
+  split <;> try simp
+  rename_i Hcutoff
   simp [privMax_eval_alt_loop, privMax_eval_alt_loop_cut]
   apply tsum_congr
   intro initial_history
@@ -570,17 +638,39 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 
   -- Apply probWhile limit lemma
   apply probWhile_apply
-
-  -- Evaluate the filter
-  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ (evaluated_point + initial_history.1.length)) -- Something like that
-  intro later_evaluated_point Hlep
+  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ cutoff)
 
   -- Prove that probWhileCut is eventually constant
+  intro later_cutoff Hlep
+  rw [<- Nat.add_sub_cancel' Hlep]
 
-  -- Adding more unfoldings to the loop only increases the length of the history
-  -- Evaluating at evaluated_history uses only adds checks for greater numbers than evaluted_history
-  -- assuming initial_history is empty?
-  sorry
+  -- Change of variables
+  generalize Hd : later_cutoff - cutoff = d
+  clear Hlep Hd later_cutoff
+
+  -- Revert something about the size of the tape?
+  induction d
+  · simp
+  · -- Apply IH to reduce the difference to 1
+    rename_i d' IH
+    rw [<- IH]
+    clear IH
+
+    -- The tricky thing: The continuation isn't the same for _all_ histories, just
+    -- those with at least cutoff samples.
+    -- To separate this program into the cuttoff + (d, d+1) part, and prove that the d part
+    -- equals the (d+1) part, I need the (d, d+1) parts to know that their tapes have at least cutoff samples
+    sorry
+
+
+  -- Maybe this? Not sure
+  -- Split into (do cutoff) with (do d) as continuation
+  -- Prove that inner (do d) is zero
+  --  - Prove that condition does not change
+  --  - Prove that
+  -- Continuation is zero
+  -- Fold back into probWhile
+
 
 
 
@@ -599,12 +689,23 @@ def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // N = v
 -- A length N list only happens when we sample exactly N times,
 -- Everyting up to the N-1th time did not terminate, and the Nth time did terminate.
 -- (Put this in a probUntil to normalize)
-def privMax_eval_alt_loop_cut_presample_pre (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang {v : List ℤ // 0 < v.length} := do
-  let history <- privMax_sampN ε₁ ε₂ N
-  let candidate <- privNoiseZero ε₁ (4 * ε₂)
-  if sorry
-    then probPure sorry -- history
-    else sorry -- probZero?? What?
+def privMax_eval_alt_loop_cut_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang ℕ :=
+  fun N =>
+    ((do
+        let candidate <- (privNoiseZero ε₁ (4 * ε₂))
+        let history <- privMax_sampN ε₁ ε₂ (N + 1)
+        let GD := G l ⟨ history, sorry ⟩ -- Biggest
+        probPure 0) N)
+  --  >>= (fun candidate => sorry)) N)
+
+
+-- do
+--   let history <-
+--   let candidate <- privNoiseZero ε₁ (4 * ε₂)
+--   if sorry
+--     then probPure sorry -- history
+--     else sorry -- probZero?? What?
+
 
 
 
