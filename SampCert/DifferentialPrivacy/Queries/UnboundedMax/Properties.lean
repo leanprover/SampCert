@@ -493,13 +493,13 @@ def privMax_G_form (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) : SLang ℕ := 
 -- a probWhile after the fact?
 
 
-
 -- Maximum noised diffSum of the first vis.length entries
-def G (l : List ℕ) (vis : List ℤ) (Hvis : 0 < vis.length) : ℤ :=
+def G (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) : ℤ :=
   let vis' := (List.mapIdx (fun i vi => exactDiffSum i l + vi) vis)
   let Hvis' : 0 < vis'.length := by
     dsimp [vis']
-    rw [List.length_mapIdx]
+    cases vis
+    simp [List.length_mapIdx]
     trivial
   List.maximum_of_length_pos Hvis'
 
@@ -510,24 +510,101 @@ def privMax_eval_alt_body (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang { v 
 -- The loop continues when the maximum value so far does not exceed τ.
 -- Once it is false once, it is false forever.
 def privMax_G_continue_alt (l : List ℕ) (τ : ℤ) (history : { v : List ℤ // 0 < v.length }) : Bool :=
-  G l history (by cases history ; simp ; trivial ) < τ
+  G l history < τ
+
+def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : {v : List ℤ // 0 < v.length}) : Bool :=
+  privMax_G_continue_alt l τ history
+
+def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : {v : List ℤ // 0 < v.length}) : SLang {v : List ℤ // 0 < v.length} :=
+   privMax_eval_alt_body ε₁ ε₂ history
 
 def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang {v : List ℤ // 0 < v.length} := do
   probWhile
-    (fun history => privMax_G_continue_alt l τ history)
-    (fun history => privMax_eval_alt_body ε₁ ε₂ history)
+    (privMax_eval_alt_cond l τ)
+    (privMax_eval_alt_F ε₁ ε₂)
     (<- privMax_eval_alt_body ε₁ ε₂ [])
 
-def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
-  -- Pick the threshold
-  let τ <- privNoiseZero ε₁ (2 * ε₂)
+-- -1st reduction: Go from complete history-tracking sampler to the sampler I have implemented in code
+--  (how?)
 
-  -- State is the list of all the noises up to this point, unchecked
+def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  let τ <- privNoiseZero ε₁ (2 * ε₂)
   let final_history : { v : List ℤ // 0 < v.length } <- privMax_eval_alt_loop ε₁ ε₂ l τ
-  -- The first index which exceeds the threshold
   return final_history.1.length
 
 
+
+-- 1st reduction: Pointwise bound on the number of loop iterates
+def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang {v : List ℤ // 0 < v.length} := do
+  probWhileCut
+    (privMax_eval_alt_cond l τ)
+    (privMax_eval_alt_F ε₁ ε₂)
+    N
+    (<- privMax_eval_alt_body ε₁ ε₂ [])
+
+
+def privMax_eval_alt_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
+  (do
+    let τ <- privNoiseZero ε₁ (2 * ε₂)
+    let final_history : { v : List ℤ // 0 < v.length } <- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
+    return final_history.1.length) N)
+
+
+lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
+    privMax_eval_alt ε₁ ε₂ l = privMax_eval_alt_cut ε₁ ε₂ l := by
+
+  -- Reduce to just the loop differences
+  apply SLang.ext
+  intro evaluated_point
+  simp [privMax_eval_alt, privMax_eval_alt_cut]
+  apply tsum_congr
+  intro initial_point
+  congr
+  apply funext
+  intro evaluated_history
+  congr
+  simp [privMax_eval_alt_loop, privMax_eval_alt_loop_cut]
+  apply tsum_congr
+  intro initial_history
+  congr
+
+  -- Apply probWhile limit lemma
+  apply probWhile_apply
+
+  -- Evaluate the filter
+  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ (evaluated_point + initial_history.1.length)) -- Something like that
+  intro later_evaluated_point Hlep
+
+  -- Prove that probWhileCut is eventually constant
+
+  -- Adding more unfoldings to the loop only increases the length of the history
+  -- Evaluating at evaluated_history uses only adds checks for greater numbers than evaluted_history
+  -- assuming initial_history is empty?
+  sorry
+
+
+
+
+-- Reduction 2: Sample all the noise upfront (that is, calculate G(D)), and then
+-- Check to see if the nth iterate is the terminating one.
+
+def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // N = v.length } :=
+  match N with
+  | Nat.zero => probPure ⟨ [], by simp ⟩
+  | Nat.succ N' => do
+      let v <- privNoiseZero ε₁ (4 * ε₂)
+      let r <- privMax_sampN ε₁ ε₂ N'
+      probPure ⟨ v :: r.1, by cases r; simp ; trivial ⟩
+
+-- A length N list only happens when we sample exactly N times,
+-- Everyting up to the N-1th time did not terminate, and the Nth time did terminate.
+-- (Put this in a probUntil to normalize)
+def privMax_eval_alt_loop_cut_presample_pre (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang {v : List ℤ // 0 < v.length} := do
+  let history <- privMax_sampN ε₁ ε₂ N
+  let candidate <- privNoiseZero ε₁ (4 * ε₂)
+  if sorry
+    then probPure sorry -- history
+    else sorry -- probZero?? What?
 
 
 
