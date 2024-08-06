@@ -155,6 +155,58 @@ lemma probWhileSplit_succ_r (cond : T → Bool) (body : T → SLang T) (n : Nat)
 
 
 
+-- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
+-- of the body.
+def mono_conditional (cond : T → Bool) (body : T → SLang T) : Prop :=
+    ∀ t : T, (cond t = false) -> (∀ t', cond t' = false ∨ body t t' = 0)
+
+
+-- This is the shape of lemma I'm looking for (probably), and it's what needs to use montonicity.
+
+lemma probWhileSplit_succ_r_mono (cond : T → Bool) (body : T → SLang T) (H : mono_conditional cond body) (n : Nat) (Hn : n > 0) (init : T):
+    probWhileSplit cond body (fun _ => probZero) (Nat.succ n) init =
+    (probWhileSplit cond body probPure 1 init)  >>=  (probWhileSplit cond body (fun _ => probZero) n) := by
+  apply funext
+  intro x
+  simp [probWhileSplit]
+  split
+  · simp [probBind]
+  · -- Conditional is false.
+    --  - probWHileSplits do a a ret,
+    --  - RHS moves into loop
+    --  - Conditional is false at the start of the loop by monotonicity, so it becomes a ret too
+    rename_i h
+    simp at h
+    have H := H _ h
+    -- Can simplify the "a" in that sum
+    conv =>
+      rhs
+      enter [1, a]
+      simp [probPure]
+    rw [ENNReal.tsum_eq_add_tsum_ite init]
+    simp
+    have H1 :
+      (∑' (x_1 : T), if x_1 = init then 0 else if x_1 = init then probWhileSplit cond body (fun x => probZero) n x_1 x else 0) = 0 := by
+      apply ENNReal.tsum_eq_zero.mpr
+      intro i
+      split <;> simp
+    simp [H1]
+    clear H1
+
+    -- since n > 0 the RHS should apply the conditional, which will be false.
+    unfold probWhileSplit
+    cases n
+    · exfalso
+      linarith
+    · simp [h]
+
+-- NOTE: This is good progress! The n > 0 constraint may be an issue. Think more about this before moving on.
+
+
+
+
+
+
 
 
 /--
@@ -694,7 +746,7 @@ def privMax_eval_alt_loop_cut_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ 
     ((do
         let candidate <- (privNoiseZero ε₁ (4 * ε₂))
         let history <- privMax_sampN ε₁ ε₂ (N + 1)
-        let GD := G l ⟨ history, sorry ⟩ -- Biggest
+        -- let GD_tau := G l ⟨ history, sorry ⟩--
         probPure 0) N)
   --  >>= (fun candidate => sorry)) N)
 
@@ -708,7 +760,96 @@ def privMax_eval_alt_loop_cut_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ 
 
 
 
+def prefixes {T : Type*} (L : List T) : List (List T) := List.map (flip List.take L) $ List.range (L.length).succ
 
+
+-- -- 1st reduction: Pointwise bound on the number of loop iterates
+-- def privMax_eval_alt_loop_cut_simpler (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
+--   (fun history =>
+--     ((do
+--       for p in prefixes history do
+--         (fun x => probPure [])
+--       probPure [])
+--     history))
+--   -- probWhileCut
+--   --   (privMax_eval_alt_cond l τ)
+--   --   (privMax_eval_alt_F ε₁ ε₂)
+--   --   N
+--   --   (<- privMax_eval_alt_F ε₁ ε₂ [])
+
+
+
+
+-- New idea:
+-- Since the if condition is monotonic, we don't need to exit the while loop early.
+-- The stopping condition does not have to depend on the state, and that has the potential
+-- to simplify a ton of the things I'm getting stuck on.
+
+
+
+-- Basically the same as probWhileFunctional, but it
+--    - always applies the body
+--    - keeps track of the current index
+-- def probFor (body : ℕ -> T → SLang T) (index : ℕ) (init: T) : SLang T :=
+--   match index with
+--   | Nat.zero => return init
+--   | Nat.succ N' => do
+--     let init' <- body N' init
+--     probFor body N' init'
+--
+--
+-- def probWhile_of_probFor  (body : ℕ -> T → SLang T) (index : ℕ) (init: T) : SLang T :=
+--   (probWhileCut
+--     (fun (i, _) => i > 0)
+--     (fun (i, t) => do return (i - 1, <- body i t))
+--     (index + 1)
+--     ((index : ℕ), (init : T))) >>= (fun z => return z.2)
+--
+--
+-- def probFor_probWhileFunctional_eq (body : ℕ -> T → SLang T) (index : ℕ) (init: T) :
+--   probFor body index init = probWhile_of_probFor body index init := by
+--   revert init
+--   induction index
+--   · intro init
+--     simp [probFor, probWhile_of_probFor, probWhileCut, probWhileFunctional]
+--   · intro init
+--     rename_i index' IH
+--     simp [probFor]
+--
+--     sorry
+
+
+
+-- Actually, might not even need to do this. For well behaved conditionals, I should be able to rewrite
+-- it into this form without defining separate syntax?
+
+lemma probWhileCut_monotone_lemma (cond : T → Bool) (body : T → SLang T)
+    (n : Nat) (init : T) :
+    probWhileCut cond body n init =
+    (probWhileCut
+      (fun (i, _) => i < n)
+      (fun (i, t) => do if cond t then return (i + 1, <- body t) else return (i + 1, t))
+      n
+      (0, init)) >>= (fun x => x.1) := by
+  revert init
+  induction n
+  · intro init
+    simp [probWhileCut]
+    unfold probZero
+    unfold probBind
+    simp
+  · intro init
+    rename_i n' IH
+    simp [probWhileCut, probWhileFunctional]
+    split
+    · simp
+      sorry
+    · simp
+      sorry
+
+
+
+-- prove that the limit of probFor is a probWhile, for certain monotone predicates
 
 
 
