@@ -6,3 +6,5 @@ Authors: Jean-Baptiste Tristan
 
 import SampCert.DifferentialPrivacy.Queries.UnboundedMax.Code
 import SampCert.DifferentialPrivacy.Queries.UnboundedMax.Properties
+import SampCert.DifferentialPrivacy.Queries.UnboundedMax.Pure
+import SampCert.DifferentialPrivacy.Queries.UnboundedMax.ZeroConcentrated

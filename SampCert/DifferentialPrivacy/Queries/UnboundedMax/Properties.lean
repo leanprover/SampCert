@@ -4,21 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Queries.UnboundedMax.Code
-import SampCert.DifferentialPrivacy.Pure.System
-import SampCert.DifferentialPrivacy.Sensitivity
 import SampCert.DifferentialPrivacy.Abstract
 
 /-!
-# ``privMax`` Properties
-
-This file proves pure DP for privMax, and zCDP for privMax using
-the (ε^2/2)-zCDP bound.
-
-privMax implemented using the abstract DP system, but I am not aware of how
-to generalize the privacy proof to the abstract DP case.
-
-Follows the proof given for Algorithm 1 pp. 57 "The Sparse Vector Technique"
-in "The Algorithmic Foundations of Differential Privacy", Dwork & Roth.
+# ``privMax`` reductions
 -/
 
 open Classical Nat Int Real
@@ -374,15 +363,6 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
 
 
 
-/-
-## Reduction 0: The implementation version is the same as the history-tracking version
--/
-
-
-
-/-
-## Reduction 1: The history-tracking version is the same as a bounded history-tracking version
--/
 
 
 /--
@@ -496,6 +476,21 @@ def privMax_eval_alt {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : 
   let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
   let final_history <- @privMax_eval_alt_loop dps ε₁ ε₂ l τ
   return final_history.length
+
+
+/-
+## Reduction 0: The implementation version is the same as the history-tracking version
+-/
+
+lemma privMax_reduction_0 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
+    @privMax_eval dps ε₁ ε₂ l = @privMax_eval_alt dps ε₁ ε₂ l := by
+  sorry
+
+
+/-
+## Reduction 1: The history-tracking version is the same as a bounded history-tracking version
+-/
+
 
 /--
 Sampling loop for the bounded history-aware privMax function
@@ -773,6 +768,17 @@ lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
   sorry
 
 
+def privMax_presample_sep_normalizes : HasSum (@privMax_presample_sep dps ε₁ ε₂ l) 1 := by
+  rw [<- privMax_reduction_3]
+  rw [<- privMax_reduction_2]
+  rw [<- privMax_reduction_1]
+  rw [<- privMax_reduction_0]
+  exact privMaxPMF_normalizes
+
+
+-- To express differential privacy, we need pricMax_presample_sep to be a PMF
+def privMax_presample_sep_PMF {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℕ :=
+  ⟨ @privMax_presample_sep dps ε₁ ε₂ l, privMax_presample_sep_normalizes ⟩
 
 
 

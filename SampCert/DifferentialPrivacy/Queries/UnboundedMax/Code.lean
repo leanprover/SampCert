@@ -80,13 +80,15 @@ def privMax_eval [DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ 
   return r.1
 
 
+
+lemma privMaxPMF_normalizes [DPSystem ℕ] : HasSum (privMax_eval ε₁ ε₂ l) 1 := sorry
+
 /--
 privMax is a PMF.
 
 Using the Laplace mechanism, privMax is (ε₁/ε₂)-DP.
 -/
 def privMaxPMF [DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℕ :=
-  ⟨ privMax_eval ε₁ ε₂ l,
-    sorry⟩
+  ⟨ privMax_eval ε₁ ε₂ l, privMaxPMF_normalizes  ⟩
 
 end SLang
