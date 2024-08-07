@@ -374,11 +374,14 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
 
 
 
+/-
+## Reduction 0: The implementation version is the same as the history-tracking version
+-/
 
 
 
 /-
-## History-tracking privMax program
+## Reduction 1: The history-tracking version is the same as a bounded history-tracking version
 -/
 
 
@@ -462,6 +465,19 @@ lemma privMaxEval_alt_body_supp (ε₁ ε₂ : ℕ+) history eval :
   intro x Heval _
   exists x
 
+-- FIXME: cleanup
+lemma privMaxEval_alt_body_supp' (ε₁ ε₂ : ℕ+) history eval :
+    (¬(∃ z, eval = history ++ [z])) -> (privMax_eval_alt_F ε₁ ε₂ history eval) = 0 := by
+  apply Classical.by_contradiction
+  intro A
+  apply A
+  intro B
+  suffices ¬(privMax_eval_alt_F ε₁ ε₂ history eval ≠ 0) by
+    exact False.elim (this fun a => A fun _ => a)
+  intro C
+  apply B
+  apply privMaxEval_alt_body_supp ε₁ ε₂
+  trivial
 
 
 def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang (List ℤ) := do
@@ -469,7 +485,9 @@ def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang
     (privMax_eval_alt_cond l τ)
     (privMax_eval_alt_F ε₁ ε₂)
     []
-    -- (<- privMax_eval_alt_F ε₁ ε₂ [])
+
+
+
 
 /--
 History-aware privMax program
@@ -488,6 +506,36 @@ def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N 
     (privMax_eval_alt_F ε₁ ε₂)
     N
     []
+
+/--
+[] is never in the support of the cut loop, no matter how many iterations
+-/
+lemma privMax_eval_alt_loop_cut_empty (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) :
+    privMax_eval_alt_loop_cut ε₁ ε₂ l τ N [] = 0 := by
+  rw [privMax_eval_alt_loop_cut]
+  induction N
+  · simp [probWhileCut]
+  · simp [probWhileCut, probWhileFunctional]
+    -- First loop check always passes
+    simp only [privMax_eval_alt_cond, ↓reduceIte]
+    simp
+    -- We're quantifying over all i right now, but in reality, we should be quantifying over all singletons.
+    -- I'd guess that this is one place where I was getting lost before.
+    intro i
+    cases Classical.em (∃ z, i = [z])
+    · right
+      rename_i n' IH hz
+      rcases hz with ⟨ v , hz ⟩
+      subst hz
+      -- Now we're starting in a history with at least one element
+      unfold probWhileCut
+      -- Stuck
+
+      sorry
+    · left
+      apply privMaxEval_alt_body_supp'
+      simp only [List.nil_append]
+      trivial
 
 
 /--
@@ -514,10 +562,80 @@ lemma privMax_eval_alt_loop_cut_closed :
     cases h <;> simp
     simp [probWhileCut]
   rename_i N' IH
+  intro h
 
+  -- Simplify right-hand side?
+  simp [privMax_eval_alt_loop_cut_step]
+  split
+  · -- When there are too few steps, evaluation at N' is 0
+    clear IH
+    rename_i HN'
+    simp [privMax_eval_alt_loop_cut]
+    -- rw [probWhileCut_add_r _ _ _ _ (by simp)]
 
+    sorry
 
-  sorry
+    -- revert HN'
+    -- induction N'
+    -- · intro
+    --   simp [probWhileSplit]
+    --   simp [probWhileCut, probWhileFunctional]
+    --   simp [privMax_eval_alt_cond]
+    -- rename_i N'' IHN''
+    -- intro HN''
+    -- have HN''' : N'' + 1  < h.length := by linarith
+    -- have IHN := IHN'' HN'''
+    -- clear IHN'' HN'''
+
+    -- simp [probWhileCut, probWhileFunctional]
+    -- simp [probWhileCut, probWhileFunctional] at IHN
+    -- intro i
+    -- have IH := IHN i
+    -- clear IHN
+    -- cases IH
+    -- · left
+    --   rw [probWhileSplit_succ_r_pure]
+    --   simp
+    --   intro i'
+    --   conv =>
+    --     enter [1]
+    --     unfold probWhileSplit
+    --     simp [privMax_eval_alt_cond]
+    --     enter [v]
+    --     simp [privMax_eval_alt_F]
+    --     unfold probWhileSplit
+    --     simp [privMax_eval_alt_cond]
+    --   right
+    --   sorry
+    -- · right
+    --   trivial
+
+    -- -- induction N'
+    -- -- · simp [privMax_eval_alt_loop_cut, probWhileCut, probWhileFunctional, privMax_eval_alt_cond]
+    -- -- · rename_i N'' IHN''
+    -- --   intro HN''
+    -- --   unfold privMax_eval_alt_loop_cut
+    -- --   unfold probWhileCut
+    -- --   unfold probWhileFunctional
+    -- --   split
+    -- --   ·
+    -- --     sorry
+    -- --   · rename_i Hcont
+    -- --     simp [privMax_eval_alt_cond] at Hcont
+  · rename_i HN_1
+    -- h.length ≤ N' + 1
+    have IH := @IH h
+    simp [privMax_eval_alt_loop_cut_step] at IH
+    split at IH
+    · rename_i HN_2
+      have HN_3 : N' + 1 = h.length := by linarith
+      rw [HN_3]
+    · rw [<- IH]
+      clear IH
+      -- Number of steps is too large
+
+      sorry
+
 
 
 /--
@@ -576,11 +694,15 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 
 
 
-/-
--- Reduction 2: Sample all the noise upfront (that is, calculate G(D)), and then
--- Check to see if the nth iterate is the terminating one.
 
-def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // N = v.length } :=
+/-
+## Reduction 2: The bounded history-tracking version is the same as a predicate on eager presample
+-/
+
+/--
+Sample N noised values. Always returns a list of length N.
+-/
+def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.length = N } :=
   match N with
   | Nat.zero => probPure ⟨ [], by simp ⟩
   | Nat.succ N' => do
@@ -588,360 +710,31 @@ def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // N = v
       let r <- privMax_sampN ε₁ ε₂ N'
       probPure ⟨ v :: r.1, by cases r; simp ; trivial ⟩
 
--- A length N list only happens when we sample exactly N times,
--- Everyting up to the N-1th time did not terminate, and the Nth time did terminate.
--- (Put this in a probUntil to normalize)
-def privMax_eval_alt_loop_cut_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang ℕ :=
-  fun N =>
-    ((do
-        let candidate <- (privNoiseZero ε₁ (4 * ε₂))
-        let history <- privMax_sampN ε₁ ε₂ (N + 1)
-        -- let GD_tau := G l ⟨ history, sorry ⟩--
-        probPure 0) N)
-  --  >>= (fun candidate => sorry)) N)
 
-
--- do
---   let history <-
---   let candidate <- privNoiseZero ε₁ (4 * ε₂)
---   if sorry
---     then probPure sorry -- history
---     else sorry -- probZero?? What?
-
-
-
-def prefixes {T : Type*} (L : List T) : List (List T) := List.map (flip List.take L) $ List.range (L.length).succ
-
-
--- -- 1st reduction: Pointwise bound on the number of loop iterates
--- def privMax_eval_alt_loop_cut_simpler (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
---   (fun history =>
---     ((do
---       for p in prefixes history do
---         (fun x => probPure [])
---       probPure [])
---     history))
---   -- probWhileCut
---   --   (privMax_eval_alt_cond l τ)
---   --   (privMax_eval_alt_F ε₁ ε₂)
---   --   N
---   --   (<- privMax_eval_alt_F ε₁ ε₂ [])
-
-
-
-
--- New idea:
--- Since the if condition is monotonic, we don't need to exit the while loop early.
--- The stopping condition does not have to depend on the state, and that has the potential
--- to simplify a ton of the things I'm getting stuck on.
-
-
-
--- Basically the same as probWhileFunctional, but it
---    - always applies the body
---    - keeps track of the current index
--- def probFor (body : ℕ -> T → SLang T) (index : ℕ) (init: T) : SLang T :=
---   match index with
---   | Nat.zero => return init
---   | Nat.succ N' => do
---     let init' <- body N' init
---     probFor body N' init'
---
---
--- def probWhile_of_probFor  (body : ℕ -> T → SLang T) (index : ℕ) (init: T) : SLang T :=
---   (probWhileCut
---     (fun (i, _) => i > 0)
---     (fun (i, t) => do return (i - 1, <- body i t))
---     (index + 1)
---     ((index : ℕ), (init : T))) >>= (fun z => return z.2)
---
---
--- def probFor_probWhileFunctional_eq (body : ℕ -> T → SLang T) (index : ℕ) (init: T) :
---   probFor body index init = probWhile_of_probFor body index init := by
---   revert init
---   induction index
---   · intro init
---     simp [probFor, probWhile_of_probFor, probWhileCut, probWhileFunctional]
---   · intro init
---     rename_i index' IH
---     simp [probFor]
---
---     sorry
-
-
-
--- Actually, might not even need to do this. For well behaved conditionals, I should be able to rewrite
--- it into this form without defining separate syntax?
-
-lemma probWhileCut_monotone_lemma (cond : T → Bool) (body : T → SLang T)
-    (n : Nat) (init : T) :
-    probWhileCut cond body n init =
-    (probWhileCut
-      (fun (i, _) => i < n)
-      (fun (i, t) => do if cond t then return (i + 1, <- body t) else return (i + 1, t))
-      n
-      (0, init)) >>= (fun x => x.1) := by
-  revert init
-  induction n
-  · intro init
-    simp [probWhileCut]
-    unfold probZero
-    unfold probBind
-    simp
-  · intro init
-    rename_i n' IH
-    simp [probWhileCut, probWhileFunctional]
-    split
-    · simp
-      sorry
-    · simp
-      sorry
-
-
-
--- prove that the limit of probFor is a probWhile, for certain monotone predicates
-
-
-
+/--
+Sample N+1 noise values upfront. Return (N+1) when the first N noised prefix
+sums are less than τ, and the N+1st noised prefix sum exceeds τ.
 -/
+def privMax_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+(fun N =>
+  (do
+    let τ <- privNoiseZero ε₁ (2 * ε₂)
+    let history <- privMax_sampN ε₁ ε₂ N.succ
+    if (privMax_eval_alt_cond l τ history.1) ∧ ¬ (privMax_eval_alt_cond l τ history.1.tail)
+      then probPure (N + 1)
+      else probZero)
+  N)
+
+
+
+
+
+
+
+
+
+
+
+
 
 end SLang
-
-
-
-
--- Junk?
--- I might eventually want to use some of these definitions when proving the
--- equivalence to the non-history program
-
-
--- /--
--- privMax unrolled at most k times
--- -/
--- def privMax_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (N : ℕ) : SLang ℕ := do
---   let τ <- privNoiseZero ε₁ (2 * ε₂)
---   let v0 <- privNoiseZero ε₁ (4 * ε₂)
---   let r <- (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N (0, v0))
---   return r.1
---
---
--- lemma privMax_cut_loop_0 (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (init : ℕ × ℤ) :
---     probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) 0 init = probZero := by
---   simp [probWhileCut]
---
--- /--
--- Move one iterate from a probWhileCut out to a probWhileSplit
---
--- MARKUSDE: We probably want the other direction: moving into init
--- -/
--- lemma privMax_cut_loop_succ_l (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N : ℕ) (init : ℕ × ℤ) :
---     probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) (Nat.succ N) init =
---     probWhileSplit (privMaxC τ l) (privMaxF ε₁ ε₂) (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N) 1 init := by
---   simp [probWhileCut, probWhileFunctional, probWhileSplit]
---
--- /--
--- Separate the first N iterates from probMax_cut:
--- Do n iterates inside a probWhileSplit, and the remaining M iterates inside probWhileCut
--- -/
--- lemma privMax_cut_loop_add_l (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N M : ℕ) (init : ℕ × ℤ) :
---     probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) (N + M) init =
---     probWhileSplit (privMaxC τ l) (privMaxF ε₁ ε₂) (probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) N) M init := by
---   revert init
---   induction N
---   · intro init
---     simp [probWhileCut]
---     rw [probWhileCut_probWhileSplit_zero]
---   · intro init
---     rename_i N' IH
---     rw [add_assoc, add_comm, add_assoc, add_comm]
---     rw [privMax_cut_loop_succ_l]
---     rw [add_comm]
---     rw [funext IH]
---     rw [(funext (privMax_cut_loop_succ_l _ _ _ _ _))]
---     rw [<- probWhileSplit_add_l]
---     rw [<- probWhileSplit_add_l]
---     rw [add_comm]
---
---
--- /--
--- Boundary of the support of the privMax_cut loop:
--- If we start in state (N, ?), for any k, (N + K + 1) will be zero after K steps.
--- ie. We step zero times, (N + 0 + 1) = N and beyond is still zero (since it starts with zero distribution)
---      We step two times, (N + 2) and beyond is zero.
--- -/
--- lemma privMax_cut_loop_support_bound (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (K N : ℕ) (vp: ℤ) (vi : ℤ)  :
---     probWhileCut (privMaxC τ l) (privMaxF ε₁ ε₂) K (N, vi) (N + K, vp) = 0 := by
---   revert vi vp
---   induction K
---   · -- Exact boundary
---     induction N <;> simp [probWhileCut]
---   · rename_i K' IH
---     induction N
---     · sorry
---     · rename_i N' IH'
---       intro vp vi
---       simp [probWhileCut, probWhileFunctional]
---       split
---       · simp
---         simp at *
---         rename_i H
---         intro a b
---         simp [privMaxF]
---         have Ha : a ≠ N' + 1 + 1 := by sorry
---         right
---         have IH := IH vp vi
---         -- This is not helping
---         sorry
---       · simp
---      -- Lost
-
-
-
--- /--
--- Support of privMax_cut is bounded abouve by the cut number
--- -/
--- lemma privMax_cut_support_le_k (ε₁ ε₂ : ℕ+) (l : List ℕ) (N K : ℕ) :
---     privMax_cut ε₁ ε₂ l N (N + K) = 0 := by
---   simp [privMax_cut]
---   intro τ
---   right
---   intro v0
---   right
---   intro r vr Hr
---   subst Hr
---
---   -- The condition itself does not matter to this proof
---   generalize HC : (fun (x : ℕ × ℤ) => decide (exactDiffSum x.1 l + x.2 < τ)) = C
---   clear HC
---   rw [probWhileCut_probWhileSplit_zero]
---   revert v0 N
---   induction K
---   · intros N v0
---     simp
---     -- Equality case. Hmm.
---     sorry
---   · intros N v0
---     rename_i K' IH
---     have IH := IH N v0
---
---     sorry
---
---   -- -- Am I inducting on the wrong thing?
---   -- induction N
---   -- · aesop
---   -- · rename_i N' IH
---   --   intro K v0
---
---   --   -- Same as doing 1 iteration and then N' iterations
---   --   rw [probWhileSplit_succ_l]
---   --   simp [probWhileSplit]
---   --   split
---   --   · simp
---   --     intro v1
---   --     right
---   --     rw [<- IH K v1]
---
---   --     -- Need a shifting lemma
---
---   --     -- Err... the shifting lemma might not be provable
---   --     -- Because the condition depends on the start value
---
---   --     -- Incremeting the start condition just shifts the final distribution
---   --     -- Simplify irrelevant the expression for quality of life
---   --     generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
---   --     conv =>
---   --       enter [1, 6, 1]
---   --       rw [add_comm]
---   --       rw [<- add_assoc]
---   --       enter [1]
---   --       rw [add_comm]
---   --     generalize HD : (N' + K) = D
---   --     clear HD
---   --     clear IH
---   --     induction N'
---   --     · simp [probWhileSplit]
---   --     · rename_i N'' IH''
---   --       conv =>
---   --         enter [1]
---   --         rw [probWhileSplit_succ_l]
---   --       rw [probWhileSplit_succ_l]
---   --       simp [probWhileSplit]
---   --       sorry
---   --   · simp
-
-
-
--- Since the max returnable value increases by at most 1 every iteration, and
---    privMaxCut _ _ _ 0 = (fun _ => 0),
--- we should be able to prove that for all N ≥ K ≥ 0
---   privMaxCut _ _ _ N K = 0
-
-
-
--- /--
--- privMax_cut is eventually constant (at every point N, it is constant after N terms).
--- -/
--- lemma privMax_cut_support_eventually_constant (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (N K : ℕ) (VN : ℤ) :
---     probWhileCut (privMaxC τ l)
---       (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) (N + K) (0, v0) (N, VN) =
---     probWhileCut (privMaxC τ l)
---       (fun x => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) N (0, v0) (N, VN) := by
---
---   rw [probWhileCut_probWhileSplit_zero]
---   rw [probWhileCut_probWhileSplit_zero]
---
---   -- Induction: Reduce from (... N + K) to (... N + 1)
---   induction K
---   · simp
---   · rename_i K' IH
---     conv =>
---       enter [1, 4]
---       rw [<- add_assoc]
---     rw [probWhileSplit_succ_l]
---     generalize HF : (fun (x : ℕ × ℤ) => (privNoiseZero ε₁ (4 * ε₂)).probBind fun vk => probPure (x.1 + 1, vk)) = F
---     rw [HF] at IH
---     rw [<- IH]
---     rw [<- probWhileSplit_succ_l]
---
---     -- Split it up into the first N terms, and the remaining K' or K'+1 terms in the contiunation
---     -- The "extra branches" should all be 0 when evaluated at N, their initial values all start higher than N.
---
---
---     -- FIXME: Actually do this step to make sure the lemmas I'm trying to prove are the right ones.
---
---     sorry
---
---
---
--- -- This can be used in a lemma to show that it's eventually constant, ie
--- -- for all N ≥ S k:
--- --    privMaxCut _ _ _ (N + 1) k = privMaxCut _ _ _ N k
---
---
--- -- This is because, if we do more unrollings, it just adds more branches
--- -- into a paths which all return values greater than k, by the lemma before.
---
--- -- Then, there should be a lemma about the limits of eventually constant sequences, which
--- -- alongside probWhile_apply, should be able to rewrite
--- --  privMax ... k = (let τ <- ..., privMax_cut ... k k)
--- lemma privMax_eval_limit {ε₁ ε₂ : ℕ+} {l : List ℕ} {k : ℕ} :
---     @privMax_eval PureDPSystem ε₁ ε₂ l k = privMax_cut ε₁ ε₂ l k k := by
---   simp [privMax_eval, privMax_cut]
---   apply tsum_congr
---   intro τ
---   congr 1
---   apply tsum_congr
---   intro v0
---   congr 1
---   apply tsum_congr
---   intro (r, vr)
---   split <;> try simp
---   rename_i Hk
---   subst Hk
---   apply probWhile_apply
---
---   -- Evaluate the filter
---   apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ k)
---   intro i Hi
---   rw [<- Nat.add_sub_cancel' Hi]
---   apply (@privMax_cut_support_eventually_constant v0 ε₁ ε₂ τ l k (i - k) vr)
