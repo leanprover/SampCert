@@ -137,11 +137,9 @@ lemma probWhileSplit_add_l (cond : T → Bool) (body : T → SLang T) (continuat
 
 
 /--
-Move iterates of probWhileSplit into the initial value, when the continuation is probPure
-
-Probably no use for this theorem
+Move iterate of probWhileSplit into the initial value, when the continuation is probPure
 -/
-lemma probWhileSplit_succ_r (cond : T → Bool) (body : T → SLang T) (n : Nat) (init : T):
+lemma probWhileSplit_succ_r_pure (cond : T → Bool) (body : T → SLang T) (n : Nat) (init : T):
     probWhileSplit cond body probPure (Nat.succ n) init =
     (probWhileSplit cond body probPure 1 init)  >>=  (probWhileSplit cond body probPure n) := by
   apply funext
@@ -184,6 +182,31 @@ lemma probWhileSplit_succ_r (cond : T → Bool) (body : T → SLang T) (n : Nat)
     rw [H]
 
 
+/--
+Move iterates of probWhileSplit into the initial value, when the continuation is probPure
+-/
+lemma probWhileSplit_add_r_pure (cond : T → Bool) (body : T → SLang T) (m n : Nat) (init : T):
+    probWhileSplit cond body probPure (m + n) init =
+    (probWhileSplit cond body probPure m init)  >>=  (probWhileSplit cond body probPure n) := by
+  revert init
+  induction m
+  · simp [probWhileSplit]
+  · intro init
+    rename_i m' IH
+    rw [add_comm, <- add_assoc]
+    rw [probWhileSplit_succ_r_pure]
+    rw [add_comm]
+    rw [bind_congr IH]
+    rw [probWhileSplit_succ_r_pure _ _ m']
+    conv =>
+      congr
+      · enter [1]
+        simp [probWhileSplit]
+      · enter [1, 1]
+        simp [probWhileSplit]
+    split <;> simp
+
+
 
 -- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
 -- of the body.
@@ -191,7 +214,10 @@ def mono_conditional (cond : T → Bool) (body : T → SLang T) : Prop :=
     ∀ t : T, (cond t = false) -> (∀ t', cond t' = false ∨ body t t' = 0)
 
 
-lemma probWhileSplit_succ_r' (cond : T → Bool) (body : T → SLang T) (n : Nat) (Hn : n > 0) (init : T):
+/--
+Move iterate of probWhileSplit into initial condition, when continuation is probZero
+-/
+lemma probWhileSplit_succ_r_zero (cond : T → Bool) (body : T → SLang T) (n : Nat) (Hn : n > 0) (init : T):
     probWhileSplit cond body (fun _ => probZero) (Nat.succ n) init =
     (probWhileSplit cond body probPure 1 init)  >>=  (probWhileSplit cond body (fun _ => probZero) n) := by
   apply funext
@@ -199,13 +225,8 @@ lemma probWhileSplit_succ_r' (cond : T → Bool) (body : T → SLang T) (n : Nat
   simp [probWhileSplit]
   split
   · simp [probBind]
-  · -- Conditional is false.
-    --  - probWHileSplits do a a ret,
-    --  - RHS moves into loop
-    --  - Conditional is false at the start of the loop by monotonicity, so it becomes a ret too
-    rename_i h
+  · rename_i h
     simp at h
-    -- Can simplify the "a" in that sum
     conv =>
       rhs
       enter [1, a]
@@ -219,8 +240,6 @@ lemma probWhileSplit_succ_r' (cond : T → Bool) (body : T → SLang T) (n : Nat
       split <;> simp
     simp [H1]
     clear H1
-
-    -- since n > 0 the RHS should apply the conditional, which will be false.
     unfold probWhileSplit
     cases n
     · exfalso
@@ -228,6 +247,9 @@ lemma probWhileSplit_succ_r' (cond : T → Bool) (body : T → SLang T) (n : Nat
     · simp [h]
 
 
+/--
+Move iterate of probWhileSplit into initial condition, when continuation is probZero
+-/
 lemma probWhileSplit_add_r' (cond : T → Bool) (body : T → SLang T) (m n : Nat) (Hn : n > 0) (init : T):
     probWhileSplit cond body (fun _ => probZero) (m + n) init =
     (probWhileSplit cond body probPure m init)  >>=  (probWhileSplit cond body (fun _ => probZero) n) := by
@@ -240,7 +262,7 @@ lemma probWhileSplit_add_r' (cond : T → Bool) (body : T → SLang T) (m n : Na
     conv =>
       lhs
       rw [add_comm, <- add_assoc]
-    rw [probWhileSplit_succ_r' _ _ _ (by linarith)]
+    rw [probWhileSplit_succ_r_zero _ _ _ (by linarith)]
     rw [add_comm]
     cases m'
     · simp
