@@ -253,7 +253,7 @@ lemma probWhileSplit_succ_r_zero (cond : T → Bool) (body : T → SLang T) (n :
     rw [ENNReal.tsum_eq_add_tsum_ite init]
     simp
     have H1 :
-      (∑' (x_1 : T), if x_1 = init then 0 else if x_1 = init then probWhileSplit cond body (fun x => probZero) n x_1 x else 0) = 0 := by
+      (∑' (x_1 : T), if x_1 = init then 0 else if x_1 = init then probWhileSplit cond body (fun _ => probZero) n x_1 x else 0) = 0 := by
       apply ENNReal.tsum_eq_zero.mpr
       intro i
       split <;> simp
@@ -316,59 +316,55 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
   rfl
 
 
-/--
-Sufficient condition for proving that a probWhileCut is constant after n unfoldings:
-All (hypothetical) future loop guard conditionals cause it to terminate.
--/
-theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang T) (i n : Nat) (Hn : 0 < n) (init : T)
-    (p : T)
-    -- Evaluating at p for n iterates, the base case isn't relevant
-    -- Basically, after n iterates, nothing touches the point p
-    (Hno_base : probWhileCut cond body n init p = probWhileSplit cond body probPure n init p)
-
-    -- This is too strong
-    -- -- The continue condition will be false for everything in the support of the first n iterates?
-    -- (Hterm : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> cond v = false ) :
-
-    -- Starting at anything in the support of the first t iterates, any additional iterates won't change p
-    -- This is also too strong, since the first t iterates can terminate early.
-    -- (Hsep : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> True) :
-
-    -- Two ideas:
-    --   - Develop equations for "doing exactly n iterations"
-    --   - Strengthen monotone condition predicate to decide if the first n iterates terminated
-    --     successfully or hit the base case
-
-    -- In order to finish this lemma, we need to say that either:
-    --   - The first n iterates don't terminate early, putting us in a state when
-    --        future iterates don't touch the evaluation at p.
-    --   - The first n iterates do terminate early; putting us in a state
-    --        where any hypothetical future iterate will fail the check (cond monotonicity)
-    --        so will not touch the evaluation at p.
-    -- This is pretty challenging to express without being able to index into the loop guards.
-    -- So it may be easier to leave as is, and prove it only for our special case, where tracking
-    -- histories makes this possible.
-    :
-    probWhileCut cond body (n + i) init p = probWhileCut cond body n init p := by
-  cases i
-  · simp
-  rename_i i'
-  rw [probWhileCut_add_r _ _ _ _ (by linarith)]
-  rw [Hno_base]
-
-  have H : probWhileSplit cond body probPure n init p = (probWhileSplit cond body probPure n init >>= probPure) p := by
-    simp [probWhileSplit]
-
-    sorry
-  rw [H]
-  simp only [bind]
-
-  -- For all values in the support of the first n iterates, trying to do more iterates will terminate immediately
-  apply (unfunext _ _  p (probBind_congr_strong _ _ _ _))
-  intro v Hv
-  -- simp only [probWhileCut, probWhileFunctional]
-
-  sorry
+-- theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang T) (i n : Nat) (Hn : 0 < n) (init : T)
+--     (p : T)
+--     -- Evaluating at p for n iterates, the base case isn't relevant
+--     -- Basically, after n iterates, nothing touches the point p
+--     (Hno_base : probWhileCut cond body n init p = probWhileSplit cond body probPure n init p)
+--
+--     -- This is too strong
+--     -- -- The continue condition will be false for everything in the support of the first n iterates?
+--     -- (Hterm : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> cond v = false ) :
+--
+--     -- Starting at anything in the support of the first t iterates, any additional iterates won't change p
+--     -- This is also too strong, since the first t iterates can terminate early.
+--     -- (Hsep : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> True) :
+--
+--     -- Two ideas:
+--     --   - Develop equations for "doing exactly n iterations"
+--     --   - Strengthen monotone condition predicate to decide if the first n iterates terminated
+--     --     successfully or hit the base case
+--
+--     -- In order to finish this lemma, we need to say that either:
+--     --   - The first n iterates don't terminate early, putting us in a state when
+--     --        future iterates don't touch the evaluation at p.
+--     --   - The first n iterates do terminate early; putting us in a state
+--     --        where any hypothetical future iterate will fail the check (cond monotonicity)
+--     --        so will not touch the evaluation at p.
+--     -- This is pretty challenging to express without being able to index into the loop guards.
+--     -- So it may be easier to leave as is, and prove it only for our special case, where tracking
+--     -- histories makes this possible.
+--     :
+--     probWhileCut cond body (n + i) init p = probWhileCut cond body n init p := by
+--   cases i
+--   · simp
+--   rename_i i'
+--   rw [probWhileCut_add_r _ _ _ _ (by linarith)]
+--   rw [Hno_base]
+--
+--   have H : probWhileSplit cond body probPure n init p = (probWhileSplit cond body probPure n init >>= probPure) p := by
+--     simp [probWhileSplit]
+--
+--     sorry
+--   rw [H]
+--   simp only [bind]
+--
+--   -- For all values in the support of the first n iterates, trying to do more iterates will terminate immediately
+--   apply (unfunext _ _  p (probBind_congr_strong _ _ _ _))
+--   intro v Hv
+--   -- simp only [probWhileCut, probWhileFunctional]
+--
+--   sorry
 
 -- -- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
 -- -- of the body.
@@ -382,7 +378,7 @@ theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang
 
 
 /-
-## History-tracking program
+## History-tracking privMax program
 -/
 
 
@@ -418,27 +414,18 @@ lemma G_mono (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) (c : ℤ) p
 
 
 
+/--
+History-aware loop condition for the privMax program
 
-
-
--- FIXME
-
-
-
-
-
-
-
-
-
-
-
--- The loop continues when the maximum value so far does not exceed τ.
--- Once it is false once, it is false forever.
+Monotonicity allows us to express this in terms of the entire history. The imlemented
+version shoudld only consider the last sample.
+-/
 def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : List ℤ) : Bool :=
   match history with
   | [] => true
   | (h :: hs) => G l ⟨ h :: hs, by simp ⟩ < τ
+
+
 
 /--
 Once a history terminates the loop, any hypothetical future loop conditions are also aware that it terminates
@@ -455,17 +442,16 @@ lemma privMax_G_continue_alt_mono (l : List ℕ) (τ : ℤ) (history : List ℤ)
   apply LE.le.trans_lt _ H2
   apply G_mono
 
--- NOTE Somehow, this could help us do induction on the branches the program never explores.
--- Inductively rewriting branches that are never executed seems like overkill, but the alternative
--- (with the splittting, for example) proved to be quite hard.
 
 
-
-
-
+/--
+History-aware body for the privMax sampling loop
+-/
 def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang (List ℤ) := do
   let candidate <- privNoiseZero ε₁ (4 * ε₂)
   return history ++ [candidate]
+
+
 
 /--
 Support of privMaxEval_alt_body is contained in the extensions of the history by one element
@@ -482,44 +468,71 @@ def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang
   probWhile
     (privMax_eval_alt_cond l τ)
     (privMax_eval_alt_F ε₁ ε₂)
-    (<- privMax_eval_alt_F ε₁ ε₂ [])
+    []
+    -- (<- privMax_eval_alt_F ε₁ ε₂ [])
 
-
-
-
-
-
-
-
-
-
--- 0th reduction: Go from complete history-tracking sampler to the sampler I have implemented in code
---  (how do I do this?)
-
+/--
+History-aware privMax program
+-/
 def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
   let τ <- privNoiseZero ε₁ (2 * ε₂)
   let final_history <- privMax_eval_alt_loop ε₁ ε₂ l τ
   return final_history.length
 
-
-
-
-
--- 1st reduction: Pointwise bound on the number of loop iterates
+/--
+Sampling loop for the bounded history-aware privMax function
+-/
 def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
   probWhileCut
     (privMax_eval_alt_cond l τ)
     (privMax_eval_alt_F ε₁ ε₂)
     N
-    (<- privMax_eval_alt_F ε₁ ε₂ [])
+    []
 
--- Evaluates a point ℕ by evaluating at most N iterates
+
+/--
+Closed form for privMax_eval_alt_loop_cut evaluated on the history hist, in terms of the number of iterates.
+
+Namely, it is a step function.
+-/
+def privMax_eval_alt_loop_cut_step (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (iterates : ℕ) (hist : List ℤ) : ENNReal :=
+  if (iterates < hist.length)
+    then 0
+    else privMax_eval_alt_loop_cut ε₁ ε₂ l τ hist.length hist
+
+
+/--
+privMax_eval_alt equals its closed form
+-/
+lemma privMax_eval_alt_loop_cut_closed :
+    privMax_eval_alt_loop_cut ε₁ ε₂ l τ N h =  privMax_eval_alt_loop_cut_step ε₁ ε₂ l τ N h := by
+  revert h
+  induction N
+  · intro h
+    simp [privMax_eval_alt_loop_cut, privMax_eval_alt_loop_cut_step]
+    simp [probWhileCut]
+    cases h <;> simp
+    simp [probWhileCut]
+  rename_i N' IH
+
+
+
+  sorry
+
+
+/--
+The first reduction: Evaluate each point using a finite number of iterates
+-/
 def privMax_eval_alt_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
   (do
     let τ <- privNoiseZero ε₁ (2 * ε₂)
-    let final_history<- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
+    let final_history <- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
     return final_history.length) N)
 
+/-
+The main program equals the cut program
+-/
+-- lemma privMax_eval_alt_loop_limit :
 
 lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     privMax_eval_alt ε₁ ε₂ l = privMax_eval_alt_cut ε₁ ε₂ l := by
@@ -536,9 +549,6 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   split <;> try simp
   rename_i Hcutoff
   simp [privMax_eval_alt_loop, privMax_eval_alt_loop_cut]
-  apply tsum_congr
-  intro initial_history
-  congr
 
   -- Apply probWhile limit lemma
   apply probWhile_apply
@@ -552,33 +562,21 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   generalize Hd : later_cutoff - cutoff = d
   clear Hlep Hd later_cutoff
 
-  -- Revert something about the size of the tape?
-  induction d
-  · simp
-  · -- Apply IH to reduce the difference to 1
-    rename_i d' IH
-    rw [<- IH]
-    clear IH
+  -- Change to closed form
+  have H := @privMax_eval_alt_loop_cut_closed
+  unfold privMax_eval_alt_loop_cut at H
+  rw [H, H]
+  clear H
 
-    -- The tricky thing: The continuation isn't the same for _all_ histories, just
-    -- those with at least cutoff samples.
-    -- To separate this program into the cuttoff + (d, d+1) part, and prove that the d part
-    -- equals the (d+1) part, I need the (d, d+1) parts to know that their tapes have at least cutoff samples
-    sorry
-
-
-  -- Maybe this? Not sure
-  -- Split into (do cutoff) with (do d) as continuation
-  -- Prove that inner (do d) is zero
-  --  - Prove that condition does not change
-  --  - Prove that
-  -- Continuation is zero
-  -- Fold back into probWhile
+  rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
+  simp [Hcutoff]
 
 
 
 
 
+
+/-
 -- Reduction 2: Sample all the noise upfront (that is, calculate G(D)), and then
 -- Check to see if the nth iterate is the terminating one.
 
@@ -705,7 +703,7 @@ lemma probWhileCut_monotone_lemma (cond : T → Bool) (body : T → SLang T)
 
 
 
-
+-/
 
 end SLang
 
