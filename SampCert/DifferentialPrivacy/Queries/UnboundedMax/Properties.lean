@@ -450,8 +450,8 @@ lemma privMax_G_continue_alt_mono (l : List ℕ) (τ : ℤ) (history : List ℤ)
 /--
 History-aware body for the privMax sampling loop
 -/
-def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang (List ℤ) := do
-  let candidate <- privNoiseZero ε₁ (4 * ε₂)
+def privMax_eval_alt_F {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang (List ℤ) := do
+  let candidate <- @privNoiseZero dps ε₁ (4 * ε₂)
   return history ++ [candidate]
 
 
@@ -459,15 +459,15 @@ def privMax_eval_alt_F (ε₁ ε₂ : ℕ+) (history : List ℤ) : SLang (List �
 /--
 Support of privMaxEval_alt_body is contained in the extensions of the history by one element
 -/
-lemma privMaxEval_alt_body_supp (ε₁ ε₂ : ℕ+) history eval :
-    (privMax_eval_alt_F ε₁ ε₂ history eval) ≠ 0 -> ∃ z, eval = history ++ [z] := by
+lemma privMaxEval_alt_body_supp {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) history eval :
+    (@privMax_eval_alt_F dps ε₁ ε₂ history eval) ≠ 0 -> ∃ z, eval = history ++ [z] := by
   simp [privMax_eval_alt_F ]
   intro x Heval _
   exists x
 
 -- FIXME: cleanup
-lemma privMaxEval_alt_body_supp' (ε₁ ε₂ : ℕ+) history eval :
-    (¬(∃ z, eval = history ++ [z])) -> (privMax_eval_alt_F ε₁ ε₂ history eval) = 0 := by
+lemma privMaxEval_alt_body_supp' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) history eval :
+    (¬(∃ z, eval = history ++ [z])) -> (@privMax_eval_alt_F dps ε₁ ε₂ history eval) = 0 := by
   apply Classical.by_contradiction
   intro A
   apply A
@@ -480,10 +480,10 @@ lemma privMaxEval_alt_body_supp' (ε₁ ε₂ : ℕ+) history eval :
   trivial
 
 
-def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang (List ℤ) := do
+def privMax_eval_alt_loop {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang (List ℤ) := do
   probWhile
     (privMax_eval_alt_cond l τ)
-    (privMax_eval_alt_F ε₁ ε₂)
+    (@privMax_eval_alt_F dps ε₁ ε₂)
     []
 
 
@@ -492,26 +492,26 @@ def privMax_eval_alt_loop (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) : SLang
 /--
 History-aware privMax program
 -/
-def privMax_eval_alt (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
-  let τ <- privNoiseZero ε₁ (2 * ε₂)
-  let final_history <- privMax_eval_alt_loop ε₁ ε₂ l τ
+def privMax_eval_alt {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+  let final_history <- @privMax_eval_alt_loop dps ε₁ ε₂ l τ
   return final_history.length
 
 /--
 Sampling loop for the bounded history-aware privMax function
 -/
-def privMax_eval_alt_loop_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
+def privMax_eval_alt_loop_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
   probWhileCut
     (privMax_eval_alt_cond l τ)
-    (privMax_eval_alt_F ε₁ ε₂)
+    (@privMax_eval_alt_F dps ε₁ ε₂)
     N
     []
 
 /--
 [] is never in the support of the cut loop, no matter how many iterations
 -/
-lemma privMax_eval_alt_loop_cut_empty (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) :
-    privMax_eval_alt_loop_cut ε₁ ε₂ l τ N [] = 0 := by
+lemma privMax_eval_alt_loop_cut_empty {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) :
+    @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = 0 := by
   rw [privMax_eval_alt_loop_cut]
   induction N
   · simp [probWhileCut]
@@ -543,17 +543,17 @@ Closed form for privMax_eval_alt_loop_cut evaluated on the history hist, in term
 
 Namely, it is a step function.
 -/
-def privMax_eval_alt_loop_cut_step (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (iterates : ℕ) (hist : List ℤ) : ENNReal :=
+def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (iterates : ℕ) (hist : List ℤ) : ENNReal :=
   if (iterates < hist.length)
     then 0
-    else privMax_eval_alt_loop_cut ε₁ ε₂ l τ hist.length hist
+    else @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ hist.length hist
 
 
 /--
 privMax_eval_alt equals its closed form
 -/
-lemma privMax_eval_alt_loop_cut_closed :
-    privMax_eval_alt_loop_cut ε₁ ε₂ l τ N h =  privMax_eval_alt_loop_cut_step ε₁ ε₂ l τ N h := by
+lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
+    @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N h = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N h := by
   revert h
   induction N
   · intro h
@@ -641,10 +641,10 @@ lemma privMax_eval_alt_loop_cut_closed :
 /--
 The first reduction: Evaluate each point using a finite number of iterates
 -/
-def privMax_eval_alt_cut (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
+def privMax_eval_alt_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
   (do
-    let τ <- privNoiseZero ε₁ (2 * ε₂)
-    let final_history <- privMax_eval_alt_loop_cut ε₁ ε₂ l τ N
+    let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+    let final_history <- @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N
     return final_history.length) N)
 
 /-
@@ -653,7 +653,7 @@ The main program equals the cut program
 -- lemma privMax_eval_alt_loop_limit :
 
 lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
-    privMax_eval_alt ε₁ ε₂ l = privMax_eval_alt_cut ε₁ ε₂ l := by
+    @privMax_eval_alt dps ε₁ ε₂ l = @privMax_eval_alt_cut dps ε₁ ε₂ l := by
   -- Want to show that the eval (unbounded at each point) equals the cut version (cut to N at each point)
   apply SLang.ext
   intro cutoff
@@ -702,12 +702,12 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 /--
 Sample N noised values. Always returns a list of length N.
 -/
-def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.length = N } :=
+def privMax_sampN {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.length = N } :=
   match N with
   | Nat.zero => probPure ⟨ [], by simp ⟩
   | Nat.succ N' => do
-      let v <- privNoiseZero ε₁ (4 * ε₂)
-      let r <- privMax_sampN ε₁ ε₂ N'
+      let v <- @privNoiseZero dps ε₁ (4 * ε₂)
+      let r <- @privMax_sampN dps ε₁ ε₂ N'
       probPure ⟨ v :: r.1, by cases r; simp ; trivial ⟩
 
 
@@ -715,11 +715,11 @@ def privMax_sampN (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.len
 Sample N+1 noise values upfront. Return (N+1) when the first N noised prefix
 sums are less than τ, and the N+1st noised prefix sum exceeds τ.
 -/
-def privMax_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+def privMax_presample {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
 (fun N =>
   (do
-    let τ <- privNoiseZero ε₁ (2 * ε₂)
-    let history <- privMax_sampN ε₁ ε₂ N.succ
+    let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+    let history <- @privMax_sampN dps ε₁ ε₂ N.succ
     if (privMax_eval_alt_cond l τ history.1) ∧ ¬ (privMax_eval_alt_cond l τ history.1.tail)
       then probPure (N + 1)
       else probZero)
@@ -727,11 +727,50 @@ def privMax_presample (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
 
 
 
+lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ)  :
+    @privMax_eval_alt_cut dps ε₁ ε₂ l = @privMax_presample dps ε₁ ε₂ l := by
+  -- Evaluate the identical preludes
+  unfold privMax_presample
+  unfold privMax_eval_alt_cut
+  apply SLang.ext
+  intro N
+  simp only [bind]
+  congr 1
+  apply funext
+  intro τ
+
+
+  sorry
+
+
+/-
+## Reduction 3: Separate the random samples we will view as deterministic, from the random samples for the DP proof.
+-/
+
+
+def privMax_presample_sep_det {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.length = N} :=
+  @privMax_sampN dps ε₁ ε₂ N
+
+
+def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+(fun N =>
+  (do
+    -- Part we will parameterize over (ie. using tsum_congr)
+    let history <- @privMax_presample_sep_det dps ε₁ ε₂ N
+
+    -- Part which includes the randomness in the proof (τ and the final sample)
+    let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+    let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
+    if (privMax_eval_alt_cond l τ (vk :: history.1)) ∧ ¬ (privMax_eval_alt_cond l τ history.1)
+      then probPure (N + 1)
+      else probZero)
+  N)
 
 
 
-
-
+lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
+    @privMax_presample dps ε₁ ε₂ l = @privMax_presample_sep dps ε₁ ε₂ l := by
+  sorry
 
 
 
