@@ -161,9 +161,7 @@ def mono_conditional (cond : T → Bool) (body : T → SLang T) : Prop :=
     ∀ t : T, (cond t = false) -> (∀ t', cond t' = false ∨ body t t' = 0)
 
 
--- This is the shape of lemma I'm looking for (probably), and it's what needs to use montonicity.
-
-lemma probWhileSplit_succ_r_mono (cond : T → Bool) (body : T → SLang T) (H : mono_conditional cond body) (n : Nat) (Hn : n > 0) (init : T):
+lemma probWhileSplit_succ_r' (cond : T → Bool) (body : T → SLang T) (n : Nat) (Hn : n > 0) (init : T):
     probWhileSplit cond body (fun _ => probZero) (Nat.succ n) init =
     (probWhileSplit cond body probPure 1 init)  >>=  (probWhileSplit cond body (fun _ => probZero) n) := by
   apply funext
@@ -177,7 +175,6 @@ lemma probWhileSplit_succ_r_mono (cond : T → Bool) (body : T → SLang T) (H :
     --  - Conditional is false at the start of the loop by monotonicity, so it becomes a ret too
     rename_i h
     simp at h
-    have H := H _ h
     -- Can simplify the "a" in that sum
     conv =>
       rhs
@@ -200,7 +197,80 @@ lemma probWhileSplit_succ_r_mono (cond : T → Bool) (body : T → SLang T) (H :
       linarith
     · simp [h]
 
--- NOTE: This is good progress! The n > 0 constraint may be an issue. Think more about this before moving on.
+
+lemma probWhileSplit_add_r' (cond : T → Bool) (body : T → SLang T) (m n : Nat) (Hn : n > 0) (init : T):
+    probWhileSplit cond body (fun _ => probZero) (m + n) init =
+    (probWhileSplit cond body probPure m init)  >>=  (probWhileSplit cond body (fun _ => probZero) n) := by
+  revert init
+  induction m
+  · intro init
+    simp [probWhileSplit]
+  · intro init
+    rename_i m' IH
+    conv =>
+      lhs
+      rw [add_comm, <- add_assoc]
+    rw [probWhileSplit_succ_r' _ _ _ (by linarith)]
+    rw [add_comm]
+    cases m'
+    · simp
+    rename_i m''
+    rw [bind_congr IH]
+    clear IH
+    generalize HK : (probWhileSplit cond body (fun x => probZero) n) = K
+    unfold probWhileSplit
+    simp
+    split <;> simp
+    · apply SLang.ext
+      simp
+      -- Monotonicity necessary here? Seems odd that I'd need it in the inductive proof but not the single step proof
+      -- However, maybe not so weird. The step I'm getting stuck on is proving asociativity, which didn't
+      -- need to happen in the 1 step proof.
+      sorry
+    · rw [if_neg (by trivial)]
+      simp
+
+
+
+/--
+Stronger congruence rule for probBind: The bound-to functions have to be equal only on the support of
+the bound-from function.
+-/
+lemma probBind_congr_strong (p : SLang T) (f : T -> SLang U) (g : T -> SLang U) (Hcong : ∀ t : T, p t ≠ 0 -> f t = g t) :
+    p >>= f = p >>= g := by
+  simp
+  unfold probBind
+  apply SLang.ext
+  intro u
+  apply Equiv.tsum_eq_tsum_of_support ?G1
+  case G1 =>
+    apply Set.BijOn.equiv (fun x => x)
+    simp [Function.support]
+    have Heq : {x | ¬p x = 0 ∧ ¬f x u = 0} =  {x | ¬p x = 0 ∧ ¬g x u = 0} := by
+      apply Set.sep_ext_iff.mpr
+      intro t Ht
+      rw [Hcong]
+      apply Ht
+    rw [Heq]
+    apply Set.bijOn_id
+  simp [Function.support]
+  intro t ⟨ Hp, _ ⟩
+  simp [Set.BijOn.equiv]
+  rw [Hcong]
+  apply Hp
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
