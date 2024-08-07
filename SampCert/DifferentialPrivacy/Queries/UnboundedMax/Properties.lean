@@ -96,7 +96,6 @@ def probWhileSplit (cond : T → Bool) (body : T → SLang T) (continuation : T 
       else
         return a
 
-    -- probWhileFunctional cond body (probWhileSplit cond body base n) a
 
 /--
 probWhileCut is probWhileSplit applied to the zero distribution
@@ -311,6 +310,7 @@ theorem probWhileCut_add_r (cond : T → Bool) (body : T → SLang T) (m n : Nat
   trivial
 
 
+
 lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
   subst H
   rfl
@@ -339,7 +339,15 @@ theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang
     --   - Strengthen monotone condition predicate to decide if the first n iterates terminated
     --     successfully or hit the base case
 
-
+    -- In order to finish this lemma, we need to say that either:
+    --   - The first n iterates don't terminate early, putting us in a state when
+    --        future iterates don't touch the evaluation at p.
+    --   - The first n iterates do terminate early; putting us in a state
+    --        where any hypothetical future iterate will fail the check (cond monotonicity)
+    --        so will not touch the evaluation at p.
+    -- This is pretty challenging to express without being able to index into the loop guards.
+    -- So it may be easier to leave as is, and prove it only for our special case, where tracking
+    -- histories makes this possible.
     :
     probWhileCut cond body (n + i) init p = probWhileCut cond body n init p := by
   cases i
@@ -349,7 +357,8 @@ theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang
   rw [Hno_base]
 
   have H : probWhileSplit cond body probPure n init p = (probWhileSplit cond body probPure n init >>= probPure) p := by
-    simp
+    simp [probWhileSplit]
+
     sorry
   rw [H]
   simp only [bind]
@@ -360,8 +369,6 @@ theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang
   -- simp only [probWhileCut, probWhileFunctional]
 
   sorry
-
-
 
 -- -- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
 -- -- of the body.
