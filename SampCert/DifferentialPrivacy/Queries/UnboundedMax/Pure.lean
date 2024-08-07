@@ -28,6 +28,50 @@ namespace SLang
 Reduced, history-aware, presampled, separated program  is (ε₁/ε₂)-DP
 -/
 lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_sep_PMF PureDPSystem ε₁ ε₂) (ε₁ / ε₂) := by
+  -- Transform into inequality
+  simp [PureDP]
+  apply singleton_to_event
+  simp [DP_singleton]
+  intro l₁ l₂ HN n
+  apply (ENNReal.div_le_iff_le_mul ?G1 ?G2).mpr
+  case G1 =>
+    right
+    exact ENNReal.ofReal_ne_top
+  case G2 =>
+    left
+    apply PMF.apply_ne_top
+  unfold privMax_presample_sep_PMF
+  simp [DFunLike.coe, PMF.instFunLike]
+
+  -- Execute the deterministic part
+  simp [privMax_presample_sep]
+  rw [<- ENNReal.tsum_mul_left]
+  apply ENNReal.tsum_le_tsum
+  intro history
+  conv =>
+    enter [2]
+    rw [<- mul_assoc]
+    enter [1]
+    rw [mul_comm]
+  conv =>
+    enter [2]
+    rw [mul_assoc]
+  apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
+  case G1 =>
+    -- privMax_presample_sep_det can sample all n-length histories
+    -- Could also reduce this away by conditioning if an issue
+    sorry
+  case G2 =>
+    -- wf
+    sorry
+
+  -- Now, history is determined, and the system involves the remaining two random events
+
+  -- I wonder if I could get away without the separation lemmas. Seems hard, but I
+  -- might be able to do this cancellation (N-1) times right here.
+  --
+  -- Work on the separation proof some more. If it's way too hard for some reason,
+  -- can explore this instead. My intuition says it'll be roughly the same difficulty.
   sorry
 
 
