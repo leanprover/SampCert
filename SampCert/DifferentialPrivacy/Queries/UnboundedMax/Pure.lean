@@ -64,8 +64,18 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_se
   case G2 =>
     -- wf
     sorry
+  rcases history with ⟨ history, Hhistory ⟩
+  simp only []
 
   -- Now, history is determined, and the system involves the remaining two random events
+
+  -- Do the change of variables (on the LHS)
+  -- Either change n+1 -> n in reduct or postprocess with -1 (hard to tell which is right)
+
+
+
+
+
 
   -- I wonder if I could get away without the separation lemmas. Seems hard, but I
   -- might be able to do this cancellation (N-1) times right here.

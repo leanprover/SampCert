@@ -406,7 +406,7 @@ version shoudld only consider the last sample.
 def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : List ℤ) : Bool :=
   match history with
   | [] => true
-  | (h :: hs) => G l ⟨ h :: hs, by simp ⟩ < τ
+  | (h :: hs) => G l ⟨ h :: hs , by simp ⟩ < τ
 
 
 
@@ -445,7 +445,7 @@ lemma privMaxEval_alt_body_supp {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) histor
   intro x Heval _
   exists x
 
--- FIXME: cleanup
+-- FIXME: cleanup proof
 lemma privMaxEval_alt_body_supp' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) history eval :
     (¬(∃ z, eval = history ++ [z])) -> (@privMax_eval_alt_F dps ε₁ ε₂ history eval) = 0 := by
   apply Classical.by_contradiction
@@ -467,24 +467,41 @@ def privMax_eval_alt_loop {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
     []
 
 
-
-
 /--
 History-aware privMax program
 -/
 def privMax_eval_alt {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
   let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
   let final_history <- @privMax_eval_alt_loop dps ε₁ ε₂ l τ
-  return final_history.length
-
+  return final_history.length - 1
 
 /-
 ## Reduction 0: The implementation version is the same as the history-tracking version
+
+
+This reduction is not necessary, technically, since privMax_eval_alt is computable.
+The later reductions, on the other hand, are necessary.
 -/
 
 lemma privMax_reduction_0 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     @privMax_eval dps ε₁ ε₂ l = @privMax_eval_alt dps ε₁ ε₂ l := by
+  unfold privMax_eval privMax_eval_alt
+  simp
+  apply funext
+  intro N
+  simp
+  apply tsum_congr
+  intro τ
+  congr 1
+  unfold privMax_eval_alt_loop
+  conv =>
+    enter [1, 1, a, 2]
+    rw [ENNReal.tsum_prod']
+
+  -- Separate the sum on the right into a sum over list lengths
   sorry
+
+
 
 
 /-
@@ -499,44 +516,14 @@ def privMax_eval_alt_loop_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : Lis
   probWhileCut
     (privMax_eval_alt_cond l τ)
     (@privMax_eval_alt_F dps ε₁ ε₂)
-    N
+    (N + 1)
     []
-
-/--
-[] is never in the support of the cut loop, no matter how many iterations
--/
-lemma privMax_eval_alt_loop_cut_empty {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) :
-    @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = 0 := by
-  rw [privMax_eval_alt_loop_cut]
-  induction N
-  · simp [probWhileCut]
-  · simp [probWhileCut, probWhileFunctional]
-    -- First loop check always passes
-    simp only [privMax_eval_alt_cond, ↓reduceIte]
-    simp
-    -- We're quantifying over all i right now, but in reality, we should be quantifying over all singletons.
-    -- I'd guess that this is one place where I was getting lost before.
-    intro i
-    cases Classical.em (∃ z, i = [z])
-    · right
-      rename_i n' IH hz
-      rcases hz with ⟨ v , hz ⟩
-      subst hz
-      -- Now we're starting in a history with at least one element
-      unfold probWhileCut
-      -- Stuck
-
-      sorry
-    · left
-      apply privMaxEval_alt_body_supp'
-      simp only [List.nil_append]
-      trivial
-
 
 /--
 Closed form for privMax_eval_alt_loop_cut evaluated on the history hist, in terms of the number of iterates.
 
-Namely, it is a step function.
+Namely, it is a step function. The function probWhileCut needs (hist.length + 1) iterates before hist
+is in its support, and afterwards, no additional iterates return hist.
 -/
 def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (iterates : ℕ) (hist : List ℤ) : ENNReal :=
   if (iterates < hist.length)
@@ -545,16 +532,57 @@ def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l 
 
 
 /--
+Test lemma:
+-/
+lemma removeme_privMax_eval_alt_loop_cut_closed_ {dps : DPSystem ℕ} :
+    @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N [] := by
+  -- Given the argument N = 0, the cut loop will do 1 iteration which is enough for [] to be stable.
+  -- The step function will have threshold 0 < hist.length which will be false, so we get a stable value too.
+  simp [privMax_eval_alt_loop_cut]
+  simp [privMax_eval_alt_loop_cut_step]
+  simp [privMax_eval_alt_loop_cut]
+
+  simp [probWhileCut, probWhileFunctional]
+  split
+  · -- Loop does not terminate at the first conditional. We seek to show that the resulting distribution
+    -- should not have [] in its support, because the first exit is the only time we return [].
+    simp
+    -- F_init is the result of the random sample (privMax_eval_alt_F ε₁ ε₂ [])
+    intro F_init
+    cases Classical.em (∃ z : ℤ, F_init = [z])
+    · -- Case: F_init evaluates to the extension of [] by exactly one element
+      right
+      rename_i h
+      rcases h with ⟨ z, hz ⟩
+      subst hz
+      -- We must show that probWhileCut starting with at least one element in the history
+      -- never "rewrites history" to get back to [].
+
+
+      sorry
+    · -- Case: F_init does not evaluate to the extension of [] by exactly one element
+      -- This has probability zero.
+      left
+      apply privMaxEval_alt_body_supp'
+      simp only [List.nil_append]
+      trivial
+  · -- Loop does terminate at the first conditional
+    simp
+
+
+
+/--
 privMax_eval_alt equals its closed form
 -/
 lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N h = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N h := by
+
+  sorry
+  /-
   revert h
   induction N
   · intro h
     simp [privMax_eval_alt_loop_cut, privMax_eval_alt_loop_cut_step]
-    simp [probWhileCut]
-    cases h <;> simp
     simp [probWhileCut]
   rename_i N' IH
   intro h
@@ -623,14 +651,16 @@ lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     simp [privMax_eval_alt_loop_cut_step] at IH
     split at IH
     · rename_i HN_2
-      have HN_3 : N' + 1 = h.length := by linarith
+      have HN_3 : N' = h.length := by linarith
       rw [HN_3]
+      -- Wrong
+      sorry
     · rw [<- IH]
       clear IH
       -- Number of steps is too large
 
       sorry
-
+  -/
 
 
 /--
@@ -640,7 +670,7 @@ def privMax_eval_alt_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ
   (do
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let final_history <- @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N
-    return final_history.length) N)
+    return final_history.length - 1) N)
 
 /-
 The main program equals the cut program
@@ -678,11 +708,15 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   -- Change to closed form
   have H := @privMax_eval_alt_loop_cut_closed
   unfold privMax_eval_alt_loop_cut at H
-  rw [H, H]
-  clear H
+  sorry
+  -- rw [H, H]
+  -- clear H
 
-  rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
-  simp [Hcutoff]
+  -- rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
+  -- simp [Hcutoff]
+  -- apply ite_congr ?G1 (congrFun rfl) (congrFun rfl)
+
+  -- sorry
 
 
 
@@ -735,6 +769,7 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
   intro τ
 
 
+
   sorry
 
 
@@ -756,7 +791,7 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
     -- Part which includes the randomness in the proof (τ and the final sample)
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
-    if (privMax_eval_alt_cond l τ (vk :: history.1)) ∧ ¬ (privMax_eval_alt_cond l τ history.1)
+    if (privMax_eval_alt_cond l τ (history.1 ++ [vk])) ∧ ¬ (privMax_eval_alt_cond l τ history.1)
       then probPure (N + 1)
       else probZero)
   N)
@@ -765,6 +800,13 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
 
 lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     @privMax_presample dps ε₁ ε₂ l = @privMax_presample_sep dps ε₁ ε₂ l := by
+  unfold privMax_presample
+  unfold privMax_presample_sep
+  unfold privMax_presample_sep_det
+  simp
+  apply funext
+  intro N
+
   sorry
 
 
