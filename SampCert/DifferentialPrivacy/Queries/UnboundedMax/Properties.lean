@@ -532,9 +532,38 @@ def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l 
 
 
 /--
-Test lemma:
+Adding iterates only increases the length of the history
 -/
-lemma removeme_privMax_eval_alt_loop_cut_closed_ {dps : DPSystem ℕ} :
+lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ) (HAB : A.length > B.length) :
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N A B = 0 := by
+  revert A
+  induction N
+  · simp [probWhileCut]
+  · intro A HA
+    rename_i N' IH
+    simp [probWhileCut, probWhileFunctional]
+    split
+    · simp
+      intro F_A
+      cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+      · rename_i h
+        rcases h with ⟨ z, HF_A ⟩
+        right
+        apply IH
+        simp [HF_A]
+        linarith
+      · left
+        apply privMaxEval_alt_body_supp'
+        trivial
+    · simp
+      intro HK
+      simp [HK] at HA
+
+
+/--
+Test lemma: privMax loop cut equals its closed form at []
+-/
+lemma removeme_privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N [] := by
   -- Given the argument N = 0, the cut loop will do 1 iteration which is enough for [] to be stable.
   -- The step function will have threshold 0 < hist.length which will be false, so we get a stable value too.
@@ -557,9 +586,8 @@ lemma removeme_privMax_eval_alt_loop_cut_closed_ {dps : DPSystem ℕ} :
       subst hz
       -- We must show that probWhileCut starting with at least one element in the history
       -- never "rewrites history" to get back to [].
-
-
-      sorry
+      apply privMax_eval_cut_supp_bound
+      simp
     · -- Case: F_init does not evaluate to the extension of [] by exactly one element
       -- This has probability zero.
       left
@@ -568,6 +596,12 @@ lemma removeme_privMax_eval_alt_loop_cut_closed_ {dps : DPSystem ℕ} :
       trivial
   · -- Loop does terminate at the first conditional
     simp
+
+
+
+
+
+
 
 
 
