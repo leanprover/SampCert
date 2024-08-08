@@ -150,6 +150,38 @@ lemma probWhileSplit_add_l (cond : T → Bool) (body : T → SLang T) (continuat
 
 
 /--
+Do exactly n iterations of body starting at `a`, and then apply the continuation.
+-/
+def probRepeat (body : T → SLang T) (n : Nat) (a : T) : SLang T := do
+  match n with
+  | Nat.zero => probPure a
+  | Nat.succ n => do
+      let v ← body a
+      probRepeat body n v
+
+
+/--
+To show that a probWhileSplit has stopped increasing at a point,
+it's enough to show that the probRepeat has stopped increasing at that point
+-/
+lemma probRepeat_lemma_1 (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T) :
+    (probRepeat body n init eval = probRepeat body (n + 1) init eval) ->
+    (probWhileSplit C body probPure n init eval = probWhileSplit C body probPure (n + 1) init eval) := by
+  induction n
+  · intro H
+    simp [probWhileSplit]
+    simp [probRepeat] at H
+
+    sorry
+  sorry
+
+-- Plan:
+-- Then: Break up probRepeat into two sections
+-- Then: Define the support on the first section
+-- Then: Use strong congruence to finish
+
+
+/--
 Move iterate of probWhileSplit into the initial value, when the continuation is probPure
 -/
 lemma probWhileSplit_succ_r_pure (cond : T → Bool) (body : T → SLang T) (n : Nat) (init : T):
@@ -560,6 +592,10 @@ lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C :
       simp [HK] at HA
 
 
+
+
+
+
 /--
 After a certain number of iterations, the function stops changing.
 -/
@@ -568,6 +604,17 @@ lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : 
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) (N + 1) [] B := by
   -- We should be able to prove this by rewriting into the split form, and then applying the strong
   -- congruence theorem with the support bound above.
+  apply le_iff_exists_add.mp at HN
+  rcases HN with ⟨ diff, Hdiff ⟩
+  subst Hdiff
+  -- After |B|+1 iterates, the probability of sampling B is zero
+  -- have H : ∀ n, ((probRepeat (@privMax_eval_alt_F dps ε₁ ε₂) (probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) n) (B.length + 1) []) B = 0) := by
+
+  rw [probWhileCut_probWhileSplit_zero]
+  rw [probWhileCut_probWhileSplit_zero]
+
+  -- rw [probRepeat_lemma_1 (privMax_eval_alt_F ε₁ ε₂) C (B.length + 1 + diff) []]
+-- probWhileCut C (privMax_eval_alt_F ε₁ ε₂) (B.length + 1 + diff) [] B =
   sorry
 
 
@@ -738,22 +785,24 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   intro later_cutoff Hlep
   rw [<- Nat.add_sub_cancel' Hlep]
 
-  -- Change of variables
-  generalize Hd : later_cutoff - cutoff = d
-  clear Hlep Hd later_cutoff
 
-  -- Change to closed form
-  have H := @privMax_eval_alt_loop_cut_closed
-  unfold privMax_eval_alt_loop_cut at H
-  sorry
-  -- rw [H, H]
+  -- -- Change to closed form
+  -- have H := @privMax_eval_alt_loop_cut_closed
+  -- unfold privMax_eval_alt_loop_cut at H
+  -- rw [H]
+  -- cases d
+  -- · simp_all
+  --   -- idk
+  --   sorry
+
+  -- rw [<- add_assoc, H]
+  -- rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
   -- clear H
 
-  -- rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
-  -- simp [Hcutoff]
+  -- subst Hcutoff
   -- apply ite_congr ?G1 (congrFun rfl) (congrFun rfl)
-
-  -- sorry
+  -- -- Something here is screwed up now
+  sorry
 
 
 
