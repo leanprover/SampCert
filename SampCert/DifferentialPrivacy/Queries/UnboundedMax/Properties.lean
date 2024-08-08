@@ -532,7 +532,7 @@ def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l 
 
 
 /--
-Adding iterates only increases the length of the history
+Length of the supported region is bounded below by the length of the initial history.
 -/
 lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ) (HAB : A.length > B.length) :
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N A B = 0 := by
@@ -559,11 +559,40 @@ lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C :
       intro HK
       simp [HK] at HA
 
+/--
+Length of supported region is bounded abouve by the length of the initial history, plus the number of iterations.
+-/
+lemma privMax_eval_cut_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ) (HAB : A.length + N < B.length + 1) :
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N A B = 0 := by
+  revert A
+  induction N
+  · intro _ _
+    simp [probWhileCut]
+  · intro A HA
+    rename_i N' IH
+    simp [probWhileCut, probWhileFunctional]
+    split
+    · simp
+      intro F_A
+      cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+      · rename_i h
+        rcases h with ⟨ z, HF_A ⟩
+        right
+        apply IH
+        simp [HF_A]
+        linarith
+      · left
+        apply privMaxEval_alt_body_supp'
+        trivial
+    · simp
+      intro HK
+      simp [HK] at HA
+
 
 /--
 Test lemma: privMax loop cut equals its closed form at []
 -/
-lemma removeme_privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
+lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N [] := by
   -- Given the argument N = 0, the cut loop will do 1 iteration which is enough for [] to be stable.
   -- The step function will have threshold 0 < hist.length which will be false, so we get a stable value too.
@@ -598,103 +627,21 @@ lemma removeme_privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     simp
 
 
-
-
-
-
-
-
-
 /--
 privMax_eval_alt equals its closed form
 -/
 lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N h = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N h := by
-
-  sorry
-  /-
-  revert h
-  induction N
-  · intro h
-    simp [privMax_eval_alt_loop_cut, privMax_eval_alt_loop_cut_step]
-    simp [probWhileCut]
-  rename_i N' IH
-  intro h
-
-  -- Simplify right-hand side?
-  simp [privMax_eval_alt_loop_cut_step]
+  unfold privMax_eval_alt_loop_cut_step
   split
-  · -- When there are too few steps, evaluation at N' is 0
-    clear IH
-    rename_i HN'
-    simp [privMax_eval_alt_loop_cut]
-    -- rw [probWhileCut_add_r _ _ _ _ (by simp)]
+  · -- Below the step
+    unfold privMax_eval_alt_loop_cut
+    apply privMax_eval_cut_supp_bound'
+    simp
+    trivial
+  · -- Above the step
 
     sorry
-
-    -- revert HN'
-    -- induction N'
-    -- · intro
-    --   simp [probWhileSplit]
-    --   simp [probWhileCut, probWhileFunctional]
-    --   simp [privMax_eval_alt_cond]
-    -- rename_i N'' IHN''
-    -- intro HN''
-    -- have HN''' : N'' + 1  < h.length := by linarith
-    -- have IHN := IHN'' HN'''
-    -- clear IHN'' HN'''
-
-    -- simp [probWhileCut, probWhileFunctional]
-    -- simp [probWhileCut, probWhileFunctional] at IHN
-    -- intro i
-    -- have IH := IHN i
-    -- clear IHN
-    -- cases IH
-    -- · left
-    --   rw [probWhileSplit_succ_r_pure]
-    --   simp
-    --   intro i'
-    --   conv =>
-    --     enter [1]
-    --     unfold probWhileSplit
-    --     simp [privMax_eval_alt_cond]
-    --     enter [v]
-    --     simp [privMax_eval_alt_F]
-    --     unfold probWhileSplit
-    --     simp [privMax_eval_alt_cond]
-    --   right
-    --   sorry
-    -- · right
-    --   trivial
-
-    -- -- induction N'
-    -- -- · simp [privMax_eval_alt_loop_cut, probWhileCut, probWhileFunctional, privMax_eval_alt_cond]
-    -- -- · rename_i N'' IHN''
-    -- --   intro HN''
-    -- --   unfold privMax_eval_alt_loop_cut
-    -- --   unfold probWhileCut
-    -- --   unfold probWhileFunctional
-    -- --   split
-    -- --   ·
-    -- --     sorry
-    -- --   · rename_i Hcont
-    -- --     simp [privMax_eval_alt_cond] at Hcont
-  · rename_i HN_1
-    -- h.length ≤ N' + 1
-    have IH := @IH h
-    simp [privMax_eval_alt_loop_cut_step] at IH
-    split at IH
-    · rename_i HN_2
-      have HN_3 : N' = h.length := by linarith
-      rw [HN_3]
-      -- Wrong
-      sorry
-    · rw [<- IH]
-      clear IH
-      -- Number of steps is too large
-
-      sorry
-  -/
 
 
 /--
