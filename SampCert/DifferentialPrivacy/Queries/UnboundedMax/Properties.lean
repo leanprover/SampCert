@@ -559,6 +559,20 @@ lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C :
       intro HK
       simp [HK] at HA
 
+
+/--
+After a certain number of iterations, the function stops changing.
+-/
+lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (B : List ℤ) (HN : B.length + 1 ≤ N) :
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N [] B =
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) (N + 1) [] B := by
+  -- We should be able to prove this by rewriting into the split form, and then applying the strong
+  -- congruence theorem with the support bound above.
+  sorry
+
+
+
+
 /--
 Length of supported region is bounded abouve by the length of the initial history, plus the number of iterations.
 -/
@@ -641,7 +655,49 @@ lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     trivial
   · -- Above the step
 
-    sorry
+    -- Equal to the step point
+    cases Classical.em (N = h.length)
+    · rename_i Hn
+      subst Hn
+      rfl
+    · -- Greater than the step point
+
+      -- Cleanup context
+      rename_i H1 H2
+      have H3 : h.length < N := by
+        apply lt_of_not_ge
+        intro HK
+        apply GE.ge.le at HK
+        apply LE.le.eq_or_lt at HK
+        cases HK <;> simp_all
+      clear H1 H2
+
+      induction N
+      · exfalso
+        simp at H3
+      rename_i N' IH
+
+      cases Classical.em (N' = h.length)
+      · simp_all
+        -- The real base case
+        -- Should be basically the same as the other argument though
+        -- Just can't/don't need to rewrite with the IH
+        unfold privMax_eval_alt_loop_cut
+        symm
+        apply privMax_eval_cut_const_ind
+        rfl
+      rw [<- IH ?G1]
+      case G1 =>
+        apply Nat.lt_add_one_iff.mp at H3
+        apply LE.le.eq_or_lt at H3
+        cases H3 <;> simp_all
+
+      unfold privMax_eval_alt_loop_cut
+      symm
+      apply privMax_eval_cut_const_ind
+      linarith
+
+
 
 
 /--
