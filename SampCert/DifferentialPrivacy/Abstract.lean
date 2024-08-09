@@ -80,6 +80,12 @@ lemma DPSystem_prop_ext [dps : DPSystem T] {ε₁ ε₂ : NNReal} (m : Mechanism
   assumption
 
 
+lemma DPSystem_mech_prop_ext [dps : DPSystem T] {ε : NNReal} (m1 m2 : Mechanism T U) (Hm : m1 = m2) (H : dps.prop m1 ε) :
+    dps.prop m2 ε := by
+  subst Hm
+  assumption
+
+
 @[simp]
 lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → PMF A) :
     (fun l => (p l) >>= (fun a : U => (q l) >>= fun b : V => h a b)) =
