@@ -1000,8 +1000,8 @@ def privMax_presample {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   (do
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let history <- @privMax_sampN dps ε₁ ε₂ N.succ
-    if (privMax_eval_alt_cond l τ history.1) ∧ ¬ (privMax_eval_alt_cond l τ (@initDep ℤ N history.1 (by cases history ; simp ; trivial )) )
-      then probPure (N + 1)
+    if (¬ privMax_eval_alt_cond l τ history.1) ∧ (privMax_eval_alt_cond l τ (@initDep ℤ N history.1 (by cases history ; simp ; trivial )) )
+      then probPure N
       else probZero)
   N)
 
@@ -1032,12 +1032,16 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
     apply SLang.ext
     intro v
     simp
-    split
-    · simp [probPure]
-      exfalso
-      rename_i h
-      simp [privMax_eval_alt_cond, initDep] at h
-    · simp [probZero]
+    -- Suspicous LHS, need more iterates?
+    sorry
+
+    -- split
+    -- · simp [probPure]
+    --   exfalso
+    --   rename_i h
+    --   simp [privMax_eval_alt_cond, initDep] at h
+
+    -- · simp [probZero]
 
   · rename_i N' IH
     -- I want to unfold one iteration from both sides, but that means I should
@@ -1063,8 +1067,8 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
     -- Part which includes the randomness in the proof (τ and the final sample)
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
-    if (privMax_eval_alt_cond l τ (history.1 ++ [vk])) ∧ ¬ (privMax_eval_alt_cond l τ history.1)
-      then probPure (N + 1)
+    if (¬ privMax_eval_alt_cond l τ (history.1 ++ [vk])) ∧ (privMax_eval_alt_cond l τ history.1)
+      then probPure N
       else probZero)
   N)
 

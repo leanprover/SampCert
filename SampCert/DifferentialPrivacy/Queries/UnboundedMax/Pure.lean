@@ -24,6 +24,19 @@ noncomputable section
 
 namespace SLang
 
+-- Enables the change of variables in privMax_reduct_PureDP
+/--
+Sums over ℤ can be shifted by any any amount
+-/
+lemma tsum_shift_lemma (f : ℤ -> ENNReal) (Δ : ℤ) : ∑'(t : ℤ), f t = ∑'(t : ℤ), f (t + Δ) := by
+  apply tsum_eq_tsum_of_bij (fun z => z + Δ) <;> simp [Function.Injective]
+  intro x Hf
+  exists (x - Δ)
+  simp
+  trivial
+
+
+
 /--
 Reduced, history-aware, presampled, separated program  is (ε₁/ε₂)-DP
 -/
@@ -67,21 +80,46 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_se
   rcases history with ⟨ history, Hhistory ⟩
   simp only []
 
-  -- Now, history is determined, and the system involves the remaining two random events
 
-  -- Do the change of variables (on the LHS)
-  -- Either change n+1 -> n in reduct or postprocess with -1 (hard to tell which is right)
+  -- The n = 0 case is special, since we cannot define G
+  cases n
+  · simp_all
+    sorry
+    -- rw [<- ENNReal.tsum_mul_left]
+    -- apply ENNReal.tsum_le_tsum
+    -- intro τ
+    -- conv =>
+    --   rhs
+    --   rw [mul_comm]
+    --   rw [mul_assoc]
+    -- apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
+    -- case G1 => sorry
+    -- case G2 => sorry
+    -- conv =>
+    --   rhs
+    --   rw [mul_comm]
+    -- rw [<- ENNReal.tsum_mul_left]
+    -- apply ENNReal.tsum_le_tsum
+    -- intro v0
+    -- conv =>
+    --   rhs
+    --   rw [mul_comm]
+    --   rw [mul_assoc]
+    -- apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
+    -- case G1 => sorry
+    -- case G2 => sorry
+  rename_i N
 
+  -- Define the shift for the change of variables
+  -- Might have these backwards
+  let cov_Δτ : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩
+  let cov_Δvk  : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩ + exactDiffSum N l₁ - exactDiffSum N l₂
+  conv =>
+    lhs
+    rw [tsum_shift_lemma _ cov_Δτ]
+    enter [1, t]
+    rw [tsum_shift_lemma _ cov_Δvk]
 
-
-
-
-
-  -- I wonder if I could get away without the separation lemmas. Seems hard, but I
-  -- might be able to do this cancellation (N-1) times right here.
-  --
-  -- Work on the separation proof some more. If it's way too hard for some reason,
-  -- can explore this instead. My intuition says it'll be roughly the same difficulty.
   sorry
 
 
