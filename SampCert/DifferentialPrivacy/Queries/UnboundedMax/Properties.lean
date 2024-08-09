@@ -569,7 +569,7 @@ def privMax_eval_alt_loop_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : Lis
   probWhileCut
     (privMax_eval_alt_cond l τ)
     (@privMax_eval_alt_F dps ε₁ ε₂)
-    (N + 1)
+    (N + 2)
     []
 
 /--
@@ -750,23 +750,26 @@ lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
     -- should not have [] in its support, because the first exit is the only time we return [].
     simp
     -- F_init is the result of the random sample (privMax_eval_alt_F ε₁ ε₂ [])
-    intro F_init
-    cases Classical.em (∃ z : ℤ, F_init = [z])
-    · -- Case: F_init evaluates to the extension of [] by exactly one element
-      right
-      rename_i h
-      rcases h with ⟨ z, hz ⟩
-      subst hz
-      -- We must show that probWhileCut starting with at least one element in the history
-      -- never "rewrites history" to get back to [].
-      apply privMax_eval_cut_supp_bound
-      simp
-    · -- Case: F_init does not evaluate to the extension of [] by exactly one element
-      -- This has probability zero.
-      left
-      apply privMaxEval_alt_body_supp'
-      simp only [List.nil_append]
-      trivial
+
+
+    sorry
+    -- intro F_init
+    -- cases Classical.em (∃ z : ℤ, F_init = [z])
+    -- · -- Case: F_init evaluates to the extension of [] by exactly one element
+    --   right
+    --   rename_i h
+    --   rcases h with ⟨ z, hz ⟩
+    --   subst hz
+    --   -- We must show that probWhileCut starting with at least one element in the history
+    --   -- never "rewrites history" to get back to [].
+    --   apply privMax_eval_cut_supp_bound
+    --   simp
+    -- · -- Case: F_init does not evaluate to the extension of [] by exactly one element
+    --   -- This has probability zero.
+    --   left
+    --   apply privMaxEval_alt_body_supp'
+    --   simp only [List.nil_append]
+    --   trivial
   · -- Loop does terminate at the first conditional
     simp
 
@@ -849,7 +852,8 @@ lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     unfold privMax_eval_alt_loop_cut
     apply privMax_eval_cut_supp_bound'
     simp
-    trivial
+    sorry
+    -- trivial
   · -- Above the step
 
     -- Equal to the step point
@@ -882,7 +886,8 @@ lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
         unfold privMax_eval_alt_loop_cut
         symm
         apply privMax_eval_cut_const_ind
-        rfl
+        sorry
+        -- rfl
       rw [<- IH ?G1]
       case G1 =>
         apply Nat.lt_add_one_iff.mp at H3
@@ -1032,16 +1037,45 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
     apply SLang.ext
     intro v
     simp
-    -- Suspicous LHS, need more iterates?
-    sorry
 
-    -- split
-    -- · simp [probPure]
-    --   exfalso
-    --   rename_i h
-    --   simp [privMax_eval_alt_cond, initDep] at h
+    simp [initDep]
+    simp [privMax_eval_alt_cond]
 
-    -- · simp [probZero]
+    symm
+    split <;> symm
+    · have Hfin : (∑' (a : List ℤ), if v = a.length - 1 then probPure [v0] a else 0) = probPure 0 v := by
+        simp
+        split
+        · rename_i h
+          subst h
+          rw [ENNReal.tsum_eq_add_tsum_ite [v0]]
+          simp
+          conv =>
+            lhs
+            enter [2]
+            rw [ENNReal.tsum_eq_zero.mpr]
+            · skip
+            · exact by
+                intro i
+                split <;> simp
+          simp
+        · apply ENNReal.tsum_eq_zero.mpr
+          intro _
+          simp
+          intro _ _
+          simp_all
+      conv =>
+      enter [1, 1, a]
+      split
+      · exfalso
+        linarith
+      · apply Hfin
+    · simp
+      intro i Hv
+      split
+      · simp
+      · exfalso
+        aesop
 
   · rename_i N' IH
     -- I want to unfold one iteration from both sides, but that means I should
