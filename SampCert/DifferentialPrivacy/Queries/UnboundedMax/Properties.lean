@@ -973,7 +973,23 @@ def privMax_sampN {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { 
   | Nat.succ N' => do
       let v <- @privNoiseZero dps ε₁ (4 * ε₂)
       let r <- @privMax_sampN dps ε₁ ε₂ N'
-      probPure ⟨ v :: r.1, by cases r; simp ; trivial ⟩
+      probPure ⟨ r.1 ++ [v], by cases r; simp ; trivial ⟩
+
+
+def initDep {N : ℕ} (l : List T) (_ : l.length = N.succ) : List T :=
+  match l with
+  | [_] => []
+  | (v :: h1 :: hs) => v :: @initDep _ (hs.length) (h1 :: hs) (by simp)
+
+def initDep_append_singleton {N : ℕ} (l : List T) (vk : T) (Hl : (l ++ [vk]).length = N.succ) :
+    @initDep T N (l ++ [vk]) Hl = l := by
+  revert N
+  induction l
+  · simp [initDep]
+  rename_i h t IH
+  cases t <;> simp_all [initDep]
+
+
 
 
 /--
@@ -985,7 +1001,7 @@ def privMax_presample {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
   (do
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let history <- @privMax_sampN dps ε₁ ε₂ N.succ
-    if (privMax_eval_alt_cond l τ history.1) ∧ ¬ (privMax_eval_alt_cond l τ history.1.tail)
+    if (privMax_eval_alt_cond l τ history.1) ∧ ¬ (privMax_eval_alt_cond l τ (@initDep ℤ N history.1 (by cases history ; simp ; trivial )) )
       then probPure (N + 1)
       else probZero)
   N)
@@ -1032,7 +1048,10 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
       else probZero)
   N)
 
-
+lemma sum_len_split_lemma (N : ℕ) (f : { v : List T // v.length = N + 1 } -> ENNReal) :
+    ∑' (a : { v : List T // v.length = N + 1 }), f a =
+    ∑' (a : { v : List T // v.length = N}), ∑'(b : T), f ⟨ a ++ [b], (by cases a; simp; trivial) ⟩ := by
+  sorry
 
 lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     @privMax_presample dps ε₁ ε₂ l = @privMax_presample_sep dps ε₁ ε₂ l := by
@@ -1043,7 +1062,113 @@ lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
   apply funext
   intro N
 
-  sorry
+  -- Commute out τ and cancel
+  conv =>
+    enter [2, 1, a]
+    rw [<- ENNReal.tsum_mul_left]
+    enter [1, i]
+    rw [<- mul_assoc]
+    enter [1]
+    rw [mul_comm]
+  conv =>
+    enter [2, 1, a, 1, b]
+    rw [mul_assoc]
+  rw [ENNReal.tsum_comm]
+  conv =>
+    enter [2, 1, a]
+    rw [ENNReal.tsum_mul_left]
+  apply tsum_congr
+  intro τ
+  congr 1
+
+  -- Separate the sums
+  rw [sum_len_split_lemma N]
+  conv =>
+    rhs
+    enter [1, i]
+    rw [<- ENNReal.tsum_mul_left]
+  apply tsum_congr
+  intro history
+  apply tsum_congr
+  intro vk
+
+  -- Simplify away the conditional
+  rcases history with ⟨ history, Hhistory ⟩
+  simp
+  conv =>
+    enter [1, 2]
+    rw [initDep_append_singleton]
+  rw [<- mul_assoc]
+  congr 1
+
+  -- Separate the indicator
+  simp [privMax_sampN]
+  have H (a : ℤ) (b : { v // v.length = N }) :
+       (if history ++ [vk] = ↑b ++ [a] then @privMax_sampN dps ε₁ ε₂ N b else 0) =
+       (if history = ↑b then 1 else 0) * (if vk = a then 1 else 0) * (@privMax_sampN dps ε₁ ε₂ N b) := by
+    symm
+    split <;> try simp_all
+    apply eq_ite_iff.mpr
+    right
+    simp
+    intro HK
+    rename_i h
+    apply h
+    exact List.append_inj_left' HK rfl
+  conv =>
+    enter [1, 1, a, 2, 1, b]
+    rw [H]
+  clear H
+
+  -- Move the a indicator to the outside
+  conv =>
+    enter [1, 1, a, 2, 1, b]
+    rw [mul_comm]
+    rw [<- mul_assoc]
+    rw [mul_comm]
+  conv =>
+    enter [1, 1, a]
+    rw [ENNReal.tsum_mul_left]
+    rw [<- mul_assoc]
+    rw [mul_ite, mul_zero, mul_one]
+
+  rw [<- @tsum_subtype_eq_of_support_subset _ _ _ _ _ { v : ℤ | v = vk } ?G1]
+  case G1 =>
+    simp [Function.support]
+  simp
+  rw [ENNReal.tsum_eq_add_tsum_ite ⟨vk, rfl⟩]
+  simp
+  conv =>
+    lhs
+    enter [2]
+    rw [ENNReal.tsum_eq_zero.mpr
+       (by
+         intro i
+         split <;> simp_all
+         intro H
+         exfalso
+         rename_i H'
+         apply H'
+         subst Hhistory
+         simp_all only [Subtype.coe_eta, not_true_eq_false])]
+    · skip
+  simp
+  rw [mul_comm]
+  congr 1
+
+  -- Same for the other indicator
+  rw [<- @tsum_subtype_eq_of_support_subset _ _ _ _ _ { v : { v // v.length = N } | v = ⟨ history, Hhistory ⟩ } ?G1]
+  case G1 =>
+    simp [Function.support]
+    intros
+    symm
+    trivial
+  rw [ENNReal.tsum_eq_add_tsum_ite ⟨⟨history, Hhistory⟩, rfl⟩]
+  simp
+  rw [ENNReal.tsum_eq_zero.mpr]
+  · simp
+  simp
+
 
 
 def privMax_presample_sep_normalizes : HasSum (@privMax_presample_sep dps ε₁ ε₂ l) 1 := by
