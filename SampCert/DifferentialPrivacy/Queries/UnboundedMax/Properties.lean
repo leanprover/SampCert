@@ -981,14 +981,13 @@ def initDep {N : ℕ} (l : List T) (_ : l.length = N.succ) : List T :=
   | [_] => []
   | (v :: h1 :: hs) => v :: @initDep _ (hs.length) (h1 :: hs) (by simp)
 
-def initDep_append_singleton {N : ℕ} (l : List T) (vk : T) (Hl : (l ++ [vk]).length = N.succ) :
+lemma initDep_append_singleton {N : ℕ} (l : List T) (vk : T) (Hl : (l ++ [vk]).length = N.succ) :
     @initDep T N (l ++ [vk]) Hl = l := by
   revert N
   induction l
   · simp [initDep]
   rename_i h t IH
   cases t <;> simp_all [initDep]
-
 
 
 
@@ -1048,10 +1047,79 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
       else probZero)
   N)
 
+
+/--
+Simpler bijection lemma which ignores the support (makes for much easier fn definitions)
+-/
+lemma tsum_eq_tsum_of_bij {α : Type u_1} {β : Type u_2} {γ : Type u_3} [AddCommMonoid α]
+  [TopologicalSpace α] {f : β → α} {g : γ → α}
+    (i : γ → β)
+    (hi : Function.Injective i)
+    (hf : Function.support f ⊆ Set.range fun (x : ↑(Function.support g)) => i ↑x)
+    (hfg : ∀ (x : γ), f (i x) = g x) :
+  ∑' (x : β), f x = ∑' (y : γ), g y := by
+  apply tsum_eq_tsum_of_ne_zero_bij (fun x => i x)
+  · simp [Function.Injective]
+    exact fun a _ a_1 _ a_2 => hi a_2
+  · trivial
+  · simp_all
+
+def sum_lem_split_lemma_i (N : ℕ) (x : { v : List T // v.length = N } × T) : { v : List T // v.length = N + 1 } :=
+  let ⟨ hist, vk ⟩ := x
+  ⟨ hist ++ [vk], by cases hist ; simp; trivial ⟩
+
+
+lemma splitting_list_lemma {N : ℕ} (hist : List T) (Hhist : hist.length = N + 1) :
+    ∃ vr, ∃ l : List T, hist = l ++ [vr] := by
+  revert N
+  induction hist
+  · simp_all
+  · rename_i hh ht IH
+    cases ht
+    · simp
+      exists hh
+      exists []
+    intro N Hl
+    simp at Hl
+    rename_i hh1 hh2
+    have IH := @IH (hh2.length) ?G1
+    case G1 => simp_all
+    rcases IH with ⟨ a, ⟨ b, c ⟩ ⟩
+    exists a
+    exists (hh :: b)
+    simp [c]
+
+
 lemma sum_len_split_lemma (N : ℕ) (f : { v : List T // v.length = N + 1 } -> ENNReal) :
     ∑' (a : { v : List T // v.length = N + 1 }), f a =
     ∑' (a : { v : List T // v.length = N}), ∑'(b : T), f ⟨ a ++ [b], (by cases a; simp; trivial) ⟩ := by
-  sorry
+  rw [← ENNReal.tsum_prod]
+  apply tsum_eq_tsum_of_bij  (sum_lem_split_lemma_i N)
+  · simp [Function.Injective]
+    simp [sum_lem_split_lemma_i]
+    intros _ _ _ _ _ _ H
+    have _ := List.append_inj_left' H
+    simp_all
+  · simp [Function.support]
+    apply Set.setOf_subset.mpr
+    intro x H
+    simp [Set.range]
+    rcases x with ⟨ hist, Hhist ⟩
+    rcases (splitting_list_lemma hist Hhist) with ⟨ a, ⟨ b, c ⟩ ⟩
+    exists b
+    exists ?G1
+    case G1 =>
+      subst c
+      simp at Hhist
+      trivial
+    exists a
+    subst c
+    apply And.intro
+    · trivial
+    · simp [sum_lem_split_lemma_i]
+  · intro x
+    congr 1
+
 
 lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     @privMax_presample dps ε₁ ε₂ l = @privMax_presample_sep dps ε₁ ε₂ l := by
