@@ -69,6 +69,26 @@ lemma probBind_congr_strong (p : SLang T) (f : T -> SLang U) (g : T -> SLang U) 
   rw [Hcong]
   apply Hp
 
+lemma probBind_congr_medium (p : SLang T) (f : T -> SLang U) (g : T -> SLang U) (u : U)
+      (Hcong : ∀ t : T, p t ≠ 0 -> f t u = g t u) :
+      (p >>= f) u = (p >>= g) u := by
+   simp
+   apply Equiv.tsum_eq_tsum_of_support ?G1
+   case G1 =>
+     apply Set.BijOn.equiv (fun x => x)
+     simp [Function.support]
+     have Heq : {x | ¬p x = 0 ∧ ¬f x u = 0} =  {x | ¬p x = 0 ∧ ¬g x u = 0} := by
+       apply Set.sep_ext_iff.mpr
+       intro t Ht
+       rw [Hcong]
+       apply Ht
+     rw [Heq]
+     apply Set.bijOn_id
+   simp [Function.support]
+   intro t ⟨ Hp, _ ⟩
+   simp [Set.BijOn.equiv]
+   rw [Hcong]
+   apply Hp
 
 
 /--
@@ -161,19 +181,20 @@ def probRepeat (body : T → SLang T) (n : Nat) (a : T) : SLang T := do
 
 
 /--
-To show that a probWhileSplit has stopped increasing at a point,
-it's enough to show that the probRepeat has stopped increasing at that point
+probWhileSplit with different continuations are equal the continuations are equal evaluated
 -/
-lemma probRepeat_lemma_1 (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T) :
-    (probRepeat body n init eval = probRepeat body (n + 1) init eval) ->
-    (probWhileSplit C body probPure n init eval = probWhileSplit C body probPure (n + 1) init eval) := by
-  induction n
-  · intro H
-    simp [probWhileSplit]
-    simp [probRepeat] at H
+lemma probWhileSplit_congr_strong (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T)
+    (H : probRepeat body n init >>= cont1 = probRepeat body n init >>= cont2) :
+    (probWhileSplit C body cont1 n init = probWhileSplit C body cont2 n init) := by
 
+  induction n
+  · simp [probWhileSplit]
+    simp [probRepeat] at H
+    trivial
+  · rename_i n' IH
     sorry
-  sorry
+    -- This is probably false in general
+
 
 -- Plan:
 -- Then: Break up probRepeat into two sections
@@ -530,7 +551,7 @@ lemma privMax_reduction_0 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     enter [1, 1, a, 2]
     rw [ENNReal.tsum_prod']
 
-  -- Separate the sum on the right into a sum over list lengths
+  -- Separate the sum on the right into a sum over list lengths?
   sorry
 
 
@@ -566,7 +587,8 @@ def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l 
 /--
 Length of the supported region is bounded below by the length of the initial history.
 -/
-lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ) (HAB : A.length > B.length) :
+lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ)
+  (HAB : A.length > B.length) :
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N A B = 0 := by
   revert A
   induction N
@@ -597,33 +619,10 @@ lemma privMax_eval_cut_supp_bound {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C :
 
 
 /--
-After a certain number of iterations, the function stops changing.
--/
-lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (B : List ℤ) (HN : B.length + 1 ≤ N) :
-    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N [] B =
-    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) (N + 1) [] B := by
-  -- We should be able to prove this by rewriting into the split form, and then applying the strong
-  -- congruence theorem with the support bound above.
-  apply le_iff_exists_add.mp at HN
-  rcases HN with ⟨ diff, Hdiff ⟩
-  subst Hdiff
-  -- After |B|+1 iterates, the probability of sampling B is zero
-  -- have H : ∀ n, ((probRepeat (@privMax_eval_alt_F dps ε₁ ε₂) (probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) n) (B.length + 1) []) B = 0) := by
-
-  rw [probWhileCut_probWhileSplit_zero]
-  rw [probWhileCut_probWhileSplit_zero]
-
-  -- rw [probRepeat_lemma_1 (privMax_eval_alt_F ε₁ ε₂) C (B.length + 1 + diff) []]
--- probWhileCut C (privMax_eval_alt_F ε₁ ε₂) (B.length + 1 + diff) [] B =
-  sorry
-
-
-
-
-/--
 Length of supported region is bounded abouve by the length of the initial history, plus the number of iterations.
 -/
-lemma privMax_eval_cut_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ) (HAB : A.length + N < B.length + 1) :
+lemma privMax_eval_cut_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (A B : List ℤ)
+    (HAB : A.length + N < B.length + 1) :
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N A B = 0 := by
   revert A
   induction N
@@ -648,6 +647,90 @@ lemma privMax_eval_cut_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C 
     · simp
       intro HK
       simp [HK] at HA
+
+-- TODO: Can I prove strong congruence for the constant true split?
+
+
+-- TODO: Can I prove support for the constant true split?
+
+
+-- FIXME: Does the need for HContSupp just come from an off-by-one error?
+lemma privMax_eval_const_true_supp_spec {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (cont : List ℤ -> SLang (List ℤ)) (A B : List ℤ) (N : ℕ)
+    (HContSupp : ∀ C D : List ℤ, C.length < D.length + 1 -> cont C D = 0) (H : A.length + N < B.length + 1) :
+    probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B = 0 := by
+  revert A
+  induction N
+  · intro A HA
+    simp [probWhileSplit]
+    apply HContSupp
+    simp_all
+  · intro A HA
+    rename_i n' IH
+    simp [probWhileSplit]
+    intro F_A
+    cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+    · right
+      rename_i h
+      rcases h with ⟨ z, Hz ⟩
+      subst Hz
+      apply IH
+      simp
+      linarith
+    · left
+      apply privMaxEval_alt_body_supp'
+      trivial
+
+
+
+-- Effectively circular due to the side condition constraint on ConstSupp?
+lemma privMax_eval_split_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool)
+    (cont : List ℤ -> SLang (List ℤ)) (B : List ℤ)
+    (HContSupp : ∀ (C D : List ℤ), C.length < D.length + 1 → cont C D = 0)
+    (HB : A.length + N < B.length + 1) :
+    probWhileSplit C (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B =
+    probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B := by
+  revert A
+  induction N
+  · intro _ _
+    simp [probWhileSplit]
+  · intro A HA
+    rename_i N' IH
+    simp only [probWhileSplit, decide_True, ↓reduceIte]
+    split
+    · apply probBind_congr_medium
+      intro A' HA'
+      apply IH
+      apply privMaxEval_alt_body_supp at HA'
+      rcases HA' with ⟨ z, hz ⟩
+      subst hz
+      simp
+      linarith
+    · conv =>
+        lhs
+        simp
+      split
+      · exfalso
+        rename_i HK
+        subst HK
+        simp at HA
+      symm
+      simp
+      intro F_A
+      cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+      · rename_i h
+        rcases h with ⟨ z, Hz ⟩
+        subst Hz
+        right
+        -- After the N' iterates, the length of F(F(F(...(F(A ++ [z]))))) is A.length + N' + 1
+        -- This length is less than B + 1 by hyp.
+        -- So, applying the contniuation support property, it is zero.
+        apply privMax_eval_const_true_supp_spec
+        · trivial
+        · simp
+          linarith
+      · left
+        apply privMaxEval_alt_body_supp'
+        trivial
 
 
 /--
@@ -686,6 +769,73 @@ lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
       trivial
   · -- Loop does terminate at the first conditional
     simp
+
+
+
+
+/--
+After a certain number of iterations, the function stops changing.
+-/
+lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (B : List ℤ) (HN : B.length + 1 ≤ N) :
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N [] B =
+    probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) (N + 1) [] B := by
+
+  -- We should be able to prove this by rewriting into the split form, and then applying the strong
+  -- congruence theorem with the support bound above.
+  apply le_iff_exists_add.mp at HN
+  rcases HN with ⟨ diff, Hdiff ⟩
+  subst Hdiff
+  rw [probWhileCut_probWhileSplit_zero]
+  rw [probWhileCut_probWhileSplit_zero]
+
+  -- Turn into a sequence of nested probWhileSplits
+
+
+
+
+
+  -- Re-evaluate: what does this split actually equal?
+  -- Is it
+  --    - last element of the outermost split?
+  --    - the first element of the continuation?
+  -- Which do I want it to be?
+  -- How do I specify that?
+
+  -- Intuition says either might be good
+  -- FRIDAY: Finish lemma about the support of probWhileSplit with True conditional
+
+
+  conv =>
+    lhs
+    enter [4]
+    rw [add_assoc, add_comm]
+  rw [probWhileSplit_add_l]
+  have SC1 :  ∀ (C_1 D : List ℤ), C_1.length < D.length + 1 → probWhileSplit C (@privMax_eval_alt_F dps ε₁ ε₂) (fun x => probZero) (1 + diff) C_1 D = 0 := by
+    intro C1 D HL
+
+
+    -- FIXME Might not be provable sadly
+
+
+
+
+    sorry
+  rw [privMax_eval_split_supp_bound' _ _ _ _ _ SC1 (by simp)]
+  conv =>
+    rhs
+    enter [4]
+    rw [add_assoc, add_comm]
+    rw [add_comm B.length]
+    rw [<- add_assoc]
+  rw [probWhileSplit_add_l]
+  have SC2 : ∀ (C_1 D : List ℤ), C_1.length < D.length + 1 → probWhileSplit C (@privMax_eval_alt_F dps ε₁ ε₂) (fun x => probZero) (diff + 1 + 1) C_1 D = 0 := by
+    sorry
+  conv =>
+    rhs
+    rw [privMax_eval_split_supp_bound' _ _ _ _ _ SC2 (by simp)]
+
+  -- Strong congruence and the support equation for the true eqn makes progress
+  sorry
 
 
 /--
