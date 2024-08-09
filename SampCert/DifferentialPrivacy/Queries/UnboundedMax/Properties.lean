@@ -180,20 +180,20 @@ def probRepeat (body : T → SLang T) (n : Nat) (a : T) : SLang T := do
       probRepeat body n v
 
 
-/--
-probWhileSplit with different continuations are equal the continuations are equal evaluated
--/
-lemma probWhileSplit_congr_strong (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T)
-    (H : probRepeat body n init >>= cont1 = probRepeat body n init >>= cont2) :
-    (probWhileSplit C body cont1 n init = probWhileSplit C body cont2 n init) := by
-
-  induction n
-  · simp [probWhileSplit]
-    simp [probRepeat] at H
-    trivial
-  · rename_i n' IH
-    sorry
-    -- This is probably false in general
+--  /-
+--  probWhileSplit with different continuations are equal the continuations are equal evaluated
+--  -/
+--  lemma probWhileSplit_congr_strong (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T)
+--      (H : probRepeat body n init >>= cont1 = probRepeat body n init >>= cont2) :
+--      (probWhileSplit C body cont1 n init = probWhileSplit C body cont2 n init) := by
+--
+--    induction n
+--    · simp [probWhileSplit]
+--      simp [probRepeat] at H
+--      trivial
+--    · rename_i n' IH
+--      s orry
+--      -- This is probably false in general
 
 
 -- Plan:
@@ -397,7 +397,7 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
 --   have H : probWhileSplit cond body probPure n init p = (probWhileSplit cond body probPure n init >>= probPure) p := by
 --     simp [probWhileSplit]
 --
---     sorry
+--     s orry
 --   rw [H]
 --   simp only [bind]
 --
@@ -406,7 +406,7 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
 --   intro v Hv
 --   -- simp only [probWhileCut, probWhileFunctional]
 --
---   sorry
+--   s orry
 
 -- -- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
 -- -- of the body.
@@ -569,7 +569,7 @@ def privMax_eval_alt_loop_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : Lis
   probWhileCut
     (privMax_eval_alt_cond l τ)
     (@privMax_eval_alt_F dps ε₁ ε₂)
-    (N + 2)
+    N
     []
 
 /--
@@ -579,9 +579,9 @@ Namely, it is a step function. The function probWhileCut needs (hist.length + 1)
 is in its support, and afterwards, no additional iterates return hist.
 -/
 def privMax_eval_alt_loop_cut_step {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (iterates : ℕ) (hist : List ℤ) : ENNReal :=
-  if (iterates < hist.length)
+  if (iterates ≤ hist.length)
     then 0
-    else @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ hist.length hist
+    else probWhileCut (privMax_eval_alt_cond l τ) (@privMax_eval_alt_F dps ε₁ ε₂) (hist.length + 1) [] hist
 
 
 /--
@@ -742,17 +742,15 @@ lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
   -- The step function will have threshold 0 < hist.length which will be false, so we get a stable value too.
   simp [privMax_eval_alt_loop_cut]
   simp [privMax_eval_alt_loop_cut_step]
-  simp [privMax_eval_alt_loop_cut]
 
   simp [probWhileCut, probWhileFunctional]
   split
   · -- Loop does not terminate at the first conditional. We seek to show that the resulting distribution
     -- should not have [] in its support, because the first exit is the only time we return [].
-    simp
+    simp_all [probWhileCut]
+
     -- F_init is the result of the random sample (privMax_eval_alt_F ε₁ ε₂ [])
 
-
-    sorry
     -- intro F_init
     -- cases Classical.em (∃ z : ℤ, F_init = [z])
     -- · -- Case: F_init evaluates to the extension of [] by exactly one element
@@ -770,16 +768,20 @@ lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
     --   apply privMaxEval_alt_body_supp'
     --   simp only [List.nil_append]
     --   trivial
-  · -- Loop does terminate at the first conditional
-    simp
-
+  ·
+    cases N
+    · simp_all
+    simp_all [probWhileCut, probWhileFunctional]
+    split <;> try rfl
+    sorry
 
 
 
 /--
 After a certain number of iterations, the function stops changing.
 -/
-lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (B : List ℤ) (HN : B.length + 1 ≤ N) :
+lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool) (B : List ℤ)
+    (HN : B.length + 1 ≤ N) :
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) N [] B =
     probWhileCut C (@privMax_eval_alt_F dps ε₁ ε₂) (N + 1) [] B := by
 
@@ -792,9 +794,6 @@ lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : 
   rw [probWhileCut_probWhileSplit_zero]
 
   -- Turn into a sequence of nested probWhileSplits
-
-
-
 
 
   -- Re-evaluate: what does this split actually equal?
@@ -820,8 +819,6 @@ lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : 
     -- FIXME Might not be provable sadly
 
 
-
-
     sorry
   rw [privMax_eval_split_supp_bound' _ _ _ _ _ SC1 (by simp)]
   conv =>
@@ -837,7 +834,7 @@ lemma privMax_eval_cut_const_ind {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : 
     rhs
     rw [privMax_eval_split_supp_bound' _ _ _ _ _ SC2 (by simp)]
 
-  -- Strong congruence and the support equation for the true eqn makes progress
+  -- Strong congruence and the support equation for the true eqn makes progress????
   sorry
 
 
@@ -846,58 +843,66 @@ privMax_eval_alt equals its closed form
 -/
 lemma privMax_eval_alt_loop_cut_closed {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N h = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N h := by
+
   unfold privMax_eval_alt_loop_cut_step
   split
   · -- Below the step
     unfold privMax_eval_alt_loop_cut
     apply privMax_eval_cut_supp_bound'
     simp
-    sorry
-    -- trivial
+    linarith
   · -- Above the step
+    rename_i h
 
-    -- Equal to the step point
-    cases Classical.em (N = h.length)
-    · rename_i Hn
-      subst Hn
-      rfl
-    · -- Greater than the step point
+    sorry
 
-      -- Cleanup context
-      rename_i H1 H2
-      have H3 : h.length < N := by
-        apply lt_of_not_ge
-        intro HK
-        apply GE.ge.le at HK
-        apply LE.le.eq_or_lt at HK
-        cases HK <;> simp_all
-      clear H1 H2
 
-      induction N
-      · exfalso
-        simp at H3
-      rename_i N' IH
+    -- -- Equal to the step point
+    -- cases Classical.em (N = h.length)
+    -- · rename_i Hn
+    --   subst Hn
+    --   sorry
+    --   -- rfl
+    -- · -- Greater than the step point
 
-      cases Classical.em (N' = h.length)
-      · simp_all
-        -- The real base case
-        -- Should be basically the same as the other argument though
-        -- Just can't/don't need to rewrite with the IH
-        unfold privMax_eval_alt_loop_cut
-        symm
-        apply privMax_eval_cut_const_ind
-        sorry
-        -- rfl
-      rw [<- IH ?G1]
-      case G1 =>
-        apply Nat.lt_add_one_iff.mp at H3
-        apply LE.le.eq_or_lt at H3
-        cases H3 <;> simp_all
+    --   -- Cleanup context
+    --   rename_i H1 H2
+    --   have H3 : h.length < N := by
+    --     apply lt_of_not_ge
+    --     intro HK
+    --     apply GE.ge.le at HK
+    --     apply LE.le.eq_or_lt at HK
+    --     cases HK <;> simp_all
+    --   clear H1 H2
 
-      unfold privMax_eval_alt_loop_cut
-      symm
-      apply privMax_eval_cut_const_ind
-      linarith
+    --   induction N
+    --   · exfalso
+    --     simp at H3
+    --   rename_i N' IH
+
+    --   cases Classical.em (N' = h.length)
+    --   · simp_all
+    --     simp [privMax_eval_alt_loop_cut]
+    --     -- The real base case
+    --     -- Should be basically the same as the other argument though
+    --     -- Just can't/don't need to rewrite with the IH
+    --     -- unfold privMax_eval_alt_loop_cut
+    --     -- symm
+    --     -- apply privMax_eval_cut_const_ind
+    --     -- sorry
+    --     -- rfl
+    --   rw [<- IH ?G1]
+    --   case G1 =>
+    --     apply Nat.lt_add_one_iff.mp at H3
+    --     apply LE.le.eq_or_lt at H3
+    --     cases H3 <;> simp_all
+
+    --   unfold privMax_eval_alt_loop_cut
+    --   symm
+    --   apply privMax_eval_cut_const_ind
+    --   --  OK
+    --   sorry
+    --   -- linarith
 
 
 
@@ -908,7 +913,7 @@ The first reduction: Evaluate each point using a finite number of iterates
 def privMax_eval_alt_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := (fun N =>
   (do
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
-    let final_history <- @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N
+    let final_history <- @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ (N + 2)
     return final_history.length - 1) N)
 
 /-
@@ -920,48 +925,53 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
     @privMax_eval_alt dps ε₁ ε₂ l = @privMax_eval_alt_cut dps ε₁ ε₂ l := by
   -- Want to show that the eval (unbounded at each point) equals the cut version (cut to N at each point)
   apply SLang.ext
-  intro cutoff
+  intro N
   simp [privMax_eval_alt, privMax_eval_alt_cut]
   apply tsum_congr
-  intro initial_point
+  intro τ
   congr
   apply funext
-  -- Loop should be the same evaluated at every history whose length is equal to cutoff
-  intro evaluated_history
+  intro returned_hist
   split <;> try simp
-  rename_i Hcutoff
+  rename_i Hreturned_hist
   simp [privMax_eval_alt_loop, privMax_eval_alt_loop_cut]
 
   -- Apply probWhile limit lemma
   apply probWhile_apply
-  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ cutoff)
+  apply (@tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ (N + 2))
 
   -- Prove that probWhileCut is eventually constant
   intro later_cutoff Hlep
   rw [<- Nat.add_sub_cancel' Hlep]
 
 
-  -- -- Change to closed form
-  -- have H := @privMax_eval_alt_loop_cut_closed
-  -- unfold privMax_eval_alt_loop_cut at H
-  -- rw [H]
-  -- cases d
-  -- · simp_all
-  --   -- idk
-  --   sorry
+  -- Change to closed form
+  generalize Hd : (later_cutoff - (N + 1)) = d
+  cases d
+  · simp_all
+    -- OK as long as returned_hist is nonepty, which is always is.
+    sorry
 
-  -- rw [<- add_assoc, H]
+
+  rename_i d'
+
+
+  have H := @privMax_eval_alt_loop_cut_closed
+  unfold privMax_eval_alt_loop_cut at H
+  rw [H]
+
+  -- conv =>
+  --   enter [1, 3]
+  --   rw [add_comm]
+  --   rw [<- add_assoc]
+  --   enter [1]
+  --   rw [add_comm]
+  -- rw [H]
+  -- rename_i d'
+
   -- rw [privMax_eval_alt_loop_cut_step, privMax_eval_alt_loop_cut_step]
   -- clear H
-
-  -- subst Hcutoff
-  -- apply ite_congr ?G1 (congrFun rfl) (congrFun rfl)
-  -- -- Something here is screwed up now
   sorry
-
-
-
-
 
 
 
@@ -1064,18 +1074,20 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
           simp
           intro _ _
           simp_all
-      conv =>
-      enter [1, 1, a]
-      split
-      · exfalso
-        linarith
-      · apply Hfin
-    · simp
-      intro i Hv
-      split
-      · simp
-      · exfalso
-        aesop
+      sorry
+      -- conv =>
+      -- enter [1, 1, a]
+      -- split
+      -- · exfalso
+      --   linarith
+      -- · apply Hfin
+    · sorry
+      -- simp
+      -- intro i Hv
+      -- split
+      -- · simp
+      -- · exfalso
+      --   aesop
 
   · rename_i N' IH
     -- I want to unfold one iteration from both sides, but that means I should

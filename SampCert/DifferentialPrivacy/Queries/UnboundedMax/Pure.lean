@@ -81,9 +81,24 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_se
   simp only []
 
 
-  -- The n = 0 case is special, since we cannot define G
+  -- The n = 0 case is special
+  -- We can't define G when n = 0 (there is nothing to take the max over)
+  -- So we need a different change of variables, I think
   cases n
   · simp_all
+    conv =>
+      congr
+      · enter [1, a, 2, 1, b]
+        simp [privMax_eval_alt_cond]
+        simp [G]
+      · enter [2, 1, a, 2, 1, b]
+        simp [privMax_eval_alt_cond]
+        simp [G]
+
+    -- Can get away with no COV for τ, I think
+
+
+
     sorry
     -- rw [<- ENNReal.tsum_mul_left]
     -- apply ENNReal.tsum_le_tsum
@@ -108,6 +123,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_se
     -- apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
     -- case G1 => sorry
     -- case G2 => sorry
+    -- simp [privMax_eval_alt_cond]
   rename_i N
 
   -- Define the shift for the change of variables
