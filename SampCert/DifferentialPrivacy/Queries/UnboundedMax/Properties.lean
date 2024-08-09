@@ -1019,9 +1019,30 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
   apply funext
   intro τ
 
+  simp [privMax_eval_alt_loop_cut]
+  induction N
+  · simp [privMax_sampN]
+    simp [probWhileCut, probWhileFunctional]
+    conv =>
+      lhs
+      simp [privMax_eval_alt_cond]
+      simp [privMax_eval_alt_F]
+    apply probBind_congr_strong
+    intro v0 Hv0
+    apply SLang.ext
+    intro v
+    simp
+    split
+    · simp [probPure]
+      exfalso
+      rename_i h
+      simp [privMax_eval_alt_cond, initDep] at h
+    · simp [probZero]
 
-
-  sorry
+  · rename_i N' IH
+    -- I want to unfold one iteration from both sides, but that means I should
+    -- generalize over initial condition from [] to A
+    sorry
 
 
 /-
