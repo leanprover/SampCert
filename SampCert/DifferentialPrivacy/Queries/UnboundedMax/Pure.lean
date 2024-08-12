@@ -150,9 +150,10 @@ lemma privMax_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMaxPMF PureDPSystem ε�
   unfold privMax_presample_sep_PMF
   unfold privMaxPMF
   congr
-  rw [privMax_reduction_0]
-  rw [privMax_reduction_1]
-  rw [privMax_reduction_2]
-  rw [privMax_reduction_3]
+  sorry
+  -- rw [privMax_reduction_0]
+  -- rw [privMax_reduction_1]
+  -- rw [privMax_reduction_2]
+  -- rw [privMax_reduction_3]
 
 end SLang

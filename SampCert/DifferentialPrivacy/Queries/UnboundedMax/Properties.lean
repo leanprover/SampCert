@@ -16,6 +16,318 @@ noncomputable section
 
 namespace SLang
 
+/-
+## Abstract sparse vector mechanism code
+-/
+
+def gen_sv_cond (st : Bool × List ℤ) : Bool := st.1
+
+def gen_sv_body (cond : List ℤ -> Bool) (noise : SLang ℤ) (st : Bool × List ℤ) : SLang (Bool × List ℤ) := do
+  let z <- noise
+  return (st.1 ∧ cond (st.2 ++ [z]), st.2 ++ [z])
+
+/--
+Generic, history-aware, sparse-vector trial.
+
+Given a history-aware condition cond, it returns the shortest history of random events
+drawn from noise such that the history fails cond.
+-/
+def gen_sv (cond : List ℤ -> Bool) (noise : SLang ℤ) : SLang (List ℤ) := do
+  let x <- probWhile gen_sv_cond (gen_sv_body cond noise) (true, [])
+  return x.2
+
+
+def gen_sv_cut (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (init : Bool × List ℤ) : SLang (List ℤ) := do
+  let x <- probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel init
+  return x.2
+
+
+lemma gen_sv_cut_zero (cond : List ℤ -> Bool) (noise : SLang ℤ) (st_init st_eval : Bool × List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) 0 st_init st_eval = 0 := by
+  simp [probWhileCut]
+
+
+lemma gen_sv_succ_true (cond : List ℤ -> Bool) (noise : SLang ℤ) (hist_init : List ℤ) (st_eval: Bool × List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) (fuel + 1) (true, hist_init) st_eval =
+    (noise >>= (fun z =>
+      probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel ((cond (hist_init ++ [z])), hist_init ++ [z]))) st_eval := by
+    simp [probWhileCut, probWhileFunctional]
+    simp [gen_sv_cond]
+    rw [ENNReal.tsum_prod']
+    simp [gen_sv_body]
+    conv =>
+      enter [1, 1, a, 1, b]
+      rw [<- ENNReal.tsum_mul_right]
+    conv =>
+      enter [1, 1, a]
+      rw [ENNReal.tsum_comm]
+    rw [ENNReal.tsum_comm]
+    apply tsum_congr
+    intro vk
+    rw [<- ENNReal.tsum_prod]
+    generalize _HK : cond (hist_init ++ [vk]) = K
+    rw [ENNReal.tsum_eq_add_tsum_ite (K, hist_init ++ [vk])]
+    simp
+    rw [ENNReal.tsum_eq_zero.mpr]
+    · simp
+    intro i
+    split <;> simp
+    intro H1 H2
+    cases i
+    simp_all
+
+lemma gen_sv_succ_false (cond : List ℤ -> Bool) (noise : SLang ℤ) (hist_init : List ℤ) (st_eval: Bool × List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) (fuel + 1) (false, hist_init) st_eval =
+    if (st_eval = (false, hist_init)) then 1 else 0 := by
+    simp [probWhileCut, probWhileFunctional, gen_sv_cond]
+    split <;> rfl
+
+
+lemma gen_sv_body_support (cond : List ℤ -> Bool) (noise : SLang ℤ) (hist : List ℤ) (f1 f2: Bool) :
+    gen_sv_body cond noise (f1, hist) (f2, eval) ≠ 0 -> eval.length = hist.length + 1 := by
+  simp [gen_sv_body]
+  intro _ _ Hx _
+  simp [Hx]
+
+lemma gen_sv_body_support' (cond : List ℤ -> Bool) (noise : SLang ℤ) (hist : List ℤ) (f1 f2: Bool) :
+    gen_sv_body cond noise (f1, hist) (f2, eval) ≠ 0 -> ∃ vk, eval = hist ++ [vk] := by
+  simp [gen_sv_body]
+  intro _ _ Hx _
+  simp [Hx]
+
+
+-- False states are absorbing
+lemma gen_sv_loop_false_true_supp (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist pres: List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (false, hist) (true, pres) = 0 := by
+  cases fuel <;> simp [probWhileCut, probWhileFunctional, gen_sv_cond]
+
+
+-- The only way to end in a True state is to start in a true state
+lemma gen_sv_loop_end_true_true_flag (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist pres: List ℤ) (f : Bool) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (f, hist) (true, pres) ≠ 0 -> f = true := by
+  revert hist pres
+  induction fuel
+  · intro _ _
+    simp [probWhileCut]
+  · intro hist pres
+    rename_i N' IH
+    cases f
+    simp [probWhileCut, probWhileFunctional, gen_sv_cond]
+    simp
+
+lemma gen_sv_loop_true_true_length (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist pres: List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (true, pres) ≠ 0 -> hist.length + fuel = pres.length := by
+  revert hist pres
+  induction fuel
+  · simp [probWhileCut]
+  · rename_i fuel' IH
+    intro hist pres Hsupp
+    simp [probWhileCut, probWhileFunctional, gen_sv_cond, ↓reduceIte] at Hsupp
+    have Hsupp' := Hsupp ?G1
+    case G1 =>
+      intro b
+      right
+      apply gen_sv_loop_false_true_supp
+    clear Hsupp
+    rcases Hsupp' with ⟨ F_hist, ⟨ Hbody, Hloop ⟩ ⟩
+    apply gen_sv_body_support' at Hbody
+    rcases Hbody with ⟨ vk, Hvk ⟩
+    subst Hvk
+    have IH' := IH _ _ Hloop
+    clear IH
+    simp_all
+    linarith
+
+
+-- -- Not sure
+-- lemma gen_sv_loop_true_trans_support (cond : List ℤ -> Bool) (noise : SLang ℤ)
+--     (fuel fuel': ℕ) (hist hist' hist'': List ℤ) (f : Bool)
+--     (H1 : probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (true, hist') ≠ 0)
+--     (H2 : probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel' (true, hist') (f, hist'') ≠ 0) :
+--     (probWhileCut gen_sv_cond (gen_sv_body cond noise) (fuel + fuel') (true, hist') (f, hist'') ≠ 0) := by
+--   induction hist
+--   · apply gen_sv_loop_true_true_length at H1
+--     simp at H1
+--     s orry
+--   · s orry
+
+
+
+-- -- False is constant
+-- lemma gen_sv_loop_false_const (cond : List ℤ -> Bool) (noise : SLang ℤ)
+--     (fuel fuel': ℕ) (hist hist' hist'': List ℤ) (f : Bool) :
+--     (H1 : probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (false, hist') ≠ 0) =
+--     (H1 : probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (false, hist') ≠ 0) =
+
+
+-- THe only way to terminate in a false state is to be true and then fail the check exactly once
+lemma gen_sv_loop_true_false_supp (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist hist': List ℤ) (last : ℤ):
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) (fuel + 1) (true, hist) (false, pres ++ [last]) ≠ 0 ->
+    (probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (true, pres) ≠ 0) := by
+  revert hist last fuel
+  induction pres
+  · simp
+    sorry
+  · intro fuel hist last
+    cases fuel
+    · sorry
+    simp [probWhileCut, probWhileFunctional, gen_sv_cond]
+    sorry
+
+
+
+-- lemma gen_sv_loop_cut_transition_true_false_self (cond : List ℤ -> Bool) (noise : SLang ℤ) (hist : List ℤ)
+--      : probWhileCut gen_sv_cond (gen_sv_body cond noise) 1 (true, hist) (false, hist) = 0 := by
+
+lemma gen_sv_loop_cut_bound_lower (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist pres : List ℤ)
+      (Hlen : hist.length > pres.length) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (false, pres) = 0 := by
+  -- Was proven in the old version, should be provable here
+  sorry
+
+lemma gen_sv_loop_cut_bound_upper (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (hist pres : List ℤ)
+      (HAB : hist.length + fuel < pres.length + 1) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) fuel (true, hist) (false, pres) = 0 := by
+  -- Was proven in the old version, should be provable here.
+  sorry
+
+-- Prove that probWhileCut ... (true, false) is a step function in terms of the amount of fuel?
+
+
+
+/--
+Each point depends on at most a finite number of iterations
+-/
+theorem gen_sv_loop_cut_eventually_constant_true_false (cond : List ℤ -> Bool) (noise : SLang ℤ) (diff fuel : ℕ) (init eval : List ℤ) :
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) (eval.length + 1) (true, init) (false, init ++ eval) =
+    probWhileCut gen_sv_cond (gen_sv_body cond noise) (eval.length + 1 + fuel) (true, init) (false, init ++ eval) := by
+  revert init eval
+  induction fuel
+  · simp
+  · intro init eval
+    rename_i fuel' IH
+    conv =>
+      rhs
+      simp only [probWhileCut, probWhileFunctional, gen_sv_cond, ↓reduceIte]
+    rw [IH]
+    -- Not sure
+    sorry
+
+
+
+
+
+/-
+Reduction 1: Unbounded compilable program to bounded noncompilable program
+-/
+
+
+/-
+Reduction 2: Bounded noncompilable program to Presampled program
+-/
+
+
+
+
+
+
+
+
+/-
+# Concrete program, used in the pure DP proof
+-/
+
+
+
+/--
+G: Maximum noised prefix sum.
+
+vis is a fixed list of noise samples.
+-/
+def G (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) : ℤ :=
+  let vis' := (List.mapIdx (fun i vi => exactDiffSum i l + vi) vis)
+  let Hvis' : 0 < vis'.length := by
+    dsimp [vis']
+    cases vis
+    simp [List.length_mapIdx]
+    trivial
+  List.maximum_of_length_pos Hvis'
+
+
+/--
+Adding additional random samples (thereby extending the prefix sum) can only increase the value of G
+-/
+lemma G_mono (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) (c : ℤ) pf :
+    G l vis ≤ G l ⟨ vis.1 ++ [c], pf ⟩ := by
+  simp [G]
+  apply List.maximum_le_of_forall_le
+  intro a Ha
+  apply List.le_maximum_of_mem'
+  rw [List.mapIdx_append_one]
+  rw [List.mem_append]
+  left
+  trivial
+
+
+
+/--
+History-aware loop condition for the privMax program
+-/
+def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : List ℤ) : Bool :=
+  match history with
+  | [] => true
+  | (h :: hs) => G l ⟨ h :: hs , by simp ⟩ < τ
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /-
@@ -167,39 +479,6 @@ lemma probWhileSplit_add_l (cond : T → Bool) (body : T → SLang T) (continuat
     rw [<- (funext IH)]
     rw [<- probWhileSplit_succ_l]
     rfl
-
-
-/--
-Do exactly n iterations of body starting at `a`, and then apply the continuation.
--/
-def probRepeat (body : T → SLang T) (n : Nat) (a : T) : SLang T := do
-  match n with
-  | Nat.zero => probPure a
-  | Nat.succ n => do
-      let v ← body a
-      probRepeat body n v
-
-
---  /-
---  probWhileSplit with different continuations are equal the continuations are equal evaluated
---  -/
---  lemma probWhileSplit_congr_strong (body : T → SLang T) (C : T -> Bool) (n : Nat) (init : T) (eval : T)
---      (H : probRepeat body n init >>= cont1 = probRepeat body n init >>= cont2) :
---      (probWhileSplit C body cont1 n init = probWhileSplit C body cont2 n init) := by
---
---    induction n
---    · simp [probWhileSplit]
---      simp [probRepeat] at H
---      trivial
---    · rename_i n' IH
---      s orry
---      -- This is probably false in general
-
-
--- Plan:
--- Then: Break up probRepeat into two sections
--- Then: Define the support on the first section
--- Then: Use strong congruence to finish
 
 
 /--
@@ -358,110 +637,102 @@ lemma unfunext (f g : A -> B) (a : A) (H : f = g) : f a = g a := by
   rfl
 
 
--- theorem probWhileCut_eventually_constant (cond : T → Bool) (body : T → SLang T) (i n : Nat) (Hn : 0 < n) (init : T)
---     (p : T)
---     -- Evaluating at p for n iterates, the base case isn't relevant
---     -- Basically, after n iterates, nothing touches the point p
---     (Hno_base : probWhileCut cond body n init p = probWhileSplit cond body probPure n init p)
+-- /--
+-- Probability that loop terminates using exactly N successful evaluations of the loop head
+-- -/
+-- def probTermCut (cond : T → Bool) (body : T → SLang T) (N : ℕ) (init : T) : SLang Bool :=
+--   match N with
+--   | Nat.zero =>
+--     -- Have done N successes at the loop head, next loop head must fail
+--     if cond init
+--       then probPure False
+--       else probPure True
+--   | Nat.succ N' =>
+--     -- Haven't done N successes at the loop head, next loop head must succeed
+--     if cond init
+--       then (body init) >>= (probTermCut cond body N')
+--       else probPure False
 --
---     -- This is too strong
---     -- -- The continue condition will be false for everything in the support of the first n iterates?
---     -- (Hterm : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> cond v = false ) :
 --
---     -- Starting at anything in the support of the first t iterates, any additional iterates won't change p
---     -- This is also too strong, since the first t iterates can terminate early.
---     -- (Hsep : ∀ t : T, probWhileSplit cond body probPure n init t ≠ 0 -> True) :
+-- /--
+-- Probability mass at each point associated only to loop iterates that terminate in N steps
+-- -/
+-- def indicTermN (cond : T → Bool) (body : T → SLang T) (N : ℕ) (init : T) : SLang T := do
+--   let tN <- probTermCut cond body N init
+--   if tN
+--     then probWhileSplit (fun _ => true) body probPure N init
+--     else probZero
 --
---     -- Two ideas:
---     --   - Develop equations for "doing exactly n iterations"
---     --   - Strengthen monotone condition predicate to decide if the first n iterates terminated
---     --     successfully or hit the base case
 --
---     -- In order to finish this lemma, we need to say that either:
---     --   - The first n iterates don't terminate early, putting us in a state when
---     --        future iterates don't touch the evaluation at p.
---     --   - The first n iterates do terminate early; putting us in a state
---     --        where any hypothetical future iterate will fail the check (cond monotonicity)
---     --        so will not touch the evaluation at p.
---     -- This is pretty challenging to express without being able to index into the loop guards.
---     -- So it may be easier to leave as is, and prove it only for our special case, where tracking
---     -- histories makes this possible.
---     :
---     probWhileCut cond body (n + i) init p = probWhileCut cond body n init p := by
---   cases i
---   · simp
---   rename_i i'
---   rw [probWhileCut_add_r _ _ _ _ (by linarith)]
---   rw [Hno_base]
+-- lemma probWhileCut_indic_ind (cond : T → Bool) (body : T → SLang T) (N : ℕ) (init : T) (eval : T) :
+--   probWhileCut cond body (N + 1) init eval = probWhileCut cond body N init eval + indicTermN cond body N init eval := by
+--   simp [indicTermN]
+--   rw [tsum_bool]
+--   simp
 --
---   have H : probWhileSplit cond body probPure n init p = (probWhileSplit cond body probPure n init >>= probPure) p := by
---     simp [probWhileSplit]
---
---     s orry
---   rw [H]
---   simp only [bind]
---
---   -- For all values in the support of the first n iterates, trying to do more iterates will terminate immediately
---   apply (unfunext _ _  p (probBind_congr_strong _ _ _ _))
---   intro v Hv
---   -- simp only [probWhileCut, probWhileFunctional]
---
---   s orry
-
--- -- A conditional is monotone if, as soon as it becomes False, it remains false on the entire support
--- -- of the body.
--- def mono_conditional (cond : T → Bool) (body : T → SLang T) : Prop :=
---     ∀ t : T, (cond t = false) -> (∀ t', cond t' = false ∨ body t t' = 0)
-
-
-
-
-
-
-/--
-G: Maximum noised prefix sum.
-
-vis is a fixed list of noise samples.
--/
-def G (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) : ℤ :=
-  let vis' := (List.mapIdx (fun i vi => exactDiffSum i l + vi) vis)
-  let Hvis' : 0 < vis'.length := by
-    dsimp [vis']
-    cases vis
-    simp [List.length_mapIdx]
-    trivial
-  List.maximum_of_length_pos Hvis'
+--   sorry
+  -- revert init eval
+  -- induction N
+  -- · intro init eval
+  --   simp [probWhileCut, probWhileFunctional]
+  --   simp [indicTermN, probTermCut]
+  --   rw [tsum_bool]
+  --   split <;> simp [probWhileSplit]
+  -- · intro init eval
+  --   rename_i N' IH
+  --   rw [probWhileCut_probWhileSplit_zero]
+  --   rw [probWhileSplit_add_l]
+  --   rw [<- probWhileCut_probWhileSplit_zero]
+  --   have IH' : probWhileCut cond body (N' + 1) = (fun init eval => probWhileCut cond body N' init eval + indicTermN cond body N' init eval) := by
+  --     apply funext
+  --     intro init'
+  --     apply funext
+  --     intro eval'
+  --     apply IH init' eval'
+  --   simp [probWhileSplit]
+  --   split
+  --   · sorry
+  --   · simp [probWhileCut, probWhileFunctional]
+  --     simp [indicTermN]
+  --     sorry
 
 
-/--
-Adding additional random samples (thereby extending the prefix sum) can only increase the value of G
--/
-lemma G_mono (l : List ℕ) (vis : { v : List ℤ // 0 < v.length }) (c : ℤ) pf :
-    G l vis ≤ G l ⟨ vis.1 ++ [c], pf ⟩ := by
-  simp [G]
-  apply List.maximum_le_of_forall_le
-  intro a Ha
-  apply List.le_maximum_of_mem'
-  rw [List.mapIdx_append_one]
-  rw [List.mem_append]
-  left
-  trivial
+
+-- lemma probWhileCut_indic_sum (cond : T → Bool) (body : T → SLang T) (N : ℕ) (init : T) (eval : T) :
+--   probWhileCut cond body N init eval = ∑'(i : ℕ), if i < N then (indicTermN cond body i init) eval else 0 := by
+--   induction N
+--   · simp [probWhileCut]
+--   rename_i N' IH
+--   sorry
 
 
 
 
-/--
-History-aware loop condition for the privMax program
-
-Monotonicity allows us to express this in terms of the entire history. The imlemented
-version shoudld only consider the last sample.
--/
-def privMax_eval_alt_cond (l : List ℕ) (τ : ℤ) (history : List ℤ) : Bool :=
-  match history with
-  | [] => true
-  | (h :: hs) => G l ⟨ h :: hs , by simp ⟩ < τ
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/-
 
 /--
 Once a history terminates the loop, any hypothetical future loop conditions are also aware that it terminates
@@ -564,6 +835,8 @@ lemma privMax_reduction_0 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 
 /--
 Sampling loop for the bounded history-aware privMax function
+
+Truncated to N iterates; stable for all lists of length at most N-1
 -/
 def privMax_eval_alt_loop_cut {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) (τ : ℤ) (N : ℕ) : SLang (List ℤ) := do
   probWhileCut
@@ -654,83 +927,82 @@ lemma privMax_eval_cut_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C 
 -- TODO: Can I prove support for the constant true split?
 
 
--- FIXME: Does the need for HContSupp just come from an off-by-one error?
-lemma privMax_eval_const_true_supp_spec {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (cont : List ℤ -> SLang (List ℤ)) (A B : List ℤ) (N : ℕ)
-    (HContSupp : ∀ C D : List ℤ, C.length < D.length + 1 -> cont C D = 0) (H : A.length + N < B.length + 1) :
-    probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B = 0 := by
-  revert A
-  induction N
-  · intro A HA
-    simp [probWhileSplit]
-    apply HContSupp
-    simp_all
-  · intro A HA
-    rename_i n' IH
-    simp [probWhileSplit]
-    intro F_A
-    cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
-    · right
-      rename_i h
-      rcases h with ⟨ z, Hz ⟩
-      subst Hz
-      apply IH
-      simp
-      linarith
-    · left
-      apply privMaxEval_alt_body_supp'
-      trivial
-
-
-
--- Effectively circular due to the side condition constraint on ConstSupp?
-lemma privMax_eval_split_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool)
-    (cont : List ℤ -> SLang (List ℤ)) (B : List ℤ)
-    (HContSupp : ∀ (C D : List ℤ), C.length < D.length + 1 → cont C D = 0)
-    (HB : A.length + N < B.length + 1) :
-    probWhileSplit C (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B =
-    probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B := by
-  revert A
-  induction N
-  · intro _ _
-    simp [probWhileSplit]
-  · intro A HA
-    rename_i N' IH
-    simp only [probWhileSplit, decide_True, ↓reduceIte]
-    split
-    · apply probBind_congr_medium
-      intro A' HA'
-      apply IH
-      apply privMaxEval_alt_body_supp at HA'
-      rcases HA' with ⟨ z, hz ⟩
-      subst hz
-      simp
-      linarith
-    · conv =>
-        lhs
-        simp
-      split
-      · exfalso
-        rename_i HK
-        subst HK
-        simp at HA
-      symm
-      simp
-      intro F_A
-      cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
-      · rename_i h
-        rcases h with ⟨ z, Hz ⟩
-        subst Hz
-        right
-        -- After the N' iterates, the length of F(F(F(...(F(A ++ [z]))))) is A.length + N' + 1
-        -- This length is less than B + 1 by hyp.
-        -- So, applying the contniuation support property, it is zero.
-        apply privMax_eval_const_true_supp_spec
-        · trivial
-        · simp
-          linarith
-      · left
-        apply privMaxEval_alt_body_supp'
-        trivial
+-- lemma privMax_eval_const_true_supp_spec {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (cont : List ℤ -> SLang (List ℤ)) (A B : List ℤ) (N : ℕ)
+--     (HContSupp : ∀ C D : List ℤ, C.length < D.length + 1 -> cont C D = 0) (H : A.length + N < B.length + 1) :
+--     probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B = 0 := by
+--   revert A
+--   induction N
+--   · intro A HA
+--     simp [probWhileSplit]
+--     apply HContSupp
+--     simp_all
+--   · intro A HA
+--     rename_i n' IH
+--     simp [probWhileSplit]
+--     intro F_A
+--     cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+--     · right
+--       rename_i h
+--       rcases h with ⟨ z, Hz ⟩
+--       subst Hz
+--       apply IH
+--       simp
+--       linarith
+--     · left
+--       apply privMaxEval_alt_body_supp'
+--       trivial
+--
+--
+--
+-- -- Effectively circular due to the side condition constraint on ConstSupp?
+-- lemma privMax_eval_split_supp_bound' {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (C : List ℤ -> Bool)
+--     (cont : List ℤ -> SLang (List ℤ)) (B : List ℤ)
+--     (HContSupp : ∀ (C D : List ℤ), C.length < D.length + 1 → cont C D = 0)
+--     (HB : A.length + N < B.length + 1) :
+--     probWhileSplit C (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B =
+--     probWhileSplit (fun _ => True) (@privMax_eval_alt_F dps ε₁ ε₂) cont N A B := by
+--   revert A
+--   induction N
+--   · intro _ _
+--     simp [probWhileSplit]
+--   · intro A HA
+--     rename_i N' IH
+--     simp only [probWhileSplit, decide_True, ↓reduceIte]
+--     split
+--     · apply probBind_congr_medium
+--       intro A' HA'
+--       apply IH
+--       apply privMaxEval_alt_body_supp at HA'
+--       rcases HA' with ⟨ z, hz ⟩
+--       subst hz
+--       simp
+--       linarith
+--     · conv =>
+--         lhs
+--         simp
+--       split
+--       · exfalso
+--         rename_i HK
+--         subst HK
+--         simp at HA
+--       symm
+--       simp
+--       intro F_A
+--       cases Classical.em (∃ z : ℤ, F_A = A ++ [z])
+--       · rename_i h
+--         rcases h with ⟨ z, Hz ⟩
+--         subst Hz
+--         right
+--         -- After the N' iterates, the length of F(F(F(...(F(A ++ [z]))))) is A.length + N' + 1
+--         -- This length is less than B + 1 by hyp.
+--         -- So, applying the contniuation support property, it is zero.
+--         apply privMax_eval_const_true_supp_spec
+--         · trivial
+--         · simp
+--           linarith
+--       · left
+--         apply privMaxEval_alt_body_supp'
+--         trivial
 
 
 /--
@@ -738,42 +1010,68 @@ Test lemma: privMax loop cut equals its closed form at []
 -/
 lemma privMax_eval_alt_loop_cut_closed_base {dps : DPSystem ℕ} :
     @privMax_eval_alt_loop_cut dps ε₁ ε₂ l τ N [] = @privMax_eval_alt_loop_cut_step dps ε₁ ε₂ l τ N [] := by
-  -- Given the argument N = 0, the cut loop will do 1 iteration which is enough for [] to be stable.
-  -- The step function will have threshold 0 < hist.length which will be false, so we get a stable value too.
   simp [privMax_eval_alt_loop_cut]
-  simp [privMax_eval_alt_loop_cut_step]
 
-  simp [probWhileCut, probWhileFunctional]
-  split
-  · -- Loop does not terminate at the first conditional. We seek to show that the resulting distribution
-    -- should not have [] in its support, because the first exit is the only time we return [].
-    simp_all [probWhileCut]
+  cases N
+  · -- For N = 0 we are below the step
+    -- Simplify the RHS. Below the step, so it is constant 0.
+    conv =>
+      rhs
+      simp [privMax_eval_alt_loop_cut_step]
+    -- Simplify the LHS. There are not enough steps (0 ≤ [].length) so it is 0.
+    conv =>
+      lhs
+      simp [probWhileCut]
+  · -- For N ≥ 1 we are above the step
+    rename_i N'
+    -- Simplify the RHS. Above the step, so it is probWhilecut _ _ ([].length + 1) [] []
+    conv =>
+      rhs
+      simp [privMax_eval_alt_loop_cut_step]
+    -- Separate the first iterate from both sides.
+    -- Have to handle special case where N' = 0 and the formula doesn't hold
+    cases N'
+    · simp
+    rename_i N''
+    rw [probWhileCut_probWhileSplit_zero,
+        probWhileCut_probWhileSplit_zero]
+    rw [add_comm]
+    rw [probWhileSplit_add_r_zero _ _ _ _ ?G1]
+    case G1 => simp
 
-    -- F_init is the result of the random sample (privMax_eval_alt_F ε₁ ε₂ [])
+    -- rewrite the RHS to a bind
 
-    -- intro F_init
-    -- cases Classical.em (∃ z : ℤ, F_init = [z])
-    -- · -- Case: F_init evaluates to the extension of [] by exactly one element
-    --   right
-    --   rename_i h
-    --   rcases h with ⟨ z, hz ⟩
-    --   subst hz
-    --   -- We must show that probWhileCut starting with at least one element in the history
-    --   -- never "rewrites history" to get back to [].
-    --   apply privMax_eval_cut_supp_bound
-    --   simp
-    -- · -- Case: F_init does not evaluate to the extension of [] by exactly one element
-    --   -- This has probability zero.
-    --   left
-    --   apply privMaxEval_alt_body_supp'
-    --   simp only [List.nil_append]
-    --   trivial
-  ·
-    cases N
-    · simp_all
-    simp_all [probWhileCut, probWhileFunctional]
-    split <;> try rfl
+    -- Either the bound-from term will do:
+    --  early return, so false forever
+    --  continuation, with so much context that the RHS is false forever
+
+
+
+
+
     sorry
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -979,6 +1277,7 @@ lemma privMax_reduction_1 (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 ## Reduction 2: The bounded history-tracking version is the same as a predicate on eager presample
 -/
 
+-/
 /--
 Sample N noised values. Always returns a list of length N.
 -/
@@ -990,7 +1289,7 @@ def privMax_sampN {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { 
       let r <- @privMax_sampN dps ε₁ ε₂ N'
       probPure ⟨ r.1 ++ [v], by cases r; simp ; trivial ⟩
 
-
+/-
 def initDep {N : ℕ} (l : List T) (_ : l.length = N.succ) : List T :=
   match l with
   | [_] => []
@@ -1100,6 +1399,8 @@ lemma privMax_reduction_2 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
 -/
 
 
+-/
+
 def privMax_presample_sep_det {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (N : ℕ) : SLang { v : List ℤ // v.length = N} :=
   @privMax_sampN dps ε₁ ε₂ N
 
@@ -1119,6 +1420,7 @@ def privMax_presample_sep {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
   N)
 
 
+
 /--
 Simpler bijection lemma which ignores the support (makes for much easier fn definitions)
 -/
@@ -1135,6 +1437,7 @@ lemma tsum_eq_tsum_of_bij {α : Type u_1} {β : Type u_2} {γ : Type u_3} [AddCo
   · trivial
   · simp_all
 
+/-
 def sum_lem_split_lemma_i (N : ℕ) (x : { v : List T // v.length = N } × T) : { v : List T // v.length = N + 1 } :=
   let ⟨ hist, vk ⟩ := x
   ⟨ hist ++ [vk], by cases hist ; simp; trivial ⟩
@@ -1310,18 +1613,19 @@ lemma privMax_reduction_3 {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List �
 
 
 
+-/
 def privMax_presample_sep_normalizes : HasSum (@privMax_presample_sep dps ε₁ ε₂ l) 1 := by
-  rw [<- privMax_reduction_3]
-  rw [<- privMax_reduction_2]
-  rw [<- privMax_reduction_1]
-  rw [<- privMax_reduction_0]
-  exact privMaxPMF_normalizes
+  sorry
+  -- rw [<- privMax_reduction_3]
+  -- rw [<- privMax_reduction_2]
+  -- rw [<- privMax_reduction_1]
+  -- rw [<- privMax_reduction_0]
+  -- exact privMaxPMF_normalizes
 
 
 -- To express differential privacy, we need pricMax_presample_sep to be a PMF
 def privMax_presample_sep_PMF {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : PMF ℕ :=
   ⟨ @privMax_presample_sep dps ε₁ ε₂ l, privMax_presample_sep_normalizes ⟩
-
 
 
 end SLang
