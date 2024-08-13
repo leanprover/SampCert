@@ -372,12 +372,37 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       ring_nf
 
       -- Apply the triangle inequality
-
-
-
-
-
+      apply le_trans ?G1
+      case G1 =>
+        apply (_root_.add_le_add ?G2 ?G3)
+        case G2 =>
+          apply (_root_.add_le_add ?G4 ?G5)
+          case G4 => apply abs_add
+          case G5 => rfl
+        case G3 =>
+          apply (_root_.mul_le_mul ?G4 ?G5 ?G6 ?G7)
+          case G4 => apply abs_add
+          case G5 => rfl
+          case G6 => simp
+          case G7 =>
+            apply Left.add_nonneg
+            · apply abs_nonneg
+            · apply abs_nonneg
+      ring_nf
+      -- Is this true?
+      simp [G]
+      -- I guess since G is the max of exactDiffSum, each of which has difference less than 1,
+      -- so the difference of maximums can't be less than 1
+      apply (le_div_iff ?G1).mp
+      case G1 => simp
+      apply (@le_trans _ _ _ 1 _ _ (by linarith))
+      -- Weird that the constants in both history zero and nonzero cases ended up looser
+      -- than necessary (1 ≤ 4 and 3 ≤ 4).
+      -- I suppose this means I we slightly improve on the D&R bound?
+      rw [← natAbs_to_abs]
+      -- #check exactDiffSum_neighbours
       sorry
+
 
 
 
