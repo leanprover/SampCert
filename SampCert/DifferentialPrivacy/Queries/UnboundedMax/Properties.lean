@@ -248,9 +248,9 @@ def gen_sv_loop_cut_step (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : �
     | false =>
         -- true->false closed form: Either there is not enough iterates to reach the eval point, so the
         -- probability is zero, or there is enough, and the probability is constant.
-        if fuel < eval.length - init.length
+        if fuel ≤ eval.length - init.length
           then 0
-          else probWhileCut gen_sv_cond (gen_sv_body cond noise) (eval.length - init.length) (true, init) (false, eval))
+          else probWhileCut gen_sv_cond (gen_sv_body cond noise) (1 + eval.length - init.length) (true, init) (false, eval))
 
 
 theorem gen_sv_loop_closed (cond : List ℤ -> Bool) (noise : SLang ℤ) (fuel : ℕ) (init : List ℤ) :
