@@ -147,6 +147,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       dsimp [cov_Δvk]
 
     -- Simplify COV and all the coercions
+    -- FIXME: Refactor to be like the other branch and eliminate these
     have Hite_eq1 (a : ℤ) D :
       (@ite _
         (WithBot.some τ ≤
@@ -238,18 +239,146 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       simp
     apply (exactDiffSum_neighbours _ HN)
 
+  · -- History is not empty
+    -- Construct and apply change of variables
+    rename_i hist0 histR
+    generalize Hhistory : (hist0 :: histR) = history
+    have Hhistory_len : 0 < history.length := by
+      rw [<- Hhistory]
+      simp
+    let cov_τ : ℤ := G l₂ ⟨ history, Hhistory_len ⟩ - G l₁ ⟨ history, Hhistory_len  ⟩
+    let cov_vk  : ℤ := G l₂ ⟨ history, Hhistory_len ⟩ - G l₁ ⟨ history, Hhistory_len ⟩ + exactDiffSum n l₁ - exactDiffSum n l₁
+    conv =>
+      enter [2, 2]
+      rw [tsum_shift_lemma _ cov_τ]
+      enter [1, t, 2]
+      rw [tsum_shift_lemma _ cov_vk]
+
+    -- Now the inequality should hold element-wise
+    conv =>
+      enter [1, 1, i]
+      rw [<- ENNReal.tsum_mul_left]
+    conv =>
+      enter [2]
+      rw [<- ENNReal.tsum_mul_left]
+      enter [1, i]
+      rw [<- ENNReal.tsum_mul_left]
+      rw [<- ENNReal.tsum_mul_left]
+    apply ENNReal.tsum_le_tsum
+    intro τ
+    apply ENNReal.tsum_le_tsum
+    intro vk
+
+    repeat rw [<- mul_assoc]
+    have Lem1 (A B C D : ENNReal) : (C = D) -> A ≤ B -> A * C ≤ B * D := by
+      intro H1 H2
+      apply mul_le_mul' H2
+      subst H1
+      rfl
+    apply Lem1 <;> clear Lem1
+    · -- The conditionals are equal
+      sorry
+    · -- Noise inequality
+      conv =>
+        enter [2]
+        rw [mul_assoc]
+        rw [mul_comm]
+        rw [mul_assoc]
+
+      simp [privNoiseZero]
+      simp only [DFunLike.coe, PMF.instFunLike]
+      simp [DPSystem.noise]
+      simp [privNoisedQueryPure]
+      simp [DiscreteLaplaceGenSamplePMF]
+
+      -- Combine coercions
+      rw [<- ENNReal.ofReal_mul ?G1]
+      case G1 => sorry
+      rw [<- ENNReal.ofReal_mul ?G1]
+      case G1 => sorry
+      rw [<- ENNReal.ofReal_mul ?G1]
+      case G1 => sorry
+      apply ENNReal.ofReal_le_ofReal
+
+      -- Combine and cancel exponentials
+      conv =>
+        congr
+        · enter [1, 1]
+          rw [division_def]
+        · enter [1, 1]
+          rw [division_def]
+      repeat rw [mul_assoc]
+      apply mul_le_mul_of_nonneg_left _ ?G1
+      case G1 => sorry
+      apply mul_le_mul_of_nonneg_left _ ?G1
+      case G1 => sorry
+      repeat rw [<- exp_add]
+      conv =>
+        congr
+        · rw [mul_comm]
+        · rw [mul_comm]
+      repeat rw [mul_assoc]
+      apply mul_le_mul_of_nonneg_left _ ?G1
+      case G1 => sorry
+      repeat rw [<- exp_add]
+      apply Real.exp_le_exp.mpr
+      simp
+
+      -- Move factor to other side
+      apply (@_root_.mul_le_mul_right _ (OfNat.ofNat 4 * ε₂.val.cast / ε₁.val.cast) _ _ _ _ _ _ _ ?G1).mp
+      case G1 => sorry
+
+      -- Simplify
+      repeat rw [add_mul]
+      simp
+      conv =>
+        enter [1, 2, 1, 2]
+        repeat rw [division_def]
+        repeat rw [mul_inv]
+        repeat rw [mul_assoc]
+        simp
+        enter [1, 2, 2]
+        rw [mul_comm (ε₁.val.cast) _]
+        rw [mul_comm]
+        repeat rw [mul_assoc]
+        simp
+      conv =>
+        enter [1, 2, 2]
+        rw [division_def]
+        repeat rw [mul_inv]
+        rw [mul_assoc]
+        enter [2]
+        rw [mul_comm]
+        rw [division_def]
+        rw [mul_assoc]
+        rw [mul_assoc]
+        enter [2]
+        rw [mul_comm]
+        rw [mul_comm (_⁻¹) _]
+        rw [division_def]
+        rw [mul_inv]
+        rw [mul_inv]
+        repeat rw [mul_assoc]
+        simp
+      conv =>
+        enter [2]
+        rw [mul_comm]
+        rw [division_def]
+        repeat rw [mul_assoc]
+        enter [2]
+        rw [division_def]
+        simp
+      simp
+      ring_nf
+
+      -- Apply the triangle inequality
 
 
-  sorry
-  -- let cov_Δτ : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩
-  -- let cov_Δvk  : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩ + exactDiffSum N l₁ - exactDiffSum N l₂
-  -- conv =>
-  --   lhs
-  --   rw [tsum_shift_lemma _ cov_Δτ]
-  --   enter [1, t]
-  --   rw [tsum_shift_lemma _ cov_Δvk]
 
-  -- sorry
+
+
+      sorry
+
 
 
 
