@@ -36,6 +36,28 @@ lemma tsum_shift_lemma (f : ℤ -> ENNReal) (Δ : ℤ) : ∑'(t : ℤ), f t = �
   trivial
 
 
+lemma exactDiffSum_neighbours {l₁ l₂ : List ℕ} (i : ℕ) (HN : Neighbour l₁ l₂) :
+    (exactDiffSum i l₁ - exactDiffSum i l₂).natAbs ≤ 1 := by
+  cases HN
+  · rename_i A B v H1 H2
+    subst H1 H2
+    unfold exactDiffSum
+    unfold exactClippedSum
+    rw [Int.sub_sub]
+    repeat rw [List.map_append]
+    generalize HV1 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n i)) A) = V1
+    generalize HV2 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n i)) B) = V2
+    generalize HV3 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n (i + 1))) A) = V3
+    generalize HV4 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n (i + 1))) B) = V4
+    simp
+    -- Doable
+    sorry
+  · sorry
+  · sorry
+
+
+set_option pp.coercions false
+
 /--
 Reduced, history-aware, presampled, separated program  is (ε₁/ε₂)-DP
 -/
@@ -55,7 +77,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
   unfold privMax_presample_PMF
   simp [DFunLike.coe, PMF.instFunLike]
 
-  -- Eliminate the deterministic part by cancellation
+  -- Eliminate the first n-1 random choices by cancellation
   simp [privMax_presample, gen_sv_presampled]
   conv =>
     enter [1, 1, τ]
@@ -114,18 +136,8 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
     apply mul_le_mul'
     · rfl
 
-    -- Unfold defs,
+    -- Unfold defs
     simp [privNoiseZero, DPSystem.noise]
-    have Hsens : @sensitivity ℕ (fun x => 0) ↑1 := by
-      unfold sensitivity
-      simp
-    let noise_dp := @privNoisedQueryPure_DP_bound ℕ (fun _ => 0) 1 ε₁ (4 * ε₂) Hsens
-    apply (event_eq_singleton  _ _).mp at noise_dp
-    unfold DP_singleton at noise_dp
-    have noise_dp' := noise_dp _ _ HN
-    clear noise_dp
-
-
 
     -- Change of variables
     let cov_Δvk : ℤ := exactDiffSum 0 l₁ - exactDiffSum 0 l₂
@@ -134,7 +146,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       rw [tsum_shift_lemma _ cov_Δvk]
       dsimp [cov_Δvk]
 
-    -- Simplify COV and all these coercions
+    -- Simplify COV and all the coercions
     have Hite_eq1 (a : ℤ) D :
       (@ite _
         (WithBot.some τ ≤
@@ -167,11 +179,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
     intro v
     split <;> try simp
 
-    -- Seems like noise_dp is not what I want actually.
-    -- Probably can derive the inequality directly from the Laplace distribution
-    clear noise_dp'
-
-
+    -- Simplify noise expression
     simp [privNoisedQueryPure]
     simp [DiscreteLaplaceGenSamplePMF]
     simp only [DFunLike.coe, PMF.instFunLike]
@@ -189,7 +197,6 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       rw [mul_assoc]
     apply mul_le_mul_of_nonneg_left _ ?G1
     case G1 => sorry
-    skip
     rw [← exp_add]
     apply Real.exp_le_exp.mpr
     simp only [le_neg_add_iff_add_le, add_neg_le_iff_le_add]
@@ -219,39 +226,21 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
     apply _root_.add_le_add _ (by rfl)
 
     -- Suffices to show that ExactDiffSum is le 1 on neighbours
+    rw [← natAbs_to_abs]
+    suffices ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂).natAbs ≤ 1) by
+      cases Classical.em ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂) = 0)
+      · simp_all
+      apply (Real.natCast_le_toNNReal ?G1).mp
+      case G1 =>
+        simp_all only [ne_eq, natAbs_eq_zero, not_false_eq_true]
+      simp
+      apply le_trans this
+      simp
+    apply (exactDiffSum_neighbours _ HN)
 
-    sorry
 
 
   sorry
-    -- rw [<- ENNReal.tsum_mul_left]
-    -- apply ENNReal.tsum_le_tsum
-    -- intro τ
-    -- conv =>
-    --   rhs
-    --   rw [mul_comm]
-    --   rw [mul_assoc]
-    -- apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
-    -- case G1 => sorry
-    -- case G2 => sorry
-    -- conv =>
-    --   rhs
-    --   rw [mul_comm]
-    -- rw [<- ENNReal.tsum_mul_left]
-    -- apply ENNReal.tsum_le_tsum
-    -- intro v0
-    -- conv =>
-    --   rhs
-    --   rw [mul_comm]
-    --   rw [mul_assoc]
-    -- apply (ENNReal.mul_le_mul_left ?G1 ?G2).mpr
-    -- case G1 => sorry
-    -- case G2 => sorry
-    -- simp [privMax_eval_alt_cond]
-  -- rename_i N
-
-  -- -- Define the shift for the change of variables
-  -- -- Might have these backwards
   -- let cov_Δτ : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩
   -- let cov_Δvk  : ℤ := G l₂ ⟨ history, by linarith ⟩ - G l₁ ⟨ history, by linarith ⟩ + exactDiffSum N l₁ - exactDiffSum N l₂
   -- conv =>
