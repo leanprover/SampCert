@@ -55,6 +55,139 @@ lemma exactDiffSum_neighbours {l₁ l₂ : List ℕ} (i : ℕ) (HN : Neighbour l
   · sorry
   · sorry
 
+
+
+def List.max_default (l : List ℤ) (default : ℤ) : ℤ :=
+  match l.maximum with
+  | none => default
+  | some v => v
+
+-- Since the list is nonempty, the argmax exists
+lemma max_unbot_eq_max_default (v : ℤ) (l : List ℤ) H :
+  (v :: l).maximum.unbot H = List.max_default (v :: l) 0 := by
+  unfold List.max_default
+  split
+  · rename_i x Hx
+    exfalso
+    apply H
+    apply Hx
+  · rename_i x Hx
+    simp_all
+    simp [WithBot.unbot]
+
+-- Element-wise difference between lists
+inductive ListDiffLe (N : ℕ) : List ℤ -> List ℤ -> Prop where
+| emp {l1 l2 : List ℤ} (H1 : l1 = []) (H2 : l2 = []) :  ListDiffLe N l1 l2
+| snoc {v1 v2 : ℤ} {l1 l2 L1 L2: List ℤ} (H1 : ListDiffLe N l1 l2) (H2 : (v1 - v2).natAbs ≤ N)
+      (H3 : l1 ++ [v1] = L1) (H4 : l2 ++ [v2] = L2) :
+       ListDiffLe N L1 L2
+
+
+lemma ldle_eq_lens_r {N : ℕ} {L : List ℤ} (H : ListDiffLe N [] L) :  L = [] := by
+  sorry
+
+lemma ldle_eq_lens_l {N : ℕ} {L : List ℤ} (H : ListDiffLe N L []) :  L = [] := by
+  sorry
+
+
+lemma cons_ex_app (v : T) (L : List T) : ∃ v' : T, ∃ L' : List T, v :: L = L' ++ [v'] := by
+  sorry
+
+
+lemma list_max_default_snoc {v : ℤ} {L : List ℤ} : List.max_default (l1 ++ [v1]) 0  = max v1 (List.max_default l1 0) := by
+  sorry
+
+/-
+If two lists are pointwise close, then the difference between their maximums are pointwise close
+-/
+lemma diff_le_1_dif_max_le_1 {N : ℕ} {l1 l2 : List ℤ} (Hl1 : 0 < l1.length) (Hl2 : 0 < l2.length)
+  (Hdiff : ListDiffLe N l1 l2) : (List.maximum_of_length_pos Hl1 - List.maximum_of_length_pos Hl2).natAbs ≤ N + N := by
+  simp [List.maximum_of_length_pos]
+  --  Get rid of length requirements by cases
+  cases l1
+  · simp at Hl1
+  rename_i v1 l1'
+  cases l2
+  · simp at Hl2
+  rename_i v2 l2'
+
+  -- Get rid of proof terms
+  rw [max_unbot_eq_max_default]
+  rw [max_unbot_eq_max_default]
+  simp_all
+  generalize HL1 : (v1 :: l1') = L1
+  generalize HL2 : (v2 :: l2') = L2
+  simp_all
+  clear HL1 HL2 l1' l2' v1 v2
+
+  revert L2
+
+  -- Need to do reversed induction here too
+  revert L1
+  apply List.list_reverse_induction
+  · intro L2 Hdiff
+    rw [ldle_eq_lens_r Hdiff]
+    simp
+
+  intro L1' L1v IH' L2 Hdiff
+
+  cases L2
+  · rw [ldle_eq_lens_l Hdiff]
+    simp
+  rename_i v2' L2'
+
+  rcases (cons_ex_app v2' L2') with ⟨ v2'', ⟨ L2'', Hab ⟩ ⟩
+  rw [Hab]
+  rw [Hab] at Hdiff
+  clear Hab
+
+  cases Hdiff
+  · simp_all
+  rename_i v1 v2 l1 l2 Hdiff_rec Hdiff_head Heq1 Heq2
+  -- Fix for dependent pattern match
+  have X (A B : List ℤ) (c d : ℤ) : A ++ [c] = B ++ [d] -> A = B ∧ c = d := by
+    intro H
+    apply List.of_concat_eq_concat
+    simp_all
+  rcases (X _ _ _ _ Heq1) with ⟨ Heq11, Heq12 ⟩
+  subst Heq11 Heq12
+  rcases (X _ _ _ _ Heq2) with ⟨ Heq21, Heq22 ⟩
+  subst Heq21 Heq22
+  clear Heq1 Heq2 X
+
+  have IH := IH' _ Hdiff_rec
+  clear IH' Hdiff_rec
+
+  simp [List.max_default]
+  split
+  · rename_i _ Hcontra
+    exfalso
+    -- Weird warning
+    apply List.maximum_eq_none.mp at Hcontra
+    simp at Hcontra
+  rename_i _ m1 Hm1
+  apply List.maximum_eq_coe_iff.mp at Hm1
+  rcases Hm1 with ⟨ Hm1_in, Hm1_ge ⟩
+  split
+  · rename_i _ Hcontra
+    exfalso
+    -- Weird warning
+    apply List.maximum_eq_none.mp at Hcontra
+    simp at Hcontra
+  rename_i _ m2 Hm2
+  apply List.maximum_eq_coe_iff.mp at Hm2
+  rcases Hm2 with ⟨ Hm2_in, Hm2_ge ⟩
+
+  simp at Hm1_in
+  cases Hm1_in
+  · simp_all
+    cases Hm2_in
+    · sorry
+    sorry
+  sorry
+
+
+
 lemma helper1 (A B C D : ENNReal) : (C = D) -> A ≤ B -> A * C ≤ B * D := by
   intro H1 H2
   apply mul_le_mul' H2
@@ -449,20 +582,42 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
             · apply abs_nonneg
             · apply abs_nonneg
       ring_nf
-      -- Is this true?
       simp [G]
       -- I guess since G is the max of exactDiffSum, each of which has difference less than 1,
       -- so the difference of maximums can't be less than 1
       apply (le_div_iff ?G1).mp
       case G1 => simp
-      apply (@le_trans _ _ _ 1 _ _ (by linarith))
-      -- Weird that the constants in both history zero and nonzero cases ended up looser
-      -- than necessary (1 ≤ 4 and 3 ≤ 4).
-      -- I suppose this means I we slightly improve on the D&R bound?
-      rw [← natAbs_to_abs]
-      -- #check exactDiffSum_neighbours
+
+
+      -- Seems that we do need to improve this argument, actually, since the difference between G's
+      -- is bounded above by 2
+
       sorry
 
+
+      /-
+      apply (@le_trans _ _ _ 1 _ _ (by linarith))
+      rw [← natAbs_to_abs]
+      simp
+      apply diff_le_1_dif_max_le_1
+
+      -- Show that the lists are uniformly close
+      clear cov_τ cov_vk
+      clear Hhistory Hhistory_len
+
+      revert history
+      apply List.list_reverse_induction
+      · simp
+        constructor <;> simp
+      · intro history' vk IH
+        rw [List.mapIdx_append_one]
+        rw [List.mapIdx_append_one]
+        apply (@ListDiffLe.snoc 1 _ _ _ _ _ _ IH ?G1 (by rfl) (by rfl))
+        simp only [add_sub_add_right_eq_sub]
+        apply exactDiffSum_neighbours history'.length
+        apply Neighbour_symm
+        apply HN
+      -/
 
 
 /--
