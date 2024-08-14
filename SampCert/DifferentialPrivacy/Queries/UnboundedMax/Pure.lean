@@ -418,13 +418,33 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
         · dsimp [cov_τ]
           dsimp [cov_vk]
           simp [privMax_eval_alt_cond]
-          have HA : ∃ a b, history ++ [vk + (G l₂ ⟨history, Hhistory_len⟩ - G l₁ ⟨history, Hhistory_len⟩)]  = a :: b := by sorry
-          rcases HA with ⟨ a, ⟨ b, Hab ⟩ ⟩
-          rw [Hab]
+          cases history
+          · simp_all
+          rw [List.cons_append]
           simp
-          -- Need to unfold G (though a lemma)
+          simp [privMax_eval_alt_cond] at HK11
+          apply le_trans ?G3
+          case G3 =>
+            apply _root_.add_le_add
+            · apply HK11
+            · rfl
+          rename_i hist0 histT
+          -- rw [<- List.cons_append] -- Type error
           sorry
 
+          -- -- Want to use HK11
+          -- simp only []
+          -- simp only [decide_eq_false_iff_not, not_lt]
+          -- simp only [G, List.le_maximum_of_length_pos_iff, WithBot.coe_add]
+          -- rw [<- List.cons_append]
+          -- rw [List.mapIdx_append_one]
+          -- simp [privMax_eval_alt_cond] at HK11
+          -- simp [G] at HK11
+          -- simp
+          -- clear HK11
+          -- rw [List.maximum_cons]
+          -- rw [List.maximum_cons]
+          -- rw [List.maximum_concat]
 
         · dsimp [cov_τ]
           simp [privMax_eval_alt_cond]

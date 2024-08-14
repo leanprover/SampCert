@@ -297,6 +297,7 @@ def gen_sv_presampleN (noise : SLang ℤ) (N : ℕ) : SLang (List ℤ) :=
 
 lemma gen_sv_presampleN_supp (noise : SLang ℤ) (N : ℕ) (eval : List ℤ) :
     gen_sv_presampleN noise N eval ≠ 0 -> eval.length = N := by
+
   sorry
 
 
@@ -320,7 +321,23 @@ def gen_sv_presampled (cond : List ℤ -> Bool) (noise : SLang ℤ) : SLang ℕ 
   N
 
 lemma gen_sv_reduction_2 (cond : List ℤ -> Bool) (noise : SLang ℤ) (Hcond : cond_mono_pred cond) :
-  gen_sv_num_cut cond noise = gen_sv_presampled cond noise := by
+    gen_sv_num_cut cond noise = gen_sv_presampled cond noise := by
+  -- This lemma was provable in the old formulation (privMax_reduction_2 in tmp.lean)
+  -- Not sure if this is correctly written for the new formulation yet
+  unfold gen_sv_num_cut
+  unfold gen_sv_presampled
+  apply funext
+  intro N
+  simp
+
+  -- is it true for N = 0?
+  cases N
+  · simp
+    unfold gen_sv_cut
+    simp
+    sorry
+
+
   sorry
 
 
@@ -380,6 +397,7 @@ def privMax_presample {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) :
 
 
 lemma privMax_presample_normalizes {dps : DPSystem ℕ} (ε₁ ε₂ : ℕ+) (l : List ℕ) : HasSum (@privMax_presample dps ε₁ ε₂ l) 1 := by
+  -- Probably use the fact that the computable version normalizes
   sorry
 
 /--
