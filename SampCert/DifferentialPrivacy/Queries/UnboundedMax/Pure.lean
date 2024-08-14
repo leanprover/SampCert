@@ -55,8 +55,11 @@ lemma exactDiffSum_neighbours {l₁ l₂ : List ℕ} (i : ℕ) (HN : Neighbour l
   · sorry
   · sorry
 
-
-set_option pp.coercions false
+lemma helper1 (A B C D : ENNReal) : (C = D) -> A ≤ B -> A * C ≤ B * D := by
+  intro H1 H2
+  apply mul_le_mul' H2
+  subst H1
+  rfl
 
 /--
 Reduced, history-aware, presampled, separated program  is (ε₁/ε₂)-DP
@@ -118,11 +121,12 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
   · rfl
 
   -- Change of variables will not work for empty history as it uses G explicitly
+  -- We do a different change of variables in the history=[] case
   cases history
   · simp [privMax_eval_alt_cond]
     unfold G
 
-    -- Cancel τ (could be a mistake)
+    -- Cancel τ
     conv =>
       enter [2]
       rw [<- ENNReal.tsum_mul_left]
@@ -146,101 +150,119 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       rw [tsum_shift_lemma _ cov_Δvk]
       dsimp [cov_Δvk]
 
-    -- Simplify COV and all the coercions
-    -- FIXME: Refactor to be like the other branch and eliminate these
-    have Hite_eq1 (a : ℤ) D :
-      (@ite _
-        (WithBot.some τ ≤
-          (WithBot.some (SLang.exactDiffSum 0 l₂) +
-          ((WithBot.some a) + (WithBot.some ((SLang.exactDiffSum 0 l₁) - (SLang.exactDiffSum 0 l₂))))))
-        D (probPure n) 0) n =
-        (if (τ ≤ SLang.exactDiffSum 0 l₁ + a) then (probPure n) else 0) n := by
-      sorry
-    have Hite_eq2 (a : ℤ) D :
-      (@ite _
-        (WithBot.some τ ≤
-          (WithBot.some (SLang.exactDiffSum 0 l₁) + (WithBot.some a)))
-        D (probPure n) 0) n =
-        (if (τ ≤ SLang.exactDiffSum 0 l₁ + a) then (probPure n) else 0) n := by
-      sorry
-    conv =>
-      enter [2, 2, 1, a, 2]
-      rw [Hite_eq1]
-    clear Hite_eq1
-    conv =>
-      enter [1, 1, a]
-      rw [Hite_eq2]
-    clear Hite_eq2
-
-    -- Simplify the inequalities and split on the conditional
-    conv =>
-      enter [2]
-      rw [<- ENNReal.tsum_mul_left]
+    -- After the COV, the bodies satisfy the bound pointwise
+    rw [<- ENNReal.tsum_mul_left]
     apply ENNReal.tsum_le_tsum
-    intro v
-    split <;> try simp
+    intro vk
+    rw [<- mul_assoc]
+    apply helper1
+    · -- Indicator functions are equal
+      split <;> split <;> try rfl
+      · rename_i HK1 HK2
+        exfalso
+        apply HK2
+        apply le_trans HK1
+        conv =>
+          enter [2, 2]
+          rw [add_comm]
+        rw [<- add_assoc]
+        apply _root_.add_le_add _ (by rfl)
+        rw [← WithBot.coe_add]
+        rw [WithBot.coe_le_coe]
+        linarith
+      · rename_i HK1 HK2
+        exfalso
+        apply HK1
+        apply le_trans HK2
+        conv =>
+          enter [1, 2]
+          rw [add_comm]
+        rw [<- add_assoc]
+        apply _root_.add_le_add _ (by rfl)
+        rw [← WithBot.coe_add]
+        rw [WithBot.coe_le_coe]
+        linarith
 
-    -- Simplify noise expression
-    simp [privNoisedQueryPure]
-    simp [DiscreteLaplaceGenSamplePMF]
-    simp only [DFunLike.coe, PMF.instFunLike]
-    simp [DiscreteLaplaceGenSample_apply]
+    · -- Constants satisfy inequality
 
-    -- Coalesce the ENNReal.ofReals
-    rw [<- ENNReal.ofReal_mul ?G1]
-    case G1 => sorry
-    apply ENNReal.ofReal_le_ofReal
+      -- Simplify noise expression
+      simp [privNoisedQueryPure]
+      simp [DiscreteLaplaceGenSamplePMF]
+      simp only [DFunLike.coe, PMF.instFunLike]
+      simp [DiscreteLaplaceGenSample_apply]
 
-    -- Cancel constant factor terms
-    conv =>
-      enter [2]
-      rw [mul_comm]
-      rw [mul_assoc]
-    apply mul_le_mul_of_nonneg_left _ ?G1
-    case G1 => sorry
-    rw [← exp_add]
-    apply Real.exp_le_exp.mpr
-    simp only [le_neg_add_iff_add_le, add_neg_le_iff_le_add]
+      -- Combine the coercions
+      rw [<- ENNReal.ofReal_mul ?G1]
+      case G1 => apply exp_nonneg
+      apply ENNReal.ofReal_le_ofReal
 
-    -- Move factor to other side
-    apply div_le_of_nonneg_of_le_mul ?G1 ?G2
-    case G1 => sorry
-    case G2 => sorry
-
-    -- Transitivity with triangle inequality on LHS
-    apply le_trans (abs_add _ _)
-
-    -- Simplify fractions on RHS
-    simp [add_mul]
-    conv =>
-      enter [2, 1]
-      rw [mul_comm]
-      rw [division_def]
-      rw [division_def]
-      repeat rw [mul_assoc]
-      enter [2]
-      rw [mul_comm]
-      repeat rw [<- mul_assoc]
-      simp
-    simp
-    rw [add_comm]
-    apply _root_.add_le_add _ (by rfl)
-
-    -- Suffices to show that ExactDiffSum is le 1 on neighbours
-    rw [← natAbs_to_abs]
-    suffices ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂).natAbs ≤ 1) by
-      cases Classical.em ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂) = 0)
-      · simp_all
-      apply (Real.natCast_le_toNNReal ?G1).mp
+      -- Cancel constant factor terms
+      conv =>
+        enter [2]
+        rw [mul_comm]
+        rw [mul_assoc]
+      apply mul_le_mul_of_nonneg_left _ ?G1
       case G1 =>
-        simp_all only [ne_eq, natAbs_eq_zero, not_false_eq_true]
+        apply div_nonneg
+        · simp
+          apply div_nonneg
+          · apply cast_nonneg'
+          · apply mul_nonneg
+            · simp
+            · apply cast_nonneg'
+        · apply add_nonneg <;> try simp
+          apply exp_nonneg
+      rw [← exp_add]
+      apply Real.exp_le_exp.mpr
+      simp only [le_neg_add_iff_add_le, add_neg_le_iff_le_add]
+
+
+      -- Move factor to other side
+      apply div_le_of_nonneg_of_le_mul ?G1 ?G2
+      case G1 => apply mul_nonneg <;> simp
+      case G2 =>
+        apply add_nonneg
+        · apply div_nonneg <;> simp
+        · apply div_nonneg <;> try simp
+          apply mul_nonneg <;> simp
+
+
+      -- Simplify fractions on RHS
+      simp [add_mul]
+      conv =>
+        enter [2, 1]
+        rw [mul_comm]
+        rw [division_def]
+        rw [division_def]
+        repeat rw [mul_assoc]
+        enter [2]
+        rw [mul_comm]
+        repeat rw [<- mul_assoc]
+        simp
       simp
-      apply le_trans this
-      simp
-    apply (exactDiffSum_neighbours _ HN)
+      rw [add_comm]
+
+      -- Transitivity with triangle inequality on LHS
+      apply le_trans (abs_add _ _)
+      apply _root_.add_le_add _ (by rfl)
+
+      -- -- Suffices to show that ExactDiffSum is le 1 on neighbours
+      -- rw [← natAbs_to_abs]
+      -- suffices ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂).natAbs ≤ 1) by
+      --   cases Classical.em ((exactDiffSum (OfNat.ofNat 0) l₁ - exactDiffSum (OfNat.ofNat 0) l₂) = 0)
+      --   · simp_all
+      --   apply (Real.natCast_le_toNNReal ?G1).mp
+      --   case G1 =>
+      --     simp_all only [ne_eq, natAbs_eq_zero, not_false_eq_true]
+      --   simp
+      --   apply le_trans this
+      --   simp
+      -- apply (exactDiffSum_neighbours _ HN)
+      sorry
 
   · -- History is not empty
-    -- Construct and apply change of variables
+
+    -- Change of variables
     rename_i hist0 histR
     generalize Hhistory : (hist0 :: histR) = history
     have Hhistory_len : 0 < history.length := by
@@ -254,7 +276,7 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       enter [1, t, 2]
       rw [tsum_shift_lemma _ cov_vk]
 
-    -- Now the inequality should hold element-wise
+    -- The inequality now holds element-wise
     conv =>
       enter [1, 1, i]
       rw [<- ENNReal.tsum_mul_left]
@@ -268,16 +290,22 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
     intro τ
     apply ENNReal.tsum_le_tsum
     intro vk
-
     repeat rw [<- mul_assoc]
-    have Lem1 (A B C D : ENNReal) : (C = D) -> A ≤ B -> A * C ≤ B * D := by
-      intro H1 H2
-      apply mul_le_mul' H2
-      subst H1
-      rfl
-    apply Lem1 <;> clear Lem1
+    apply helper1
     · -- The conditionals are equal
-      sorry
+      split <;> split <;> try rfl
+      · rename_i HK1 HK2
+        rcases HK1 with ⟨ HK11, HK12 ⟩
+        exfalso
+        apply HK2
+        -- Separate the upper and lower bounds
+        apply And.intro
+        · sorry
+        · sorry
+      · rename_i HK1 HK2
+        rcases HK2 with ⟨ HK21, HK22 ⟩
+        sorry
+
     · -- Noise inequality
       conv =>
         enter [2]
@@ -292,12 +320,34 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       simp [DiscreteLaplaceGenSamplePMF]
 
       -- Combine coercions
+      -- Simplify me
       rw [<- ENNReal.ofReal_mul ?G1]
-      case G1 => sorry
+      case G1 =>
+        apply mul_nonneg
+        · apply div_nonneg
+          · simp
+            apply div_nonneg <;> simp
+          · apply add_nonneg <;> try simp
+            apply exp_nonneg
+        · apply exp_nonneg
       rw [<- ENNReal.ofReal_mul ?G1]
-      case G1 => sorry
+      case G1 =>
+        apply mul_nonneg
+        · apply div_nonneg
+          · simp
+            apply div_nonneg <;> simp
+          · apply add_nonneg <;> try simp
+            apply exp_nonneg
+        · apply exp_nonneg
       rw [<- ENNReal.ofReal_mul ?G1]
-      case G1 => sorry
+      case G1 =>
+        apply mul_nonneg
+        · apply div_nonneg
+          · simp
+            apply div_nonneg <;> simp
+          · apply add_nonneg <;> try simp
+            apply exp_nonneg
+        · apply exp_nonneg
       apply ENNReal.ofReal_le_ofReal
 
       -- Combine and cancel exponentials
@@ -309,9 +359,14 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
           rw [division_def]
       repeat rw [mul_assoc]
       apply mul_le_mul_of_nonneg_left _ ?G1
-      case G1 => sorry
+      case G1 =>
+        simp
+        apply div_nonneg <;> simp
       apply mul_le_mul_of_nonneg_left _ ?G1
-      case G1 => sorry
+      case G1 =>
+        simp
+        apply add_nonneg <;> try simp
+        apply exp_nonneg
       repeat rw [<- exp_add]
       conv =>
         congr
@@ -319,14 +374,19 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
         · rw [mul_comm]
       repeat rw [mul_assoc]
       apply mul_le_mul_of_nonneg_left _ ?G1
-      case G1 => sorry
+      case G1 =>
+        apply div_nonneg
+        · simp
+          apply div_nonneg <;> simp
+        · apply add_nonneg <;> try simp
+          apply exp_nonneg
       repeat rw [<- exp_add]
       apply Real.exp_le_exp.mpr
       simp
 
       -- Move factor to other side
       apply (@_root_.mul_le_mul_right _ (OfNat.ofNat 4 * ε₂.val.cast / ε₁.val.cast) _ _ _ _ _ _ _ ?G1).mp
-      case G1 => sorry
+      case G1 => simp
 
       -- Simplify
       repeat rw [add_mul]
@@ -402,8 +462,6 @@ lemma privMax_reduct_PureDP {ε₁ ε₂ : ℕ+} : PureDP (@privMax_presample_PM
       rw [← natAbs_to_abs]
       -- #check exactDiffSum_neighbours
       sorry
-
-
 
 
 
