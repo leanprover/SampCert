@@ -36,25 +36,79 @@ lemma tsum_shift_lemma (f : ℤ -> ENNReal) (Δ : ℤ) : ∑'(t : ℤ), f t = �
   trivial
 
 
+lemma exactClippedSum_append : exactClippedSum i (A ++ B) = exactClippedSum i A + exactClippedSum i B := by
+  simp [exactClippedSum]
+
+
+lemma exactClippedSum_singleton_diff : (-exactClippedSum i [v] + exactClippedSum (1 + i) [v]).natAbs ≤ 1 := by
+  simp [exactClippedSum]
+  cases Classical.em ((v : ℤ) ≤ (i : ℤ))
+  · rw [min_eq_left_iff.mpr (by trivial)]
+    rw [min_eq_left_iff.mpr (by linarith)]
+    simp
+  · rw [min_eq_right_iff.mpr (by linarith)]
+    cases Classical.em ((v : ℤ) ≤ 1 + (i : ℤ))
+    · rw [min_eq_left_iff.mpr (by linarith)]
+      have Z : (-(i : ℤ) + (v : ℤ) = 1) := by linarith
+      simp_all
+    · rw [min_eq_right_iff.mpr (by linarith)]
+      simp
+
+
 lemma exactDiffSum_neighbours {l₁ l₂ : List ℕ} (i : ℕ) (HN : Neighbour l₁ l₂) :
-    (exactDiffSum i l₁ - exactDiffSum i l₂).natAbs ≤ 1 := by
+    (exactDiffSum i l₁ - exactDiffSum i l₂).natAbs ≤ 2 := by
   cases HN
   · rename_i A B v H1 H2
     subst H1 H2
     unfold exactDiffSum
-    unfold exactClippedSum
-    rw [Int.sub_sub]
-    repeat rw [List.map_append]
-    generalize HV1 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n i)) A) = V1
-    generalize HV2 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n i)) B) = V2
-    generalize HV3 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n (i + 1))) A) = V3
-    generalize HV4 : (List.map (fun (n : Nat) => @Nat.cast Int _ (Nat.min n (i + 1))) B) = V4
-    simp
-    -- Doable
-    sorry
-  · sorry
-  · sorry
+    repeat rw [exactClippedSum_append]
+    ring_nf
+    apply le_trans ?G1 ?G2
+    case G1 => apply exactClippedSum_singleton_diff
+    linarith
 
+  · rename_i A v B H1 H2
+    subst H1 H2
+    unfold exactDiffSum
+    repeat rw [exactClippedSum_append]
+    ring_nf
+
+    apply @le_trans _ _ _ 1 <;> try simp
+    apply le_trans _ (@exactClippedSum_singleton_diff i v)
+    apply Eq.le
+    apply natAbs_eq_natAbs_iff.mpr
+    simp
+    right
+    linarith
+
+  · -- FIXME: We have to double the bound in the literature because of this case.
+    -- The literature assumes that neighbours involve addition or deletion of a record, not modification.
+    -- This will change the constants used in the program (namely, from ε₁/2ε₂ and ε₁/4ε₂ to something else).
+    rename_i A v1 B v2 H1 H2
+    subst H1 H2
+    unfold exactDiffSum
+    repeat rw [exactClippedSum_append]
+    ring_nf
+
+    rw [Int.sub_eq_add_neg]
+    conv =>
+      enter [1, 1]
+      rw [add_assoc]
+      rw [add_assoc]
+      rw [<- add_assoc]
+    apply le_trans
+    · apply natAbs_add_le
+    have X : 1 + 1 = 2 := by simp
+    rw [<- X]
+    clear X
+    apply _root_.add_le_add
+    · apply le_trans _ (@exactClippedSum_singleton_diff i v1)
+      apply Eq.le
+      apply natAbs_eq_natAbs_iff.mpr
+      simp
+      right
+      linarith
+    · exact exactClippedSum_singleton_diff
 
 
 def List.max_default (l : List ℤ) (default : ℤ) : ℤ :=
@@ -76,6 +130,8 @@ lemma max_unbot_eq_max_default (v : ℤ) (l : List ℤ) H :
     simp [WithBot.unbot]
 
 -- Element-wise difference between lists
+-- Might reformulate as Prop over indicies
+
 inductive ListDiffLe (N : ℕ) : List ℤ -> List ℤ -> Prop where
 | emp {l1 l2 : List ℤ} (H1 : l1 = []) (H2 : l2 = []) :  ListDiffLe N l1 l2
 | snoc {v1 v2 : ℤ} {l1 l2 L1 L2: List ℤ} (H1 : ListDiffLe N l1 l2) (H2 : (v1 - v2).natAbs ≤ N)
@@ -83,25 +139,26 @@ inductive ListDiffLe (N : ℕ) : List ℤ -> List ℤ -> Prop where
        ListDiffLe N L1 L2
 
 
-lemma ldle_eq_lens_r {N : ℕ} {L : List ℤ} (H : ListDiffLe N [] L) :  L = [] := by
-  sorry
-
-lemma ldle_eq_lens_l {N : ℕ} {L : List ℤ} (H : ListDiffLe N L []) :  L = [] := by
-  sorry
-
-
-lemma cons_ex_app (v : T) (L : List T) : ∃ v' : T, ∃ L' : List T, v :: L = L' ++ [v'] := by
-  sorry
-
-
-lemma list_max_default_snoc {v : ℤ} {L : List ℤ} : List.max_default (l1 ++ [v1]) 0  = max v1 (List.max_default l1 0) := by
-  sorry
+-- Only used in the inductive proof, probably delete me
+-- lemma ldle_eq_lens_r {N : ℕ} {L : List ℤ} (H : ListDiffLe N [] L) :  L = [] := by
+--   sorry
+--
+-- lemma ldle_eq_lens_l {N : ℕ} {L : List ℤ} (H : ListDiffLe N L []) :  L = [] := by
+--   sorry
+--
+--
+-- lemma cons_ex_app (v : T) (L : List T) : ∃ v' : T, ∃ L' : List T, v :: L = L' ++ [v'] := by
+--   sorry
+--
+-- lemma list_max_default_snoc {v : ℤ} {L : List ℤ} :
+--   List.max_default (l1 ++ [v1]) 0 = max v1 (List.max_default l1 0) := by
+--   sorry
 
 /-
 If two lists are pointwise close, then the difference between their maximums are pointwise close
 -/
 lemma diff_le_1_dif_max_le_1 {N : ℕ} {l1 l2 : List ℤ} (Hl1 : 0 < l1.length) (Hl2 : 0 < l2.length)
-  (Hdiff : ListDiffLe N l1 l2) : (List.maximum_of_length_pos Hl1 - List.maximum_of_length_pos Hl2).natAbs ≤ N + N := by
+  (Hdiff : ListDiffLe N l1 l2) : (List.maximum_of_length_pos Hl1 - List.maximum_of_length_pos Hl2).natAbs ≤ N := by
   simp [List.maximum_of_length_pos]
   --  Get rid of length requirements by cases
   cases l1
@@ -120,8 +177,22 @@ lemma diff_le_1_dif_max_le_1 {N : ℕ} {l1 l2 : List ℤ} (Hl1 : 0 < l1.length) 
   simp_all
   clear HL1 HL2 l1' l2' v1 v2
 
-  revert L2
+  -- The inductive proof is a mess. Cleaner outline:
+  -- let L1[i] be the maximum of L1
+  -- let L2[j] is the maximum of L2
+  -- assume the lists are pw close: | L1[k] - L2[k] | ≤ N for all k
+  -- wlog L2[j] ≤ L1[i]
+  -- then
+  --    L1[i] - N ≤ L2[i]     By def'n pw close
+  --              ≤ L2[j]     By def'n max
+  --              ≤ L1[i]     By assumption wlog
+  --
+  -- so | L1[i] - L2[j] | ≤ N
 
+  sorry
+
+  /-
+  revert L2
   -- Need to do reversed induction here too
   revert L1
   apply List.list_reverse_induction
@@ -183,9 +254,12 @@ lemma diff_le_1_dif_max_le_1 {N : ℕ} {l1 l2 : List ℤ} (Hl1 : 0 < l1.length) 
   · simp_all
     cases Hm2_in
     · sorry
-    sorry
-  sorry
-
+    · sorry
+  · simp_all
+    cases Hm2_in
+    · sorry
+    · sorry
+  -/
 
 
 lemma helper1 (A B C D : ENNReal) : (C = D) -> A ≤ B -> A * C ≤ B * D := by
