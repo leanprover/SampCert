@@ -8,7 +8,7 @@ Authors: Jean-Baptiste Tristan
 #include <unistd.h>
 #include <random>
 
-int urandom;
+static int urandom = -1; 
 
 extern "C" lean_object * prob_UniformByte (lean_object * eta) {
     lean_dec(eta);
@@ -46,13 +46,14 @@ extern "C" lean_object * prob_While(lean_object * condition, lean_object * body,
 }
 
 extern "C" lean_object * my_run(lean_object * a) {
-    urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
     if (urandom == -1) {
-        lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
+        urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (urandom == -1) {
+            lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
+        }
     }
     lean_object * comp = lean_apply_1(a,lean_box(0));
     lean_object * res = lean_io_result_mk_ok(comp);
-    close(urandom);
     return res;
 } 
 
