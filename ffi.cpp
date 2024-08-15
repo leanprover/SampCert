@@ -8,12 +8,6 @@ Authors: Jean-Baptiste Tristan
 #include <unistd.h>
 #include <random>
 
-#ifdef __APPLE__
-    std::random_device generator;
-#else
-    std::mt19937_64 generator(time(NULL));
-#endif
-
 int urandom;
 
 extern "C" lean_object * prob_UniformByte (lean_object * eta) {
