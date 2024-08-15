@@ -8,52 +8,13 @@ Authors: Jean-Baptiste Tristan
 #include <unistd.h>
 #include <random>
 
-#ifdef __APPLE__
-    std::random_device generator;
-#else
-    std::mt19937_64 generator(time(NULL));
-#endif
+static int urandom = -1; 
 
 extern "C" lean_object * prob_UniformByte (lean_object * eta) {
     lean_dec(eta);
     unsigned char r;
-    int urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
-    if (urandom == -1) {
-        lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
-    }
     read(urandom, &r,1);
-    close(urandom);
     return lean_box((size_t) r);
-}
-
-
-extern "C" lean_object * prob_UniformP2(lean_object * a, lean_object * eta) {
-    lean_dec(eta);
-    if (lean_is_scalar(a)) {
-        size_t n = lean_unbox(a);
-        if (n == 0) {
-            lean_internal_panic("prob_UniformP2: n == 0");
-        } else {
-            int lz = std::__countl_zero(n);
-            int bitlength = (8*sizeof n) - lz - 1;
-            size_t bound = 1 << bitlength; 
-            std::uniform_int_distribution<size_t> distribution(0,bound-1);
-            size_t r = distribution(generator);
-            lean_dec(a); 
-            return lean_box(r);
-        }
-    } else {
-        lean_object * res = lean_usize_to_nat(0);
-        do {
-            a = lean_nat_sub(a,lean_box(LEAN_MAX_SMALL_NAT));
-            std::uniform_int_distribution<size_t> distribution(0,LEAN_MAX_SMALL_NAT-1);
-            size_t rdm = distribution(generator);
-            lean_object * acc = lean_usize_to_nat(rdm);
-            res = lean_nat_add(res,acc);
-        } while(lean_nat_le(lean_box(LEAN_MAX_SMALL_NAT),a));
-        lean_object * rem = prob_UniformP2(a,lean_box(0));
-        return lean_nat_add(res,rem);
-    }
 }
 
 extern "C" lean_object * prob_Pure(lean_object * a, lean_object * eta) {
@@ -85,6 +46,12 @@ extern "C" lean_object * prob_While(lean_object * condition, lean_object * body,
 }
 
 extern "C" lean_object * my_run(lean_object * a) {
+    if (urandom == -1) {
+        urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (urandom == -1) {
+            lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
+        }
+    }
     lean_object * comp = lean_apply_1(a,lean_box(0));
     lean_object * res = lean_io_result_mk_ok(comp);
     return res;
