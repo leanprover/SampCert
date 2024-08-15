@@ -44,3 +44,9 @@ lean_exe check where
   root := `SampCertCheck
   extraDepTargets := #[`libleanffi]
   moreLinkArgs := #["-L.lake/build/lib", "-lleanffi"]
+
+lean_exe mk_all where
+  root := `mk_all
+  supportInterpreter := true
+  -- Executables which import `Lake` must set `-lLake`.
+  weakLinkArgs := #["-lLake"]
