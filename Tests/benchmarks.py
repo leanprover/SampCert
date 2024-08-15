@@ -2,26 +2,23 @@
 
 # Benchmarking the discrete Gaussian sampler
 
-import SampCert
 import matplotlib.pyplot as plt
 import timeit
 import secrets
 import numpy as np
 from datetime import datetime
 import tqdm as tqdm
-from decimal import Decimal
 import argparse
 
-from diffprivlib.mechanisms.base import bernoulli_neg_exp
 from diffprivlib.mechanisms import GaussianDiscrete
 
-from fractions import Fraction
-from discretegauss import sample_dlaplace, sample_dgauss
+from IBM.discretegauss import sample_dgauss
 
-sampler = SampCert.SLang()
+from Load import samplers
+
 rng = secrets.SystemRandom()
 
-def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantity):
+def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantity, inv):
     # Values of epsilon attempted
     sigmas = []
 
@@ -45,12 +42,20 @@ def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantit
 
     num_attempts = warmup_attempts + measured_attempts
 
-    for sigma in tqdm.tqdm(np.linspace(lb+0.001,ub,quantity)):
+    for sigma_ in tqdm.tqdm(range(lb,ub,quantity)):
         
+        if inv:
+            sigma = 1.0 / float(sigma_)
+            sigma_num = sigma_
+            sigma_denom = ub
+        else: 
+            sigma = sigma_
+            sigma_num = sigma_
+            sigma_denom = 1
+
         g._scale = sigma
         sigmas += [sigma]
 
-        sigma_num, sigma_denom = Decimal(sigma).as_integer_ratio()
         sigma_squared = sigma ** 2
 
         times = []
@@ -63,7 +68,7 @@ def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantit
         for m in range(len(mix)): 
             for i in range(num_attempts):
                 start_time = timeit.default_timer()
-                sampler.DiscreteGaussianSample(sigma_num, sigma_denom, mix[m])
+                samplers.dgs_get(sigma_num, sigma_denom, mix[m])
                 elapsed = timeit.default_timer() - start_time
                 times[m].append(elapsed)
 
@@ -123,12 +128,13 @@ def gaussian_benchmarks(mix, warmup_attempts, measured_attempts, lb ,ub, quantit
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mix", nargs="+", type=int, help="mix", default=[0])
+    parser.add_argument("--mix", nargs="+", type=int, help="mix", default=[7])
     parser.add_argument("--warmup", type=int, help="warmup", default=0)
     parser.add_argument("--trials", type=int, help="trials", default=1000)
     parser.add_argument("--min", type=int, help="min", default=1)
     parser.add_argument("--max", type=int, help="max", default=500)
     parser.add_argument("--quantity", type=int, help="step", default=10)
+    parser.add_argument("--inv", default=False, action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
 
-    gaussian_benchmarks(args.mix,args.warmup,args.trials,args.min,args.max,args.quantity)
+    gaussian_benchmarks(args.mix,args.warmup,args.trials,args.min,args.max,args.quantity,args.inv)
