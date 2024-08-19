@@ -4,15 +4,15 @@ from os.path import expanduser
 home = expanduser("~")
 
 # Loading Lean's libraries
-CDLL(home + "/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libInit_shared.dylib", RTLD_GLOBAL)
-lean = CDLL(home +  "/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libleanshared.dylib", RTLD_GLOBAL)
+CDLL(home + "/.elan/toolchains/leanprover--lean4---v4.10.0/lib/lean/libInit_shared.dylib", RTLD_GLOBAL)
+lean = CDLL(home +  "/.elan/toolchains/leanprover--lean4---v4.10.0/lib/lean/libleanshared.dylib", RTLD_GLOBAL)
 
 # import-graph uses some Lake definitions that are available in the lake library, but 
 # Lean does not produce a dynamic version
 # One needs to create the library
 # On Mac, it looks like: #clang++ -fpic -shared -Wl,-force_load libLake.a -o libLake_shared.dylib -L . -lleanshared
 # If you are in the lib/lean directory of your toolchain
-CDLL(home +  "/.elan/toolchains/leanprover--lean4---v4.10.0-rc2/lib/lean/libLake_shared.dylib", RTLD_GLOBAL)
+CDLL(home +  "/.elan/toolchains/leanprover--lean4---v4.10.0/lib/lean/libLake_shared.dylib", RTLD_GLOBAL)
 
 # Loading Mathlib and its dependencies
 # To create the dynamic library, for each one of them, run lake build xxx:shared

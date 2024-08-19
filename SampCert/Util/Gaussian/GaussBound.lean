@@ -25,6 +25,15 @@ open ContinuousMap Function
 
 attribute [local instance] Real.fact_zero_lt_one
 
+/-
+This is copied from MathLib; it was made private in the release of 4.10 with the suggestion that it would be
+auto-generated in 4.11. It wasn't clear if it would become public again at that point.
+
+See: https://github.com/leanprover-community/mathlib4/pull/15340
+-/
+theorem local_ext_iff {z w : ℂ} : z = w ↔ z.re = w.re ∧ z.im = w.im :=
+  ⟨fun H => by simp [H], fun h => Complex.ext h.1 h.2⟩
+
 /--
 The sum of any gaussian function over ℤ is bounded above by the sum of the mean-zero gaussian function over ℤ.
 -/
@@ -94,13 +103,13 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
         rw [← Complex.ofReal_mul]
         rw [← Complex.ofReal_mul]
         rw [← Complex.ofReal_mul]
-        rw [ext_iff]
+        rw [local_ext_iff]
         constructor
-        . rw [rpow_def]
+        · rw [rpow_def]
           simp
-        . simp
+        · simp
           rw [cpow_inv_two_im_eq_sqrt]
-          . simp
+          · simp
             ring_nf
             simp
             rw [← Real.sqrt_zero]

@@ -572,11 +572,11 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
               . apply measurable_discrete
               . apply Measurable.inv
                 apply measurable_discrete
-            · simp [snorm]
+            · simp [eLpNorm]
               split
               · simp
               · rename_i Hα
-                simp [snorm']
+                simp [eLpNorm']
                 rw [MeasureTheory.lintegral_countable']
                 rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
                 apply rpow_lt_top_of_nonneg
@@ -739,11 +739,11 @@ lemma Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingle
           . apply measurable_discrete
           . apply Measurable.inv
             apply measurable_discrete
-        · simp [snorm]
+        · simp [eLpNorm]
           split
           · simp
           · rename_i Hα
-            simp [snorm']
+            simp [eLpNorm']
             rw [MeasureTheory.lintegral_countable']
             rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
             apply rpow_lt_top_of_nonneg
