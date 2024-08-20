@@ -51,7 +51,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
   simp [DiscreteLaplaceGenSamplePMF]
   simp [DFunLike.coe, PMF.instFunLike]
   rw [← ENNReal.ofReal_div_of_pos]
-  . apply ofReal_le_ofReal
+  · apply ofReal_le_ofReal
     rw [division_def]
     rw [mul_inv]
     rw [← mul_assoc]
@@ -75,7 +75,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
     rw [div_add_div_same]
     rw [division_def]
     apply (mul_inv_le_iff' _).mpr
-    . have B : (ε₁ : ℝ) / ε₂ * (Δ * ε₂ / ε₁) = Δ := by
+    · have B : (ε₁ : ℝ) / ε₂ * (Δ * ε₂ / ε₁) = Δ := by
         ring_nf
         simp
         field_simp
@@ -96,23 +96,23 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
       rw [← natAbs_to_abs]
       exact Nat.cast_le.mpr bounded_sensitivity
 
-    . simp
-  . rw [_root_.mul_pos_iff]
+    · simp
+  · rw [_root_.mul_pos_iff]
     left
     constructor
-    . rw [_root_.div_pos_iff]
+    · rw [_root_.div_pos_iff]
       left
       have A : 1 < rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
         rw [← exp_zero]
         apply exp_lt_exp.mpr
         simp
       constructor
-      . simp [A]
-      . apply @lt_trans _ _ _ 2 _
-        . simp
-        . rw [← one_add_one_eq_two]
+      · simp [A]
+      · apply @lt_trans _ _ _ 2 _
+        · simp
+        · rw [← one_add_one_eq_two]
           exact (add_lt_add_iff_right 1).mpr A
-    . apply exp_pos
+    · apply exp_pos
 
 
 /--

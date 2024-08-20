@@ -43,8 +43,8 @@ instance gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
     apply Continuous.neg
     apply Continuous.pow
     apply Continuous.sub
-    . apply continuous_ofReal
-    . apply continuous_const
+    · apply continuous_ofReal
+    · apply continuous_const
 
 /--
 Agreement between the ℂ-valued and ℝ-valued gaussian formulas over ℝ
@@ -271,8 +271,8 @@ The sum of ``gauss_term_ℝ`` is positive.
 theorem sum_gauss_term_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
   0 < (∑' (x : ℤ), (gauss_term_ℝ σ μ) x) := by
   apply tsum_pos (summable_gauss_term' h μ) _ 0
-  . apply gauss_term_pos
-  . intro i
+  · apply gauss_term_pos
+  · intro i
     apply gauss_term_noneg
 
 /--
@@ -298,8 +298,8 @@ theorem discrete_gaussian_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (n : ℤ) :
   rw [div_pos_iff]
   left
   constructor
-  . apply gauss_term_pos
-  . apply sum_gauss_term_pos h μ
+  · apply gauss_term_pos
+  · apply sum_gauss_term_pos h μ
 
 /--
 The discrete gaussian is nonnegative.

@@ -43,20 +43,20 @@ theorem probUntilCut_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : �
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  . simp only [zero_eq, probUntilCut_zero, implies_true]
-  . rename_i fuel IH
+  · simp only [zero_eq, probUntilCut_zero, implies_true]
+  · rename_i fuel IH
     intro j
     simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
       bind_apply, pure_apply]
     split
-    . simp only [IH, mul_zero, tsum_zero]
-    . rename_i h'
+    · simp only [IH, mul_zero, tsum_zero]
+    · rename_i h'
       split
-      . rename_i h'
+      · rename_i h'
         subst h'
         simp at h'
         simp [h'] at h
-      . simp
+      · simp
 
 /--
 ``probUntil`` evaluates to zero at all values which do not satisfy ``cond``.
@@ -74,14 +74,14 @@ theorem probUntil_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : 
 lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
   split
-  . simp
-  . split
-    . split
-      . rename_i h1 h2 h3
+  · simp
+  · split
+    · split
+      · rename_i h1 h2 h3
         subst h3
         contradiction
-      . simp
-    . simp
+      · simp
+    · simp
 
 -- Dead code
 theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
@@ -113,14 +113,14 @@ lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   apply tsum_congr
   intro b
   split
-  . split
-    . rename_i h h'
+  · split
+    · rename_i h h'
       rw [h'] at h
       contradiction
-    . simp
-  . split
-    . simp
-    . rename_i h h'
+    · simp
+  · split
+    · simp
+    · rename_i h h'
       simp at h'
       rw [h'] at h
       contradiction
@@ -129,8 +129,8 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  . simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
-  . rename_i fuel IH
+  · simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
+  · rename_i fuel IH
     unfold probWhileCut
     unfold probWhileFunctional
     simp only [decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply, bind_apply, pure_apply, mul_ite,
@@ -173,8 +173,8 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
             (body i) 0 * (body x * ∑ i in range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i) := by
       intro i
       split
-      . simp
-      . simp
+      · simp
+      · simp
     conv =>
       left
       right
@@ -190,9 +190,9 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
     congr
     ext i
     split
-    . rename_i h
+    · rename_i h
       simp [h]
-    . rename_i h
+    · rename_i h
       simp [h]
 
 /--
@@ -241,7 +241,7 @@ theorem probUntil_apply_sat (body : SLang T) (cond : T → Bool) (x : T) (h : co
     right
     right
     intro s
-    rw [finset_sum_iSup_nat (probUntilCut_monotone body cond x)]
+    rw [finsetSum_iSup_of_monotone (probUntilCut_monotone body cond x)]
   rw [iSup_comm]
   conv =>
     right
@@ -260,9 +260,9 @@ theorem probUntil_apply (body : SLang T) (cond : T → Bool) (x : T) :
   probUntil (body : SLang T) (cond : T → Bool) x =
   (if cond x then body x else 0) * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   split
-  . rename_i h
+  · rename_i h
     simp [h, probUntil_apply_sat]
-  . rename_i h
+  · rename_i h
     simp [h, probUntil_apply_unsat]
 
 /--
@@ -280,8 +280,8 @@ theorem probUntil_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm 
   have A : ∀ x, body x = (if cond x then body x else 0) + (if cond x then 0 else body x) := by
     intro x
     split
-    . simp
-    . simp
+    · simp
+    · simp
   revert norm
   conv =>
     left

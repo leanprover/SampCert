@@ -66,12 +66,12 @@ theorem BernoulliSample_apply_false (num : Nat) (den : PNat) (wf : num ≤ den) 
   have A := BernoulliSample_normalizes num den wf
   rw [tsum_bool, BernoulliSample_apply_true] at A
   apply ENNReal.eq_sub_of_add_eq
-  . have B : ↑num / ↑↑den < (⊤ : ENNReal) := by
+  · have B : ↑num / ↑↑den < (⊤ : ENNReal) := by
       apply ENNReal.div_lt_top
-      . simp
-      . simp
+      · simp
+      · simp
     exact lt_top_iff_ne_top.mp B
-  . trivial
+  · trivial
 
 /--
 Closed form for evaulation of Bernoulli distribution in terms of its paramater ``num/den``.
@@ -80,8 +80,8 @@ Closed form for evaulation of Bernoulli distribution in terms of its paramater `
 theorem BernoulliSample_apply (num : Nat) (den : PNat) (wf : num ≤ den) (b : Bool) :
   BernoulliSample num den wf b = if b then ((num : ENNReal) / (den : ENNReal)) else ((1 : ENNReal) - ((num : ENNReal) / (den : ENNReal))) := by
   cases b
-  . simp
-  . simp
+  · simp
+  · simp
 
 /--
 ``SLang`` Bernoulli program is a proper distribution.

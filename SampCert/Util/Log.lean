@@ -106,7 +106,7 @@ lemma ENNReal_isReal_cases (x : ENNReal) : x = ⊤ ∨ (∃ v : ℝ, x = ENNReal
   cases x
   · left
     simp
-  . right
+  · right
     rename_i v
     rcases v with ⟨ r, Hr ⟩
     exists r

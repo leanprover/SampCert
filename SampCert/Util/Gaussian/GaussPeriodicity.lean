@@ -174,8 +174,8 @@ theorem shifted_gauss_sum_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ + k)) n := by
   revert μ
   induction k
-  . simp
-  . intro μ
+  · simp
+  · intro μ
     rename_i n IH
     simp
     rw [← add_assoc]
@@ -189,8 +189,8 @@ theorem shifted_gauss_sum_neg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℕ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ - k)) n := by
   revert μ
   induction k
-  . simp
-  . intro μ
+  · simp
+  · intro μ
     rename_i n IH
     simp
     rw [sub_add_eq_sub_sub]
@@ -207,8 +207,8 @@ The sum of ``gauss_term_ℝ`` does not change when the mean shifts by any intege
 theorem shifted_gauss_sum {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   (∑' (n : ℤ), (gauss_term_ℝ σ μ) n) = ∑' (n : ℤ), (gauss_term_ℝ σ (μ + k)) n := by
   cases k
-  . apply shifted_gauss_sum_pos h
-  . simp
+  · apply shifted_gauss_sum_pos h
+  · simp
     have X : ∀ a : ℕ, -(1: ℝ) + -a = - (((1 + a) : ℕ)) := by
       intro a
       simp

@@ -32,12 +32,12 @@ lemma ite_simpl_gaussian_1 (num den t: ℕ+) (x a : ℤ) :
       BernoulliExpNegSample (Int.natAbs (Int.sub (|x| * ↑↑t * ↑↑den) ↑↑num) ^ 2) (2 * num * t ^ 2 * den) false
   else 0) = 0 := by
   split
-  . simp
-  . split
-    . rename_i h1 h2
+  · simp
+  · split
+    · rename_i h1 h2
       subst h2
       contradiction
-    . simp
+    · simp
 
 lemma ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
   @ite ENNReal (x = a) (propDecidable (x = a)) 0
@@ -46,12 +46,12 @@ lemma ite_simpl_gaussian_2 (num den t: ℕ+) (x a : ℤ) :
       BernoulliExpNegSample (Int.natAbs (Int.sub (|x| * ↑↑t * ↑↑den) ↑↑num) ^ 2) (2 * num * t ^ 2 * den) true
   else 0) = 0 := by
   split
-  . simp
-  . split
-    . rename_i h1 h2
+  · simp
+  · split
+    · rename_i h1 h2
       subst h2
       contradiction
-    . simp
+    · simp
 
 /--
 Gaussian sampling attempt is a proper distribution.
@@ -97,8 +97,8 @@ lemma ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
     ENNReal.ofReal (-(((|x| * t * den).sub num).natAbs ^ 2 / ((2 : ℕ+) * num * (t : ℝ) ^ 2 * den))).exp)
   0)) = 0 := by
   split
-  . simp
-  . rename_i h
+  · simp
+  · rename_i h
     simp [h]
     intro h
     subst h
@@ -121,7 +121,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) (mix 
   simp (config := { contextual := true }) only [↓reduceIte, ite_simpl_1', tsum_zero, add_zero]
   rw [ENNReal.ofReal_mul]
   have A : 0 ≤ rexp (-(|↑n| / ↑↑t)) := by apply exp_nonneg
-  . conv =>
+  · conv =>
       left
       rw [mul_assoc]
       right
@@ -129,22 +129,22 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) (mix 
     congr
     rw [cast_natAbs]
     simp only [Int.cast_abs]
-  . rw [div_nonneg_iff] -- always the same
+  · rw [div_nonneg_iff] -- always the same
     left
     simp only [sub_nonneg, one_le_exp_iff, inv_nonneg, cast_nonneg, true_and]
     apply Right.add_nonneg
-    . apply exp_nonneg
-    . simp only [zero_le_one]
+    · apply exp_nonneg
+    · simp only [zero_le_one]
 
 lemma if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
   @ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (a * (@ite ENNReal (x = x_1) (propDecidable (x = (x_1, true).1))) 1 0) = 0 := by
   split
-  . simp
-  . split
-    . rename_i h1 h2
+  · simp
+  · split
+    · rename_i h1 h2
       subst h2
       contradiction
-    . simp
+    · simp
 
 lemma alg_auto (num den : ℕ+) (x : ℤ) :
   ENNReal.ofReal (
@@ -163,7 +163,7 @@ lemma alg_auto (num den : ℕ+) (x : ℤ) :
     apply cast_add_one_pos
 
   rw [← ENNReal.ofReal_mul]
-  . congr 1
+  · congr 1
     simp [← exp_add]
     simp [division_def]
     rw [(neg_add _ _).symm]
@@ -236,7 +236,7 @@ lemma alg_auto (num den : ℕ+) (x : ℤ) :
     ring
 
 
-  . simp [exp_nonneg]
+  · simp [exp_nonneg]
 
 lemma alg_auto' (num den : ℕ+) (x : ℤ) :
   -((x : ℝ) ^ 2 * (den : ℝ) ^ 2 / ((2 : ℝ) * (num : ℝ) ^ 2)) = -(x : ℝ) ^ 2 / ((2 : ℝ) * ((num : ℝ) ^ 2 / (den : ℝ) ^ 2)) := by
@@ -280,7 +280,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
 
   rw [ENNReal.tsum_mul_left]
   rw [ENNReal.mul_inv]
-  . rw [mul_assoc]
+  · rw [mul_assoc]
     conv =>
       left
       right
@@ -288,11 +288,11 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
       rw [mul_assoc]
     rw [← mul_assoc]
     rw [ENNReal.mul_inv_cancel]
-    . simp only [one_mul]
+    · simp only [one_mul]
       rw [mul_comm]
       rw [← division_def]
       rw [ENNReal.ofReal_div_of_pos]
-      . simp only [alg_auto]
+      · simp only [alg_auto]
         rw [ENNReal.tsum_mul_left]
         rw [ENNReal.div_eq_inv_mul]
         rw [← mul_assoc]
@@ -303,7 +303,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
           simp only [exp_pos]
         have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2)))) ≠ ⊤ := by
           exact ENNReal.ofReal_ne_top
-        . conv =>
+        · conv =>
             left
             left
             rw [mul_comm]
@@ -314,60 +314,60 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
           rw [mul_comm]
           rw [← division_def]
           congr
-          . simp only [alg_auto']
-          . conv =>
+          · simp only [alg_auto']
+          · conv =>
               left
               right
               intro i
               rw [alg_auto']
             rw [← ENNReal.ofReal_tsum_of_nonneg]
-            . intro n
+            · intro n
               simp only [exp_nonneg]
-            . have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
+            · have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
                 simp
               have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
               unfold gauss_term_ℝ at Y
               simp at Y
               exact Y
-        . left
+        · left
           simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
           simp only [exp_pos]
-        . left
+        · left
           exact ENNReal.ofReal_ne_top
-      . apply tsum_pos
-        . have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
+      · apply tsum_pos
+        · have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
             simp
           have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
           unfold gauss_term_ℝ at Y
           simp at Y
           exact Y
-        . intro i
+        · intro i
           simp only [exp_nonneg]
-        . simp only [exp_pos]
-        . exact 0
-    . refine pos_iff_ne_zero.mp ?h0.a
+        · simp only [exp_pos]
+        · exact 0
+    · refine pos_iff_ne_zero.mp ?h0.a
       simp only [ENNReal.ofReal_pos]
       rw [div_pos_iff]
       left
       simp only [sub_pos, one_lt_exp_iff, inv_pos]
       constructor
-      . apply cast_add_one_pos
-      . apply Right.add_pos_of_pos_of_nonneg
-        . simp only [exp_pos]
-        . simp only [zero_le_one]
-    . exact ENNReal.ofReal_ne_top
-  . left
+      · apply cast_add_one_pos
+      · apply Right.add_pos_of_pos_of_nonneg
+        · simp only [exp_pos]
+        · simp only [zero_le_one]
+    · exact ENNReal.ofReal_ne_top
+  · left
     apply zero_lt_iff.mp
     simp only [ENNReal.ofReal_pos]
     rw [div_pos_iff]
     left
     simp only [sub_pos, one_lt_exp_iff, inv_pos]
     constructor
-    . apply cast_add_one_pos
-    . apply Right.add_pos_of_pos_of_nonneg
-      . simp only [exp_pos]
-      . simp only [zero_le_one]
-  . left
+    · apply cast_add_one_pos
+    · apply Right.add_pos_of_pos_of_nonneg
+      · simp only [exp_pos]
+      · simp only [zero_le_one]
+  · left
     exact ENNReal.ofReal_ne_top
 
 /--
@@ -384,12 +384,12 @@ theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) (mix : ℕ) 
     intro x
     rw [DiscreteGaussianSample_apply]
   rw [← ENNReal.ofReal_tsum_of_nonneg]
-  . rw [ENNReal.ofReal_one.symm]
+  · rw [ENNReal.ofReal_one.symm]
     congr 1
     apply discrete_gaussian_normalizes A
-  . intro n
+  · intro n
     apply discrete_gaussian_nonneg A 0 n
-  . apply discrete_gaussian_summable A
+  · apply discrete_gaussian_summable A
 
 theorem DiscreteGaussianSample_HasSum1 (num : PNat) (den : PNat) (mix : ℕ) :
   HasSum (DiscreteGaussianSample num den mix) 1 := by

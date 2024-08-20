@@ -38,11 +38,11 @@ theorem rw1 (n : PNat) :
   congr
   rw [mul_comm]
   rw [ENNReal.mul_inv]
-  . simp only [inv_inv]
-  . simp only [ne_eq, cast_eq_zero, PNat.ne_zero, not_false_eq_true, inv_eq_top, log_eq_zero_iff,
+  · simp only [inv_inv]
+  · simp only [ne_eq, cast_eq_zero, PNat.ne_zero, not_false_eq_true, inv_eq_top, log_eq_zero_iff,
     gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff, not_ofNat_le_one, or_self,
     pow_eq_zero_iff, OfNat.ofNat_ne_zero]
-  . simp only [ne_eq, natCast_ne_top, not_false_eq_true, ENNReal.inv_eq_zero, pow_eq_top_iff,
+  · simp only [ne_eq, natCast_ne_top, not_false_eq_true, ENNReal.inv_eq_zero, pow_eq_top_iff,
     two_ne_top, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
     PNat.ne_zero, not_ofNat_le_one, or_self, and_true]
 
@@ -59,8 +59,8 @@ lemma double_large_enough (n : PNat) (x : Nat) (support : x < n) :
   have A : ∀ m : ℕ, m < 2 ^ (log 2 ↑(2 * m)) := by
     intro m
     cases m
-    . simp
-    . rename_i m
+    · simp
+    · rename_i m
       have H1 := @Nat.lt_pow_succ_log_self 2 le.refl (succ m)
       have H2 := @Nat.log_mul_base 2 (succ m) le.refl (succ_ne_zero m)
       rw [Nat.mul_comm]
@@ -113,7 +113,7 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
     clear D
     trivial
   apply ENNReal.sub_eq_of_eq_add_rev
-  . have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
+  · have Y := tsum_split_less (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
     rw [UniformPowerOfTwoSample_normalizes (2 * n)] at Y
     simp at Y
     clear X
@@ -121,7 +121,7 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
     rename_i h
     rw [h] at Y
     contradiction
-  . simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
+  · simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
     rw [X]
 
 /--
@@ -141,14 +141,14 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
           0) = 0 := by
     intro x1
     split
-    . simp only
-    . split
-      . split
-        . rename_i h1 h2 h3
+    · simp only
+    · split
+      · split
+        · rename_i h1 h2 h3
           subst h3
           contradiction
-        . simp only [mul_zero]
-      . simp only
+        · simp only [mul_zero]
+      · simp only
   conv =>
     left
     right
@@ -162,15 +162,15 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
            (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (UniformPowerOfTwoSample (2 * n) x) 0) := by
     intro x
     split
-    . split
-      . rename_i h1 h2
+    · split
+      · rename_i h1 h2
         rw [← not_lt] at h2
         contradiction
-      . simp only
-    . split
-      . rename_i h1 h2
+      · simp only
+    · split
+      · rename_i h1 h2
         simp only
-      . rename_i h1 h2
+      · rename_i h1 h2
         simp only [not_lt] at h1
         contradiction
   conv =>
@@ -205,8 +205,8 @@ Sum of the ``UniformSample`` distribution over a subset of its support.
 lemma UniformSample_support_Sum (n : PNat) (m : ℕ) (h : m ≤ n) :
   (Finset.sum (range m) fun i => UniformSample n i) = m / n := by
   induction m
-  . simp
-  . rename_i m IH
+  · simp
+  · rename_i m IH
     simp at *
     have A : m ≤ ↑n := by exact lt_succ.mp (le.step h)
     have IH' := IH A
@@ -223,8 +223,8 @@ lemma UniformSample_support_Sum' (n : PNat) :
   (Finset.sum (range n) fun i => UniformSample n i) = 1 := by
   rw [UniformSample_support_Sum n n le.refl]
   apply ENNReal.div_self
-  . simp
-  . simp
+  · simp
+  · simp
 
 /--
 Sum over the whole space of ``UniformSample`` is ``1``.
@@ -233,8 +233,8 @@ Sum over the whole space of ``UniformSample`` is ``1``.
 theorem UniformSample_normalizes (n : PNat) :
   ∑' a : ℕ, UniformSample n a = 1 := by
   rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ n]
-  . simp [UniformSample_support_Sum']
-  . exact ENNReal.summable
+  · simp [UniformSample_support_Sum']
+  · exact ENNReal.summable
 
 /--
 ``UniformSample`` is a proper distribution
@@ -259,8 +259,8 @@ theorem UniformSample_apply_ite (a b : ℕ) (c : PNat) (i1 : b ≤ c) :
   split
   rename_i i2
   rw [UniformSample_apply]
-  . exact Nat.lt_of_lt_of_le i2 i1
-  . trivial
+  · exact Nat.lt_of_lt_of_le i2 i1
+  · trivial
 
 /--
 Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when outside the support.
@@ -268,9 +268,9 @@ Evaluation of ``UniformSample`` on ``ℕ`` guarded by its support, when outside 
 theorem UniformSample_apply' (n : PNat) (x : Nat) :
   (UniformSample n) x = if x < n then (1 : ENNReal) / n else 0 := by
   split
-  . rename_i h
+  · rename_i h
     simp [h]
-  . rename_i h
+  · rename_i h
     apply UniformSample_apply_out
     exact Nat.not_lt.mp h
 

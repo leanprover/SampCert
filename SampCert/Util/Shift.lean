@@ -27,7 +27,7 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
   have h4 : Summable fun x : ℕ => f (- (x + 1)) := by
     apply h3 0
   rw [tsum_of_nat_of_neg_add_one h1]
-  . rw [← sum_add_tsum_nat_add μ h1]
+  · rw [← sum_add_tsum_nat_add μ h1]
     rw [add_rotate]
     conv =>
       left
@@ -53,8 +53,8 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
       rw [add_comm]
     congr 1
     induction μ
-    . simp
-    . rename_i n IH
+    · simp
+    · rename_i n IH
       rw [Finset.sum_range_succ]
       rw [IH]
       clear IH
@@ -64,7 +64,7 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
       intro x _
       congr 1
       ring_nf
-  . exact h4
+  · exact h4
 
 
 /--
@@ -79,7 +79,7 @@ theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
   have h4 : Summable fun x : ℕ => f (- (x + 1)) := by
     apply h3 0
   rw [tsum_of_nat_of_neg_add_one]
-  . rw [← sum_add_tsum_nat_add μ (h2 μ)]
+  · rw [← sum_add_tsum_nat_add μ (h2 μ)]
     rw [add_rotate]
     conv =>
       left
@@ -90,28 +90,28 @@ theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
       right
       rw [tsum_of_nat_of_neg_add_one h1 h4]
     congr 1
-    . apply tsum_congr
+    · apply tsum_congr
       intro b
       congr 1
       simp
-    . conv =>
+    · conv =>
         right
         rw [← sum_add_tsum_nat_add μ h4]
       congr 1
-      . induction μ
-        . simp
-        . rename_i μ IH
+      · induction μ
+        · simp
+        · rename_i μ IH
           rw [Finset.sum_range_succ']
           rw [Finset.sum_range_succ]
           rw [← IH]
           simp
-      . apply tsum_congr
+      · apply tsum_congr
         intro b
         congr 1
         simp
         ring_nf
-  . exact (h2 μ)
-  . exact (h3 μ)
+  · exact (h2 μ)
+  · exact (h3 μ)
 
 /--
 A series is invariant under integer shifts provided its shifted positive and negative parts are summable.
@@ -146,10 +146,10 @@ theorem tsum_shift (f : ℤ → ℝ) (μ : ℤ)
     intro μ
     apply h'
   cases μ
-  . rename_i μ
+  · rename_i μ
     rw [tsum_shift₁ f μ h1 h2]
     simp
-  . rename_i μ
+  · rename_i μ
     rw [← tsum_shift₂ f (μ + 1) h3 h4]
     apply tsum_congr
     intro b
