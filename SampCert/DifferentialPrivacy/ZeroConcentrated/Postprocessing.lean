@@ -84,8 +84,8 @@ theorem norm_simplify (x : ENNReal) (h : x ≠ ⊤) :
   @nnnorm ℝ SeminormedAddGroup.toNNNorm x.toReal = x := by
   simp [nnnorm]
   cases x
-  . contradiction
-  . rename_i v
+  · contradiction
+  · rename_i v
     simp
     rfl
 
@@ -95,12 +95,12 @@ theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T)
   rw [← condition_to_subset]
   have A : (∑' (y : T), if x = f y  then p y else 0) ≤ ∑' (x : T), p x := by
     apply tsum_le_tsum
-    . intro i
+    · intro i
       split
-      . trivial
-      . simp only [_root_.zero_le]
-    . exact ENNReal.summable
-    . exact ENNReal.summable
+      · trivial
+      · simp only [_root_.zero_le]
+    · exact ENNReal.summable
+    · exact ENNReal.summable
   rw [← lt_top_iff_ne_top]
   apply lt_of_le_of_lt A
   rw [lt_top_iff_ne_top]
@@ -208,8 +208,8 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
     rename_i z w
     exists z
     constructor
-    . trivial
-    . exact Hl z
+    · trivial
+    · exact Hl z
   simp
 
   let δF₁ := (δpmf (nq l₁) f i (nq_restriction_nzs l₁ Hnq2) nq_restriction_nts1)

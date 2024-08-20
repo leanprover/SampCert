@@ -33,9 +33,9 @@ theorem sum_simple (bound : ℕ) (k : ENNReal) :
   rw [(tsum_eq_zero_iff A).mpr]
   · rw [← @Finset.sum_filter]
     rw [Finset.filter_true_of_mem]
-    . simp
+    · simp
       rw [mul_comm]
-    . intro _
+    · intro _
       exact List.mem_range.mp
   · intro x
     simp
@@ -50,8 +50,8 @@ theorem tsum_simpl_ite_left (cond : T → Bool) (f g : T → ENNReal) :
   apply tsum_congr
   intro b
   split
-  . simp
-  . rename_i h
+  · simp
+  · rename_i h
     cases b
     rename_i b P
     simp at *
@@ -67,13 +67,13 @@ theorem tsum_simpl_ite_right (cond : T → Bool) (f g : T → ENNReal) :
   apply tsum_congr
   intro b
   split
-  . rename_i h
+  · rename_i h
     cases b
     rename_i b P
     simp at *
     have A : ¬ cond b = true := by exact P
     simp [A] at h
-  . simp
+  · simp
 
 /--
 Partition series indices based on conditional guard
@@ -98,13 +98,13 @@ theorem tsum_simpl_ite_left' (cond : T → Bool) (f g : T → ENNReal) :
   apply tsum_congr
   intro b
   split
-  . rename_i h
+  · rename_i h
     cases b
     rename_i b P
     simp at *
     have A : cond b = true := by exact P
     simp [A] at h
-  . simp
+  · simp
 
 /--
 Simplify guarded series based on index type
@@ -115,8 +115,8 @@ theorem tsum_simpl_ite_right' (cond : T → Bool) (f g : T → ENNReal) :
   apply tsum_congr
   intro b
   split
-  . simp
-  . rename_i h
+  · simp
+  · rename_i h
     cases b
     rename_i b P
     simp at *
@@ -184,8 +184,8 @@ theorem tsum_shift_1 (f : ℕ → ENNReal) :
   rw [iSup_congr]
   intro i
   induction i
-  . simp
-  . rename_i i IH
+  · simp
+  · rename_i i IH
     rw [sum_range_succ]
     simp
     conv =>
@@ -210,8 +210,8 @@ theorem tsum_shift'_1 (f : ℕ → ENNReal) :
   rw [iSup_congr]
   intro i
   induction i
-  . simp
-  . rename_i i IH
+  · simp
+  · rename_i i IH
     rw [sum_range_succ]
     simp
     conv =>
@@ -236,16 +236,16 @@ theorem tsum_shift'_2 (f : ℕ → ENNReal) :
   rw [iSup_congr]
   intro i
   induction i
-  . simp
+  · simp
     intro x h1 h2 h3
     cases x
-    . contradiction
-    . rename_i x
-      . cases x
-        . contradiction
-        . rename_i x
+    · contradiction
+    · rename_i x
+      · cases x
+        · contradiction
+        · rename_i x
           contradiction
-  . rename_i i IH
+  · rename_i i IH
     rw [sum_range_succ]
     simp
     conv =>

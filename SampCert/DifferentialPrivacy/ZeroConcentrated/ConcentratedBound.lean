@@ -26,8 +26,8 @@ lemma sg_sum_pos' {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (α : ℝ)  :
   rw [div_pos_iff]
   left
   constructor
-  . apply exp_pos
-  . apply sum_gauss_term_pos h
+  · apply exp_pos
+  · apply sum_gauss_term_pos h
 
 lemma SG_Renyi_simplify {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) :
   (fun (x : ℤ) => (gauss_term_ℝ σ μ) x / ∑' (x : ℤ), (gauss_term_ℝ σ μ) x) x ^ α *
@@ -128,7 +128,7 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       rw [← Int.cast_zero]
     apply sum_gauss_term_pos h
   rw [exp_log]
-  . conv =>
+  · conv =>
       left
       ring_nf
       right
@@ -225,8 +225,8 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       rw [← mul_div_assoc]
     apply mul_le_of_le_one_right _ G
     apply exp_nonneg
-  . apply tsum_pos _ _ 0 _
-    . simp -- some of this proof is similar to the one just above and needs to be hoisted
+  · apply tsum_pos _ _ 0 _
+    · simp -- some of this proof is similar to the one just above and needs to be hoisted
       conv =>
         right
         intro x
@@ -275,18 +275,18 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
         rw [exp_add]
       apply Summable.mul_right
       apply summable_gauss_term' h
-    . intro i
+    · intro i
       apply le_of_lt
       rw [mul_pos_iff]
       left
       constructor
-      . apply sg_sum_pos' h
-      . apply sg_sum_pos' h
-    . rw [mul_pos_iff]
+      · apply sg_sum_pos' h
+      · apply sg_sum_pos' h
+    · rw [mul_pos_iff]
       left
       constructor
-      . apply sg_sum_pos' h
-      . apply sg_sum_pos' h
+      · apply sg_sum_pos' h
+      · apply sg_sum_pos' h
 
 lemma  sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rexp (-(x - μ) ^ 2 / (2 * ss)) ^ α * rexp (-(x - ν) ^ 2 / (2 * ss)) ^ (1 - α)
@@ -357,14 +357,14 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     rw [sg_mul_simplify]
 
   rw [← tsum_shift _ (-τ)]
-  . apply tsum_congr
+  · apply tsum_congr
     intro b
     congr 6
-    . simp
+    · simp
       ring_nf
-    . simp
+    · simp
       ring_nf
-  . intro β
+  · intro β
     conv =>
       right
       intro x
@@ -434,8 +434,8 @@ theorem Renyi_sum_SG_nonneg {σ α : ℝ} (h : σ ≠ 0) (μ ν n : ℤ) :
   rw [mul_nonneg_iff]
   left
   constructor
-  . apply Real.rpow_nonneg A
-  . apply Real.rpow_nonneg B
+  · apply Real.rpow_nonneg A
+  · apply Real.rpow_nonneg B
 
 /--
 Sum in Renyi divergence between discrete Gaussians is well-defined.

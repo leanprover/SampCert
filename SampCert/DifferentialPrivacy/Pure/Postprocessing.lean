@@ -33,14 +33,14 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε : NNReal} (h : PureDP nq
   apply tsum_le_tsum _ ENNReal.summable (by aesop)
   intro i
   split
-  . rename_i h
+  · rename_i h
     subst h
     refine (ENNReal.div_le_iff_le_mul ?inl.hb0 ?inl.hbt).mp (h i)
-    . aesop
-    . right
+    · aesop
+    · right
       simp
       exact Real.exp_pos ε
-  . simp
+  · simp
 
 /--
 ``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.

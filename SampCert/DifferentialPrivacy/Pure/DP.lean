@@ -48,10 +48,10 @@ theorem singleton_to_event (m : Mechanism T U) (ε : ℝ) (h : DP_singleton m ε
   have F := ENNReal.tsum_le_tsum E
   rw [ENNReal.tsum_mul_left] at F
   rw [← ENNReal.div_le_iff_le_mul] at F
-  . clear h1 A B C D
+  · clear h1 A B C D
     trivial
-  . aesop
-  . right
+  · aesop
+  · right
     simp
     exact Real.exp_pos ε
 
@@ -63,18 +63,18 @@ theorem event_to_singleton (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   replace h1 := h l₁ l₂ h1 {x}
   simp at h1
   rw [tsum_eq_single x] at h1
-  . simp at h1
+  · simp at h1
     rw [tsum_eq_single x] at h1
-    . simp at h1
+    · simp at h1
       trivial
-    . aesop
-  . aesop
+    · aesop
+  · aesop
 
 theorem event_eq_singleton (m : Mechanism T U) (ε : ℝ) :
   DP m ε ↔ DP_singleton m ε := by
   constructor
-  . apply event_to_singleton
-  . apply singleton_to_event
+  · apply event_to_singleton
+  · apply singleton_to_event
 
 lemma PureDP_mono {m : Mechanism T U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε₂) (Hε : PureDP m ε₁) : PureDP m ε₂ := by
   rw [PureDP] at *

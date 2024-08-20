@@ -102,10 +102,10 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
   have A : ∀ a : U, ∀ b : U, (∑' (a_1 : V), if b = a ∧ c = a_1 then nq2 a_1 else 0) = if b = a then (∑' (a_1 : V), if c = a_1 then nq2 a_1 else 0) else 0 := by
     intro x  y
     split
-    . rename_i h
+    · rename_i h
       subst h
       simp
-    . rename_i h
+    · rename_i h
       simp
       intro h
       contradiction
@@ -120,12 +120,12 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
   have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 x * ∑' (a_1 : V), if c = a_1 then nq2 a_1 else 0 else 0) = 0 := by
     intro x
     split
-    . simp
-    . split
-      . rename_i h1 h2
+    · simp
+    · split
+      · rename_i h1 h2
         subst h2
         contradiction
-      . simp
+      · simp
   conv =>
     left
     right
@@ -139,12 +139,12 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
   have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 x else 0) = 0 := by
     intro x
     split
-    . simp
-    . split
-      . rename_i h1 h2
+    · simp
+    · split
+      · rename_i h1 h2
         subst h2
         contradiction
-      . simp
+      · simp
   conv =>
     left
     right
@@ -167,8 +167,8 @@ theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum 
   intro b
   have F := @Summable.hasSum_iff ENNReal _ _ _ (fun c => (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) { fst := b, snd := c }) ((fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) b) _
   apply (F _).2
-  . rfl
-  . apply ENNReal.summable
+  · rfl
+  · apply ENNReal.summable
 
 /--
 Partition series into fibers. `g` maps an element to its fiber.
@@ -204,10 +204,10 @@ theorem fiberwisation (p : T → ENNReal) (f : T → V) :
   apply tsum_congr
   intro b
   split
-  . rename_i h'
+  · rename_i h'
     rw [h']
     simp only [tsum_empty]
-  . simp
+  · simp
 
 lemma condition_to_subset (f : U → V) (g : U → ENNReal) (x : V) :
   (∑' a : U, if x = f a then g a else 0) = ∑' a : { a | x = f a }, g a := by

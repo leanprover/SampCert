@@ -30,13 +30,13 @@ theorem exactCount_1_sensitive :
   simp [exactCount, sensitivity]
   intros l₁ l₂ H
   cases H
-  . rename_i a b n h1 h2
+  · rename_i a b n h1 h2
     subst h1 h2
     simp
-  . rename_i a b n h1 h2
+  · rename_i a b n h1 h2
     subst h1 h2
     simp
-  . rename_i a n b m h1 h2
+  · rename_i a n b m h1 h2
     subst h1 h2
     simp
 

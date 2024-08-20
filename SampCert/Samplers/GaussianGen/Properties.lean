@@ -24,12 +24,12 @@ lemma if_simple_GaussianGen (x_1 x μ : ℤ) :
   (@ite ENNReal (x = x_1 + μ) (x.instDecidableEq (x_1 + μ))
   (ENNReal.ofReal (gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x_1 / ∑' (x : ℤ), gauss_term_ℝ (↑↑num / ↑↑den) 0 ↑x)) 0)) = 0 := by
   split
-  . simp
-  . split
-    . rename_i h1 h2
+  · simp
+  · split
+    · rename_i h1 h2
       subst h2
       simp at h1
-    . simp
+    · simp
 
 /--
 ``SLang`` general discrete gaussian term evaluates according to the mathematical ``discrete_gaussian`` distribution.
@@ -50,8 +50,8 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
     rw [if_simple_GaussianGen]
   simp only [tsum_zero, add_zero]
   congr 2
-  . simp [gauss_term_ℝ]
-  . rw [shifted_gauss_sum_0 A]
+  · simp [gauss_term_ℝ]
+  · rw [shifted_gauss_sum_0 A]
 
 /--
 DiscreteGaussianGen has sum 1

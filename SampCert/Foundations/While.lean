@@ -29,13 +29,13 @@ theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init 
   intro n
   revert init
   induction n
-  . intro init
+  · intro init
     simp [probWhileCut]
-  . rename_i n IH
+  · rename_i n IH
     intro init
     simp [probWhileCut,probWhileFunctional]
     split
-    . rename_i COND
+    · rename_i COND
       unfold probBind
       unfold SLang.probPure
       simp
@@ -43,7 +43,7 @@ theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init 
       intro a
       apply mul_le_mul_left'
       exact IH a
-    . simp
+    · simp
 
 /--
 The ``probWhile`` term evaluates to the pointwise limit of the ``probWhileCut`` term
@@ -55,7 +55,7 @@ theorem probWhile_apply (cond : T → Bool) (body : T → SLang T) (init : T) (x
   intro H
   unfold probWhile
   apply iSup_eq_of_tendsto
-  . apply probWhileCut_monotonic
-  . apply H
+  · apply probWhileCut_monotonic
+  · apply H
 
 end SLang

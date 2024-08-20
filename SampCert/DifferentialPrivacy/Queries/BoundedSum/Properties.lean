@@ -34,49 +34,49 @@ theorem exactBoundedSum_sensitivity (U : ℕ+) : sensitivity (exactBoundedSum U)
     simp
     exact Nat.le_total n ↑U
   cases H
-  . rename_i l l' n h1 h2
+  · rename_i l l' n h1 h2
     subst h1 h2
     simp
     cases A n
-    . rename_i h
+    · rename_i h
       rw [h]
       simp at *
       trivial
-    . rename_i h
+    · rename_i h
       rw [h]
       simp
-  . rename_i l n l' h1 h2
+  · rename_i l n l' h1 h2
     subst h1 h2
     simp
     cases A n
-    . rename_i h
+    · rename_i h
       rw [h]
       simp at *
       trivial
-    . rename_i h
+    · rename_i h
       rw [h]
       simp
-  . rename_i l n l' m h1 h2
+  · rename_i l n l' m h1 h2
     subst h1 h2
     simp
     cases A n
-    . rename_i h
+    · rename_i h
       cases A m
-      . rename_i h'
+      · rename_i h'
         rw [h, h']
         simp at *
         apply Int.natAbs_coe_sub_coe_le_of_le h h'
-      . rename_i h'
+      · rename_i h'
         rw [h, h']
         simp at *
         apply Int.natAbs_coe_sub_coe_le_of_le h le_rfl
-    . rename_i h
+    · rename_i h
       cases A m
-      . rename_i h'
+      · rename_i h'
         rw [h, h']
         simp at *
         apply Int.natAbs_coe_sub_coe_le_of_le le_rfl h'
-      . rename_i h'
+      · rename_i h'
         rw [h, h']
         simp at *
 

@@ -46,9 +46,9 @@ theorem UniformPowerOfTwoSample_apply' (n : PNat) (x : Nat) (h : x ≥ 2 ^ (log 
 lemma if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
   (@ite ENNReal (x_1 = x) (propDecidable (x_1 = x)) 0 (@ite ENNReal ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1)) (propDecidable ((@Fin.val (2 ^ log 2 ↑n) x) = (@Fin.val (2 ^ log 2 ↑n) x_1))) 1 0)) = 0 := by
   split
-  . simp
-  . split
-    . rename_i h1 h2
+  · simp
+  · split
+    · rename_i h1 h2
       cases x
       rename_i x p
       cases x_1
@@ -56,7 +56,7 @@ lemma if_simpl_up2 (n : PNat) (x x_1: Fin (2 ^ log 2 ↑n)) :
       simp at *
       subst h2
       contradiction
-    . simp
+    · simp
 
 /--
 The ``SLang`` term ``uniformPowerOfTwo`` is a proper distribution on ``ℕ``.

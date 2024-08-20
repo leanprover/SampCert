@@ -191,10 +191,10 @@ lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) 
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by
   simp [discrete_gaussian]
   congr 1
-  . simp [gauss_term_ℝ]
+  · simp [gauss_term_ℝ]
     congr 3
     ring_nf
-  . rw [shifted_gauss_sum h]
+  · rw [shifted_gauss_sum h]
 
 /--
 privNoisedQuery preserves absolute continuity between neighbours

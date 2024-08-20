@@ -83,9 +83,9 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     unfold fourier_gauss_term
     simp [sq]
     congr 1
-    . rw [Complex.abs_exp]
+    · rw [Complex.abs_exp]
       simp [sq]
-    . have A : 0 ≤ (2⁻¹ * ((↑σ)⁻¹ * (↑σ)⁻¹ * (↑π)⁻¹)) ^ (2 : ℝ)⁻¹ := by
+    · have A : 0 ≤ (2⁻¹ * ((↑σ)⁻¹ * (↑σ)⁻¹ * (↑π)⁻¹)) ^ (2 : ℝ)⁻¹ := by
         apply rpow_nonneg
         rw [mul_nonneg_iff]
         left
@@ -124,7 +124,7 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
             simp
             right
             ring_nf
-          . simp
+          · simp
       rw [← X]
       rw [H]
 
