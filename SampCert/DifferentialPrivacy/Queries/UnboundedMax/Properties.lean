@@ -43,7 +43,7 @@ Not used for anything, but to give confidence in our definitions
 (exactDiffSum l m) is zero if and only if m is an upper bound on the list elements
 -/
 lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
-    l.maximum ≤ m <-> exactDiffSum m l = 0 := by
+    l.maximum ≤ m <-> exactDiffSum m l ≤ 0 := by
   apply Iff.intro
   · induction l
     · simp [exactDiffSum, exactClippedSum]
@@ -54,19 +54,9 @@ lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
       have IH' := IH Hmax1
       clear IH
       simp [exactDiffSum, exactClippedSum] at *
-      rw [add_sub_add_comm]
-      rw [IH']
-      rw [Int.min_def, Int.min_def]
-      split
-      · split
-        · simp
-        · linarith
-      · exfalso
-        rename_i h
-        apply h
-        simp
-        rw [Nat.cast_withBot, WithBot.coe_le_coe] at Hmax0
-        trivial
+      apply Int.add_le_of_le_neg_add
+      apply le_trans IH'
+      simp
   · intro H1
     apply List.maximum_le_of_forall_le
     revert H1
@@ -76,9 +66,20 @@ lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
       intro Hdiff a Ha
       rw [List.mem_cons_eq] at Ha
       cases Ha
-      · sorry
-      · apply IH
-        · sorry
+      · rename_i H
+        rw [H]
+        rw [Nat.cast_withBot]
+        apply WithBot.coe_le_coe.mpr
+
+        sorry
+      · apply IH; clear IH
+        · simp only [exactDiffSum, exactClippedSum] at *
+          have H : (min (l0.cast : ℤ) (m.cast : ℤ) - min (l0.cast) ((m.cast : ℤ) + 1)) = 0 := by
+            sorry
+          -- rw [H] at Hdiff
+          -- rw [<- Hdiff]
+          -- simp
+          sorry
         · trivial
 
 
@@ -88,3 +89,60 @@ lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
   - Executable
   - Tracks single state
 -/
+
+def sv0_state : Type := ℕ × ℤ
+
+def sv0_threshold (s : sv0_state) : ℕ := s.1
+
+def sv0_noise (s : sv0_state) : ℤ := s.2
+
+def sv0_privMaxC (τ : ℤ) (l : List ℕ) (s : sv0_state) : Bool :=
+  decide (exactDiffSum (sv0_threshold s) l + (sv0_noise s) < τ)
+
+def sv0_privMaxF [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (s : sv0_state) : SLang sv0_state := do
+  let vn <- @privNoiseZero dps ε₁ (4 * ε₂)
+  let n := (sv0_threshold s) + 1
+  return (n, vn)
+
+def sv0_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+  let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+  let sk <- probWhile (sv0_privMaxC τ l) (sv0_privMaxF ε₁ ε₂) (0, v0)
+  return (sv0_threshold sk)
+
+/-
+## Program version 1
+  - Executable
+  - Tracks history of samples
+-/
+
+def sv1_state : Type := List ℤ × ℤ
+
+def sv1_threshold (s : sv1_state) : ℕ := List.length s.1
+
+def sv1_noise (s : sv1_state) : ℤ := s.2
+
+def sv1_privMaxC (τ : ℤ) (l : List ℕ) (s : sv1_state) : Bool :=
+  decide (exactDiffSum (sv1_threshold s) l + (sv1_noise s) < τ)
+
+def sv1_privMaxF [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (s : sv1_state) : SLang sv1_state := do
+  let vn <- @privNoiseZero dps ε₁ (4 * ε₂)
+  return (s.1 ++ [s.2], vn)
+
+def sv1_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+  let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+  let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+  let sk <- probWhile (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) ([], v0)
+  return (sv1_threshold sk)
+
+/--
+History-aware progam computes the same as the history-agnostic program
+-/
+lemma sv0_eq_sv1 [dps : DPSystem ℕ] ε₁ ε₂ l : sv0_privMax ε₁ ε₂ l = sv1_privMax ε₁ ε₂ l := by
+  apply SLang.ext
+  intro r
+
+
+
+
+  sorry
