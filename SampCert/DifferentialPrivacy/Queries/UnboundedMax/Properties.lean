@@ -37,51 +37,50 @@ This looks strange, but will specialize to Lap(ε₁/ε₂, 0) in the pure DP ca
 -/
 def privNoiseZero [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) : SLang ℤ := dps.noise (fun _ => 0) 1 ε₁ ε₂ []
 
-/--
+/-
 Not used for anything, but to give confidence in our definitions
 
 (exactDiffSum l m) is zero if and only if m is an upper bound on the list elements
 -/
-lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
-    l.maximum ≤ m <-> exactDiffSum m l ≤ 0 := by
-  apply Iff.intro
-  · induction l
-    · simp [exactDiffSum, exactClippedSum]
-    · rename_i l0 ls IH
-      intro Hmax
-      simp [List.maximum_cons] at Hmax
-      rcases Hmax with ⟨ Hmax0, Hmax1 ⟩
-      have IH' := IH Hmax1
-      clear IH
-      simp [exactDiffSum, exactClippedSum] at *
-      apply Int.add_le_of_le_neg_add
-      apply le_trans IH'
-      simp
-  · intro H1
-    apply List.maximum_le_of_forall_le
-    revert H1
-    induction l
-    · simp
-    · rename_i l0 ls IH
-      intro Hdiff a Ha
-      rw [List.mem_cons_eq] at Ha
-      cases Ha
-      · rename_i H
-        rw [H]
-        rw [Nat.cast_withBot]
-        apply WithBot.coe_le_coe.mpr
-
-        sorry
-      · apply IH; clear IH
-        · simp only [exactDiffSum, exactClippedSum] at *
-          have H : (min (l0.cast : ℤ) (m.cast : ℤ) - min (l0.cast) ((m.cast : ℤ) + 1)) = 0 := by
-            sorry
-          -- rw [H] at Hdiff
-          -- rw [<- Hdiff]
-          -- simp
-          sorry
-        · trivial
-
+-- lemma exactDiffSum_eq_0_iff_ge_max (l : List ℕ) (m : ℕ) :
+--     l.maximum ≤ m <-> exactDiffSum m l ≤ 0 := by
+--   apply Iff.intro
+--   · induction l
+--     · simp [exactDiffSum, exactClippedSum]
+--     · rename_i l0 ls IH
+--       intro Hmax
+--       simp [List.maximum_cons] at Hmax
+--       rcases Hmax with ⟨ Hmax0, Hmax1 ⟩
+--       have IH' := IH Hmax1
+--       clear IH
+--       simp [exactDiffSum, exactClippedSum] at *
+--       apply Int.add_le_of_le_neg_add
+--       apply le_trans IH'
+--       simp
+--   · intro H1
+--     apply List.maximum_le_of_forall_le
+--     revert H1
+--     induction l
+--     · simp
+--     · rename_i l0 ls IH
+--       intro Hdiff a Ha
+--       rw [List.mem_cons_eq] at Ha
+--       cases Ha
+--       · rename_i H
+--         rw [H]
+--         rw [Nat.cast_withBot]
+--         apply WithBot.coe_le_coe.mpr
+--
+--         sorry
+--       · apply IH; clear IH
+--         · simp only [exactDiffSum, exactClippedSum] at *
+--           have H : (min (l0.cast : ℤ) (m.cast : ℤ) - min (l0.cast) ((m.cast : ℤ) + 1)) = 0 := by
+--             sorry
+--           -- rw [H] at Hdiff
+--           -- rw [<- Hdiff]
+--           -- simp
+--           sorry
+--         · trivial
 
 
 /-
@@ -190,11 +189,55 @@ lemma sv1_eq_sv2 [dps : DPSystem ℕ] ε₁ ε₂ l : sv1_privMax ε₁ ε₂ l 
 
 
 
+/-
+## Program version 3
+  - Truncates the loop
+-/
+
+def sv3_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+  fun (point : ℕ) =>
+  let computation : SLang ℕ := do
+    let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+    let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+    let sk <- probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) (point + 1) ([], v0)
+    return (sv1_threshold sk)
+  computation point
 
 
+lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l = sv3_privMax ε₁ ε₂ l := by
+  apply SLang.ext
 
--- def sv1_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
---   let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
---   let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
---   let sk <- probWhile (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) ([], v0)
---   return (sv1_threshold sk)
+  -- Step through equal headers
+  intro point
+  unfold sv2_privMax
+  unfold sv3_privMax
+  simp
+  apply tsum_congr
+  intro τ
+  congr 1
+  apply tsum_congr
+  intro v0
+  congr 1
+  apply tsum_congr
+  intro final_state
+  rcases final_state with ⟨ hist, vk ⟩
+  split <;> try rfl
+  rename_i H
+  simp [H, sv1_threshold]
+  clear H
+
+  -- TODO: Move over the eventual constancy statement, and prove it
+
+  -- This statement is wrong, delete it
+  --
+  -- -- Want to say that the masses of the final returned _value_ are the same,
+  -- -- even though the lengths of the histories may change,
+  -- -- because past a certain point, adding to the history does not change the
+  -- -- probability of returning a given value.
+  -- conv =>
+  --   unfold sv1_state
+  --   congr
+  --   · rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
+  --   · rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
+  -- apply tsum_congr
+  -- intro point'
