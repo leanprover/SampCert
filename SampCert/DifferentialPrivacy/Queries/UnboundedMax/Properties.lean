@@ -140,9 +140,61 @@ History-aware progam computes the same as the history-agnostic program
 -/
 lemma sv0_eq_sv1 [dps : DPSystem ℕ] ε₁ ε₂ l : sv0_privMax ε₁ ε₂ l = sv1_privMax ε₁ ε₂ l := by
   apply SLang.ext
-  intro r
 
+  -- Initial setup is equal
+  intro result
+  simp [sv0_privMax, sv1_privMax]
+  apply tsum_congr
+  intro τ
+  congr 1
+  apply tsum_congr
+  intro v0
+  congr 1
 
+  -- unfold sum over product; term re. last sample should be equal as well
+  conv =>
+    congr
+    · unfold sv0_state
+      rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
+    · unfold sv1_state
+      rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
+  apply tsum_congr
+  intro vk
 
-
+  -- LHS: singleton sum
+  -- RHS: sum over all lists of length "result"
+  -- rw [tsum_ite_eq]
   sorry
+
+
+
+/-
+## Program version 2
+  - Only moves the loop into a non-executable form, ie. explicitly defines the PMF
+-/
+
+def sv2_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+  fun (point : ℕ) =>
+  let computation : SLang ℕ := do
+    let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+    let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+    let sk <- probWhile (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) ([], v0)
+    return (sv1_threshold sk)
+  computation point
+
+lemma sv1_eq_sv2 [dps : DPSystem ℕ] ε₁ ε₂ l : sv1_privMax ε₁ ε₂ l = sv2_privMax ε₁ ε₂ l := by
+  apply SLang.ext
+  intro result
+  simp [sv1_privMax, sv2_privMax]
+
+
+
+
+
+
+
+-- def sv1_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ := do
+--   let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+--   let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+--   let sk <- probWhile (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) ([], v0)
+--   return (sv1_threshold sk)
