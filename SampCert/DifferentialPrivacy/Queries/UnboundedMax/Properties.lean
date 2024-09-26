@@ -241,3 +241,71 @@ lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l 
   --   · rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
   -- apply tsum_congr
   -- intro point'
+
+  sorry
+
+
+
+/-
+## Program version 4
+  - Presamples each vk
+  - Iteratively checks if the loop
+  - Still loops through prefixes of the vk's iteratively
+-/
+
+-- Presamples the list (v_(n-1), v_(n-2), ..., v0)
+def sv4_presample [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (n : ℕ) : SLang (List ℤ) := do
+  match n with
+  | Nat.zero => return []
+  | (Nat.succ n') => do
+      let v <- @privNoiseZero dps ε₁ (4 * ε₂)
+      let l <- sv4_presample ε₁ ε₂ n'
+      return (v :: l)
+
+def sv4_evaluate_history (vks : List ℤ) (τ : ℤ) (l : List ℕ) : Bool :=
+  match vks with
+  | [] => true
+  | (v0 :: vs) => sv1_privMaxC τ l (vs, v0) && sv4_evaluate_history vs τ l
+
+
+def sv4_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+   fun (point : ℕ) =>
+   let computation : SLang ℕ := do
+     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+     let history <- sv4_presample ε₁ ε₂ (point + 1)
+     let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
+     if (sv4_evaluate_history history τ l && (! sv1_privMaxC τ l (history, vk)))
+       then return point
+       else probZero
+   computation point
+
+lemma sv3_eq_sv4 [dps : DPSystem ℕ] ε₁ ε₂ l : sv3_privMax ε₁ ε₂ l = sv4_privMax ε₁ ε₂ l := by
+  sorry
+
+
+
+
+
+/-
+## Program version 5
+  - Presamples each vk
+  - Performs a single check, rather than a loop
+-/
+def sv5_evaluate_history (vks : List ℤ) (τ : ℤ) (l : List ℕ) : Bool :=
+  match vks with
+  | [] => true
+  | (v0 :: vs) => sv1_privMaxC τ l (vs, v0)
+
+def sv5_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+   fun (point : ℕ) =>
+   let computation : SLang ℕ := do
+     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+     let history <- sv4_presample ε₁ ε₂ (point + 1)
+     let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
+     if (sv5_evaluate_history history τ l && (! sv1_privMaxC τ l (history, vk)))
+       then return point
+       else probZero
+   computation point
+
+lemma sv4_eq_sv5 [dps : DPSystem ℕ] ε₁ ε₂ l : sv4_privMax ε₁ ε₂ l = sv5_privMax ε₁ ε₂ l := by
+  sorry
