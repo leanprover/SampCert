@@ -224,115 +224,6 @@ def sv3_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang
   computation point
 
 
--- Lemmas about cut loops
-
--- Loop cut to zero iterates is zero everywhere
-lemma loop_cut_0_supp [dps : DPSystem ℕ] :
-    (hist.length ≥ 0) ->
-    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 0 ([], v0) (hist, vk) = 0 := by
-  simp [probWhileCut]
-
--- loop cut to 1 is zero unless hist.length is 0
-lemma loop_cut_1_supp [dps : DPSystem ℕ] :
-    (hist.length ≥ 1) ->
-    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 1 ([], v0) (hist, vk) = 0 := by
-  intro H0
-  simp [probWhileCut, probWhileFunctional]
-  cases (sv1_privMaxC τ l ([], v0))
-  · -- Loop check is false, returns ([], v0)
-    simp
-    intro H1
-    cases H1
-    simp at H0
-  · -- Loop checks to true, passes to base case (prob_zero)
-    simp
-
--- loop cut to 2 is zero unless the length is at most 1
-lemma loop_cut_2_supp [dps : DPSystem ℕ] :
-    (hist.length ≥ 2) ->
-    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 2 ([], v0) (hist, vk) = 0 := by
-  intro H0
-  simp [probWhileCut, probWhileFunctional]
-  cases (sv1_privMaxC τ l ([], v0))
-  · -- Loop check is false, returns ([], v0)
-    -- excluded by length hypothesis
-    simp
-    intro H1
-    cases H1
-    simp at H0
-  -- loop check is true
-  simp
-  intro ⟨ hist1, v1 ⟩
-
-  -- F is applied, always adds a single sample to the state
-  cases (Classical.em (∃ v, hist1 = [v]))
-  · -- F did add a single sample to the tape
-    rename_i h
-    rcases h with ⟨ v0, Hhist1 ⟩
-    rw [Hhist1]
-    right
-
-    cases (sv1_privMaxC τ l ([v0], v1))
-    · -- Check is false, returns ([v0], v1)
-      -- Excluded by length hypothesis
-      simp
-      intro H1
-      cases H1
-      simp at H0
-
-    · -- Check is true
-      simp
-
-  · -- F didn't add a single sample to the tape, is impossible
-    -- FIXME: Refactor this out
-    left
-    rename_i h
-    simp [sv1_privMaxF]
-    intro v1 H
-    exfalso
-    apply h
-    exists v0
-    cases H
-    rfl
-
-
-lemma loop_cut_2_cut_1_eq_len_0 [dps : DPSystem ℕ] :
-    (hist.length = 0) ->
-    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 2 ([], v0) (hist, vk) =
-    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 1 ([], v0) (hist, vk) := by
-  intro H
-  simp [probWhileCut, probWhileFunctional]
-  cases (sv1_privMaxC τ l ([], v0))
-  · -- First check is false
-    -- Both sides step to probPure ([], v0), which are equal
-    simp only [Bool.false_eq_true, ↓reduceIte]
-  · -- First check is true
-    -- RHS steps to probZero
-    simp only [↓reduceIte, bind_apply, zero_apply, mul_zero, tsum_zero, ENNReal.tsum_eq_zero, mul_eq_zero]
-    -- Apply F on the left-hand side
-    intro ⟨ hist', v1 ⟩
-    cases (Classical.em (∃ v, hist' = [v]))
-    · right
-      rename_i h
-      rcases h with ⟨ h0, Hhist' ⟩
-      -- We have already added too much to the history (since hist.lenght = 0)
-      -- All cases from here on out are zero
-      split <;> simp
-      intro H2
-      cases H2
-      simp_all
-    · -- F didn't add exactly one sample (impossible)
-      left
-      rename_i h
-      simp [sv1_privMaxF]
-      intro v1 H
-      exfalso
-      apply h
-      exists v0
-      cases H
-      rfl
-
-
 def cone_of_possibility (cut : ℕ) (initial hist : List ℤ) : Prop :=
   (hist.length < cut + initial.length) ∧ (initial.length ≤ hist.length)
 
@@ -382,7 +273,22 @@ lemma cone_left_edge_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {d
     hist.length = initial.length ->
     cone_of_possibility cut initial hist ->
     @constancy_at _ ε₁ ε₂ τ data v0 vk cut initial hist := by
-  sorry
+  intro Hlen Hcone
+  -- Should be able to prove cut > 0
+  -- Here, do induction over eval_length instead
+  revert cut
+  induction hist using List.list_reverse_induction
+  · intro cut Hcone
+    -- rcases Hcone with ⟨ H1, H2 ⟩
+    -- simp_all
+    unfold constancy_at
+    sorry
+  · rename_i vk hist' IH
+    intro cut Hcone
+    unfold constancy_at
+
+    -- If I unfold one iterate from both sides, will I still be on the left edge?
+    sorry
 
 lemma cone_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
     cone_of_possibility cut initial hist ->
@@ -469,21 +375,6 @@ lemma cone_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List
     · trivial
 
 
--- Define cone
--- Define constancy, parameterized by initial list length
--- Prove zero for the region to the left of the cone (done before)
--- Prove zero for the region below the cone (done before)
--- Define base case in terms of cone
--- Prove base case in terms of cone
--- Prove inductive case for code
-
-
-
-
-
-
-
-
 lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l = sv3_privMax ε₁ ε₂ l := by
   apply SLang.ext
 
@@ -511,8 +402,44 @@ lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l 
   apply @tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ (hist.length + 1)
   intro i H
 
-  sorry
+  -- i is in the cone, reduce by induction
+  induction i
+  · -- Fake base case
+    simp at H
+  · rename_i i IH
+    -- Real base case
+    cases Classical.em (i = hist.length)
+    · simp_all
 
+    -- Inductive case: use constancy
+    rw [<- IH ?G1]
+    case G1 =>
+      apply LE.le.ge
+      apply GE.ge.le at H
+      apply LE.le.lt_or_eq at H
+      cases H
+      · apply Nat.le_of_lt_succ
+        trivial
+      · exfalso
+        rename_i Hcont _
+        apply Hcont
+        linarith
+    have HK := @cone_constancy dps ε₁ ε₂ τ l v0 vk i [] hist
+    unfold constancy_at at HK
+    conv =>
+      enter [1, 3]
+      rw [add_comm]
+    apply HK
+    unfold cone_of_possibility
+    simp
+    apply GE.ge.le at H
+    apply LE.le.lt_or_eq at H
+    cases H
+    · linarith
+    · exfalso
+      rename_i h _
+      apply h
+      linarith
 
 
 /-
