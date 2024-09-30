@@ -351,7 +351,35 @@ lemma cone_left_zero [DPSystem ℕ] :
 lemma cone_below_zero [DPSystem ℕ] :
     cut + initial.length ≤ hist.length ->
     probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut (initial, v0) (hist, vk) = 0 := by
-  sorry
+  revert initial v0 vk
+  induction cut
+  · simp [probWhileCut, probWhileFunctional]
+  · rename_i cut' IH
+    intro intial v0 vk Hcut'
+    unfold probWhileCut
+    unfold probWhileFunctional
+    split <;> simp
+    · intro h
+      rcases h with ⟨ initial', vk' ⟩
+      cases Classical.em (¬ ∃ v', initial' = intial  ++ [v'])
+      · left
+        simp [sv1_privMaxF]
+        intro i Hi
+        exfalso
+        cases Hi
+        rename_i h
+        apply h
+        exists v0
+      rename_i h
+      simp at h
+      rcases h with ⟨ v', Hinitial' ⟩
+      right
+      apply IH
+      simp_all
+      linarith
+    · intro H
+      cases H
+      simp at Hcut'
 
 -- Base case: left edge of the cone satisfies constancy
 lemma cone_left_edge_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
