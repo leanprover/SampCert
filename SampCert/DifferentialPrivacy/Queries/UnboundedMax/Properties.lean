@@ -160,8 +160,28 @@ lemma sv0_eq_sv1 [dps : DPSystem ℕ] ε₁ ε₂ l : sv0_privMax ε₁ ε₂ l 
   apply tsum_congr
   intro vk
 
-  -- LHS: singleton sum
+  -- LHS: simplify singleton sum
+  conv =>
+    enter [1, 1, a]
+    simp [sv0_threshold]
+  rw [ENNReal.tsum_eq_add_tsum_ite result]
+  simp
+  rw [@tsum_congr ENNReal ℕ _ _ _ (fun _ => 0) ?G1]
+  case G1 =>
+    intro
+    split <;> simp
+    rename_i H1
+    intro
+    exfalso
+    apply H1
+    symm
+    trivial
+  simp only [tsum_zero, add_zero]
+
   -- RHS: sum over all lists of length "result"
+  -- Prove this by induction on result
+
+
   -- rw [tsum_ite_eq]
   sorry
 
@@ -204,6 +224,242 @@ def sv3_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang
   computation point
 
 
+-- Lemmas about cut loops
+
+-- Loop cut to zero iterates is zero everywhere
+lemma loop_cut_0_supp [dps : DPSystem ℕ] :
+    (hist.length ≥ 0) ->
+    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 0 ([], v0) (hist, vk) = 0 := by
+  simp [probWhileCut]
+
+-- loop cut to 1 is zero unless hist.length is 0
+lemma loop_cut_1_supp [dps : DPSystem ℕ] :
+    (hist.length ≥ 1) ->
+    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 1 ([], v0) (hist, vk) = 0 := by
+  intro H0
+  simp [probWhileCut, probWhileFunctional]
+  cases (sv1_privMaxC τ l ([], v0))
+  · -- Loop check is false, returns ([], v0)
+    simp
+    intro H1
+    cases H1
+    simp at H0
+  · -- Loop checks to true, passes to base case (prob_zero)
+    simp
+
+-- loop cut to 2 is zero unless the length is at most 1
+lemma loop_cut_2_supp [dps : DPSystem ℕ] :
+    (hist.length ≥ 2) ->
+    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 2 ([], v0) (hist, vk) = 0 := by
+  intro H0
+  simp [probWhileCut, probWhileFunctional]
+  cases (sv1_privMaxC τ l ([], v0))
+  · -- Loop check is false, returns ([], v0)
+    -- excluded by length hypothesis
+    simp
+    intro H1
+    cases H1
+    simp at H0
+  -- loop check is true
+  simp
+  intro ⟨ hist1, v1 ⟩
+
+  -- F is applied, always adds a single sample to the state
+  cases (Classical.em (∃ v, hist1 = [v]))
+  · -- F did add a single sample to the tape
+    rename_i h
+    rcases h with ⟨ v0, Hhist1 ⟩
+    rw [Hhist1]
+    right
+
+    cases (sv1_privMaxC τ l ([v0], v1))
+    · -- Check is false, returns ([v0], v1)
+      -- Excluded by length hypothesis
+      simp
+      intro H1
+      cases H1
+      simp at H0
+
+    · -- Check is true
+      simp
+
+  · -- F didn't add a single sample to the tape, is impossible
+    -- FIXME: Refactor this out
+    left
+    rename_i h
+    simp [sv1_privMaxF]
+    intro v1 H
+    exfalso
+    apply h
+    exists v0
+    cases H
+    rfl
+
+
+lemma loop_cut_2_cut_1_eq_len_0 [dps : DPSystem ℕ] :
+    (hist.length = 0) ->
+    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 2 ([], v0) (hist, vk) =
+    probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) 1 ([], v0) (hist, vk) := by
+  intro H
+  simp [probWhileCut, probWhileFunctional]
+  cases (sv1_privMaxC τ l ([], v0))
+  · -- First check is false
+    -- Both sides step to probPure ([], v0), which are equal
+    simp only [Bool.false_eq_true, ↓reduceIte]
+  · -- First check is true
+    -- RHS steps to probZero
+    simp only [↓reduceIte, bind_apply, zero_apply, mul_zero, tsum_zero, ENNReal.tsum_eq_zero, mul_eq_zero]
+    -- Apply F on the left-hand side
+    intro ⟨ hist', v1 ⟩
+    cases (Classical.em (∃ v, hist' = [v]))
+    · right
+      rename_i h
+      rcases h with ⟨ h0, Hhist' ⟩
+      -- We have already added too much to the history (since hist.lenght = 0)
+      -- All cases from here on out are zero
+      split <;> simp
+      intro H2
+      cases H2
+      simp_all
+    · -- F didn't add exactly one sample (impossible)
+      left
+      rename_i h
+      simp [sv1_privMaxF]
+      intro v1 H
+      exfalso
+      apply h
+      exists v0
+      cases H
+      rfl
+
+
+def cone_of_possibility (cut : ℕ) (initial hist : List ℤ) : Prop :=
+  (hist.length < cut + initial.length) ∧ (initial.length ≤ hist.length)
+
+def constancy_at [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) : Prop :=
+  probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) (1 + cut) (initial, v0) (hist, vk) =
+  probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut       (initial, v0) (hist, vk)
+
+
+-- All points to the left of the cone are zero
+lemma cone_left_zero [DPSystem ℕ] :
+    hist.length < initial.length ->
+    probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut (initial, v0) (hist, vk) = 0 := by
+  sorry
+
+-- All points below the cone are zero
+lemma cone_below_zero [DPSystem ℕ] :
+    cut + initial.length ≤ hist.length ->
+    probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut (initial, v0) (hist, vk) = 0 := by
+  sorry
+
+-- Base case: left edge of the cone satisfies constancy
+lemma cone_left_edge_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
+    hist.length = initial.length ->
+    cone_of_possibility cut initial hist ->
+    @constancy_at _ ε₁ ε₂ τ data v0 vk cut initial hist := by
+  sorry
+
+lemma cone_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
+    cone_of_possibility cut initial hist ->
+    @constancy_at _ ε₁ ε₂ τ data v0 vk cut initial hist := by
+  -- Need theorem to be true for all initial states, since this will increase during the induction
+  -- v0 and vk will also change in ways which don't matter
+  revert initial v0 vk
+
+  induction cut
+  · -- Not true base case (cut 0 is always outside of the cone)
+    -- Mercifully it is easy to prove
+    intro v0 vk initial Hcone
+    unfold constancy_at
+    simp [probWhileCut, probWhileFunctional]
+    cases (sv1_privMaxC τ data (initial, v0)) <;> simp
+    unfold cone_of_possibility at Hcone
+    linarith
+
+  rename_i n IH
+  intro v0 vk initial Hcone
+  -- True base case: are we on the left-hand edge of the cone
+  cases Classical.em (hist.length = initial.length)
+  · apply cone_left_edge_constancy <;> assumption
+
+  -- If not, unfold the first (and only the first) level of the induction
+  unfold constancy_at
+  unfold probWhileCut
+  unfold probWhileFunctional
+
+  -- If the conditional is false, we are done
+  cases (sv1_privMaxC τ data (initial, v0))
+  · simp
+
+
+  -- If the conditional is true, we decrement N by one and add a sample to the history
+  rename_i Hcone_interior
+  unfold constancy_at at IH
+  simp
+  apply tsum_congr
+  intro ⟨ initial', vk' ⟩
+
+  -- We only need to consider the cases where sv1_privMaxF is nonzero
+  -- And this is exactly the case where initial' is initial plus one element
+  simp [sv1_privMaxF]
+  rw [← ENNReal.tsum_mul_right]
+  rw [← ENNReal.tsum_mul_right]
+  apply tsum_congr
+  intro z
+  cases Classical.em (¬ ∃ v', initial' = initial ++ [v'])
+  · split
+    · exfalso
+      rename_i h1 h2
+      apply h1
+      exists v0
+      cases h2
+      trivial
+    · simp
+  rename_i h
+  simp at h
+  rcases h with ⟨ v', Hinitial' ⟩
+  split <;> try simp
+  rename_i h
+  cases h
+  congr 1
+
+  -- Apply the IH
+  apply IH
+
+  -- Prove that the new value is in the new cone of possibility
+  unfold cone_of_possibility at Hcone
+  rcases Hcone with ⟨ Hcone1, Hcone2 ⟩
+  unfold cone_of_possibility
+  apply And.intro
+  · simp
+    linarith
+  · simp
+    apply Nat.lt_iff_add_one_le.mp
+    apply LE.le.eq_or_lt at Hcone2
+    cases Hcone2
+    · exfalso
+      apply Hcone_interior
+      symm
+      trivial
+    · trivial
+
+
+-- Define cone
+-- Define constancy, parameterized by initial list length
+-- Prove zero for the region to the left of the cone (done before)
+-- Prove zero for the region below the cone (done before)
+-- Define base case in terms of cone
+-- Prove base case in terms of cone
+-- Prove inductive case for code
+
+
+
+
+
+
+
+
 lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l = sv3_privMax ε₁ ε₂ l := by
   apply SLang.ext
 
@@ -226,21 +482,10 @@ lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l 
   simp [H, sv1_threshold]
   clear H
 
-  -- TODO: Move over the eventual constancy statement, and prove it
-
-  -- This statement is wrong, delete it
-  --
-  -- -- Want to say that the masses of the final returned _value_ are the same,
-  -- -- even though the lengths of the histories may change,
-  -- -- because past a certain point, adding to the history does not change the
-  -- -- probability of returning a given value.
-  -- conv =>
-  --   unfold sv1_state
-  --   congr
-  --   · rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
-  --   · rw [ENNReal.tsum_prod', ENNReal.tsum_comm]
-  -- apply tsum_congr
-  -- intro point'
+  -- Apply a lemma about eventual constancy
+  apply probWhile_apply
+  apply @tendsto_atTop_of_eventually_const _ _ _ _ _ _ _ (hist.length + 1)
+  intro i H
 
   sorry
 
