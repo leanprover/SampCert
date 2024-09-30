@@ -341,15 +341,9 @@ def constancy_at [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ
   probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut       (initial, v0) (hist, vk)
 
 
--- All points to the left of the cone are zero
-lemma cone_left_zero [DPSystem ℕ] :
-    hist.length < initial.length ->
-    probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut (initial, v0) (hist, vk) = 0 := by
-  sorry
-
--- All points below the cone are zero
-lemma cone_below_zero [DPSystem ℕ] :
-    cut + initial.length ≤ hist.length ->
+-- All points outside of the cone are zero
+lemma external_to_cone_zero [DPSystem ℕ] :
+    (¬ cone_of_possibility cut initial hist) ->
     probWhileCut (sv1_privMaxC τ data) (sv1_privMaxF ε₁ ε₂) cut (initial, v0) (hist, vk) = 0 := by
   revert initial v0 vk
   induction cut
@@ -375,11 +369,13 @@ lemma cone_below_zero [DPSystem ℕ] :
       rcases h with ⟨ v', Hinitial' ⟩
       right
       apply IH
-      simp_all
+      simp_all [cone_of_possibility]
+      intro
+      have Hcut'' := Hcut' (by linarith)
       linarith
     · intro H
       cases H
-      simp at Hcut'
+      simp_all [cone_of_possibility]
 
 -- Base case: left edge of the cone satisfies constancy
 lemma cone_left_edge_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
