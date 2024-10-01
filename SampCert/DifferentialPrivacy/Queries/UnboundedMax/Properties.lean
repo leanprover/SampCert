@@ -178,10 +178,7 @@ lemma sv0_eq_sv1 [dps : DPSystem ℕ] ε₁ ε₂ l : sv0_privMax ε₁ ε₂ l 
     trivial
   simp only [tsum_zero, add_zero]
 
-  -- RHS: sum over all lists of length "result"
-  -- Prove this by induction on result
-
-
+  -- RHS: sum over all lists of length "result"?
   -- rw [tsum_ite_eq]
   sorry
 
@@ -509,6 +506,56 @@ def sv4_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang
    computation point
 
 lemma sv3_eq_sv4 [dps : DPSystem ℕ] ε₁ ε₂ l : sv3_privMax ε₁ ε₂ l = sv4_privMax ε₁ ε₂ l := by
+  apply SLang.ext
+  intro n
+  unfold sv3_privMax
+  unfold sv4_privMax
+
+  -- Simplify the common start to the programs
+  simp
+  apply tsum_congr
+  intro τ
+  congr 1
+
+  -- Rewrite sv4_presample .. (n + 1) into a program which presamples n and 1 separately
+
+  let sv4_presample_sep : SLang (List ℤ) := do
+    let v0 <- privNoiseZero ε₁ (4 * ε₂)
+    let L <- sv4_presample ε₁ ε₂ n
+    return (v0 :: L)
+
+  have sv4_presample_sep_eq a : sv4_presample ε₁ ε₂ (n + 1) a = sv4_presample_sep a := by
+    dsimp only [sv4_presample_sep]
+    clear sv4_presample_sep
+    revert a
+    induction n
+    · simp [sv4_presample]
+    rename_i n IH
+    intro a
+
+    -- Rewrite LHS to include LHS of IH
+    unfold sv4_presample
+    simp
+    conv =>
+      enter [1, 1, b, 2, 1, c]
+      rw [IH]
+    clear IH
+
+    -- Conclude by simplification
+    simp
+    apply tsum_congr
+    intro v0
+    congr 1
+
+    sorry -- Rewriting through the ite is annoying but doable
+
+
+  conv =>
+    enter [2, 1, a]
+    rw [sv4_presample_sep_eq]
+    dsimp [sv4_presample_sep]
+  clear sv4_presample_sep sv4_presample_sep_eq
+
   sorry
 
 
