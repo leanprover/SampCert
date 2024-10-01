@@ -274,21 +274,54 @@ lemma cone_left_edge_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {d
     cone_of_possibility cut initial hist ->
     @constancy_at _ ε₁ ε₂ τ data v0 vk cut initial hist := by
   intro Hlen Hcone
-  -- Should be able to prove cut > 0
-  -- Here, do induction over eval_length instead
-  revert cut
-  induction hist using List.list_reverse_induction
-  · intro cut Hcone
-    -- rcases Hcone with ⟨ H1, H2 ⟩
-    -- simp_all
-    unfold constancy_at
-    sorry
-  · rename_i vk hist' IH
-    intro cut Hcone
-    unfold constancy_at
+  -- cut > 0 due to cone
+  cases cut
+  · exfalso
+    simp [cone_of_possibility] at Hcone
+    simp_all only [lt_self_iff_false, le_refl, and_true]
+  rename_i cut'
 
-    -- If I unfold one iterate from both sides, will I still be on the left edge?
-    sorry
+  -- Unfold the first iterate
+  unfold constancy_at
+  unfold probWhileCut
+  unfold probWhileFunctional
+
+  cases (sv1_privMaxC τ data (initial, v0))
+  · -- False case: both programs terminate with initial state
+    simp
+  · -- True case: both programs step to a point outside of the cone, so are zero
+    simp
+    apply tsum_congr
+    intro ⟨ initial', v1 ⟩
+
+    simp [sv1_privMaxF]
+    rw [← ENNReal.tsum_mul_right]
+    rw [← ENNReal.tsum_mul_right]
+
+    -- Ignore the cases when hist' is not a legal step
+    cases Classical.em (¬ ∃ v', initial' = initial ++ [v'])
+    · rename_i h
+      apply tsum_congr
+      intro z
+      split
+      · exfalso
+        apply h
+        exists v0
+        rename_i h'
+        cases h'
+        rfl
+      · simp
+    rename_i h
+    simp at h
+    rcases h with ⟨ _, Hv1' ⟩
+    simp [Hv1']
+    apply tsum_congr
+    intro _
+
+    -- Both branches are outside of the cone now
+    rw [external_to_cone_zero (by simp_all [cone_of_possibility])]
+    rw [external_to_cone_zero (by simp_all [cone_of_possibility])]
+
 
 lemma cone_constancy [DPSystem ℕ] {ε₁ ε₂ : ℕ+} {τ : ℤ} {data : List ℕ} {v0 vk : ℤ} (cut : ℕ) (initial hist : List ℤ) :
     cone_of_possibility cut initial hist ->
