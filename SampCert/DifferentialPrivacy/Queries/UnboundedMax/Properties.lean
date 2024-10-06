@@ -211,12 +211,15 @@ lemma sv1_eq_sv2 [dps : DPSystem ℕ] ε₁ ε₂ l : sv1_privMax ε₁ ε₂ l 
   - Truncates the loop
 -/
 
+def sv3_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (point : ℕ) (init : sv1_state) : SLang sv1_state := do
+  probWhileCut (sv1_privMaxC τ l) (@sv1_privMaxF dps ε₁ ε₂) (point + 1) init
+
 def sv3_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
   fun (point : ℕ) =>
   let computation : SLang ℕ := do
     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
     let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
-    let sk <- probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) (point + 1) ([], v0)
+    let sk <- @sv3_loop dps ε₁ ε₂ τ l point ([], v0)
     return (sv1_threshold sk)
   computation point
 
@@ -412,6 +415,7 @@ lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l 
   intro point
   unfold sv2_privMax
   unfold sv3_privMax
+  unfold sv3_loop
   simp
   apply tsum_congr
   intro τ
@@ -472,6 +476,373 @@ lemma sv2_eq_sv3 [dps : DPSystem ℕ] ε₁ ε₂ l : sv2_privMax ε₁ ε₂ l 
       linarith
 
 
+
+
+-- Commute out a single sample from the loop
+lemma sv3_loop_unroll_1 [dps : DPSystem ℕ] (τ : ℤ) (ε₁ ε₂ : ℕ+) l point L vk :
+    sv3_loop ε₁ ε₂ τ l (point + 1) (L, vk) =
+    (do
+      let vk1 <- @privNoiseZero dps ε₁ (4 * ε₂)
+      if (sv1_privMaxC τ l (L, vk))
+        then (sv3_loop ε₁ ε₂ τ l point (L ++ [vk], vk1))
+        else probPure (L, vk)) := by
+  conv =>
+    lhs
+    unfold sv3_loop
+    simp [probWhileCut, probWhileFunctional]
+  split
+  · apply SLang.ext
+    intro ⟨ HF, vkf ⟩
+    simp [probBind]
+    unfold sv3_loop
+    conv =>
+      enter [1, 1, a, 1]
+      unfold sv1_privMaxF
+      simp
+    conv =>
+      enter [1, 1, a]
+      rw [← ENNReal.tsum_mul_right]
+    rw [ENNReal.tsum_comm]
+    apply tsum_congr
+    intro a
+    simp
+    rw [ENNReal.tsum_eq_add_tsum_ite ?G1]
+    case G1 => apply (L ++ [vk], a)
+    split
+    · conv =>
+        rhs
+        rw [<- add_zero (_ * _)]
+      congr 1
+      simp
+      intro i HK1 HK2
+      exfalso
+      apply HK1
+      apply HK2
+    · exfalso
+      rename_i hk
+      apply hk
+      rfl
+  · simp
+    apply SLang.ext
+    intro ⟨ HF, vkf ⟩
+    simp [probBind]
+    split <;> try simp
+    unfold privNoiseZero
+    exact Eq.symm (PMF.tsum_coe (DPSystem.noise (fun _ => 0) 1 ε₁ (4 * ε₂) []))
+
+
+
+-- Sample n new random samples into a list
+def sv4_presample [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (n : ℕ) : SLang (List ℤ) :=
+  match n with
+  | Nat.zero => return []
+  | Nat.succ n' => do
+    let vk1 <- @privNoiseZero dps ε₁ (4 * ε₂)
+    let vks  <- @sv4_presample dps ε₁ ε₂ n'
+    return vks ++ [vk1] -- FIXME: Possible issue: do I want to presample onto the start or end of this list?
+
+-- If there are 5 more samples in state than there are in intial state, we want to ignore the first 5 entries in presamples
+def sv4_next_def (initial_state : sv1_state) (presamples : List ℤ) (state : sv1_state) : Option sv1_state :=
+  sorry
+
+-- Given a list of random samples, and a state, which is assumed to have state drawn from
+-- init ++ (some prefix of the random samples), with init specified here, update the state
+-- to include the next sample on the tape.
+-- If no such sample exists, probZero
+
+
+-- If there are 5 more samples in state than there are in intial state, we want to ignore the first 5 entries in presamples
+def sv4_next (initial_state : sv1_state) (presamples : List ℤ) (state : sv1_state) : SLang sv1_state :=
+  match sv4_next_def initial_state presamples state with
+  | none => probZero
+  | some x => return x
+
+
+lemma sv3_loop_unroll_1_alt [dps : DPSystem ℕ] (τ : ℤ) (ε₁ ε₂ : ℕ+) l point (initial_state : sv1_state) :
+    sv3_loop ε₁ ε₂ τ l (point + 1) initial_state =
+    (do
+      let vk1 <- @privNoiseZero dps ε₁ (4 * ε₂)
+      if (sv1_privMaxC τ l initial_state)
+        then (sv3_loop ε₁ ε₂ τ l point (initial_state.1 ++ [initial_state.2], vk1))
+        else probPure initial_state) := by
+  rcases initial_state with ⟨ _ , _ ⟩
+  rw [sv3_loop_unroll_1]
+
+lemma sv3_loop_unroll_2 [dps : DPSystem ℕ] τ ε₁ ε₂ l point (initial_state : sv1_state) :
+    sv3_loop ε₁ ε₂ τ l (point + 1) initial_state =
+    (do
+      let presample_list <- @sv4_presample dps ε₁ ε₂ 1
+      if (sv1_privMaxC τ l initial_state)
+        then do
+          let next_state <- sv4_next initial_state presample_list initial_state
+          sv3_loop ε₁ ε₂ τ l point next_state
+        else probPure initial_state) := by
+  rw [sv3_loop_unroll_1_alt, sv4_presample, sv4_presample ]
+  simp
+  apply SLang.ext
+  intro x
+  simp
+  apply tsum_congr
+  intro y
+  congr 1
+  split <;> simp
+
+  -- This is doable for sure, I just need to define sv4_next
+  sorry
+
+
+
+
+
+
+
+
+
+
+/-
+
+
+
+
+
+
+
+-- 0th check: using state ([], v0)
+
+
+def sv4_nth (s : sv1_state) (n : ℕ) : sv1_state :=
+  sorry
+
+def init_iter_start (s : sv1_state) : ℕ := List.length s.1
+
+
+def state_to_list (s : sv1_state) : List ℤ := sorry
+
+def sv4_privMaxC (τ : ℤ) (l : List ℕ) (st : sv1_state) : Bool :=
+  sv1_privMaxC τ l st
+
+
+-- Assume that st is a prefix state of presamples? If we can't add on a state such that
+-- the returned state is still a prefix state, then probZero.
+def sv4_privMaxF (presamples : List ℤ) (st : sv1_state) : SLang sv1_state :=
+  -- Get the next state by getting the length of the current state
+  -- Increment it
+  -- Take that prefix of presamples
+  -- Also something about how we need to fail if we are out of presamples? Or maybe just probZero?
+  sorry
+  -- sv1_privMaxC τ l (sv4_nth presamples n)
+
+
+-- Compute the loop, but using presamples instead
+def sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (point : ℕ) (init : sv1_state) : SLang sv1_state := do
+  let presample_st <- @sv4_presample dps ε₁ ε₂ init point -- FIXME presamples need to be based on point, may be +- 1
+  let presamples := (state_to_list presample_st)
+  probWhileCut
+    (sv4_privMaxC τ l)
+    (sv4_privMaxF presamples)
+    (point + 1)
+    init
+
+
+-- No
+
+
+
+-- lemma sv4_loop_unroll_1 [dps : DPSystem ℕ] (τ : ℤ) (ε₁ ε₂ : ℕ+) l point L vk :
+
+
+
+-/
+
+
+/-
+
+def sv1_to_list (s : sv1_state) : List ℤ := s.1 ++ [s.2]
+
+def list_to_sv1 (s : List ℤ) : sv1_state :=
+  match s with
+  | [] => ([], 0) -- Error case
+  | [x] => ([], x)
+  | (x :: xs) =>
+    let w := list_to_sv1 xs
+    (x :: w.1, w.2)
+
+
+def sv1_prefix (s : sv1_state) (n : ℕ) := list_to_sv1 $ List.take n $ sv1_to_list s
+
+
+def sv4_0_cond (presamples  : sv1_state) (τ : ℤ) (l : List ℕ) (n : ℕ) : Bool :=
+  sv1_privMaxC τ l (sv1_prefix presamples n)
+
+def sv4_0_body (n : ℕ) : SLang ℕ :=
+  return (n + 1)
+
+
+def sv4_0_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (samples : ℕ) (init : sv1_state) : SLang ℕ := do
+  let presamples <- @sv4_0_presample dps ε₁ ε₂ init samples
+  let sk <- probWhileCut
+    (sv4_0_cond presamples τ l)
+    sv4_0_body
+    (samples + 1)
+    (List.length (init.1))
+  return sk + 1
+
+
+def sv3_loop_mod [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (samples : ℕ) (init : sv1_state) : SLang ℕ := do
+  let st <- probWhileCut (@sv1_privMaxC τ l) (@sv1_privMaxF dps ε₁ ε₂) samples init
+  return sv1_threshold st
+
+
+-- Turn the state back into a nat, but this time, over the presampled list
+-- FIXME: Rename if this actually works
+def sv4_0_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+   fun (point : ℕ) =>
+   let computation : SLang ℕ := do
+     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+     let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+     @sv4_0_loop dps ε₁ ε₂ τ l point ([], v0)
+   computation point
+
+
+
+-- Now try to prove this equivalence by induction for all inits
+
+lemma sv3_eq_sv4_0_loop [dps : DPSystem ℕ] ε₁ ε₂ τ l point init :
+  @sv3_loop_mod dps τ ε₁ ε₂ l (point + 1) init = @sv4_0_loop dps τ ε₁ ε₂ l point init := by
+  revert init
+  induction point
+  · intro init
+    apply SLang.ext
+    intro p'
+    simp
+
+    -- Simplify the RHS: zero presampling occurs
+    simp [sv4_0_loop]
+    simp [sv4_0_presample]
+    rw [ENNReal.tsum_eq_add_tsum_ite init]
+    simp
+    conv =>
+      lhs
+      rw [<- zero_add (sv3_loop_mod _ _ _ _ _ _ _)]
+    conv =>
+      rhs
+      rw [add_comm]
+    congr 1
+    · symm
+      simp
+      intro _ HK1 HK2
+      exfalso
+      apply HK1
+      apply HK2
+
+    -- Simplify the LHS
+    simp [sv3_loop_mod] -- ?
+    simp [probWhileCut, probWhileFunctional]
+    simp [sv4_0_cond]
+    simp [sv1_prefix, sv1_to_list, list_to_sv1]
+    rw [List.take_append]
+    simp [list_to_sv1]
+    have H : (list_to_sv1 (init.1 ++ [init.2])) = init := by
+      sorry
+    simp [H]
+    simp [sv4_0_body]
+    split <;> simp
+    simp [sv1_threshold]
+    rw [ENNReal.tsum_eq_add_tsum_ite init]
+    simp
+
+    sorry
+  · sorry
+
+
+
+
+
+lemma sv3_eq_sv4_0 [dps : DPSystem ℕ] ε₁ ε₂ l : sv3_privMax ε₁ ε₂ l = sv4_0_privMax ε₁ ε₂ l := by
+  sorry
+
+
+
+
+
+-- -- Probably useless as stated but should be true?
+-- -- For the inductive argument we only need n2 = 1, btw
+-- lemma sv3_0_presample_additive [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (x0 : sv1_state) (n1 n2 : ℕ) :
+--     ((@sv4_0_presample dps ε₁ ε₂ x0 n1) >>= fun x1 => @sv4_0_presample dps ε₁ ε₂ x1 n2) =
+--     @sv4_0_presample dps ε₁ ε₂ x0 (n1 + n2) := by
+--   revert x0
+--   induction n2
+--   · intro x0
+--     apply SLang.ext
+--     intro v
+--     simp [sv4_0_presample]
+--     rw [ENNReal.tsum_eq_add_tsum_ite ?G1]
+--     case G1 => apply v
+--     simp
+--     conv =>
+--       rhs
+--       rw [<- add_zero (sv4_0_presample _ _ _ _ _)]
+--     congr 1
+--     simp
+--     intro i H1 H2
+--     exfalso
+--     apply H1
+--     symm
+--     apply H2
+--   · intro x0
+--     rename_i n' IH
+--     apply SLang.ext
+--     intro v
+--     simp
+--     -- IDK. Something is doable for sure?
+--     sorry
+
+
+
+
+
+-- def sv3_1_threshold (s : sv3_1_state) : ℕ := List.length s.1
+--
+-- def sv3_1_noise (s : sv3_1_state) : ℤ := s.2.1
+--
+-- def sv3_1_count (s : sv3_1_state) : ℕ := s.2.2
+--
+-- def sv3_1_privMaxC (τ : ℤ) (l : List ℕ) (s : sv3_1_state) : Bool :=
+--   decide (exactDiffSum (sv3_1_threshold s) l + (sv3_1_noise s) < τ)
+--
+-- def sv3_1_privMaxF [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (s : sv3_1_state) : SLang sv3_1_state := do
+--   let vn <- @privNoiseZero dps ε₁ (4 * ε₂)
+--   return (s.1 ++ [s.2.1], vn, s.2.2 + 1)
+--
+-- def sv3_1_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang ℕ :=
+--   fun (point : ℕ) =>
+--   let computation : SLang ℕ := do
+--     let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
+--     let v0 <- @privNoiseZero dps ε₁ (4 * ε₂)
+--     let sk <- probWhileCut (sv3_1_privMaxC τ l) (sv3_1_privMaxF ε₁ ε₂) (point + 1) ([], v0, 0)
+--     return (sv3_1_count sk)
+--   computation point
+--
+--
+--
+-- lemma sv3_eq_sv3_1 [dps : DPSystem ℕ] ε₁ ε₂ l : sv3_privMax ε₁ ε₂ l = sv3_1_privMax ε₁ ε₂ l := by
+--   apply SLang.ext
+--   intro point
+--   unfold sv3_privMax
+--   unfold sv3_1_privMax
+--   simp
+--   apply tsum_congr
+--   intro τ
+--   congr 1
+--   apply tsum_congr
+--   intro v0
+--   congr 1
+--
+--   sorry
+
+
+
+
 /-
 ## Program version 4
   - Presamples each vk
@@ -498,65 +869,157 @@ def sv4_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang
    fun (point : ℕ) =>
    let computation : SLang ℕ := do
      let τ <- @privNoiseZero dps ε₁ (2 * ε₂)
-     let history <- sv4_presample ε₁ ε₂ (point + 1)
+     let history <- sv4_presample ε₁ ε₂ point
      let vk <- @privNoiseZero dps ε₁ (4 * ε₂)
-     if (sv4_evaluate_history history τ l && (! sv1_privMaxC τ l (history, vk)))
+     if (sv4_evaluate_history history τ l && (! (sv4_evaluate_history (history ++ [vk]) τ l)))
        then return point
        else probZero
    computation point
 
 lemma sv3_eq_sv4 [dps : DPSystem ℕ] ε₁ ε₂ l : sv3_privMax ε₁ ε₂ l = sv4_privMax ε₁ ε₂ l := by
   apply SLang.ext
-  intro n
+  intro point
   unfold sv3_privMax
   unfold sv4_privMax
 
-  -- Simplify the common start to the programs
   simp
   apply tsum_congr
   intro τ
   congr 1
 
-  -- Rewrite sv4_presample .. (n + 1) into a program which presamples n and 1 separately
-
-  let sv4_presample_sep : SLang (List ℤ) := do
-    let v0 <- privNoiseZero ε₁ (4 * ε₂)
-    let L <- sv4_presample ε₁ ε₂ n
-    return (v0 :: L)
-
-  have sv4_presample_sep_eq a : sv4_presample ε₁ ε₂ (n + 1) a = sv4_presample_sep a := by
-    dsimp only [sv4_presample_sep]
-    clear sv4_presample_sep
-    revert a
-    induction n
-    · simp [sv4_presample]
-    rename_i n IH
-    intro a
-
-    -- Rewrite LHS to include LHS of IH
-    unfold sv4_presample
-    simp
-    conv =>
-      enter [1, 1, b, 2, 1, c]
-      rw [IH]
-    clear IH
-
-    -- Conclude by simplification
-    simp
-    apply tsum_congr
-    intro v0
-    congr 1
-
-    sorry -- Rewriting through the ite is annoying but doable
-
-
   conv =>
-    enter [2, 1, a]
-    rw [sv4_presample_sep_eq]
-    dsimp [sv4_presample_sep]
-  clear sv4_presample_sep sv4_presample_sep_eq
+    enter [1, 1, v0, 2, 1, st]
+  conv =>
+    enter [2, 1, hist, 2, 1, vk]
+
+  -- Maybe don't keep this?
+  cases point
+  · -- point is 0
+    simp [sv4_presample, sv1_threshold]
+    unfold sv1_state
+    conv =>
+      enter [1, 1, v0]
+      rw [<- ENNReal.tsum_mul_left]
+    conv =>
+      rw [ENNReal.tsum_comm]
+      rw [ENNReal.tsum_prod']
+    apply tsum_congr
+    intro hist
+    simp
+    sorry
 
   sorry
+
+
+
+  -- -- Simplify the common start to the programs
+
+  -- Rewrite sv4_presample .. (n + 1) into a program which presamples n and 1 separately
+
+
+  -- let sv4_presample_sep : SLang (List ℤ) := do
+  --   let v0 <- privNoiseZero ε₁ (4 * ε₂)
+  --   let L <- sv4_presample ε₁ ε₂ n
+  --   return (v0 :: L)
+
+  -- have sv4_presample_sep_eq a : sv4_presample ε₁ ε₂ (n + 1) a = sv4_presample_sep a := by
+  --   dsimp only [sv4_presample_sep]
+  --   clear sv4_presample_sep
+  --   revert a
+  --   induction n
+  --   · simp [sv4_presample]
+  --   rename_i n IH
+  --   intro a
+
+  --   -- Rewrite LHS to include LHS of IH
+  --   unfold sv4_presample
+  --   simp
+  --   conv =>
+  --     enter [1, 1, b, 2, 1, c]
+  --     rw [IH]
+  --   clear IH
+
+  --   -- Conclude by simplification
+  --   simp
+  --   apply tsum_congr
+  --   intro v0
+  --   congr 1
+
+  --   sorry -- Rewriting through the ite is annoying but doable
+  -- conv =>
+  --   enter [2, 1, a]
+  --   rw [sv4_presample_sep_eq]
+  --   dsimp [sv4_presample_sep]
+  -- clear sv4_presample_sep sv4_presample_sep_eq
+
+
+
+  -- conv =>
+  --   enter [1, 1, a]
+  --   rw [<- ENNReal.tsum_mul_left]
+  -- conv =>
+  --   enter [2, 1, a]
+  --   rw [<- ENNReal.tsum_mul_left]
+  --   enter [1, i]
+  --   rw [<- ENNReal.tsum_mul_right]
+  -- conv =>
+  --   enter [2]
+  --   rw [ENNReal.tsum_comm]
+  -- apply tsum_congr
+  -- intro v0
+  -- unfold sv1_state
+  -- rw [ENNReal.tsum_prod']
+  -- apply tsum_congr
+  -- intro hist
+  -- apply tsum_congr
+  -- intro vk
+
+  -- conv =>
+  --   enter [2]
+  --   rw [mul_comm]
+  -- repeat rw [mul_assoc]
+  -- congr 1
+  -- simp [sv1_threshold]
+
+  -- split
+  -- ·
+  --   sorry
+  -- · -- Can I solve this one without induction?
+  --   -- It simplifies the induction on the other side
+  --   simp
+  --   split
+  --   · right
+  --     right
+  --     intro l Hl
+  --     induction n
+  --     · simp_all
+  --       unfold sv4_presample
+  --       simp
+  --       intro H1
+  --       simp_all
+  --       sorry
+  --     · sorry
+  --   · sorry
+
+  -- revert hist vk
+  -- induction n
+  -- · simp_all
+  --   sorry
+  -- · rename_i n IH
+  --   intro hist vk
+
+  --   have Hcond : hist = [] ∨ ∃ vl hist', hist = hist' ++ [vl] := by sorry
+  --   cases Hcond
+  --   · simp_all
+  --   rename_i h
+  --   rcases h with ⟨ hist', ⟨ vk', H ⟩ ⟩
+  --   simp [H]
+  --   clear H
+  --   conv =>
+  --     enter [1]
+  --     unfold probWhileCut
+  --     unfold probWhileFunctional
+
 
 
 
@@ -585,3 +1048,4 @@ def sv5_privMax [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (l : List ℕ) : SLang
 
 lemma sv4_eq_sv5 [dps : DPSystem ℕ] ε₁ ε₂ l : sv4_privMax ε₁ ε₂ l = sv5_privMax ε₁ ε₂ l := by
   sorry
+-/
