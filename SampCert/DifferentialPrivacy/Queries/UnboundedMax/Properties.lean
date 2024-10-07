@@ -653,9 +653,17 @@ lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) 
     @sv3_loop dps ε₁ ε₂ τ l point init = @sv4_loop dps ε₁ ε₂ τ l point init := by
   unfold sv3_loop
   unfold sv4_loop
-  revert init
+
+
+  suffices ∀ state', (probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) (point + 1) state' =
+           (do
+             let presamples ← sv4_presample ε₁ ε₂ point
+             probWhileCut (sv4_privMaxC τ l) (sv4_privMaxF init presamples) (point + 1) state'))
+    by apply this
+
   induction point
   · intro init
+    rename_i init_start
     simp [sv4_presample]
     unfold sv4_privMaxC
     simp [probWhileCut, probWhileFunctional]
@@ -669,14 +677,15 @@ lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) 
     rename_i point' IH
 
     -- Unroll it once, using the lemma
-    let H := sv3_loop_unroll_2 τ ε₁ ε₂ l point' init
+    -- Do we need to unroll this beforehand?
+    let H := sv3_loop_unroll_2 τ ε₁ ε₂ l point'
     unfold sv3_loop at H
     rw [H]
     clear H
 
     cases (Classical.em (sv1_privMaxC τ l init = true))
     · simp
-      rename_i Hcond
+      rename_i init_start Hcond
 
       -- Horrifying, but only because I can't conv under the if (dependent types)?
       have X :
@@ -690,23 +699,20 @@ lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) 
             (sv4_next init presample_list init).probBind fun next_state =>
               ((sv4_presample ε₁ ε₂ point') >>=
                   (fun presamples =>
-                    probWhileCut (sv4_privMaxC τ l) (sv4_privMaxF next_state presamples) (point' + 1) next_state))
+                    probWhileCut (sv4_privMaxC τ l) (sv4_privMaxF init_start presamples) (point' + 1) next_state))
           else probPure init) := by
         simp_all
       rw [X]
+
       clear X
       clear IH
       simp_all
 
-      -- Seems like a lost cause but I'll continue trying
       apply SLang.ext
       intro final_state
       simp
 
-      -- No [] on the LHS list because ther sv4_next term would be 0
-      -- But also, not [] on the LHS list because otherwise (sv4_presample .. 1 a) = 0
-
-      -- Maybe just try to commute the presample steps together on the LHS?
+      -- Commute the presample steps together on the LHS?
       conv =>
         enter [1, 1, a, 2, 1, a1]
         rw [<- ENNReal.tsum_mul_left]
@@ -723,19 +729,6 @@ lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) 
         rw [ENNReal.tsum_mul_left]
         rw [<- mul_assoc]
 
-      -- LHS only has support when
-      --    the outermost list has length 1
-      --    next outermost list has length point'
-      -- RHS only has support when
-      --    outermost list has length point' + 1
-      -- The sv4_presample can cancel out using a bijection
-
-      -- Seems sketchy
-      -- The LHS will have a sum over initial states i_1
-      --
-      -- the RHS fixes it to initial
-      -- Unfold a step on the right???
-
       have Hcond' : sv4_privMaxC τ l init = true := by
         simp [sv4_privMaxC]
         trivial
@@ -748,11 +741,14 @@ lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) 
         enter [2, 1, a, 2, 1, i1]
         simp only [sv4_privMaxF]
         rw [mul_comm]
-      -- This seems super bad
 
-      -- That whole scheme with "initial" is what's going wrong.
-      -- This needs "initial" as a separate paramater basically.
+      -- Now just need to finish this by a bijection?
+      -- The RHS is zero on empty lists
+      -- Make general support lemma for sv4_presample?
 
+      -- still a difference the sv4_next term
+
+      rw [<- ENNReal.tsum_prod]
 
       sorry
     · simp_all
