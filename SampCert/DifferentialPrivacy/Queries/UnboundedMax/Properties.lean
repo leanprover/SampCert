@@ -541,21 +541,47 @@ def sv4_presample [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (n : ℕ) : SLang (L
     let vks  <- @sv4_presample dps ε₁ ε₂ n'
     return vks ++ [vk1] -- FIXME: Possible issue: do I want to presample onto the start or end of this list?
 
+-- How much excess state does s have above i
+def state_len_excess (i : sv1_state) (s : sv1_state) : Option ℕ :=
+  Int.toNat' ((List.length s.1 : Int) - (List.length i.1) : Int)
+
+-- Return the next sample from presamples, ignoring the first n elements
+def sv4_next_pre (presamples : List ℤ) (n : ℕ) : Option ℤ :=
+  match presamples with
+  | [] => none
+  | (x :: xs) =>
+    match n with
+    | 0 => some x
+    | (Nat.succ n') => sv4_next_pre xs n'
+
+def sv4_state_shift (s : sv1_state) (z : ℤ) : sv1_state := (s.1 ++ [s.2], z)
+
 -- If there are 5 more samples in state than there are in intial state, we want to ignore the first 5 entries in presamples
-def sv4_next_def (initial_state : sv1_state) (presamples : List ℤ) (state : sv1_state) : Option sv1_state :=
-  sorry
+def sv4_next_def (initial_state : sv1_state) (presamples : List ℤ) (state : sv1_state) : Option sv1_state := do
+  let excess <- state_len_excess initial_state state
+  let next_sample <- sv4_next_pre presamples excess
+  return (sv4_state_shift state next_sample)
 
--- Given a list of random samples, and a state, which is assumed to have state drawn from
--- init ++ (some prefix of the random samples), with init specified here, update the state
--- to include the next sample on the tape.
--- If no such sample exists, probZero
-
-
+-- Intuition:
 -- If there are 5 more samples in state than there are in intial state, we want to ignore the first 5 entries in presamples
 def sv4_next (initial_state : sv1_state) (presamples : List ℤ) (state : sv1_state) : SLang sv1_state :=
   match sv4_next_def initial_state presamples state with
   | none => probZero
   | some x => return x
+
+
+lemma sv4_next_self (st : sv1_state) (y : ℤ) (ys : List ℤ) :
+    sv4_next st (y :: ys) st = probPure (sv4_state_shift st y) := by
+  simp [sv4_next, sv4_next_def, state_len_excess, Int.toNat', sv4_next_pre]
+
+
+
+lemma sv4_next_self_emp (st : sv1_state) :
+    sv4_next st [] st = probZero := by
+  simp [sv4_next, sv4_next_def, state_len_excess, Int.toNat', sv4_next_pre]
+
+
+
 
 
 lemma sv3_loop_unroll_1_alt [dps : DPSystem ℕ] (τ : ℤ) (ε₁ ε₂ : ℕ+) l point (initial_state : sv1_state) :
@@ -587,72 +613,188 @@ lemma sv3_loop_unroll_2 [dps : DPSystem ℕ] τ ε₁ ε₂ l point (initial_sta
   congr 1
   split <;> simp
 
-  -- This is doable for sure, I just need to define sv4_next
-  sorry
+  simp [sv4_next_self]
+  rw [ENNReal.tsum_eq_add_tsum_ite (sv4_state_shift initial_state y)]
+  simp
+  conv =>
+    lhs
+    rw [<- add_zero (sv3_loop _ _ _ _ _ _ _)]
+  congr 1
+  symm
+  simp
+  intro i H1 H2
+  exfalso
+  apply H1
+  apply H2
 
 
 
-
-
-
-
-
-
-
-/-
-
-
-
-
-
-
-
--- 0th check: using state ([], v0)
-
-
-def sv4_nth (s : sv1_state) (n : ℕ) : sv1_state :=
-  sorry
-
-def init_iter_start (s : sv1_state) : ℕ := List.length s.1
-
-
-def state_to_list (s : sv1_state) : List ℤ := sorry
-
-def sv4_privMaxC (τ : ℤ) (l : List ℕ) (st : sv1_state) : Bool :=
-  sv1_privMaxC τ l st
-
+def sv4_privMaxC (τ : ℤ) (l : List ℕ) (st : sv1_state) : Bool := sv1_privMaxC τ l st
 
 -- Assume that st is a prefix state of presamples? If we can't add on a state such that
 -- the returned state is still a prefix state, then probZero.
-def sv4_privMaxF (presamples : List ℤ) (st : sv1_state) : SLang sv1_state :=
-  -- Get the next state by getting the length of the current state
-  -- Increment it
-  -- Take that prefix of presamples
-  -- Also something about how we need to fail if we are out of presamples? Or maybe just probZero?
-  sorry
-  -- sv1_privMaxC τ l (sv4_nth presamples n)
-
+def sv4_privMaxF (initial : sv1_state) (presamples : List ℤ) (st : sv1_state) : SLang sv1_state :=
+  sv4_next initial presamples st
 
 -- Compute the loop, but using presamples instead
 def sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (point : ℕ) (init : sv1_state) : SLang sv1_state := do
-  let presample_st <- @sv4_presample dps ε₁ ε₂ init point -- FIXME presamples need to be based on point, may be +- 1
-  let presamples := (state_to_list presample_st)
+  let presamples <- @sv4_presample dps ε₁ ε₂ point -- (point + 1) breaks the base case...
   probWhileCut
     (sv4_privMaxC τ l)
-    (sv4_privMaxF presamples)
+    (sv4_privMaxF init presamples)
     (point + 1)
     init
 
 
--- No
+
+-- I want to prove that sv4_loop is equal to sv3_loop
+
+lemma sv3_loop_eq_sv4_loop [dps : DPSystem ℕ] (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List ℕ) (point : ℕ) (init : sv1_state) :
+    @sv3_loop dps ε₁ ε₂ τ l point init = @sv4_loop dps ε₁ ε₂ τ l point init := by
+  unfold sv3_loop
+  unfold sv4_loop
+  revert init
+  induction point
+  · intro init
+    simp [sv4_presample]
+    unfold sv4_privMaxC
+    simp [probWhileCut, probWhileFunctional]
+    split <;> try rfl
+    -- Does the left side have more samples than the right side?
+    -- Not a good sign!
+    apply SLang.ext
+    intro _
+    simp
+  · intro init
+    rename_i point' IH
+
+    -- Unroll it once, using the lemma
+    let H := sv3_loop_unroll_2 τ ε₁ ε₂ l point' init
+    unfold sv3_loop at H
+    rw [H]
+    clear H
+
+    cases (Classical.em (sv1_privMaxC τ l init = true))
+    · simp
+      rename_i Hcond
+
+      -- Horrifying, but only because I can't conv under the if (dependent types)?
+      have X :
+        ((sv4_presample ε₁ ε₂ 1).probBind fun presample_list =>
+          if sv1_privMaxC τ l init = true then
+            (sv4_next init presample_list init).probBind fun next_state =>
+              probWhileCut (sv1_privMaxC τ l) (sv1_privMaxF ε₁ ε₂) (point' + 1) next_state
+          else probPure init) =
+        ((sv4_presample ε₁ ε₂ 1).probBind fun presample_list =>
+          if sv1_privMaxC τ l init = true then
+            (sv4_next init presample_list init).probBind fun next_state =>
+              ((sv4_presample ε₁ ε₂ point') >>=
+                  (fun presamples =>
+                    probWhileCut (sv4_privMaxC τ l) (sv4_privMaxF next_state presamples) (point' + 1) next_state))
+          else probPure init) := by
+        simp_all
+      rw [X]
+      clear X
+      clear IH
+      simp_all
+
+      -- Seems like a lost cause but I'll continue trying
+      apply SLang.ext
+      intro final_state
+      simp
+
+      -- No [] on the LHS list because ther sv4_next term would be 0
+      -- But also, not [] on the LHS list because otherwise (sv4_presample .. 1 a) = 0
+
+      -- Maybe just try to commute the presample steps together on the LHS?
+      conv =>
+        enter [1, 1, a, 2, 1, a1]
+        rw [<- ENNReal.tsum_mul_left]
+      conv =>
+        enter [1, 1, a]
+        rw [ENNReal.tsum_comm]
+        rw [<- ENNReal.tsum_mul_left]
+      conv =>
+        enter [1, 1, a, 1, i, 2, 1, a1]
+        rw [mul_comm]
+        rw [mul_assoc]
+      conv =>
+        enter [1, 1, a, 1, i]
+        rw [ENNReal.tsum_mul_left]
+        rw [<- mul_assoc]
+
+      -- LHS only has support when
+      --    the outermost list has length 1
+      --    next outermost list has length point'
+      -- RHS only has support when
+      --    outermost list has length point' + 1
+      -- The sv4_presample can cancel out using a bijection
+
+      -- Seems sketchy
+      -- The LHS will have a sum over initial states i_1
+      --
+      -- the RHS fixes it to initial
+      -- Unfold a step on the right???
+
+      have Hcond' : sv4_privMaxC τ l init = true := by
+        simp [sv4_privMaxC]
+        trivial
+      conv =>
+        enter [2, 1, a]
+        unfold probWhileCut
+        unfold probWhileFunctional
+      simp_all
+      conv =>
+        enter [2, 1, a, 2, 1, i1]
+        simp only [sv4_privMaxF]
+        rw [mul_comm]
+      -- This seems super bad
+
+      -- That whole scheme with "initial" is what's going wrong.
+      -- This needs "initial" as a separate paramater basically.
+
+
+      sorry
+    · simp_all
+      simp [probWhileCut, probWhileFunctional]
+      have X : sv4_privMaxC τ l init = false := by
+        unfold sv4_privMaxC
+        trivial
+      simp_all
+      apply SLang.ext
+      intro final_state
+      -- Both 1 because sum of PMF?
+      simp
+      split
+      · sorry
+      · simp
+
+
+    -- apply SLang.ext
+    -- intro final_state
+    -- simp
+    --
+    -- -- Step through to get a new init?
+    -- conv =>
+    --   -- I want to enter into theat probWhileCut
+    --   enter [1, 1, a, 2]
+    --   simp
+
+    --   skip
+    -- simp
+
+
+    -- -- Then use the IH
+
+
+    -- sorry
 
 
 
--- lemma sv4_loop_unroll_1 [dps : DPSystem ℕ] (τ : ℤ) (ε₁ ε₂ : ℕ+) l point L vk :
 
 
 
--/
+
 
 
 /-
