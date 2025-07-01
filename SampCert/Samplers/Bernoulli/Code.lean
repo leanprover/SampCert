@@ -24,4 +24,5 @@ def BernoulliSample (num : Nat) (den : PNat) (_ : num ≤ den) : SLang Bool := d
   let d ← UniformSample den
   return d < num
 
+#check BernoulliSample 1 2 (by decide) 
 end SLang

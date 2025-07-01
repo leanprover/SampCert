@@ -47,7 +47,7 @@ extern "C" lean_object * prob_While(lean_object * condition, lean_object * body,
 
 extern "C" lean_object * my_run(lean_object * a) {
     if (urandom == -1) {
-        urandom = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        urandom = open("/dev/urandom", O_RDONLY);
         if (urandom == -1) {
             lean_internal_panic("prob_UniformByte: /dev/urandom cannot be opened");
         }
