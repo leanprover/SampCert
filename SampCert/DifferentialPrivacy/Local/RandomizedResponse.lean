@@ -76,31 +76,33 @@ def count_differences {T : Type} [DecidableEq T]: List T -> List T -> ℕ
         count_differences xs ys
       else 1 + count_differences xs ys
 
-noncomputable def output_probabilities {T : Type} [DecidableEq T] (num : ℕ) (den : PNat) (_ : 2 * num < den) (l : List T) : List T → ENNReal :=
+noncomputable def output_probabilities {T : Type} [DecidableEq T] (num : ℕ) (den : PNat) (_ : 2 * num < den) (l : List T) : SLang (List T) :=
   fun l' =>
     let diff := count_differences (List.map (fun x => x) l) l'
     let same := l.length - diff
-    (((2 * num + den) / (2 * den)) ^ diff * ((den - 2 * num) / (2 * den)) ^ same : ENNReal)
-
-noncomputable def output_probabilities_SLang {T : Type} [DecidableEq T] (num : ℕ) (den : PNat) (_ : 2 * num < den) (l : List T) : SLang (List T) :=
-  fun l' =>
-    let diff := count_differences l l'
-    let same := l.length - diff
-    ENNReal.ofReal (((2 * num + den : ℝ) / (2 * den : ℝ)) ^ diff * ((den - 2 * num : ℝ) / (2 * den : ℝ)) ^ same)
+    (((2 * num + den) / (2 * den)) ^ same * ((2 * num - den) / (2 * den)) ^ diff : ENNReal)
 
 noncomputable def RandomizedResponseSample {T : Type} [DecidableEq T] (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
   ⟨output_probabilities num den h (List.map query l), by sorry⟩
 
 lemma log_arith: Real.log 3 ≥ 0 := Real.log_nonneg (by linarith)
 
+lemma log_arith1: Real.exp (Real.log 3) = 3 := Real.exp_log (by linarith)
+
+lemma log_arith2: ENNReal.ofReal (Real.exp ↑(Real.log 3).toNNReal) = ENNReal.ofReal 3 := by sorry
+
 lemma RRPureDP {T : Type} [DecidableEq T] (query : T -> Bool) (l : List T) (num : Nat) (den : PNat) (h: 2 * num < den): SLang.PureDP (RandomizedResponseSample query num den h) ((Real.log 3).toNNReal) :=
   by
     rw[SLang.PureDP]
     rw[SLang.DP]
     intro l₁ l₂ hl₁l₂ S
+    /- Current bound is not correct of course, should depend on num/den, this is just for illustration -/
     /- Study SampCert PureDP proofs -/
     sorry
 
+noncomputable def RRImplementation {T : Type} [DecidableEq T] (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T): SLang (List Bool) := do
+  let r ← output_probabilities num den h (List.map query l)
+  return r
 
 
 /- def CoinFlipSample (query : T -> Bool) (l : T): SLang (Bool):= do
