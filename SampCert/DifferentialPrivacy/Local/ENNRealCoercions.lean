@@ -50,3 +50,27 @@ lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
         simp
         sorry
     }
+
+
+lemma arith_3b (num : Nat) (den : PNat) (h : 2 * num < den) :
+  (2 : ENNReal) * num < den := by
+
+lemma arith_3c (num : Nat) (den : PNat) (h : 2 * num < den):
+  (den - (2 : ENNReal) * num) / (2 * den) < 1 := by
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast]
+    apply arith_3b at h
+    norm_num at h
+    sorry
+
+lemma arith_3 (num: Nat) (den: PNat) (h : 2 * num < den):
+1 - ((den : ENNReal) - 2 * num) / (2 * den) + (den - 2 * num) / (2 * den) = 1 :=
+  by
+    apply arith_0
+    apply div_not_top
+    {simp}
+    {simp
+     exact Nat.not_eq_zero_of_lt h
+    }
+    { apply arith_3c
+      exact h
+    }
