@@ -8,20 +8,17 @@ instance SLang.LawfulMonad : LawfulMonad SLang where
                rfl
   id_map := by
             intro u hu
-            rw [@Function.funext_iff]
-            intro a
-            unfold id
-            sorry
+            simp [Functor.map]
   seqLeft_eq := by
     intro α β x y
-    sorry
+    simp [SeqLeft.seqLeft, Seq.seq, Functor.map]
+    apply Eq.refl
   seqRight_eq := by
     intro α β x y
-    sorry
+    simp [SeqRight.seqRight, Seq.seq, Functor.map]
   pure_seq := by
     intro α β g x
-    simp_all only [pure]
-    sorry
+    simp [Seq.seq, Functor.map]
   pure_bind := by simp
   bind_pure_comp := by
     intro α β f x
