@@ -33,10 +33,18 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
    list is the same thing as the usual BernoulliSample -/
 
 lemma MultiBernoulli_single_list (hd : SeedType): ∑' (b : List Bool), MultiBernoulliSample [hd] b = 1 := by
-   rw [MultiBernoulliSample]
-   rw [ENNReal.tsum_eq_add_tsum_ite]
-   sorry
-   sorry
+  rw [MultiBernoulliSample]
+  rw [List.mapM_cons, List.mapM_nil]
+  rcases hd with ⟨n, d, h⟩
+  simp only [pure, bind]
+  simp_all only [SLang.pure_bind, SLang.bind_apply, SLang.pure_apply, mul_ite, mul_one, mul_zero]
+  rw [@ENNReal.tsum_comm]
+  rw [tsum_bool]
+  simp_all only [Bool.false_eq_true, ↓reduceIte, tsum_ite_eq]
+  rw[←tsum_bool]
+  rw[mapper_funct]
+  rw [SLang.BernoulliSample_normalizes]
+  sorry
 
 lemma mapper_funct_neq_iff (l : List SeedType) (b : List Bool) :
   mapM mapper_funct l [] =
@@ -68,7 +76,7 @@ lemma MultiBernoulli_independence (hd : SeedType) (tl : List SeedType):
     sorry
 
 lemma MultiBernoulliSample_normalizes (seeds : List SeedType) :
-  ∑' (b : List Bool), MultiBernoulliSample seeds b = 1 := by
+  ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
     induction seeds with
     | nil => rw [MultiBernoulliSample]
              rw [@List.mapM_nil]
