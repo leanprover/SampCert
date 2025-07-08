@@ -1,6 +1,7 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import Mathlib.Probability.Independence.Basic
 import SampCert
+import SampCert.SLang
 
 namespace MultiBernoulli
 
@@ -33,7 +34,7 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
 /- We'll need a proof that the MultiBernoulliSample applied to a single-element
    list is the same thing as the usual BernoulliSample -/
 
-lemma MultiBernoulli_single_list (hd : SeedType): ∑' (b : List Bool), MultiBernoulliSample [hd] b = 1 := by
+lemma MultiBernoulli_single_list [LawfulMonad SLang] (hd : SeedType): ∑' (b : List Bool), MultiBernoulliSample [hd] b = 1 := by
   rw [MultiBernoulliSample]
   rw [List.mapM_cons, List.mapM_nil]
   rcases hd with ⟨n, d, h⟩
@@ -45,7 +46,6 @@ lemma MultiBernoulli_single_list (hd : SeedType): ∑' (b : List Bool), MultiBer
   rw[←tsum_bool]
   rw[bernoulli_mapper]
   rw [SLang.BernoulliSample_normalizes]
-  sorry
 
 lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
   mapM bernoulli_mapper l [] =
