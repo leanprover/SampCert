@@ -9,16 +9,16 @@ structure SeedType where
   d : PNat
   h : n ≤ d
 
-def mapper_funct: SeedType -> SLang Bool :=
+def bernoulli_mapper: SeedType -> SLang Bool :=
   fun s => SLang.BernoulliSample s.n s.d s.h
 
-noncomputable def explicit_sample (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
+noncomputable def explicit_prob (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
   match b with
     | [] => 0
-    | x :: xs => mapper_funct hd x * (mapM mapper_funct tl) xs
+    | x :: xs => bernoulli_mapper hd x * (mapM bernoulli_mapper tl) xs
 
 def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
-  seeds.mapM mapper_funct
+  seeds.mapM bernoulli_mapper
 
 #check MultiBernoulliSample [SeedType.mk 1 2 (by decide), SeedType.mk 1 2 (by decide)] [true, false]
 
@@ -27,8 +27,9 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
 #check SLang.BernoulliSample_normalizes
 #check List.mapM_cons
 #check SLang
+#check List.mapM_nil
+#check tsum_eq_single
 
-#check List.mapM_cons
 /- We'll need a proof that the MultiBernoulliSample applied to a single-element
    list is the same thing as the usual BernoulliSample -/
 
@@ -42,37 +43,56 @@ lemma MultiBernoulli_single_list (hd : SeedType): ∑' (b : List Bool), MultiBer
   rw [tsum_bool]
   simp_all only [Bool.false_eq_true, ↓reduceIte, tsum_ite_eq]
   rw[←tsum_bool]
-  rw[mapper_funct]
+  rw[bernoulli_mapper]
   rw [SLang.BernoulliSample_normalizes]
   sorry
 
-lemma mapper_funct_neq_iff (l : List SeedType) (b : List Bool) :
-  mapM mapper_funct l [] =
+lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
+  mapM bernoulli_mapper l [] =
     match l with
     | [] => 1
-    | _ => 0 := by
+    | hd :: tl => 0 := by
       cases l with
       | nil =>  simp[-mapM]
       | cons hd tl => simp[-mapM]
                       sorry
 
-
-lemma MultiBernoulliSampler_recurrence (hd : SeedType) (tl : List SeedType) (b : List Bool):
-  mapM mapper_funct (hd :: tl) b
-= explicit_sample hd tl b := by
-  unfold explicit_sample
+lemma multi_bernoulli_explicit (hd : SeedType) (tl : List SeedType) (b : List Bool):
+  mapM bernoulli_mapper (hd :: tl) b = explicit_prob hd tl b := by
+  unfold explicit_prob
   rw[List.mapM_cons]
-  aesop
+  simp_all only [bind, pure, SLang.bind_apply, SLang.pure_apply, mul_ite, mul_one, mul_zero]
+  split
+  next b => simp_all only [↓reduceIte, tsum_zero, mul_zero]
+  next b x xs =>
+    simp_all only [List.cons.injEq]
+    rw[tsum_bool]
+    cases x with
+    | false => simp[-mapM]
+               rw[tsum_eq_single xs]
+               simp_all
+               intro b' a
+               simp_all only [ne_eq, mapM, ite_eq_right_iff]
+               intro a_1
+               subst a_1
+               simp_all only [not_true_eq_false]
+    | true =>  simp[-mapM]
+               rw[tsum_eq_single xs]
+               simp_all
+               intro b' a
+               simp_all only [ne_eq, mapM, ite_eq_right_iff]
+               intro a_1
+               subst a_1
+               simp_all only [not_true_eq_false]
   sorry
 
-lemma test_2 (hd : SeedType) (tl : List SeedType):
- ∑' (b : List Bool), mapM mapper_funct (hd :: tl) b = ∑' (b : List Bool), explicit_sample hd tl b := by
-  sorry
+lemma multi_bernoulli_explicit_sum (hd : SeedType) (tl : List SeedType):
+ ∑' (b : List Bool), mapM bernoulli_mapper (hd :: tl) b = ∑' (b : List Bool), explicit_prob hd tl b := by
+  simp_all [multi_bernoulli_explicit, -mapM]
 
 lemma MultiBernoulli_independence (hd : SeedType) (tl : List SeedType):
   ∑' (b : List Bool), MultiBernoulliSample (hd :: tl) b =
   (∑' (b : List Bool), MultiBernoulliSample [hd] b) * ∑' (b : List Bool), MultiBernoulliSample tl b := by
-    rw [MultiBernoulliSample]
     sorry
 
 lemma MultiBernoulliSample_normalizes (seeds : List SeedType) :
@@ -99,7 +119,13 @@ lemma push_forward_prob_is_prob {T S : Type} [DecidableEq S] (p : SLang T) (f : 
     rw [@ENNReal.tsum_comm]
     have h1: ∀b : T, ∑' (a : S), (if f b = a then p b else 0 : ENNReal) = p b := by
       intro b
-      sorry
+      rw [tsum_eq_single (f b)]
+      simp
+      intro b' a
+      simp_all only [ne_eq, ite_eq_right_iff]
+      intro a_1
+      subst a_1
+      simp_all only [not_true_eq_false]
     simp_all
 
 end MultiBernoulli
