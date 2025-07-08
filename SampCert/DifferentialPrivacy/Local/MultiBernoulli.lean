@@ -13,10 +13,42 @@ structure SeedType where
 def bernoulli_mapper: SeedType -> SLang Bool :=
   fun s => SLang.BernoulliSample s.n s.d s.h
 
+lemma bernoulli_mapper_sums_to_1 (s : SeedType): ∑' (b : Bool), bernoulli_mapper s b = 1 := by
+  rw[bernoulli_mapper]
+  exact SLang.BernoulliSample_normalizes s.n s.d s.h
+
 noncomputable def explicit_prob (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
   match b with
     | [] => 0
     | x :: xs => bernoulli_mapper hd x * (mapM bernoulli_mapper tl) xs
+
+lemma bernoulli_mapper_empty (b : List Bool): mapM bernoulli_mapper [] b = if b = [] then 1 else 0 := by
+  rw [@List.mapM_nil]
+  simp_all only [pure, SLang.pure_apply, ite_eq_right_iff, one_ne_zero, imp_false]
+  split
+  next h =>
+    subst h
+    simp_all only
+  next h => simp_all only
+
+lemma explicit_prob_nonempty (hd : SeedType) (tl : List SeedType) (b : List Bool) (h : b ≠ []):
+  explicit_prob hd tl b = bernoulli_mapper hd (b.head h) * (mapM bernoulli_mapper tl b.tail) := by
+    rw[explicit_prob]
+    cases b with
+    | nil => contradiction
+    | cons =>
+              rename_i head tail
+              simp_all only [List.head_cons, List.tail_cons]
+
+lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
+ ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
+ induction tl with
+ | nil => sorry
+ | cons => sorry
+
+
+
+
 
 def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
   seeds.mapM bernoulli_mapper
@@ -47,7 +79,7 @@ lemma MultiBernoulli_single_list [LawfulMonad SLang] (hd : SeedType): ∑' (b : 
   rw[bernoulli_mapper]
   rw [SLang.BernoulliSample_normalizes]
 
-lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
+/- lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
   mapM bernoulli_mapper l [] =
     match l with
     | [] => 1
@@ -56,7 +88,7 @@ lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
       | nil =>  simp[-mapM]
       | cons hd tl => simp[-mapM]
                       sorry
-
+-/
 lemma multi_bernoulli_explicit [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool):
   mapM bernoulli_mapper (hd :: tl) b = explicit_prob hd tl b := by
   unfold explicit_prob
@@ -89,40 +121,75 @@ lemma multi_bernoulli_explicit_sum [LawfulMonad SLang] (hd : SeedType) (tl : Lis
  ∑' (b : List Bool), mapM bernoulli_mapper (hd :: tl) b = ∑' (b : List Bool), explicit_prob hd tl b := by
   simp_all [multi_bernoulli_explicit, -mapM]
 
-def simplify_expression (hd : SeedType) (tl : List SeedType) (x : List Bool): ENNReal :=
+/- noncomputable def unsimplified_expression (hd : SeedType) (tl : List SeedType) (x : List Bool): ENNReal :=
   if x = [] then (0 : ENNReal)
       else
         match x with
         | [] => (0 : ENNReal)
-        | x :: xs => bernoulli_mapper hd x * mapM bernoulli_mapper tl xs
+        | x :: xs => bernoulli_mapper hd x * mapM bernoulli_mapper tl xs -/
 
-lemma MultiBernoulli_independence [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType):
+/- lemma simplify_unsimplified (hd : SeedType) (tl : List SeedType) (x : List Bool) (h : x ≠ []):
+   unsimplified_expression hd tl x =
+   bernoulli_mapper hd (x.head h) * mapM bernoulli_mapper tl x.tail := by
+    unfold unsimplified_expression
+    simp_all only [↓reduceIte, mapM]
+    split
+    next b =>
+      simp_all only [List.tail_nil, zero_eq_mul]
+      apply Or.inr
+      simp_all only [ne_eq, not_true_eq_false]
+    next b x xs => simp_all only [List.head_cons, List.tail_cons] -/
+
+/- lemma list_bool_tsum_rw {T : Type} [DecidableEq T] [AddCommMonoid T] [TopologicalSpace T] (f : List Bool -> T):
+  ∑' (b : List Bool), f b = f [] + ∑' (b : {b : List Bool // b ≠ []}), f b := by
+  sorry -/
+
+lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f g : α -> β) (h: ∀i : α, f i = g i ):
+   ∑' (i : α), f i = ∑' (i : α), g i := by simp_all
+
+/- lemma multibernoulli_of_zero [LawfulMonad SLang] (seed: SeedType):
+  MultiBernoulliSample [seed] [] = 0 := by
+    rw [MultiBernoulliSample]
+    rw [List.mapM_cons]
+    simp_all only [bind, pure, SLang.bind_apply, SLang.pure_apply, ↓reduceIte, mul_zero, tsum_zero] -/
+
+/- lemma MultiBernoulli_independence_single [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool):
+  MultiBernoulliSample (hd :: tl) b = if assm: b ≠ [] then MultiBernoulliSample [hd] [b.head (by assumption)] * MultiBernoulliSample tl (b.tail) else 0 := by
+    unfold MultiBernoulliSample
+    cases b with
+    | nil => simp [-mapM]
+    | cons hd tl =>
+    rename_i inst hd_1 tl_1
+    simp_all only [ne_eq, not_false_eq_true, ↓reduceDIte, List.head_cons, List.tail_cons]
+    sorry -/
+
+/- lemma MultiBernoulli_independence [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType):
   ∑' (b : List Bool), MultiBernoulliSample (hd :: tl) b =
-  (∑' (b : List Bool), MultiBernoulliSample [hd] b) * ∑' (b : List Bool), MultiBernoulliSample tl b := by
+  ∑' (b : List Bool), if assm: b ≠ [] then MultiBernoulliSample [hd] [b.head (by assumption)] * MultiBernoulliSample tl (b.tail) else 0 := by
     unfold MultiBernoulliSample
     rw [multi_bernoulli_explicit_sum]
     unfold explicit_prob
     rw [ENNReal.tsum_eq_add_tsum_ite []]
     simp_all only [zero_add]
-    rw?
-
-
-
-    sorry
+    rw[tsum_equal_comp]
+    intro b
+    cases b with
+    | nil => simp [-mapM]
+    | cons hd tl =>
+             rename_i inst hd_1 tl_1
+             simp_all only [↓reduceIte, ne_eq, not_false_eq_true, ↓reduceDIte, List.head_cons, List.tail_cons]
+             sorry -/
 
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
+    rw [MultiBernoulliSample]
     induction seeds with
-    | nil => rw [MultiBernoulliSample]
-             rw [@List.mapM_nil]
+    | nil => rw [@List.mapM_nil]
              simp[pure]
              rw [ENNReal.tsum_eq_add_tsum_ite []]
              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
     | cons hd tl ih =>
-      rw [MultiBernoulli_independence hd tl]
-      rw [ih]
-      rw[MultiBernoulli_single_list hd]
-      rw [one_mul]
+      rw [@multi_bernoulli_explicit_sum]
 
 
 noncomputable def push_forward {T S: Type} [DecidableEq S] (p : SLang T) (f : T -> S) : SLang S :=
