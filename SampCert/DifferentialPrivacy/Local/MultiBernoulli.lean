@@ -57,7 +57,7 @@ lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
       | cons hd tl => simp[-mapM]
                       sorry
 
-lemma multi_bernoulli_explicit (hd : SeedType) (tl : List SeedType) (b : List Bool):
+lemma multi_bernoulli_explicit [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool):
   mapM bernoulli_mapper (hd :: tl) b = explicit_prob hd tl b := by
   unfold explicit_prob
   rw[List.mapM_cons]
@@ -84,18 +84,33 @@ lemma multi_bernoulli_explicit (hd : SeedType) (tl : List SeedType) (b : List Bo
                intro a_1
                subst a_1
                simp_all only [not_true_eq_false]
-  sorry
 
-lemma multi_bernoulli_explicit_sum (hd : SeedType) (tl : List SeedType):
+lemma multi_bernoulli_explicit_sum [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType):
  ∑' (b : List Bool), mapM bernoulli_mapper (hd :: tl) b = ∑' (b : List Bool), explicit_prob hd tl b := by
   simp_all [multi_bernoulli_explicit, -mapM]
 
-lemma MultiBernoulli_independence (hd : SeedType) (tl : List SeedType):
+def simplify_expression (hd : SeedType) (tl : List SeedType) (x : List Bool): ENNReal :=
+  if x = [] then (0 : ENNReal)
+      else
+        match x with
+        | [] => (0 : ENNReal)
+        | x :: xs => bernoulli_mapper hd x * mapM bernoulli_mapper tl xs
+
+lemma MultiBernoulli_independence [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType):
   ∑' (b : List Bool), MultiBernoulliSample (hd :: tl) b =
   (∑' (b : List Bool), MultiBernoulliSample [hd] b) * ∑' (b : List Bool), MultiBernoulliSample tl b := by
+    unfold MultiBernoulliSample
+    rw [multi_bernoulli_explicit_sum]
+    unfold explicit_prob
+    rw [ENNReal.tsum_eq_add_tsum_ite []]
+    simp_all only [zero_add]
+    rw?
+
+
+
     sorry
 
-lemma MultiBernoulliSample_normalizes (seeds : List SeedType) :
+lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
     induction seeds with
     | nil => rw [MultiBernoulliSample]
