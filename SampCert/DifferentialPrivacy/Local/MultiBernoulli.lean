@@ -3,6 +3,7 @@ import Mathlib.Probability.Independence.Basic
 import SampCert
 import SampCert.SLang
 
+
 namespace MultiBernoulli
 
 structure SeedType where
@@ -79,7 +80,19 @@ lemma MultiBernoulli_single_list [LawfulMonad SLang] (hd : SeedType): ∑' (b : 
   rw[bernoulli_mapper]
   rw [SLang.BernoulliSample_normalizes]
 
-/- lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
+lemma bernoulli_helper [LawfulMonad SLang] (hd : Bool) (hd_1 : SeedType) : bernoulli_mapper hd_1 hd = mapM bernoulli_mapper [hd_1] [hd] := by
+  rw [List.mapM_cons, List.mapM_nil]
+  rcases hd_1 with ⟨n, d, h⟩
+  simp only [pure, bind]
+  simp_all only [SLang.pure_bind, SLang.bind_apply, SLang.pure_apply, mul_ite, mul_one, mul_zero]
+  simp_all only [List.cons.injEq, and_true]
+  cases hd with
+  | true => simp_all only [Bool.true_eq, tsum_ite_eq]
+  | false => simp_all only [Bool.false_eq, tsum_ite_eq, tsum_zero, mul_zero]
+
+
+
+lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
   mapM bernoulli_mapper l [] =
     match l with
     | [] => 1
