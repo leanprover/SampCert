@@ -1,6 +1,9 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
-/- import SampCert.DifferentialPrivacy.Local.ENNRealCoercions -/
+import SampCert.DifferentialPrivacy.Local.MultiBernoulli
+
+open SLang
+open MultiBernoulli
 
 lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 * den := by
   simp_all only [tsub_le_iff_right]
@@ -14,14 +17,15 @@ def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num 
 /- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
 
-def RRSample2 {T : Type} (query : T -> Bool) (s : SeedType /- fix -/): SLang (List Bool) := do
-  sorry
+def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
+  let r ← MultiBernoulliSample seed_list
+  return List.zipWith (fun u s => Bool.xor (query u) s) l r
 /- At this point, we should be set to prove that RRSample is normalized and that it is
    differentially private. The definition is computable, as we need. -/
 
 #check SLang.BernoulliSample_normalizes
 
-lemma RRSingleSample2_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
+lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
   HasSum (RRSingleSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     rw [@tsum_bool]
@@ -61,7 +65,7 @@ lemma cons_case {T: Type} (query : T -> Bool) (num : Nat) (den: PNat) (h : 2 * n
     rw[RRSample]
     sorry
 
-lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
+lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
   HasSum (RRSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     rw[RRSample]
@@ -69,5 +73,16 @@ lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat
     | nil => exact nil_case query num den h
     | cons hd tl tail_ih => sorry
 
+lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
+  HasSum (RRSample2 query s l) 1 := by
+  rw[RRSample2]
+  simp_all only [bind, pure]
+  rw[Summable.hasSum_iff ENNReal.summable]
+  rw[←MultiBernoulliSample_normalizes s]
+  simp_all only [bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
+  sorry
+
+
+
 def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
-  ⟨RRSample query num den h l, RRSample2_PMF_helper query num den h l⟩
+  ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
