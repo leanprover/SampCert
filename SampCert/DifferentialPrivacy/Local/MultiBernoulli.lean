@@ -19,9 +19,20 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
    list is the same thing as the usual BernoulliSample -/
 
 lemma MultiBernoulli_single_list (hd : SeedType): ∑' (b : List Bool), MultiBernoulliSample [hd] b = 1 := by
-   rw [MultiBernoulliSample]
-   rw [ENNReal.tsum_eq_add_tsum_ite]
-   sorry
+  rw [MultiBernoulliSample]
+  rw [List.mapM_cons, List.mapM_nil]
+  rcases hd with ⟨n, d, h⟩
+  simp only [pure, bind]
+  simp_all only [pure_bind, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
+  rw [@ENNReal.tsum_comm]
+  rw [tsum_bool]
+  simp_all only [Bool.false_eq_true, ↓reduceIte, tsum_ite_eq]
+  rw[←tsum_bool]
+  rw [BernoulliSample_normalizes]
+  sorry
+
+
+
 
 
 lemma MultiBernoulli_independence (hd : SeedType) (tl : List SeedType):
@@ -30,8 +41,7 @@ lemma MultiBernoulli_independence (hd : SeedType) (tl : List SeedType):
     sorry
 
 lemma MultiBernoulliSample_normalizes (seeds : List SeedType) :
-  HasSum (MultiBernoulliSample seeds) 1 := by
-    rw [Summable.hasSum_iff ENNReal.summable]
+  ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
     induction seeds with
     | nil => rw [MultiBernoulliSample]
              rw [@List.mapM_nil]
@@ -41,5 +51,5 @@ lemma MultiBernoulliSample_normalizes (seeds : List SeedType) :
     | cons hd tl ih =>
       rw [MultiBernoulli_independence hd tl]
       rw [ih]
-      rw [@CanonicallyOrderedCommSemiring.mul_one]
-      rw[MultiBernoulli_single_list]
+      rw [MultiBernoulli_single_list hd]
+      rw [one_mul]
