@@ -23,6 +23,14 @@ noncomputable def explicit_prob (hd : SeedType) (tl : List SeedType) (b : List B
     | [] => 0
     | x :: xs => bernoulli_mapper hd x * (mapM bernoulli_mapper tl) xs
 
+noncomputable def explicit_prob2 (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
+  match b with
+    | [] => 0
+    | x :: xs => bernoulli_mapper hd x *
+      match tl with
+        | [] => if xs = [] then 1 else 0
+        | tl_hd :: tl_tl => explicit_prob2 tl_hd tl_tl xs
+
 lemma bernoulli_mapper_empty (b : List Bool): mapM bernoulli_mapper [] b = if b = [] then 1 else 0 := by
   rw [@List.mapM_nil]
   simp_all only [pure, SLang.pure_apply, ite_eq_right_iff, one_ne_zero, imp_false]
@@ -41,15 +49,23 @@ lemma explicit_prob_nonempty (hd : SeedType) (tl : List SeedType) (b : List Bool
               rename_i head tail
               simp_all only [List.head_cons, List.tail_cons]
 
+lemma explicit_prob_sum_except_empty (hd : SeedType) (tl : List SeedType):
+  ∑' (b : List Bool), explicit_prob hd tl b =
+  ∑' (b : List Bool), if assm: b ≠ [] then bernoulli_mapper hd (b.head assm) * (mapM bernoulli_mapper tl) b.tail else 0 := by
+  unfold explicit_prob
+  simp_all only [ne_eq, dite_eq_ite, ite_not]
+  sorry
+  
 lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
  ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
  induction tl with
  | nil => sorry
- | cons => sorry
+ | cons tl_hd tl_tl ih => rw[explicit_prob_sum_except_empty]
+                          rw[explicit_prob_sum_except_empty] at ih
+                          rw [← ih]
+                          simp_all only [ne_eq, dite_not]
 
-
-
-
+                          sorry
 
 def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
   seeds.mapM bernoulli_mapper
@@ -63,6 +79,7 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
 #check SLang
 #check List.mapM_nil
 #check tsum_eq_single
+#check tsum_eq_tsum_diff_singleton
 
 /- We'll need a proof that the MultiBernoulliSample applied to a single-element
    list is the same thing as the usual BernoulliSample -/
@@ -90,8 +107,7 @@ lemma bernoulli_helper [LawfulMonad SLang] (hd : Bool) (hd_1 : SeedType) : berno
   | true => simp_all only [Bool.true_eq, tsum_ite_eq]
   | false => simp_all only [Bool.false_eq, tsum_ite_eq, tsum_zero, mul_zero]
 
-
-
+/-
 lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
   mapM bernoulli_mapper l [] =
     match l with
@@ -203,6 +219,7 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
     | cons hd tl ih =>
       rw [@multi_bernoulli_explicit_sum]
+      sorry
 
 
 noncomputable def push_forward {T S: Type} [DecidableEq S] (p : SLang T) (f : T -> S) : SLang S :=
