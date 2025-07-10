@@ -361,6 +361,37 @@ lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f 
              sorry -/
 
 /- This can be proven by showing that explicit_prob normalizes. -/
+
+lemma simplifier1 (b : Bool):
+(∑' (a : List Bool), bernoulli_mapper hd b * ∑' (a_1 : List Bool), if a = b :: a_1 then mapM bernoulli_mapper tl a_1 else 0) =
+(∑' (a : List Bool), if assm: a ≠ [] then bernoulli_mapper hd b * mapM bernoulli_mapper tl a.tail else 0) := by
+  simp_all only [ne_eq, ite_eq_right_iff, not_true_eq_false, tsum_zero]
+  apply tsum_equal_comp
+  intro i
+  cases i with
+  | nil => sorry
+  | cons => sorry
+
+lemma simplifier2 (a : List Bool):
+(if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail) +
+  (if a = [] then 0 else bernoulli_mapper hd true * mapM bernoulli_mapper tl a.tail)
+= (if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail +
+  bernoulli_mapper hd true * mapM bernoulli_mapper tl a.tail) := by aesop
+
+lemma ennreal_mul_eq (a b c : ENNReal): a = b -> c * a = c * b := by
+  intro h
+  rw[h]
+
+lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
+
+lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
+  ∑' (x : List Bool), f x = (∑'(x : List Bool), if x = [] then 0 else f x) := by
+    rw [ENNReal.tsum_eq_add_tsum_ite []]
+    simp [h]
+    apply tsum_equal_comp
+    intro i
+    aesop
+
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
     rw [MultiBernoulliSample]
@@ -371,7 +402,29 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
              simp
     | cons hd tl ih =>
-      rw [@multi_bernoulli_explicit_sum]
+      simp [List.mapM_cons, -mapM]
+      rw [@ENNReal.tsum_comm]
+      rw [tsum_bool]
+      rw[simplifier1 false]
+      rw[simplifier1 true]
+      rw [← @ENNReal.tsum_add]
+      simp only [ne_eq, dite_eq_ite, ite_not]
+      conv =>
+        enter [1, 1, a]
+        simp [-mapM]
+        rw [simplifier2]
+        rw [ennreal_mul_assoc]
+        rw[←tsum_bool]
+        rw[bernoulli_mapper_sums_to_1]
+        simp [-mapM]
+      
+
+
+
+
+
+
+
       sorry
 
 /- The rest of this file can be ignored. It states that the push-forward
@@ -398,7 +451,7 @@ lemma push_forward_prob_is_prob {T S : Type} [DecidableEq S] (p : SLang T) (f : 
 
 lemma explicit_prob_eq_prob2 [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool) :
   explicit_prob hd tl b = explicit_prob2 hd tl b := by
-  induction b with
+  induction b generalizing hd with
   | nil => unfold explicit_prob explicit_prob2
            simp_all only [mapM, bernoulli_mapper, pure, SLang.pure_apply, zero_mul]
   | cons n ns ih => simp [explicit_prob, -mapM]
@@ -421,8 +474,59 @@ lemma explicit_prob_eq_prob2 [LawfulMonad SLang] (hd : SeedType) (tl : List Seed
                       simp[explicit_prob, -mapM] at ih
                       split at ih
                       next b => simp [explicit_prob2, -mapM]
-                      next b x xs => simp [explicit_prob2, -mapM] at ih
-                                     simp [List.mapM_cons, -mapM]
-                                     sorry
+                      next b x xs => apply ennreal_mul_eq
+                                     unfold explicit_prob2
+                                     rw [List.mapM_cons]
+                                     simp [-mapM]
+                                     rw[tsum_bool]
+                                     cases tl_tl with
+                                     | nil => simp only [mul_ite, mul_one, mul_zero]
+                                              rename_i inst
+                                              split
+                                              next h =>
+                                                subst h
+                                                simp_all only [↓reduceIte, _root_.tsum_zero, mul_zero]
+                                                cases x with
+                                                | true =>
+                                                simp_all only [Bool.true_eq_false, false_and, ↓reduceIte,
+                                                  _root_.tsum_zero, mul_zero, true_and, zero_add]
+                                                simp [tsum_eq_single, -mapM]
+                                                simp_all [tsum_ite_eq]
+                                                rw [tsum_eq_single []]
+                                                simp
+                                                intro b hb
+                                                simp
+                                                exact id (Ne.symm hb)
+                                                | false =>
+                                                simp_all only [Bool.true_eq_false, false_and, ↓reduceIte,
+                                                  _root_.tsum_zero, mul_zero, true_and, zero_add]
+                                                simp [tsum_eq_single, -mapM]
+                                                simp_all [tsum_ite_eq]
+                                                rw [tsum_eq_single []]
+                                                simp
+                                                intro b hb
+                                                simp
+                                                exact id (Ne.symm hb)
+                                              next
+                                                h =>
+                                                simp_all only [add_eq_zero, mul_eq_zero, ENNReal.tsum_eq_zero,
+                                                  ite_eq_right_iff, and_imp, forall_apply_eq_imp_iff]
+                                                apply And.intro
+                                                · apply Or.inr
+                                                  intro hx
+                                                  rw [List.mapM_nil]
+                                                  simp [pure]
+                                                  exact h
+                                                · apply Or.inr
+                                                  intro hx
+                                                  rw [List.mapM_nil]
+                                                  simp [pure]
+                                                  exact h
+                                     | cons =>
 
+
+
+
+
+                                     sorry
 end MultiBernoulli
