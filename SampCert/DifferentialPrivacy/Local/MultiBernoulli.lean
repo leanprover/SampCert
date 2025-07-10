@@ -17,6 +17,10 @@ namespace MultiBernoulli
    explicit_prob function.
 -/
 
+lemma tsum_zero (f : List Bool -> ENNReal):
+  ∑' (x : List Bool), (if x = [] then 0 else f x) =
+  ∑' (x : List Bool), if assm : x ≠ [] then f x else 0 := by simp_all [ite_not]
+
 structure SeedType where
   n : Nat
   d : PNat
@@ -45,6 +49,19 @@ noncomputable def explicit_prob (hd : SeedType) (tl : List SeedType) (b : List B
     | [] => 0
     | x :: xs => bernoulli_mapper hd x * (mapM bernoulli_mapper tl) xs
 
+lemma ite_simplifier1 (b : List Bool) (hd : SeedType):
+(if assm : b ≠ [] then explicit_prob hd [] b else 0) =
+if assm: b ≠ [] then bernoulli_mapper hd (b.head assm) * mapM bernoulli_mapper [] b.tail else 0 := by
+  cases b with
+  | nil => simp
+  | cons x xs => simp_all [explicit_prob, -mapM]
+
+lemma ite_simplifier2 (b : List Bool) (hd : SeedType):
+(if h : b = [] then 0 else if b.tail = [] then bernoulli_mapper hd (b.head h) else 0) =
+(if assm: b ≠ [] then if b = [b.head assm] then bernoulli_mapper hd (b.head assm) else 0 else 0) := by
+  cases b with
+  | nil => simp
+  | cons x xs => simp
 /- EXAMPLE OF WHAT ISN'T WORKING: -/
 lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
   ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
@@ -52,12 +69,20 @@ lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
   | nil => rw [ENNReal.tsum_eq_add_tsum_ite []]
            rw[explicit_prob]
            simp
-           unfold explicit_prob
+           convert tsum_zero (explicit_prob hd [])
+           apply symm
+           conv =>
+            enter [1, 1, b]
+            rw [ite_simplifier1 b hd]
+           convert show (1 + 0 : ENNReal) = 1 from add_zero 1
+           simp [-mapM]
+           conv =>
+            enter [1, 1, b]
+           sorry
            /- FOR ETHAN: At this point I would love to say that
            in the else case, the x ≠ [] and so we can just
            pattern-match on it...but I don't know how to get Lean
            to understand that. -/
-           sorry
   | cons tl_hd tl_tl ih => sorry
 /- If we could get the above proof to work, we would be done...-/
 
@@ -95,10 +120,6 @@ lemma explicit_prob_sum_except_empty (hd : SeedType) (tl : List SeedType):
   unfold explicit_prob
   simp_all only [ne_eq, dite_eq_ite, ite_not]
   sorry
-
-lemma tsum_zero (f : List Bool -> ENNReal):
-  ∑' (b : List Bool), (if b = [] then 0 else f b) =
-  ∑' (b : List Bool), if assm : b ≠ [] then f b else 0 := by simp_all [ite_not]
 
 lemma tsum_zero_subtype (f : List Bool -> ENNReal):
   ∑' (b : List Bool), f b = f [] + ∑'(b : {b : List Bool // b ≠ []}), f b.val:= by
