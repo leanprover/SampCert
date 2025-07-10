@@ -2,9 +2,34 @@ import Mathlib.Probability.ProbabilityMassFunction.Basic
 import Mathlib.Probability.Independence.Basic
 import SampCert
 import SampCert.SLang
+import Mathlib.Data.Set.Basic
 
 
 namespace MultiBernoulli
+
+
+open Set
+
+lemma all_lists_eq_all_tails_bool : (univ : Set (List Bool)) = { l | ∃ x xs, l = (x :: xs).tail } := by
+  ext l  -- extensionality: sets equal iff same elements
+  constructor
+  · intro _
+    -- show l is in the tail set: pick any Bool x and let xs := l
+    use true, l
+    rfl
+  · rintro ⟨x, xs, h⟩
+    -- l = tail of some cons => l is a list => l ∈ univ
+    subst h
+    let ll := true::l
+    have h: ll.tail =l := by rfl
+    rw [← h]
+    exact mem_univ _
+
+lemma sum_bool_eq_sum_tail {f : List Bool -> ENNReal} :
+∑' (b : List Bool), f b = ∑' (b : List Bool), f b.tail := by
+
+
+close Set
 
 /- We define the multivariable Bernoulli distrbution (corresponding to n
    independent coin flips) and prove that it normalizes.
@@ -352,5 +377,16 @@ lemma explicit_prob_eq_prob2 [LawfulMonad SLang] (hd : SeedType) (tl : List Seed
                       next b x xs => simp [explicit_prob2, -mapM] at ih
                                      simp [List.mapM_cons, -mapM]
                                      sorry
+
+
+
+
+
+
+
+
+
+
+
 
 end MultiBernoulli
