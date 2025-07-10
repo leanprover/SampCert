@@ -14,8 +14,9 @@ lemma f_sums_to_1: ∑' (b : List Bool), (if assm: b ≠ [] then f b else 1) = 1
   · simp [h]
   · unfold f; aesop
 
-lemma f_sums_to_1': ∑' (b : List Bool), (if assm: b ≠ [] then f b else 1) = 1 := by
-  conv =>
-    enter [1, 1, b]
-    rw [← List.head_cons_tail b assm, f]
-  simp
+lemma silly: (∑' (b : List Bool), if b = [true] then 1 else 0) = 1 := by
+  rw [@tsum_ite_eq]
+
+
+lemma silly2 (f : Bool -> ENNReal): (∑' (b : List Bool), if b = [true] then f true else if b = [false] then f false else 0)
+= f true + f false := by sorry 

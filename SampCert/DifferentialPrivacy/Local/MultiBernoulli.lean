@@ -62,6 +62,71 @@ lemma ite_simplifier2 (b : List Bool) (hd : SeedType):
   cases b with
   | nil => simp
   | cons x xs => simp
+
+lemma ite_simplifier3 (b : List Bool) (hd : SeedType):
+(if assm: b ≠ [] then if b = [b.head assm] then bernoulli_mapper hd (b.head assm) else 0 else 0) =
+(if b = [true] then bernoulli_mapper hd true else if b = [false] then bernoulli_mapper hd false else 0) := by
+  simp
+  cases b with
+  | nil => simp
+  | cons x xs => simp
+                 cases xs with
+                 | nil => simp
+                          cases x with
+                          | true => simp
+                          | false => simp
+                 | cons => simp
+
+lemma list_bool_length_1 (b : List Bool):
+  b.length = 1 ↔ b = [true] ∨ b = [false] := by
+   apply Iff.intro
+   · intro a
+     have h : ∃s : Bool, b = [s] := by
+       apply List.length_eq_one.mp
+       exact a
+     cases h with
+     | intro s hs =>
+     subst hs
+     simp_all only [List.length_singleton, List.cons.injEq, and_true, Bool.eq_true_or_eq_false_self]
+   · intro a
+     cases a with
+     | inl h =>
+       subst h
+       simp_all only [List.length_singleton]
+     | inr h_1 =>
+       subst h_1
+       simp_all only [List.length_singleton]
+
+lemma sum_simplifier1 (hd : SeedType):
+ (if b = [true] then bernoulli_mapper hd true else if b = [false] then bernoulli_mapper hd false else 0)
+ = if assm: b.length = 1 then bernoulli_mapper hd (b.head (by aesop)) else 0 := by
+  split
+  next h =>
+    subst h
+    simp_all only [List.length_singleton, ↓reduceDIte, List.head_cons]
+  next h =>
+    split
+    next h_1 =>
+      subst h_1
+      simp_all only [List.cons.injEq, Bool.false_eq_true, and_true, not_false_eq_true, List.length_singleton,
+        ↓reduceDIte, List.head_cons]
+    next h_1 =>
+      split
+      next h_2 => apply False.elim
+                  have p: ¬ (b = [false] ∨ b = [true]) := by simp_all only [or_self, not_false_eq_true]
+                  apply p
+                  rw [Or.comm]
+                  apply (list_bool_length_1 b).mp
+                  exact h_2
+      next h_2 => simp_all only
+
+  lemma sum_simplifier2 (hd : SeedType):
+   ∑' (b : List Bool), (if b = [true] then bernoulli_mapper hd true else if b = [false] then bernoulli_mapper hd false else 0)
+ = ∑' (b : List Bool), if assm: b.length = 1 then bernoulli_mapper hd (b.head (by aesop)) else 0 := by
+    conv =>
+      enter [1, 1, b]
+      rw [sum_simplifier1 hd]
+
 /- EXAMPLE OF WHAT ISN'T WORKING: -/
 lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
   ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
@@ -78,6 +143,12 @@ lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
            simp [-mapM]
            conv =>
             enter [1, 1, b]
+            rw [ite_simplifier2 b hd]
+            rw [ite_simplifier3 b hd]
+           rw[sum_simplifier2 hd]
+           rw [←bernoulli_mapper_sums_to_1 hd]
+           rw [tsum_bool]
+           rw [@AddCommMonoidWithOne.add_comm]
            sorry
            /- FOR ETHAN: At this point I would love to say that
            in the else case, the x ≠ [] and so we can just
@@ -155,8 +226,9 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
 #check List.mapM_cons
 #check SLang
 #check List.mapM_nil
-#check tsum_eq_single
 #check tsum_eq_tsum_diff_singleton
+#check tsum_ite_eq
+#check tsum_eq_single
 
 /- The following theorems might be useful, but are not used in the current proof -/
 
