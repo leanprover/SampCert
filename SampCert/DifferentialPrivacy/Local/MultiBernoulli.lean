@@ -324,4 +324,33 @@ lemma push_forward_prob_is_prob {T S : Type} [DecidableEq S] (p : SLang T) (f : 
       simp_all only [not_true_eq_false]
     simp_all
 
+lemma explicit_prob_eq_prob2 [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool) :
+  explicit_prob hd tl b = explicit_prob2 hd tl b := by
+  induction b with
+  | nil => unfold explicit_prob explicit_prob2
+           simp_all only [mapM, bernoulli_mapper, pure, SLang.pure_apply, zero_mul]
+  | cons n ns ih => simp [explicit_prob, -mapM]
+                    unfold explicit_prob2
+                    split
+                    next tl =>
+                      simp_all only [mul_ite, mul_one, mul_zero]
+                      split
+                      next h =>
+                        subst h
+                        rw [List.mapM_nil]
+                        simp [pure]
+                      next h =>
+                        simp_all only [mul_eq_zero]
+                        apply Or.inr
+                        rw [List.mapM_nil]
+                        simp [pure]
+                        exact h
+                    next tl tl_hd tl_tl =>
+                      simp[explicit_prob, -mapM] at ih
+                      split at ih
+                      next b => simp [explicit_prob2, -mapM]
+                      next b x xs => simp [explicit_prob2, -mapM] at ih
+                                     simp [List.mapM_cons, -mapM]
+                                     sorry
+
 end MultiBernoulli
