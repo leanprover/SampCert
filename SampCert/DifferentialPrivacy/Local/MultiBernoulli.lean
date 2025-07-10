@@ -6,11 +6,33 @@ import SampCert.SLang
 
 namespace MultiBernoulli
 
+/- We define the multivariable Bernoulli distrbution (corresponding to n
+   independent coin flips) and prove that it normalizes.
+   The approach for this is to define a function "explicit_prob" that
+   encapsulates the multiplication of probabilities for the independent
+   coin flips, and then prove that "MultiBernoulliSample" is equivalent
+   to "explicit_prob," in the sense that the two have the same output on any
+   input. Given this, the proof of normalization for the multivariate
+   Bernoulli distribution reduces to a proof of normalization for the
+   explicit_prob function.
+-/
+
 structure SeedType where
   n : Nat
   d : PNat
   h : n ≤ d
+ /- This is just handy shorthand for a rational parameter n/d in [0, 1]-/
 
+/- IGNORE-/
+example (b : {b : List Bool // b ≠ []}): b.val.head b.property ∨ ¬ b.val.head b.property := by
+  cases b.val.head b.property with
+  | true => left; rfl
+  | false => right; simp
+
+/- IGNORE -/
+def silly: {b : List Bool // b ≠ []} := ⟨[true], by decide⟩
+
+/-IMPORTANT: -/
 def bernoulli_mapper: SeedType -> SLang Bool :=
   fun s => SLang.BernoulliSample s.n s.d s.h
 
@@ -23,7 +45,25 @@ noncomputable def explicit_prob (hd : SeedType) (tl : List SeedType) (b : List B
     | [] => 0
     | x :: xs => bernoulli_mapper hd x * (mapM bernoulli_mapper tl) xs
 
-noncomputable def explicit_prob2 (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
+/- EXAMPLE OF WHAT ISN'T WORKING: -/
+lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
+  ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
+  induction tl with
+  | nil => rw [ENNReal.tsum_eq_add_tsum_ite []]
+           rw[explicit_prob]
+           simp
+           unfold explicit_prob
+           /- FOR ETHAN: At this point I would love to say that
+           in the else case, the x ≠ [] and so we can just
+           pattern-match on it...but I don't know how to get Lean
+           to understand that. -/
+           sorry
+  | cons tl_hd tl_tl ih => sorry
+/- If we could get the above proof to work, we would be done...-/
+
+/- IGNORE -- after getting stuck with the previous def, I tried to make it
+   explicitly recursive, and got stuck...but hopefully we don't need it. -/
+ noncomputable def explicit_prob2 (hd : SeedType) (tl : List SeedType) (b : List Bool) : ENNReal :=
   match b with
     | [] => 0
     | x :: xs => bernoulli_mapper hd x *
@@ -55,23 +95,39 @@ lemma explicit_prob_sum_except_empty (hd : SeedType) (tl : List SeedType):
   unfold explicit_prob
   simp_all only [ne_eq, dite_eq_ite, ite_not]
   sorry
-  
-lemma explicit_prob_sums_to_1 (hd : SeedType) (tl : List SeedType):
- ∑' (b : List Bool), explicit_prob hd tl b = 1 := by
- induction tl with
- | nil => sorry
- | cons tl_hd tl_tl ih => rw[explicit_prob_sum_except_empty]
-                          rw[explicit_prob_sum_except_empty] at ih
-                          rw [← ih]
-                          simp_all only [ne_eq, dite_not]
 
+lemma tsum_zero (f : List Bool -> ENNReal):
+  ∑' (b : List Bool), (if b = [] then 0 else f b) =
+  ∑' (b : List Bool), if assm : b ≠ [] then f b else 0 := by simp_all [ite_not]
+
+lemma tsum_zero_subtype (f : List Bool -> ENNReal):
+  ∑' (b : List Bool), f b = f [] + ∑'(b : {b : List Bool // b ≠ []}), f b.val:= by
+    rw [ENNReal.tsum_eq_add_tsum_ite []]
+    sorry
+
+lemma explicit_prob2_sums_to_1 (hd : SeedType) (tl : List SeedType):
+ ∑' (b : List Bool), explicit_prob2 hd tl b = 1 := by
+ induction tl with
+ | nil => rw [ENNReal.tsum_eq_add_tsum_ite []]
+          rw[explicit_prob2]
+          simp
+          unfold explicit_prob2
+          simp_all only [mul_ite, mul_one, mul_zero]
+          rw [tsum_zero]
+          sorry
+ | cons tl_hd tl_tl ih => rw [ENNReal.tsum_eq_add_tsum_ite []]
+                          rw[explicit_prob2]
+                          simp
                           sorry
 
+
+/- IMPORTANT -/
 def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
   seeds.mapM bernoulli_mapper
 
 #check MultiBernoulliSample [SeedType.mk 1 2 (by decide), SeedType.mk 1 2 (by decide)] [true, false]
 
+/- USEFUL LEMMAS: -/
 #check @ENNReal.tsum_eq_iSup_sum
 #check SLang.BernoulliSample_apply
 #check SLang.BernoulliSample_normalizes
@@ -81,8 +137,7 @@ def MultiBernoulliSample (seeds: List SeedType): SLang (List Bool) :=
 #check tsum_eq_single
 #check tsum_eq_tsum_diff_singleton
 
-/- We'll need a proof that the MultiBernoulliSample applied to a single-element
-   list is the same thing as the usual BernoulliSample -/
+/- The following theorems might be useful, but are not used in the current proof -/
 
 lemma MultiBernoulli_single_list [LawfulMonad SLang] (hd : SeedType): ∑' (b : List Bool), MultiBernoulliSample [hd] b = 1 := by
   rw [MultiBernoulliSample]
@@ -118,6 +173,8 @@ lemma bernoulli_mapper_neq_iff (l : List SeedType) (b : List Bool) :
       | cons hd tl => simp[-mapM]
                       sorry
 -/
+
+/- IMPORTANT: Here we prove that explicit_prob is the same as MultiBernoulliSample-/
 lemma multi_bernoulli_explicit [LawfulMonad SLang] (hd : SeedType) (tl : List SeedType) (b : List Bool):
   mapM bernoulli_mapper (hd :: tl) b = explicit_prob hd tl b := by
   unfold explicit_prob
@@ -125,6 +182,7 @@ lemma multi_bernoulli_explicit [LawfulMonad SLang] (hd : SeedType) (tl : List Se
   simp_all only [bind, pure, SLang.bind_apply, SLang.pure_apply, mul_ite, mul_one, mul_zero]
   split
   next b => simp_all only [↓reduceIte, tsum_zero, mul_zero]
+            simp
   next b x xs =>
     simp_all only [List.cons.injEq]
     rw[tsum_bool]
@@ -209,6 +267,7 @@ lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f 
              simp_all only [↓reduceIte, ne_eq, not_false_eq_true, ↓reduceDIte, List.head_cons, List.tail_cons]
              sorry -/
 
+/- This can be proven by showing that explicit_prob normalizes. -/
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
     rw [MultiBernoulliSample]
@@ -217,10 +276,14 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
              simp[pure]
              rw [ENNReal.tsum_eq_add_tsum_ite []]
              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
+             simp
     | cons hd tl ih =>
       rw [@multi_bernoulli_explicit_sum]
       sorry
 
+/- The rest of this file can be ignored. It states that the push-forward
+   of a probability measure is a probability measure, which we don't
+   need for now. -/
 
 noncomputable def push_forward {T S: Type} [DecidableEq S] (p : SLang T) (f : T -> S) : SLang S :=
   fun s => ∑' (t : T), if f t = s then p t else 0

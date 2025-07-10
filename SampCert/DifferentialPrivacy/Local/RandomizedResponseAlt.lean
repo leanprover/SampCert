@@ -1,9 +1,9 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
-import SampCert.DifferentialPrivacy.Local.MultiBernoulli
+/-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 open SLang
-open MultiBernoulli
+/- open MultiBernoulli -/
 
 lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 * den := by
   simp_all only [tsub_le_iff_right]
@@ -17,9 +17,10 @@ def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num 
 /- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
 
-def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
+/- def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
   let r ← MultiBernoulliSample seed_list
-  return List.zipWith (fun u s => Bool.xor (query u) s) l r
+  return List.zipWith (fun u s => Bool.xor (query u) s) l r -/
+
 /- At this point, we should be set to prove that RRSample is normalized and that it is
    differentially private. The definition is computable, as we need. -/
 
