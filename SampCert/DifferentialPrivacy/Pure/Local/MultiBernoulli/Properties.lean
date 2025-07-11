@@ -5,7 +5,7 @@ import SampCert.SLang
 import Mathlib.Data.Set.Basic
 import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
-
+import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 
 namespace MultiBernoulli
 open SLang
@@ -86,6 +86,8 @@ lemma simplifier2 (hd : SeedType) (tl : List SeedType) (b : Bool):
   apply symm
   apply list_bool_tsum_only_tl b
 
+lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
+
 lemma simplifier3:
  ∑' (a : Bool), bernoulli_mapper hd a * mapM bernoulli_mapper tl b = mapM bernoulli_mapper tl b := by
   rw [tsum_bool]
@@ -96,30 +98,10 @@ lemma simplifier3:
 
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
-    rw [MultiBernoulliSample]
-    induction seeds with
-    | nil => rw [@List.mapM_nil]
-             simp[pure]
-             rw [ENNReal.tsum_eq_add_tsum_ite []]
-             simp_all only [↓reduceIte, ite_self, tsum_ite_not, add_zero]
-             simp
-    | cons hd tl ih =>
-      simp [List.mapM_cons, -mapM]
-      conv =>
-        enter [1, 1, b, 1, a]
-        simp [-mapM]
-        rw [simplifier1]
-      /- rewrite as a double sum, the first sum being over possible a.heads, and the second
-         some being over all list Bools, with the conditional now being on the Boolean
-         in the first sum. Afterwards, it should be straightforward to use the inductive hypothesis -/
-      rw [@ENNReal.tsum_comm]
-      conv =>
-        enter [1, 1, b]
-        rw [simplifier2]
-      rw [@ENNReal.tsum_comm]
-      conv =>
-        enter [1, 1, b]
-        rw [simplifier3]
-      apply ih
+  unfold MultiBernoulliSample
+  apply Norm_func_norm_on_list
+  intro a
+  rw [bernoulli_mapper_sums_to_1]
+
 
 end MultiBernoulli

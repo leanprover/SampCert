@@ -1,6 +1,8 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
+import SampCert.DifferentialPrivacy.Pure.Local.Normalization
+import SampCert.Samplers.Bernoulli.Properties
 
 open SLang
 open RandomizedResponse
@@ -56,6 +58,8 @@ lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
     | nil => exact nil_case query num den h
     | cons hd tl tail_ih => sorry
 
+
+
 /- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
   HasSum (RRSample2 query s l) 1 := by
   rw[RRSample2]
@@ -69,3 +73,12 @@ lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
 
 def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
   ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
+
+
+lemma RR_normalizes [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
+ (h: 2 * num ≤ den) (l : List T) : ∑' (x : List Bool), RRSample query num den h l x = 1 := by
+ unfold RRSample
+ apply Norm_func_norm_on_list
+ intro a
+ rw [← Summable.hasSum_iff ENNReal.summable]
+ apply RRSingleSample_PMF_helper
