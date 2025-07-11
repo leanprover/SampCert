@@ -76,8 +76,9 @@ lemma simplifier1 (a : List Bool) (b : Bool):
 
 lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
 ∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
- apply Equiv.tsum_eq_tsum_of_support
- sorry
+  apply Equiv.tsum_eq_tsum_of_support
+  sorry
+  sorry
 
 lemma simplifier2 (hd : SeedType) (tl : List SeedType) (b : Bool):
 (∑' (a : List Bool), bernoulli_mapper hd b * if a.head? = some b then mapM bernoulli_mapper tl a.tail else 0) =
