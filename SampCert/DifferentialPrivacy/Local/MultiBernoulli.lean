@@ -24,11 +24,6 @@ lemma all_lists_eq_all_tails_bool : (univ : Set (List Bool)) = { l | ∃ x xs, l
     have h: ll.tail =l := by rfl
     rw [← h]
     exact mem_univ _
-
-lemma sum_bool_eq_sum_tail {f : List Bool -> ENNReal} :
-∑' (b : List Bool), f b = ∑' (b : List Bool), f b.tail := by
-
-
 close Set
 
 /- We define the multivariable Bernoulli distrbution (corresponding to n
@@ -387,21 +382,19 @@ lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f 
 
 /- This can be proven by showing that explicit_prob normalizes. -/
 
-lemma simplifier1 (b : Bool):
-(∑' (a : List Bool), bernoulli_mapper hd b * ∑' (a_1 : List Bool), if a = b :: a_1 then mapM bernoulli_mapper tl a_1 else 0) =
-(∑' (a : List Bool), if assm: a ≠ [] then bernoulli_mapper hd b * mapM bernoulli_mapper tl a.tail else 0) := by
-  simp_all only [ne_eq, ite_eq_right_iff, not_true_eq_false, tsum_zero]
-  apply tsum_equal_comp
-  intro i
-  cases i with
-  | nil => sorry
-  | cons => sorry
+lemma simplifier1 (a : List Bool) (b : Bool):
+(∑' (a_1 : List Bool), if a = b :: a_1 then mapM bernoulli_mapper tl a_1 else 0) =
+(if a.head? = b then mapM bernoulli_mapper tl a.tail else 0) := by sorry
 
-lemma simplifier2 (a : List Bool):
+lemma simplifierNOTNEEDED (a : List Bool):
 (if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail) +
   (if a = [] then 0 else bernoulli_mapper hd true * mapM bernoulli_mapper tl a.tail)
 = (if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail +
   bernoulli_mapper hd true * mapM bernoulli_mapper tl a.tail) := by aesop
+
+lemma simplifier2 (hd : SeedType) (tl : List SeedType) (b : Bool):
+(∑' (a : List Bool), bernoulli_mapper hd b * if a.head? = some b then mapM bernoulli_mapper tl a.tail else 0) =
+ ∑' (a : List Bool), bernoulli_mapper hd b * mapM bernoulli_mapper tl a := by sorry
 
 lemma ennreal_mul_eq (a b c : ENNReal): a = b -> c * a = c * b := by
   intro h
@@ -428,26 +421,23 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
              simp
     | cons hd tl ih =>
       simp [List.mapM_cons, -mapM]
-      rw [@ENNReal.tsum_comm]
+       /- rw [@ENNReal.tsum_comm]
       rw [tsum_bool]
-      rw[simplifier1 false]
-      rw[simplifier1 true]
-      rw [← @ENNReal.tsum_add]
-      simp only [ne_eq, dite_eq_ite, ite_not]
+      rw [← @ENNReal.tsum_add] -/
       conv =>
-        enter [1, 1, a]
+        enter [1, 1, b, 1, a]
         simp [-mapM]
+        rw [simplifier1]
+      /- rewrite as a double sum, the first sum being over possible a.heads, and the second
+         some being over all list Bools, with the conditional now being on the Boolean
+         in the first sum. Afterwards, it should be straightforward to use the inductive hypothesis -/
+      rw [@ENNReal.tsum_comm]
+      conv =>
+        enter [1, 1, b]
         rw [simplifier2]
-        rw [ennreal_mul_assoc]
-        rw[←tsum_bool]
-        rw[bernoulli_mapper_sums_to_1]
-        simp [-mapM]
-
-
-
-
-
-
+      rw [@ENNReal.tsum_comm]
+      rw?
+      sorry
 
 
       sorry
