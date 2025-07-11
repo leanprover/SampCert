@@ -1,9 +1,11 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 
+open SLang
+open RandomizedResponse
 
-open Slang
-
+#check RandomizedResponse.RRSingleSample
 #check SLang.BernoulliSample_normalizes
 
 lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
@@ -54,7 +56,7 @@ lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
     | nil => exact nil_case query num den h
     | cons hd tl tail_ih => sorry
 
-lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
+/- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
   HasSum (RRSample2 query s l) 1 := by
   rw[RRSample2]
   simp_all only [bind, pure]
@@ -62,9 +64,8 @@ lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l 
   rw[←MultiBernoulliSample_normalizes s]
   simp_all only [bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   sorry
-
+-/
 
 
 def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
   ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
-

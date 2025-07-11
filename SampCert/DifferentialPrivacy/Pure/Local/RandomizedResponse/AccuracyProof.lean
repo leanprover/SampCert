@@ -1,11 +1,13 @@
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponseAlt
+import SampCert
 import Mathlib.Probability.ProbabilityMassFunction.Basic
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 
+open SLang
 open PMF
+open RandomizedResponse
 
 def toSingletonLists {α : Type u} (l : List α) : List (List α) :=
   l.map (fun x => [x])
-
 
 
 def sum_list (Y : List ℕ) := Y.foldl (· + ·) 0

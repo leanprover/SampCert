@@ -2,6 +2,8 @@ import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
 /-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
+namespace RandomizedResponse
+
 open SLang
 /- open MultiBernoulli -/
 
@@ -23,3 +25,5 @@ def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num 
 
 /- At this point, we should be set to prove that RRSample is normalized and that it is
    differentially private. The definition is computable, as we need. -/
+
+end RandomizedResponse

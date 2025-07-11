@@ -3,8 +3,8 @@ import Mathlib.Probability.Independence.Basic
 import SampCert
 import SampCert.SLang
 import Mathlib.Data.Set.Basic
-import SampCert.DifferentialPrivacy.Local.ENNRealLemmasSuite
-import SampCert.DifferentialPrivacy.Local.MultiBernoulli.Code
+import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
+import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
 
 
 namespace MultiBernoulli
