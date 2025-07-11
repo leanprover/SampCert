@@ -9,6 +9,7 @@ lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 
   simp_all only [tsub_le_iff_right]
   linarith
 
+/- Eventually, we may want query to return more than just a Boolean -/
 def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) : SLang Bool := do
   let r ← SLang.BernoulliSample (den - 2*num) (2 * den) (arith_0 num den h)
   return Bool.xor (query l) r
@@ -23,8 +24,6 @@ def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num 
 
 /- At this point, we should be set to prove that RRSample is normalized and that it is
    differentially private. The definition is computable, as we need. -/
-
-#check SLang.BernoulliSample_normalizes
 
 lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
   HasSum (RRSingleSample query num den h l) 1 := by
@@ -66,6 +65,7 @@ lemma cons_case {T: Type} (query : T -> Bool) (num : Nat) (den: PNat) (h : 2 * n
     rw[RRSample]
     sorry
 
+/- This should now follow from Renee's abstraction of the MultiBernoulli proof -/
 lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
   HasSum (RRSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
@@ -74,7 +74,7 @@ lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
     | nil => exact nil_case query num den h
     | cons hd tl tail_ih => sorry
 
-lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
+/- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
   HasSum (RRSample2 query s l) 1 := by
   rw[RRSample2]
   simp_all only [bind, pure]
@@ -82,7 +82,7 @@ lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l 
   rw[←MultiBernoulliSample_normalizes s]
   simp_all only [bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   sorry
-
+-/
 
 
 def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
