@@ -392,15 +392,36 @@ lemma simplifierNOTNEEDED (a : List Bool):
 = (if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail +
   bernoulli_mapper hd true * mapM bernoulli_mapper tl a.tail) := by aesop
 
+lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
+∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
+ apply Equiv.tsum_eq_tsum_of_support
+ { intro x
+
+ }
+ {
+
+ }
+
 lemma simplifier2 (hd : SeedType) (tl : List SeedType) (b : Bool):
 (∑' (a : List Bool), bernoulli_mapper hd b * if a.head? = some b then mapM bernoulli_mapper tl a.tail else 0) =
- ∑' (a : List Bool), bernoulli_mapper hd b * mapM bernoulli_mapper tl a := by sorry
+ ∑' (a : List Bool), bernoulli_mapper hd b * mapM bernoulli_mapper tl a := by
+  simp_all only [mul_ite, mul_zero]
+  apply symm
+  apply list_bool_tsum_only_tl b
 
 lemma ennreal_mul_eq (a b c : ENNReal): a = b -> c * a = c * b := by
   intro h
   rw[h]
 
 lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
+
+lemma simplifier3:
+ ∑' (a : Bool), bernoulli_mapper hd a * mapM bernoulli_mapper tl b = mapM bernoulli_mapper tl b := by
+  rw [tsum_bool]
+  rw [ennreal_mul_assoc]
+  rw [←tsum_bool]
+  rw [bernoulli_mapper_sums_to_1]
+  rw [@CanonicallyOrderedCommSemiring.one_mul]
 
 lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
   ∑' (x : List Bool), f x = (∑'(x : List Bool), if x = [] then 0 else f x) := by
@@ -421,9 +442,6 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
              simp
     | cons hd tl ih =>
       simp [List.mapM_cons, -mapM]
-       /- rw [@ENNReal.tsum_comm]
-      rw [tsum_bool]
-      rw [← @ENNReal.tsum_add] -/
       conv =>
         enter [1, 1, b, 1, a]
         simp [-mapM]
@@ -436,12 +454,10 @@ lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType
         enter [1, 1, b]
         rw [simplifier2]
       rw [@ENNReal.tsum_comm]
-      rw?
-      sorry
-
-
-      sorry
-
+      conv =>
+        enter [1, 1, b]
+        rw [simplifier3]
+      apply ih
 /- The rest of this file can be ignored. It states that the push-forward
    of a probability measure is a probability measure, which we don't
    need for now. -/
