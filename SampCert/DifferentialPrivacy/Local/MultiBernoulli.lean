@@ -384,7 +384,31 @@ lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f 
 
 lemma simplifier1 (a : List Bool) (b : Bool):
 (∑' (a_1 : List Bool), if a = b :: a_1 then mapM bernoulli_mapper tl a_1 else 0) =
-(if a.head? = b then mapM bernoulli_mapper tl a.tail else 0) := by sorry
+(if a.head? = b then mapM bernoulli_mapper tl a.tail else 0) := by
+  cases a with
+  | nil => simp
+  | cons ah atl =>
+    simp [-mapM]
+    split
+    next h =>
+      subst h
+      simp_all only [true_and]
+      rw [tsum_eq_single]
+      --simp_all only [mapM]
+      split
+      rename_i h
+      on_goal 2 => rename_i h
+      apply Eq.refl
+      simp_all only [not_true_eq_false]
+      intro b' a
+      simp_all only [ne_eq, mapM, ite_eq_right_iff]
+      intro a_1
+      subst a_1
+      simp_all only [not_true_eq_false]
+    next h => simp_all only [false_and, ↓reduceIte, _root_.tsum_zero]
+
+
+
 
 lemma simplifierNOTNEEDED (a : List Bool):
 (if a = [] then 0 else bernoulli_mapper hd false * mapM bernoulli_mapper tl a.tail) +
