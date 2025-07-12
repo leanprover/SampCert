@@ -2,7 +2,7 @@ import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.Samplers.Bernoulli.Properties
-import SampCert.DifferentialPrivacy.Local.LawfulMonadSLang
+import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
 
 
 lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 * den := by
@@ -158,15 +158,4 @@ apply singleton_to_event
 intros l₁ l₂ h_adj x
 rw[prod_of_ind_prob_PMF query num den h x l₁]
 rw[prod_of_ind_prob_PMF query num den h x l₂]
-cases h_adj with
-| Addition hl₁ hl₂  => sorry
-| Deletion a b => sorry
-| Update a b  =>
-have h1: l₁.length = l₂.length := by aesop
-have h2: Fin (l₁.length) = Fin (l₂.length) := by rw[h1]
-rw[h2]
-
-
-
-lemma differs_in_one_row {T: Type}(l₁ l₂: List T)(adj: Neighbour l₁ l₂)(h: l₁.length = l₂.length):
-∃
+sorry
