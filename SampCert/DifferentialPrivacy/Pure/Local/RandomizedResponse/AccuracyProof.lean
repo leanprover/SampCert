@@ -52,7 +52,10 @@ noncomputable def pmf.sum_list : List (PMF α) → PMF α
 | (x::xs) => pmf.add x (pmf.sum_list xs)
 -/
 
---def mean_of_X {T : Type} (query: T -> Bool) (X : T) (num : Nat) (den : PNat) (h : 2 * num ≤ den) : SLang ℕ :=
+def p {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num ≤ den) : ℚ :=
+  let bool_lst := X.map query
+  let true_count := (bool_lst.filter (fun b => b)).length
+  (true_count) / X.length
 
 
 noncomputable def unbiased_estimator {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num ≤ den):=
