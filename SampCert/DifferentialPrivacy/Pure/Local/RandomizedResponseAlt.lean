@@ -288,8 +288,11 @@ apply singleton_to_event2
 intros l₁ l₂ h_adj x
 rw[prod_of_ind_prob_PMF query num den h x l₁]
 rw[prod_of_ind_prob_PMF query num den h x l₂]
-cases h_adj with
-| Update hl₁ hl₂ => sorry 
-                    -- have hlen: l₁.length = l₂.length := by aesop
-                    -- simp
-                    -- rename_i a n b m
+{ cases h_adj with
+  | Update hl₁ hl₂ => have hlen: l₁.length = l₂.length := by aesop
+                      simp
+                      rename_i a n b
+                      sorry 
+}
+{ sorry }
+{ sorry }

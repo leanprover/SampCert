@@ -61,27 +61,43 @@ lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
 ∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
   apply Equiv.tsum_eq_tsum_of_support
   intro x
-
   case e =>
     let e₁ := Equiv.Set.image (List.cons b) (Function.support f) (fun _ _ h => List.cons_injective h)
-
     have h_eq : (List.cons b) '' (Function.support f) =
         Function.support (fun y => if y.head? = some b then f y.tail else 0) := by
-      sorry
-
+      rw [@Set.ext_iff]
+      intro L
+      apply Iff.intro
+      { intro hx
+        have lhead: L.head? = some b := by
+          simp_all only [mem_image, Function.mem_support, ne_eq]
+          obtain ⟨w, h⟩ := hx
+          obtain ⟨_, right⟩ := h
+          subst right
+          simp_all only [List.head?_cons]
+        rw[Function.support]
+        rw [@mem_setOf]
+        rw [lhead]
+        simp
+        simp_all only [mem_image, Function.mem_support, ne_eq]
+        obtain ⟨w, h⟩ := hx
+        obtain ⟨left, right⟩ := h
+        subst right
+        simp_all only [List.head?_cons, List.tail_cons, not_false_eq_true]
+      }
+      { intro hx
+        rw [Function.support] at hx
+        rw [@mem_setOf] at hx
+        have lhead: L.head? = some b := by simp_all only [ne_eq, ite_eq_right_iff, Classical.not_imp]
+        simp_all only [↓reduceIte, ne_eq, mem_image, Function.mem_support]
+        apply Exists.intro L.tail
+        apply And.intro
+        exact hx
+        rw [List.cons_head?_tail lhead]
+      }
     let e₂ := Equiv.Set.ofEq h_eq
     exact e₁.trans e₂
-
   case he => simp
-
-
-
-
-
-
-
-
-
 
 lemma simplifier2_gen (α : Type)(f: α → SLang Bool)(hd : α) (tl : List α) (b : Bool):
 (∑' (a : List Bool), f hd b * if a.head? = some b then mapM f tl a.tail else 0) =
@@ -90,10 +106,10 @@ lemma simplifier2_gen (α : Type)(f: α → SLang Bool)(hd : α) (tl : List α) 
   apply symm
   apply list_bool_tsum_only_tl b
 
-lemma f (b :: c).tail = (if ((b::c).head? = b) then f c else 0)ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
-
 lemma simp_4 [LawfulMonad SLang] (α : Type)(a : α)(f: α → SLang Bool): ∑' (i : Bool), f a i = ∑' (b : Bool), f a b := by
   rfl
+
+lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
 
 lemma simplifier3_gen [LawfulMonad SLang] (α : Type)(f : α → SLang Bool)(hd : α)(tl : List α) (h : ∑' (b : Bool), f hd b = 1): ∑' (a : Bool), f hd a * mapM f tl b = mapM f tl b := by
   rw [tsum_bool]
@@ -102,8 +118,6 @@ lemma simplifier3_gen [LawfulMonad SLang] (α : Type)(f : α → SLang Bool)(hd 
   rw [simp_4]
   rw [h]
   rw [@CanonicallyOrderedCommSemiring.one_mul]
-
-
 
 lemma Norm_func_norm_on_list [LawfulMonad SLang] (α : Type)(f: α → SLang Bool) (al: List α):
  (∀ a : α, ∑' (b : Bool), f a b = 1) →  ∑' (b : List Bool), mapM f al b = 1 := by
