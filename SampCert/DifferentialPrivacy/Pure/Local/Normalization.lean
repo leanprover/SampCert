@@ -3,6 +3,8 @@ import Mathlib.Probability.Independence.Basic
 import SampCert
 import SampCert.SLang
 import Mathlib.Data.Set.Basic
+import Mathlib.Data.Set.Basic
+
 
 lemma simplifier1_gen (α : Type)(f: α → SLang Bool) (a : List Bool) (b : Bool)(tl : List α):
 (∑' (a_1 : List Bool), if a = b :: a_1 then mapM f tl a_1 else 0) =
@@ -29,14 +31,66 @@ lemma simplifier1_gen (α : Type)(f: α → SLang Bool) (a : List Bool) (b : Boo
       simp_all only [not_true_eq_false]
     next h => simp_all only [false_and, ↓reduceIte, _root_.tsum_zero]
 
+
+open Set
+
+lemma all_lists_eq_all_tails_bool : (univ : Set (List Bool)) = { l | ∃ x xs, l = (x :: xs).tail } := by
+  ext l  -- extensionality: sets equal iff same elements
+  constructor
+  · intro _
+    -- show l is in the tail set: pick any Bool x and let xs := l
+    use true, l
+    rfl
+  · rintro ⟨x, xs, h⟩
+    -- l = tail of some cons => l is a list => l ∈ univ
+    subst h
+    let ll := true::l
+    have h: ll.tail =l := by rfl
+    rw [← h]
+    exact mem_univ _
+
+lemma all_list_eq_all_true_tails (b: Bool):(univ : Set (List Bool)) = { l | ∃ xs, l = (b :: xs).tail } := by
+  ext l
+  constructor
+  intro a
+  simp_all only [mem_univ, List.tail_cons, exists_eq', setOf_true]
+  intro b
+  simp_all only [List.tail_cons, exists_eq', setOf_true, mem_univ]
+
+lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
+∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
+  apply Equiv.tsum_eq_tsum_of_support
+  intro x
+
+  case e =>
+    let e₁ := Equiv.Set.image (List.cons b) (Function.support f) (fun _ _ h => List.cons_injective h)
+
+    have h_eq : (List.cons b) '' (Function.support f) =
+        Function.support (fun y => if y.head? = some b then f y.tail else 0) := by
+      sorry
+
+    let e₂ := Equiv.Set.ofEq h_eq
+    exact e₁.trans e₂
+
+  case he => simp
+
+
+
+
+
+
+
+
+
+
 lemma simplifier2_gen (α : Type)(f: α → SLang Bool)(hd : α) (tl : List α) (b : Bool):
 (∑' (a : List Bool), f hd b * if a.head? = some b then mapM f tl a.tail else 0) =
  ∑' (a : List Bool), f hd b * mapM f tl a := by
   simp_all only [mul_ite, mul_zero]
   apply symm
-  sorry
+  apply list_bool_tsum_only_tl b
 
-lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
+lemma f (b :: c).tail = (if ((b::c).head? = b) then f c else 0)ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
 
 lemma simp_4 [LawfulMonad SLang] (α : Type)(a : α)(f: α → SLang Bool): ∑' (i : Bool), f a i = ∑' (b : Bool), f a b := by
   rfl
