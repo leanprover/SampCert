@@ -3,9 +3,15 @@ open Lake DSL
 
 package «sampcert» where
   -- add any package configuration options here
+  /--/ moreLinkArgs := #[
+    "-L./.lake/packages/LeanCopilot/.lake/build/lib",
+    "-lctranslate2"
+  ] -/
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.10.0"
+
+-- require LeanCopilot from git "https://github.com/lean-dojo/LeanCopilot.git" @ "49ca8d6"
 
 @[default_target]
 lean_lib «SampCert» where
