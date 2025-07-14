@@ -263,3 +263,28 @@ lemma explicit_prob_eq_prob2 [LawfulMonad SLang] (hd : SeedType) (tl : List Seed
                                                   exact h
                                      | cons =>
                                      sorry
+
+open Set
+
+lemma all_lists_eq_all_tails_bool : (univ : Set (List Bool)) = { l | ∃ x xs, l = (x :: xs).tail } := by
+  ext l  -- extensionality: sets equal iff same elements
+  constructor
+  · intro _
+    -- show l is in the tail set: pick any Bool x and let xs := l
+    use true, l
+    rfl
+  · rintro ⟨x, xs, h⟩
+    -- l = tail of some cons => l is a list => l ∈ univ
+    subst h
+    let ll := true::l
+    have h: ll.tail =l := by rfl
+    rw [← h]
+    exact mem_univ _
+
+lemma all_list_eq_all_true_tails (b: Bool):(univ : Set (List Bool)) = { l | ∃ xs, l = (b :: xs).tail } := by
+  ext l
+  constructor
+  intro _
+  simp_all only [mem_univ, List.tail_cons, exists_eq', setOf_true]
+  intro _
+  simp_all only [List.tail_cons, exists_eq', setOf_true, mem_univ]

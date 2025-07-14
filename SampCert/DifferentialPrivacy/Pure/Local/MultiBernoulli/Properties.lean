@@ -49,54 +49,6 @@ lemma bernoulli_helper [LawfulMonad SLang] (hd : Bool) (hd_1 : SeedType) : berno
   | true => simp_all only [Bool.true_eq, tsum_ite_eq]
   | false => simp_all only [Bool.false_eq, tsum_ite_eq, tsum_ite_not, mul_zero]
 
-lemma simplifier1 (a : List Bool) (b : Bool):
-(∑' (a_1 : List Bool), if a = b :: a_1 then mapM bernoulli_mapper tl a_1 else 0) =
-(if a.head? = b then mapM bernoulli_mapper tl a.tail else 0) := by
-  cases a with
-  | nil => simp
-  | cons ah atl =>
-    simp [-mapM]
-    split
-    next h =>
-      subst h
-      simp_all only [true_and]
-      rw [tsum_eq_single]
-      split
-      rename_i h
-      on_goal 2 => rename_i h
-      apply Eq.refl
-      simp_all only [not_true_eq_false]
-      intro b' a
-      simp_all only [ne_eq, mapM, ite_eq_right_iff]
-      intro a_1
-      subst a_1
-      simp_all only [not_true_eq_false]
-    next h => simp_all only [false_and, ↓reduceIte]
-              simp [tsum_ite_not]
-
-lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
-∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
-  apply Equiv.tsum_eq_tsum_of_support
-  sorry
-  sorry
-
-lemma simplifier2 (hd : SeedType) (tl : List SeedType) (b : Bool):
-(∑' (a : List Bool), bernoulli_mapper hd b * if a.head? = some b then mapM bernoulli_mapper tl a.tail else 0) =
- ∑' (a : List Bool), bernoulli_mapper hd b * mapM bernoulli_mapper tl a := by
-  simp_all only [mul_ite, mul_zero]
-  apply symm
-  apply list_bool_tsum_only_tl b
-
-lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
-
-lemma simplifier3:
- ∑' (a : Bool), bernoulli_mapper hd a * mapM bernoulli_mapper tl b = mapM bernoulli_mapper tl b := by
-  rw [tsum_bool]
-  rw [ennreal_mul_assoc]
-  rw [←tsum_bool]
-  rw [bernoulli_mapper_sums_to_1]
-  rw [@CanonicallyOrderedCommSemiring.one_mul]
-
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
   unfold MultiBernoulliSample
