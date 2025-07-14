@@ -12,4 +12,8 @@ def DP_withGeneralNeighbour (m : Mechanism T U) (VariableNeighbour: List T -> Li
 def PureDP_withGeneralNeighbour (m : Mechanism T U) (VariableNeighbour : List T -> List T -> Prop) (ε : NNReal) : Prop :=
   DP_withGeneralNeighbour m VariableNeighbour ε
 
+def DP_singleton_withGeneralNeighbour (m : Mechanism T U) (VariableNeighbour: List T -> List T -> Prop) (ε : ℝ): Prop :=
+  ∀ l₁ l₂ : List T, VariableNeighbour l₁ l₂ → ∀ x : U,
+  (m l₁ x) / (m l₂ x) ≤ ENNReal.ofReal (Real.exp ε)
+
 end SLang

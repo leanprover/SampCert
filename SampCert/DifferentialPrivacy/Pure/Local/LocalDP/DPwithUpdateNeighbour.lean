@@ -10,4 +10,6 @@ namespace SLang
 def DP_withUpdateNeighbour (m : Mechanism T U) (ε : ℝ) : Prop :=
  DP_withGeneralNeighbour m (UpdateNeighbour) ε
 
+def DP_singleton_withUpdateNeighbour (m : Mechanism T U) (ε : ℝ) : Prop :=
+  DP_singleton_withGeneralNeighbour m (UpdateNeighbour) ε
 end SLang
