@@ -3,7 +3,7 @@ import SampCert
 namespace SLang
 
 /- Lists which differ by update of a single entry. -/
-inductive UpdateNeighbour (l₁ l₂ : List T) : Prop where
+inductive UpdateNeighbour {T : Type} (l₁ l₂ : List T) : Prop where
   | Update: l₁ = a ++ [n] ++ b → l₂ = a ++ [m] ++ b -> UpdateNeighbour l₁ l₂
 
 /-

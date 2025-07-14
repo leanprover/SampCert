@@ -18,6 +18,40 @@ def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2
   let r ← SLang.BernoulliSample (den - 2*num) (2 * den) (arith_0 num den h)
   return Bool.xor (query l) r
 
+lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = true):
+  RRSingleSample query num den h l true = (den + 2 * num) / (2 * den) := by
+  rw[RRSingleSample]
+  simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
+    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
+    Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
+  sorry /- This is arithmetically true, but proving arithmetic things is a mess -/
+
+lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = true):
+  RRSingleSample query num den h l false = (den - 2 * num) / (2 * den) := by
+  rw[RRSingleSample]
+  simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
+    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, Bool.not_eq_false', mul_ite, ↓reduceIte,
+    mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
+  apply Eq.refl
+
+lemma RRSingleSample_false_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = false):
+  RRSingleSample query num den h l true = (den - 2 * num) / (2 * den) := by
+  rw[RRSingleSample]
+  simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
+    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
+    Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
+  apply Eq.refl
+
+lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = false):
+  RRSingleSample query num den h l false = (den + 2 * num) / (2 * den) := by
+  rw[RRSingleSample]
+  simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
+    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, mul_ite, Bool.false_eq_true, ↓reduceIte,
+    mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
+  /- This is the same state as the first lemma that's not working,
+     again it's just annoying arithmetic. -/
+  sorry
+
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : SLang (List Bool) := do
 /- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
@@ -105,12 +139,6 @@ intro a
 subst a
 simp_all only [not_true_eq_false]
 
-
-
-
-
-
-
 lemma mapM_dist_cons (f: T → SLang Bool) (b: Bool)(c: List Bool)(hd: T)(tl: List T):
 mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
 rw[List.mapM_cons]
@@ -133,9 +161,6 @@ RRSample query num den h (hd::tl) (b::c) = RRSingleSample query num den h hd b *
 unfold RRSample
 set f := fun x => RRSingleSample query num den h x
 rw[mapM_dist_cons f b c hd tl]
-
-
-
 
 
 lemma prod_of_ind_prob(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den)(a: List Bool)(l: List T)(k: l.length = a.length):
@@ -201,25 +226,70 @@ theorem singleton_to_event2 (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_wit
     simp
     exact Real.exp_pos ε
 
-
-lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → Bool → ENNReal)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length):(∏' (i : Fin l₁.length), f (l₁.get i) (x[↑i])) /
-    ∏' (i : Fin l₂.length), f (l₂.get i) (x[↑i])  = f (l₁[i]) (x[↑i]) := by sorry
-
+lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)
+(hx: l₁.length = x.length)(hy: l₂.length = x.length):
+  (∏' (i : Fin l₁.length), RRSingleSample query num den h l₁[i] x[i]) /
+    ∏' (i : Fin l₂.length), RRSingleSample query num den h l₂[i] x[i]
+= f (l₁[a.length]'(by sorry)) (x[a.length]' (by sorry)) := by sorry
 
 lemma prod_split (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den)(l : List T)(x: List Bool)(hl: l = a++b)(h1: l.length = x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
- ∏' (i : Fin l.length), RRSingleSample query num den h (l[↑i]) (x[↑i]) = (∏'(i : Fin a.length), RRSingleSample query num den h (a[i]) (x[↑i]))*(∏'(i : Fin b.length), RRSingleSample query num den h (b[i]) (x[↑i])) := by sorry
+ ∏' (i : Fin l.length), RRSingleSample query num den h (l[↑i]) (x[↑i])
+ = (∏'(i : Fin a.length), RRSingleSample query num den h (a[i]) (x[↑i]))*(∏'(i : Fin b.length), RRSingleSample query num den h (b[i]) (x[↑i])) := by sorry
 
-theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
+lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ den) (a a' : T) (b : Bool):
+  RRSingleSample query num den h a b / RRSingleSample query num den h a' b
+  ≤ (den + 2 * num) / (den - 2 * num) := by
+  cases b with
+  | true =>
+    cases hqa : query a with
+    | true =>
+      rw [RRSingleSample_true_true _ _ _ _ _ hqa]
+      cases hqa' : query a' with
+      | true => rw [RRSingleSample_true_true _ _ _ _ _ hqa']
+                -- arithmetic now
+                sorry
+      | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
+                -- arithmetic now
+                 sorry
+    | false =>
+      rw [RRSingleSample_false_true _ _ _ _ _ hqa]
+      cases hqa' : query a' with
+      | true => rw [RRSingleSample_true_true _ _ _ _ _ hqa']
+                -- arithmetic now
+                sorry
+      | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
+                 sorry
+                 -- arithmetic now
+  | false =>
+    cases hqa : query a with
+    | true =>
+      rw [RRSingleSample_true_false _ _ _ _ _ hqa]
+      cases hqa' : query a' with
+      | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
+                -- arithmetic now
+                sorry
+      | false => rw [RRSingleSample_false_false _ _ _ _ _ hqa']
+                 -- arithmetic now
+                 sorry
+    | false =>
+      rw [RRSingleSample_false_false _ _ _ _ _ hqa]
+      cases hqa' : query a' with
+      | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
+                -- arithmetic now
+                sorry
+      | false => rw [RRSingleSample_false_false _ _ _ _ _ hqa']
+                 -- arithmetic now
+                 sorry
+
+theorem RRSample_is_DP {T : Type} (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
 DP_withUpdateNeighbour (RRSample_PMF query num den h) ((num: NNReal) / den) := by
 -- let ε := ↑num / NNReal.ofPNat den
 apply singleton_to_event2
 intros l₁ l₂ h_adj x
 rw[prod_of_ind_prob_PMF query num den h x l₁]
 rw[prod_of_ind_prob_PMF query num den h x l₂]
-
 cases h_adj with
-| Update hl₁ hl₂ =>
-have hlen: l₁.length = l₂.length := by aesop
-simp
-rename_i a n b m
-rw[hl₁]
+| Update hl₁ hl₂ => sorry 
+                    -- have hlen: l₁.length = l₂.length := by aesop
+                    -- simp
+                    -- rename_i a n b m

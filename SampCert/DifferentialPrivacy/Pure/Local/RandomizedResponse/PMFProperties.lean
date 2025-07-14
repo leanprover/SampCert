@@ -32,33 +32,14 @@ lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den :
       rw [@AddCommMonoidWithOne.add_comm]
     }
 
-lemma nil_case {T : Type} (query : T -> Bool) (num : Nat) (den: PNat) (h: 2 * num ≤ den):
-  ∑' (b : List Bool), (RRSample query num den h) [] b = 1 := by
-    have h1: ∑' (b : List Bool), mapM (fun x => RRSingleSample query num den h x) [] b =
-             mapM (fun x => RRSingleSample query num den h x) [] [] := by
-              rw [@List.mapM_nil]
-              simp_all only [pure, SLang.pure_apply, ↓reduceIte]
-              rw [ENNReal.tsum_eq_add_tsum_ite []]
-              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
-    rw[RRSample]
-    rw[h1]
-    rw [@List.mapM_nil]
-    simp
-
-lemma cons_case {T: Type} (query : T -> Bool) (num : Nat) (den: PNat) (h : 2 * num ≤ den)
-  (l : List T) : ∑' (b : List Bool), RRSample query num den h l b = 1 := by
-    rw[RRSample]
-    sorry
-
-lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
+lemma RRSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
   HasSum (RRSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
-    rw[RRSample]
-    induction l with
-    | nil => exact nil_case query num den h
-    | cons hd tl tail_ih => sorry
-
-
+    unfold RRSample
+    apply Norm_func_norm_on_list
+    intro a
+    rw [← Summable.hasSum_iff ENNReal.summable]
+    apply RRSingleSample_PMF_helper
 
 /- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
   HasSum (RRSample2 query s l) 1 := by
@@ -70,15 +51,5 @@ lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
   sorry
 -/
 
-
-def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
+def RRSample_PMF [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
   ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
-
-
-lemma RR_normalizes [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat)
- (h: 2 * num ≤ den) (l : List T) : ∑' (x : List Bool), RRSample query num den h l x = 1 := by
- unfold RRSample
- apply Norm_func_norm_on_list
- intro a
- rw [← Summable.hasSum_iff ENNReal.summable]
- apply RRSingleSample_PMF_helper
