@@ -4,6 +4,9 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.Samplers.Bernoulli.Properties
 
+lemma final_transition (num : Nat) (den : PNat) (h : 2 * num < den) : (den + (2 : ENNReal) * num) / (den - 2 * num) = ENNReal.ofReal ((1/2 + num/den) / (1/2 - num/den)) := by
+  sorry
+
 /-
 lemma final_bound {γ: ℝ} (h0: 0 ≤ γ) (h1: 1/2 > γ) :
 ENNReal.ofReal ((1/2 + γ) / (1/2 - γ) )≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + γ) / (1/2 - γ)))) := by
@@ -76,3 +79,13 @@ lemma final_step (num : Nat) (den : PNat) (h: 2 * num < den):
   /- have h1 : 0 < ((1: ℝ) / 2 + ↑num / ↑(NNReal.ofPNat den)) := bruh query num den h l
   have h2 : 0 < ((1:ℝ) / 2 - ↑num / ↑(NNReal.ofPNat den)) := bruh1 query num den h l
   apply div_pos h1 h2 -/
+
+lemma ENNReal_final_step (num : Nat) (den : PNat) (h: 2 * num < den):
+  ENNReal.ofReal ((1/2 + num/den) / (1/2 - num/den)) ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
+  apply ENNReal.ofReal_le_ofReal
+  exact final_step num den h
+
+lemma final_step_combined (num : Nat) (den: PNat) (h: 2 * num < den):
+  (den + (2 : ENNReal) * num) / (den - 2 * num) ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
+  rw [final_transition num den h]
+  exact ENNReal_final_step num den h
