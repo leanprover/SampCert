@@ -157,6 +157,12 @@ intro a
 subst a
 simp_all only [not_true_eq_false]
 
+
+
+
+
+
+
 lemma mapM_dist_cons (f: T → SLang Bool) (b: Bool)(c: List Bool)(hd: T)(tl: List T):
 mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
 rw[List.mapM_cons]
@@ -179,6 +185,9 @@ RRSample query num den h (hd::tl) (b::c) = RRSingleSample query num den h hd b *
 unfold RRSample
 set f := fun x => RRSingleSample query num den h x
 rw[mapM_dist_cons f b c hd tl]
+
+
+
 
 
 lemma prod_of_ind_prob(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den)(a: List Bool)(l: List T)(k: l.length = a.length):
@@ -244,15 +253,10 @@ theorem singleton_to_event2 (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_wit
     simp
     exact Real.exp_pos ε
 
-lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)
-(hx: l₁.length = x.length)(hy: l₂.length = x.length):
-  (∏' (i : Fin l₁.length), RRSingleSample query num den h l₁[i] x[i]) /
-    ∏' (i : Fin l₂.length), RRSingleSample query num den h l₂[i] x[i]
-= f (l₁[a.length]'(by sorry)) (x[a.length]' (by sorry)) := by sorry
 
-lemma prod_split (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den)(l : List T)(x: List Bool)(hl: l = a++b)(h1: l.length = x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
- ∏' (i : Fin l.length), RRSingleSample query num den h (l[↑i]) (x[↑i])
- = (∏'(i : Fin a.length), RRSingleSample query num den h (a[i]) (x[↑i]))*(∏'(i : Fin b.length), RRSingleSample query num den h (b[i]) (x[↑i])) := by sorry
+
+lemma prod_split (f: T → SLang Bool)(l : List T)(x: List Bool)(a b : List T)(hl: l = a++b)(h1: l.length ≤  x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
+ ∏' (i : Fin l.length), f (l[i.val]) (x[i.val]) = (∏'(i : Fin a.length), f (a[i.val]) (x[i.val]))*(∏'(i : Fin b.length), f (b[i.val]) ((x[(a.length+i.val)]'(by rw[hl] at h1, simp  h1)))) := by sorry
 
 #check ENNReal.div_self
 
@@ -350,6 +354,7 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                    apply pnat_zero_imp_false den a_1
                  }
                  -- arithmetic now
+
   | false =>
     cases hqa : query a with
     | true =>
@@ -371,18 +376,117 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                  -- arithmetic now
                  sorry
 
-theorem RRSample_is_DP {T : Type} (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
-DP_withUpdateNeighbour (RRSample_PMF query num den h) ((num: NNReal) / den) := by
+lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
+    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
+    rw[List.append_assoc] at h1
+    rw[prod_split f l₁ x a ([n]++b) h1 (by aesop)]
+    rw[prod_split f ([n]++b) x [n] b (by aesop)]
+    case h1 =>
+      rw[← hy]
+      rw[h2]
+      simp
+    case h2 =>
+      rw[← hy]
+      rw[h2]
+      simp
+      rw[← add_assoc]
+      aesop
+
+    case h3 =>
+      rw[← hy]
+      rw[h2]
+      simp
+      rw[← add_assoc]
+      rw[add_comm a.length b.length]
+      rw[add_assoc]
+      aesop
+
+    case h2 =>
+      rw[← hy]
+      rw[h2]
+      simp
+
+    case h3 =>
+      rw[←hy]
+      rw[h2]
+      simp
+
+    rw[List.append_assoc] at h2
+    rw[prod_split f l₂ x a ([m]++b) h2 (by aesop)]
+
+    case h2 =>
+      rw[← hy]
+      rw[h2]
+      simp
+
+    case h3 =>
+      rw[← hy]
+      rw[h2]
+      simp
+
+
+
+
+    rw[prod_split f ([m]++b) x [m] b (by rfl)]
+
+    case h1 =>
+      rw[← hy]
+      rw[h2]
+      simp
+
+    case h2 =>
+      rw[← hy]
+      rw[h2]
+      simp
+      rw[← add_assoc]
+      simp
+
+    case h3 =>
+      rw[← hy]
+      rw[h2]
+      simp
+      rw[add_comm]
+      rw[add_assoc]
+      aesop
+
+    rw[ENNReal.mul_div_mul_left]
+
+    rw[ENNReal.mul_div_mul_right]
+    simp
+    ---
+
+
+
+
+
+
+
+open Finset
+open scoped BigOperators
+
+
+theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
+DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((1/2 + num / den) / (1/2 - num / den))) := by
 -- let ε := ↑num / NNReal.ofPNat den
 apply singleton_to_event2
 intros l₁ l₂ h_adj x
-rw[prod_of_ind_prob_PMF query num den h x l₁]
-rw[prod_of_ind_prob_PMF query num den h x l₂]
-{ cases h_adj with
-  | Update hl₁ hl₂ => have hlen: l₁.length = l₂.length := by aesop
-                      simp
-                      rename_i a n b
-                      sorry
-}
-{ sorry }
-{ sorry }
+cases xlen1 : l₁.length == x.length with
+| true =>
+          rw[prod_of_ind_prob_PMF query num den h x l₁ (by aesop)]
+          rw[prod_of_ind_prob_PMF query num den h x l₂ (by sorry)]
+          cases h_adj with
+          | Update hl₁ hl₂ =>
+                        rename_i a n b m
+                        have hlen: l₁.length = l₂.length := by aesop
+                        have xlen2 : l₂.length = x.length := by aesop
+                        simp
+                        have xlen3 : l₁.length = x.length := by aesop
+                        rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+
+
+
+
+| false => sorry
+
+
+-- rw[reduction l₁ l₂ x (RRSingleSample query num den h) hl₁ hl₂ xlen xlen2]
