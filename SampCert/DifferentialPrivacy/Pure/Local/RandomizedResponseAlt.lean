@@ -13,6 +13,8 @@ lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 
   simp_all only [tsub_le_iff_right]
   linarith
 
+lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
+
 /- Eventually, we may want query to return more than just a Boolean -/
 def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) : SLang Bool := do
   let r ← SLang.BernoulliSample (den - 2*num) (2 * den) (arith_0 num den h)
@@ -57,6 +59,8 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
   cases hb: b with
   | true => cases hq: query l with
       | true => rw [RRSingleSample_true_true _ _ _ _ _ hq]
+                aesop
+                apply pnat_zero_imp_false den a
                 sorry
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hq]
                  sorry
@@ -259,18 +263,33 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
             sorry
   | false => sorry
 
+lemma mult_ne_zero (a b : ENNReal) (h1 : a ≠ 0) (h2 : b ≠ 0): a * b ≠ 0 := by aesop
+
+lemma mult_inv_dist (a b : ENNReal): (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
+  rw [@inv_eq_one_div]
+  rw [@inv_eq_one_div]
+  rw [@inv_eq_one_div]
+  sorry
+  
+lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
+
 
 lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
+  rw [← @ENNReal.inv_ne_zero]
+  rw [← @ENNReal.inv_ne_zero] at h1
+  rw [← @ENNReal.inv_ne_zero] at h2
   sorry
 
 lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
+  rw [← @ENNReal.inv_ne_zero]
+  rw [← @ENNReal.inv_ne_zero] at h1
+  rw [@ENNReal.div_eq_inv_mul]
+
   sorry
 
 lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
   intro h1
   sorry
-
-lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
 
 lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ den) (a a' : T) (b : Bool):
   RRSingleSample query num den h a b / RRSingleSample query num den h a' b
