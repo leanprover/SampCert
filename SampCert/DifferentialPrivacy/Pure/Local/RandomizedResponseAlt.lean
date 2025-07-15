@@ -52,6 +52,20 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
      again it's just annoying arithmetic. -/
   sorry
 
+lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (b : Bool):
+  RRSingleSample query num den h l b ≠ 0 := by
+  cases hb: b with
+  | true => cases hq: query l with
+      | true => rw [RRSingleSample_true_true _ _ _ _ _ hq]
+                sorry
+      | false => rw [RRSingleSample_false_true _ _ _ _ _ hq]
+                 sorry
+  | false => cases hq: query l with
+      | true => rw [RRSingleSample_true_false _ _ _ _ _ hq]
+                sorry
+      | false => rw [RRSingleSample_false_false _ _ _ _ _ hq]
+                 sorry
+
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : SLang (List Bool) := do
 /- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
@@ -236,9 +250,31 @@ lemma prod_split (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den
  ∏' (i : Fin l.length), RRSingleSample query num den h (l[↑i]) (x[↑i])
  = (∏'(i : Fin a.length), RRSingleSample query num den h (a[i]) (x[↑i]))*(∏'(i : Fin b.length), RRSingleSample query num den h (b[i]) (x[↑i])) := by sorry
 
+#check ENNReal.div_self
+
+lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
+  intro h
+  cases hb: b == 0 with
+  | true => simp at hb
+            sorry
+  | false => sorry
+
+
+lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
+  sorry
+
+lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
+  sorry
+
+lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
+  intro h1
+  sorry
+
+lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
+
 lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ den) (a a' : T) (b : Bool):
   RRSingleSample query num den h a b / RRSingleSample query num den h a' b
-  ≤ (den + 2 * num) / (den - 2 * num) := by
+  < (den + 2 * num) / (den - 2 * num) := by
   cases b with
   | true =>
     cases hqa : query a with
@@ -246,10 +282,30 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
       rw [RRSingleSample_true_true _ _ _ _ _ hqa]
       cases hqa' : query a' with
       | true => rw [RRSingleSample_true_true _ _ _ _ _ hqa']
-                -- arithmetic now
-                sorry
+                rw[ENNReal.div_self]
+                {sorry}
+                {rw [@ENNReal.div_ne_zero]
+                 apply And.intro
+                 simp
+                 intro hd
+                 apply False.elim
+                 apply pnat_zero_imp_false den hd
+                 apply mult_ne_top
+                 simp
+                 simp
+                }
+                { apply div_ne_top
+                  simp
+                  apply mult_ne_top
+                  simp
+                  simp
+                  simp
+                  rw[Not]
+                  apply pnat_zero_imp_false den
+                }
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                 -- arithmetic now
+                 aesop
                  sorry
     | false =>
       rw [RRSingleSample_false_true _ _ _ _ _ hqa]
@@ -258,7 +314,22 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                 -- arithmetic now
                 sorry
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
-                 sorry
+                 rw[ENNReal.div_self]
+                 {sorry}
+                 {rw [@ENNReal.div_ne_zero]
+                  apply And.intro
+                  simp
+                  intro hd
+                  sorry /- For this sorry, we need the h hypothesis to be a strict inequality -/
+                  apply mult_ne_top
+                  simp
+                  simp
+                 }
+                 { apply div_ne_top
+                   simp
+                   aesop
+                   apply pnat_zero_imp_false den a_1
+                 }
                  -- arithmetic now
   | false =>
     cases hqa : query a with
@@ -292,7 +363,7 @@ rw[prod_of_ind_prob_PMF query num den h x l₂]
   | Update hl₁ hl₂ => have hlen: l₁.length = l₂.length := by aesop
                       simp
                       rename_i a n b
-                      sorry 
+                      sorry
 }
 { sorry }
 { sorry }
