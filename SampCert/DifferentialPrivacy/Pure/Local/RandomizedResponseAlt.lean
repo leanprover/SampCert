@@ -274,7 +274,7 @@ lemma mult_inv_dist (a b : ENNReal): (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
   rw [@inv_eq_one_div]
   rw [@inv_eq_one_div]
   sorry
-  
+
 lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
 
 
@@ -464,7 +464,6 @@ lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ 
 open Finset
 open scoped BigOperators
 
-
 theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
 DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((1/2 + num / den) / (1/2 - num / den))) := by
 -- let ε := ↑num / NNReal.ofPNat den
@@ -473,7 +472,10 @@ intros l₁ l₂ h_adj x
 cases xlen1 : l₁.length == x.length with
 | true =>
           rw[prod_of_ind_prob_PMF query num den h x l₁ (by aesop)]
-          rw[prod_of_ind_prob_PMF query num den h x l₂ (by sorry)]
+          rw[prod_of_ind_prob_PMF query num den h x l₂
+          (by rw[←UpdateNeighbour_length h_adj]
+              simp at xlen1
+              exact xlen1)]
           cases h_adj with
           | Update hl₁ hl₂ =>
                         rename_i a n b m
@@ -482,6 +484,8 @@ cases xlen1 : l₁.length == x.length with
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
                         rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+                        
+
 
 
 
