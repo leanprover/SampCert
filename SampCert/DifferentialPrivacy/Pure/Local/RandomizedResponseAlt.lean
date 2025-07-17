@@ -1,9 +1,9 @@
-import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.Samplers.Bernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
+import SampCert.SLang
 /-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 open SLang
@@ -249,11 +249,23 @@ theorem singleton_to_event2 (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_wit
     simp
     exact Real.exp_pos ε
 
+lemma list_index_trans (T : Type)(l a b : List T)(x: List Bool)(i : Fin b.length)(h1 : l = a++b)(h2 : l.length ≤ x.length)
+(h3: a.length ≤ x.length)(h4: b.length ≤ x.length): a.length + ↑i < x.length := by
+  subst h1
+  simp_all only [List.length_append]
+  have htrans : ↑i < b.length := by simp
+  have htrans2 : a.length + ↑i < a.length + b.length := by simp_all only [Fin.is_lt, add_lt_add_iff_left]
+  rw []
+  sorry
+
 
 
 lemma prod_split (f: T → SLang Bool)(l : List T)(x: List Bool)(a b : List T)(hl: l = a++b)(h1: l.length ≤  x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
- ∏' (i : Fin l.length), f (l[i.val]) (x[i.val]) = (∏'(i : Fin a.length), f (a[i.val]) (x[i.val]))*(∏'(i : Fin b.length), f (b[i.val]) ((x[(a.length+i.val)]'(by rw[hl] at h1, simp  h1)))) := by sorry
+ ∏' (i : Fin l.length), f (l[i.val]) (x[i.val]) = (∏'(i : Fin a.length), f (a[i.val]) (x[i.val]))*(∏'(i : Fin b.length), f (b[i.val]) ((x[(a.length+i.val)]'(by sorry)))) := by sorry
 
+
+lemma prod_split_left (f: T → SLang Bool)(l : List T)(x: List Bool)(a b : List T)(hl: l = b++a)(h1: l.length ≤  x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
+ ∏' (i : Fin l.length), f (l[i.val]) (x[i.val]) = (∏'(i : Fin a.length), f (a[i.val]) (x[i.val]))*(∏'(i : Fin b.length), f (b[i.val]) ((x[(a.length+i.val)]'(by sorry)))) := by sorry
 #check ENNReal.div_self
 
 lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
@@ -349,7 +361,7 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                  sorry
     | false =>
       rw [RRSingleSample_false_false _ _ _ _ _ hqa]
-      cases hqa' : query a' with
+      cases hqa' : query a' with(l : T)(ls: List T
       | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
                 -- arithmetic now
                 sorry
@@ -357,93 +369,155 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                  -- arithmetic now
                  sorry
 
-lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
-    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
-    rw[List.append_assoc] at h1
-    rw[prod_split f l₁ x a ([n]++b) h1 (by aesop)]
-    rw[prod_split f ([n]++b) x [n] b (by aesop)]
-    case h1 =>
-      rw[← hy]
-      rw[h2]
-      simp
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      aesop
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      rw[add_comm a.length b.length]
-      rw[add_assoc]
-      aesop
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h3 =>
-      rw[←hy]
-      rw[h2]
-      simp
-
-    rw[List.append_assoc] at h2
-    rw[prod_split f l₂ x a ([m]++b) h2 (by aesop)]
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-
-
-
-    rw[prod_split f ([m]++b) x [m] b (by rfl)]
-
-    case h1 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      simp
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[add_comm]
-      rw[add_assoc]
-      aesop
-
-    rw[ENNReal.mul_div_mul_left]
-
-    rw[ENNReal.mul_div_mul_right]
-    simp
-    ---
-
-
-
-
-
-
-
 open Finset
 open scoped BigOperators
+
+lemma append_empty_eq_og (l: List T) : l++[]=l:= by simp
+lemma empty_append_eq_og (l: List T) : []++l=l:= by simp
+lemma prod_of_one (x: Bool)(f: T → SLang Bool)(l : T) : ∏' (i : Fin ([l].length)), f [l][i.val] [x][i.val] = f l x := by
+  simp_all only [List.length_singleton, Fin.coe_fin_one, List.getElem_cons_zero]
+  rw [tprod_fintype]
+  rw [@Fin.prod_univ_one]
+lemma list_fin (ls: List T)(xs : List Bool) (i : Fin ls.length)(h : ls.length = xs.length) : i.val < xs.length :=by
+  rw[← h]
+  simp
+
+lemma list_len_0_then_empty (l : List T) (h: l.length = 0) : l =[] :=by simp_all only [List.length_eq_zero]
+lemma list_head_nonempty (l : List T)(h1: l ≠ []) : 0 < l.length :=by
+  rw [List.length_pos_iff_ne_nil]
+  exact h1
+
+
+
+lemma prod_ENNReal (a : List ENNReal)(h : a≠ []) : ∏' (b: Fin a.length), a[b.val] = (a[0]'(by sorry)) * ∏' (b : Fin (a.tail).length), (a.tail[b.val]'(by sorry)) := by
+  induction a with
+  | nil => simp_all only [ne_eq, not_true_eq_false]
+  | cons ah t x =>
+    rw[tprod_fintype]
+    rw[tprod_fintype]
+    simp_all only [List.getElem_cons_zero, List.tail_cons,
+      Fin.prod_univ_get]
+    simp_all only [ne_eq, not_false_eq_true, List.prod_cons]
+
+lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.length = x.length)(h1: l ≠ [])(h2 : x≠ []) :
+ (∏' (i: Fin l.length), f l[i.val] x[i.val]) = f (l[0]'(by sorry)) (x[0]'(by sorry )) * ∏' (i : Fin l.tail.length), f (l.tail)[i.val] (x.tail[i.val]'(by sorry)):= by
+  induction l generalizing x with
+  | nil => aesop
+  | cons l ls hl =>
+    rw [tprod_fintype]
+    rw[tprod_fintype]
+    simp only [List.getElem_cons_zero]
+    simp only [List.tail_cons]
+    simp [Finset.prod_eq_multiset_prod]
+
+    rw [@Fin.prod_ofFn]
+    rw[@Fin.prod_ofFn]
+    have h3 : ∀(i: Fin ls.length), (x[i.val+1]'(by sorry)) = (x.tail[i.val]'(by sorry)) := by
+      intro i
+      induction x with
+      | nil => simp_all only [ne_eq, not_false_eq_true, List.length_cons, List.length_nil, add_eq_zero,
+        List.length_eq_zero, one_ne_zero, and_false]
+      | cons xh xt x => simp
+    simp_all only [ne_eq, not_false_eq_true]
+
+
+
+
+  /-ls with
+  | nil =>
+    induction xs with
+    | nil =>
+      simp_all only [List.getElem_cons_zero, List.length_nil, tprod_empty,
+        mul_one]
+      rw [prod_of_one]
+    | cons => sorry
+  | cons lh lt h1 =>
+    induction xs with
+    | nil => sorry
+    |cons xh xt h2 =>
+      rw []
+      list_index_tran -/
+
+
+
+lemma ennreal_mul_div_mul_comm (a b c d: ENNReal) : a*b/(c*d) = (a/c) *(b/d) := by sorry
+
+
+lemma prod_div (x: List Bool)(f: T → SLang Bool)(l₁ l₂ : List T) (hx: l₁.length = x.length)(hy: l₂.length = x.length) :
+(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) / ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])
+= ∏' (i : Fin l₂.length), f (l₁[i.val]) (x[i.val]) / f (l₂[i.val]) (x[i.val]) := by
+  have hw : l₁.length = l₂.length := by simp_all only
+  induction l₁ with
+  | nil =>
+    induction l₂ with
+    | nil => simp_all only [List.length_nil, tprod_empty, div_one]
+    | cons h tl hz =>
+      apply False.elim
+      have rw_false: (([] : List T).length = (h :: tl).length) ↔ (([] : List T).length ≠ (h :: tl).length -> False) := by aesop
+      rw[rw_false] at hw
+      apply hw
+      have lhs_empty: ([] : List T).length = 0 := by rw [@List.length_eq_zero]
+      rw[lhs_empty]
+      aesop
+  | cons ah t a =>
+    induction l₂ with
+    | nil =>
+      apply False.elim
+      have rw_false: ((ah::t).length = ([]: List T).length) ↔ ((ah::t).length ≠ ([]: List T).length -> False) := by aesop
+      rw[rw_false] at hw
+      apply hw
+      have rhs_empty: ([] : List T).length = 0 := by rw [@List.length_eq_zero]
+      rw[rhs_empty]
+      aesop
+    | cons bh bt b =>
+      induction x with
+      | nil => sorry
+      | cons x xt h =>
+        rw [head_tail_prod x xt bh bt f hy]
+        rw [head_tail_prod x xt ah t f hx]
+        rw [ENNReal.mul_div_right_comm]
+
+
+
+
+
+
+
+        sorry
+
+
+
+
+
+
+
+  | cons h t h3 =>
+
+
+
+#check Finset.prod
+
+
+lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(nonzero : f (k:T) (bo : Bool) ≠ 0) (noninf : f (k:T) (bo:Bool) ≠ ⊤)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
+    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
+  induction a with
+  | nil =>
+    induction b with
+    | nil =>
+      simp_all [append_empty_eq_og, empty_append_eq_og]
+    | cons bh bt b=> sorry
+  | cons h t a =>
+    induction b with
+    | nil => sorry
+    | cons ba bt b => sorry
+
+
+
+
+
+
+
+
 
 
 theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
