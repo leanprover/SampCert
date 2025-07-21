@@ -5,10 +5,11 @@ import SampCert.Samplers.Bernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.DPProof
-import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite-
+import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 /-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 open SLang
+open ENNRealLemmas
 /- open MultiBernoulli -/
 
 lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num < den): den - 2*num ≤ 2 * den := by
@@ -58,6 +59,13 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
 
 lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ 0 := by
+  simp [RRSingleSample]
+  cases hb : b == query l with
+  | true =>
+  | false => sorry
+
+lemma RRSingleSample_non_zero2 {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
+  RRSingleSample query num den h l b ≠ 0 := by
   cases hb: b with
   | true => cases hq: query l with
       | true => rw [RRSingleSample_true_true _ _ _ _ _ hq]
@@ -73,23 +81,65 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
                  sorry
 lemma RRSingleSample_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ ⊤ := by
+  have hden: ↑(NNReal.ofPNat den) ≠ (0 : ENNReal) := by
+                rw [@ne_iff_lt_or_gt]
+                apply Or.inr
+                simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, gt_iff_lt, ENNReal.coe_pos, Nat.cast_pos]
+                apply den.2
   cases hb: b with
   | true => cases hq: query l with
       | true => rw [RRSingleSample_true_true _ _ _ _ _ hq]
+                apply div_ne_top
+                exact Ne.symm (ne_of_beq_false rfl)
+                refine mult_ne_zero 2 ↑(NNReal.ofPNat den) ?true.true.h2.h1 ?true.true.h2.h2
                 aesop
-                sorry
+                exact hden
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hq]
-                 sorry
+                 apply div_ne_top
+                 aesop
+                 refine mult_ne_zero 2 ↑(NNReal.ofPNat den) ?true.false.h2.h1 ?true.false.h2.h2
+                 aesop
+                 exact hden
   | false => cases hq: query l with
       | true => rw [RRSingleSample_true_false _ _ _ _ _ hq]
-                sorry
+                apply div_ne_top
+                aesop
+                refine mult_ne_zero 2 ↑(NNReal.ofPNat den) ?false.true.h2.h1 ?false.true.h2.h2
+                aesop
+                exact hden
       | false => rw [RRSingleSample_false_false _ _ _ _ _ hq]
-                 sorry
-
+                 apply div_ne_top
+                 rw [@ENNReal.add_ne_top]
+                 apply And.intro
+                 aesop
+                 exact Ne.symm (ne_of_beq_false rfl)
+                 refine mult_ne_zero 2 ↑(NNReal.ofPNat den) ?false.false.h2.h1 ?false.false.h2.h2
+                 aesop
+                 exact hden
 
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : SLang (List Bool) := do
 /- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
+
+ lemma RRSample_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
+  RRSample query num den h l₁ l₂= 0 := by
+  induction l₁ generalizing l₂ with
+  | nil => simp [RRSample, -mapM]
+           aesop
+  | cons hd tl ih =>
+  simp [RRSample, -mapM]
+  simp [RRSample, -mapM] at ih
+  apply And.intro
+  apply Or.inr
+  intro b
+  intro a
+  subst a
+  simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
+  apply Or.inr
+  intro b
+  intro a
+  subst a
+  simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
 
 /- def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
   let r ← MultiBernoulliSample seed_list
@@ -235,14 +285,6 @@ lemma prod_split (f: T → SLang Bool)(l : List T)(x: List Bool)(a b : List T)(h
 
 #check ENNReal.div_self
 
-lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
-  intro h
-  cases hb: b == 0 with
-  | true => simp at hb
-            sorry
-  | false => sorry
-
-
 lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (a a' : T) (b : Bool):
   RRSingleSample query num den h a b / RRSingleSample query num den h a' b
   ≤ (den + 2 * num) / (den - 2 * num) := by
@@ -359,7 +401,7 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
 
     rw [prod_over_prod f l₁ l₂ x hx hy]
     rw [prod_simp f l₁ l₂ x hx hy] /- Note that we now have 4 goals. These goals can be solved in our ultimate proof by application
-     of the lemma that says that RRSample is non-zero on lists of the same length and is always finite. -/
+     of the lemma that says that RRSample is non-zero on lists of the same length and is always finite. -/}
     have ha (i : Fin a.length): f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry)) = f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)) := by
       sorry
     set g: List T -> List T -> List Bool -> ℕ -> ENNReal := fun l₁ l₂ x i =>

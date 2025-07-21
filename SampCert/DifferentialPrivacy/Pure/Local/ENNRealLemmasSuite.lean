@@ -32,12 +32,19 @@ lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ 
   rw [← @ENNReal.inv_ne_zero]
   rw [← @ENNReal.inv_ne_zero] at h1
   rw [@ENNReal.div_eq_inv_mul]
-
+  
   sorry
 
 lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
   intro h1
   sorry
+
+lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
+  intro h
+  cases hb: b == 0 with
+  | true => simp at hb
+            sorry
+  | false => sorry
 
 lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
   ∑' (x : List Bool), f x = (∑'(x : List Bool), if x = [] then 0 else f x) := by
