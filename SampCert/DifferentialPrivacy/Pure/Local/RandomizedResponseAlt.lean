@@ -251,9 +251,6 @@ theorem singleton_to_event2 (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_wit
 
 
 
-lemma prod_split (f: T → SLang Bool)(l : List T)(x: List Bool)(a b : List T)(hl: l = a++b)(h1: l.length ≤  x.length)(h2: a.length ≤ x.length)(h3: b.length ≤ x.length):
- ∏' (i : Fin l.length), f (l[i.val]) (x[i.val]) = (∏'(i : Fin a.length), f (a[i.val]) (x[i.val]))*(∏'(i : Fin b.length), f (b[i.val]) ((x[(a.length+i.val)]'(by rw[hl] at h1, simp  h1)))) := by sorry
-
 #check ENNReal.div_self
 
 lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
@@ -357,85 +354,230 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                  -- arithmetic now
                  sorry
 
-lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
-    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
-    rw[List.append_assoc] at h1
-    rw[prod_split f l₁ x a ([n]++b) h1 (by aesop)]
-    rw[prod_split f ([n]++b) x [n] b (by aesop)]
-    case h1 =>
-      rw[← hy]
-      rw[h2]
+
+
+lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.length = x.length)(h1: l ≠ [])(h2 : x≠ []) :
+ (∏' (i: Fin l.length), f l[i.val] x[i.val]) = f (l[0]'(by sorry)) (x[0]'(by sorry )) * ∏' (i : Fin l.tail.length), f (l.tail)[i.val] (x.tail[i.val]'(by sorry)):= by
+  induction l generalizing x with
+  | nil => aesop
+  | cons l ls hl =>
+    rw [tprod_fintype]
+    rw[tprod_fintype]
+    simp only [List.getElem_cons_zero]
+    simp only [List.tail_cons]
+    simp [Finset.prod_eq_multiset_prod]
+
+    rw [@Fin.prod_ofFn]
+    rw[@Fin.prod_ofFn]
+    have h3 : ∀(i: Fin ls.length), (x[i.val+1]'(by sorry)) = (x.tail[i.val]'(by sorry)) := by
+      intro i
+      induction x with
+      | nil => simp_all only [ne_eq, not_false_eq_true, List.length_cons, List.length_nil, add_eq_zero,
+        List.length_eq_zero, one_ne_zero, and_false]
+      | cons xh xt x => simp
+    simp_all only [ne_eq, not_false_eq_true]
+lemma prod_split (f: T → SLang Bool)(l a b : List T)(x c d : List Bool)(hl: l = a++b)(hx: x = c++d)(xl : x.length = l.length)(ac: a.length = c.length) :
+∏' (i: Fin l.length), f l[i.val] x[i.val] = (∏'(i :Fin a.length), f a[i.val] c[i.val]) * ∏'(i: Fin b.length), f b[i.val] (d[i.val]'(by sorry)) := by
+  rw[tprod_fintype]
+
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: f (k: T) (bo: Bool) ≠ 0)(noninf: f (k: T) (bo: Bool) ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
+    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
+    rw[tprod_fintype]
+    rw[tprod_fintype]
+    have f₁ := fun(b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))
+    have f₂ := fun(b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))
+    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+
+    have ind: a.length < x.length := by
+      rw[← hx]
+      rw[h1]
       simp
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      aesop
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      rw[add_comm a.length b.length]
-      rw[add_assoc]
-      aesop
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h3 =>
-      rw[←hy]
-      rw[h2]
-      simp
-
-    rw[List.append_assoc] at h2
-    rw[prod_split f l₂ x a ([m]++b) h2 (by aesop)]
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
+    conv =>
+      enter[1,2]
+      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+    have helper:  ∀i : Fin (l₁.length - 1), l₁[↑(Fin.succAbove a.length i)]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by sorry
+    have helper2: ∀i : Fin (l₁.length - 1), f₁ i = f₂ i := by sorry
+    have helper3: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by sorry
+    have hlp: (∏ i : Fin (l₁.length - 1), f l₁[(Fin.succAbove a.length i).val] x[↑(Fin.succAbove a.length i).val]) = ∏ i : Fin (l₂.length - 1), f l₂[(Fin.succAbove a.length i).val] x[(Fin.succAbove a.length i).val] := by
+      rw[Finset.prod_congr]
 
 
 
 
-    rw[prod_split f ([m]++b) x [m] b (by rfl)]
-
-    case h1 =>
-      rw[← hy]
-      rw[h2]
-      simp
-
-    case h2 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[← add_assoc]
-      simp
-
-    case h3 =>
-      rw[← hy]
-      rw[h2]
-      simp
-      rw[add_comm]
-      rw[add_assoc]
-      aesop
-
-    rw[ENNReal.mul_div_mul_left]
-
+    rw[hlp]
     rw[ENNReal.mul_div_mul_right]
     simp
-    ---
+    have mod: a.length % (l₁.length-1+1) = a.length := by
+      rw[Nat.mod_eq_of_lt]
+      rw[hx]
+      rw[Nat.sub_add_cancel]
+      exact ind
+      rw[← hx]
+      rw[h1]
+      simp
+      sorry
+    simp[mod]
+    rw[hx] at mod
+    rw[← hy] at mod
+    simp[mod]
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+lemma reduction_aux (a b c List T)(x: List Bool)(f:  T → SLang Bool): ∏' (i: Fin (a++b).length)
+
+lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: f (k: T) (bo: Bool) ≠ 0)(noninf: f (k: T) (bo: Bool) ≠ ⊤):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
+    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
+    rw[List.append_assoc] at h1
+    rw[List.append_assoc] at h2
+    let c := List.take a.length x
+    have c_def : c = List.take a.length x := rfl
+    let d := List.drop a.length x
+    have d_def : d = List.drop a.length x := by rfl
+    have leq: a.length < x.length := by {
+      rw[← hx]
+      rw[h1]
+      simp
+    }
+    have ac: a.length = c.length := by {
+      rw[c_def]
+      rw[List.length_take]
+      rw[min_eq_left_of_lt leq]
+    }
+    rw[prod_split f l₁ a ([n]++b) x c d (by exact h1) (by rw[List.take_append_drop a.length x]) (by simp[hx]) (by exact ac)]
+    rw[prod_split f l₂ a ([m]++b) x c d (by exact h2) (by rw[List.take_append_drop a.length x]) (by simp[hy]) (by exact ac)]
+    rw[@tprod_fintype]
+    rw[ENNReal.mul_div_mul_left]
+    let e := List.take ([n].length) d
+    have e_def : e = List.take [n].length d := by rfl
+    let g := List.drop ([n].length) d
+    rw[prod_split f ([n]++b) [n] b d e g (by rfl) (by rw[List.take_append_drop])]
+    rw[prod_split f ([m]++b) [m] b d e g (by rfl) (by rw[List.take_append_drop])]
+    rw[@tprod_fintype]
+    rw[ENNReal.mul_div_mul_right]
+    simp only [List.length_singleton, Fin.coe_fin_one, List.getElem_cons_zero]
+    rw [tprod_fintype]
+    rw [@Fin.prod_univ_one]
+    rw [@Fin.prod_univ_one]
+    rw [h1]
+    rw [h2]
+    rw[List.getElem_append_right]
+    case h =>
+      simp
+    case h'' =>
+      simp
+    rw[List.getElem_append_right a]
+    case h =>
+      simp
+    case h'' =>
+      simp
+    simp
+    have xx : x = c++(e++g) := by
+    {
+    rw[List.take_append_drop]
+    rw[List.take_append_drop]
+    }
+    rw[xx]
+    rw[List.getElem_append_right]
+
+
+    rw[List.getElem_append_left]
+    simp [ac]
+
+    case h =>
+      rw[ac]
+      simp
+      rw[e_def]
+      simp
+      rw[d_def]
+      simp
+      exact leq
+    case h' =>
+      rw[ac]
+      simp
+      left
+      rw[e_def]
+      simp
+      rw[d_def]
+      simp
+      exact leq
+    case h =>
+      rw[ac]
+      simp
+
+    case xl =>
+      rw[d_def]
+      simp
+      rw[← hx]
+      rw[h1]
+      simp
+    case ac =>
+      rw[e_def]
+      rw[d_def]
+      simp
+      have aux: 1 ≤ x.length - a.length := by linarith [Nat.sub_pos_of_lt leq]
+      simp[aux]
+    case xl =>
+      rw[d_def]
+      simp
+      rw[← hx]
+      rw[h1]
+      simp
+    case ac =>
+      rw[e_def]
+      simp
+      rw[d_def]
+      simp
+      have aux: 1 ≤ x.length - a.length := by linarith [Nat.sub_pos_of_lt leq]
+      simp[aux]
+    case hc =>
+
+      rw[@tprod_fintype]
+      rw[Nat.eq_zero_of_mul_eq_zero]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ---
 
 
 
@@ -463,6 +605,7 @@ cases xlen1 : l₁.length == x.length with
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
                         rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+
 
 
 
