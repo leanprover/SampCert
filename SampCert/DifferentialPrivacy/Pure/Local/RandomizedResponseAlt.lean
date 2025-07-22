@@ -377,7 +377,7 @@ lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.lengt
       | cons xh xt x => simp
     simp_all only [ne_eq, not_false_eq_true]
 
-lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo < ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
     (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
@@ -506,7 +506,9 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
     simp[nonzero]
 
     rw[← lt_top_iff_ne_top]
-    sorry
+    apply ENNReal.prod_lt_top
+    intro i
+    simp[noninf]
 
 
 
