@@ -183,6 +183,7 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                  -- arithmetic now
                  sorry
 
+<<<<<<< HEAD
 lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.length = x.length)(h1: l ≠ [])(h2 : x≠ []) :
  (∏' (i: Fin l.length), f l[i.val] x[i.val]) = f (l[0]'(by sorry)) (x[0]'(by sorry )) * ∏' (i : Fin l.tail.length), f (l.tail)[i.val] (x.tail[i.val]'(by sorry)):= by
   induction l generalizing x with
@@ -226,6 +227,9 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
       enter[1,2]
       rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
     have helper:  ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
+=======
+lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b): ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
+>>>>>>> origin/main
       intro i
       simp only [h1,h2]
       by_cases i < a.length
@@ -237,10 +241,9 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
           simp
           have mod: a.length % (l₁.length-1+1) = a.length := by
             rw[Nat.mod_eq_of_lt]
-            rw[hx]
             rw[Nat.sub_add_cancel]
-            exact ind
-            rw[← hx]
+            rw[h1]
+            simp
             rw[h1]
             simp
             linarith
@@ -271,10 +274,9 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
           simp
           have mod: a.length % (l₁.length-1+1) = a.length := by
             rw[Nat.mod_eq_of_lt]
-            rw[hx]
             rw[Nat.sub_add_cancel]
-            exact ind
-            rw[← hx]
+            rw[h1]
+            simp
             rw[h1]
             simp
             linarith
@@ -310,11 +312,24 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
         simp at h
         exact h
 
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
+    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
+    rw[tprod_fintype]
+    rw[tprod_fintype]
+    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+
+    have ind: a.length < x.length := by
+      rw[← hx]
+      rw[h1]
+      simp
+    conv =>
+      enter[1,2]
+      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
     have helper2: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by aesop
     have helper3: l₁.length - 1 = l₂.length - 1 := by aesop
     have hlp: (∏ i : Fin (l₁.length - 1), f l₁[(Fin.succAbove a.length i).val] x[↑(Fin.succAbove a.length i).val]) = ∏ i : Fin (l₂.length - 1), f l₂[(Fin.succAbove a.length i).val] x[(Fin.succAbove a.length i).val] := by
       apply Fintype.prod_equiv (Equiv.cast (congr_arg Fin helper3))
-      simp[helper]
+      simp[succHelp l₁ l₂ h1 h2]
       intro i
       congr
       rw [← propext cast_eq_iff_heq]
@@ -345,76 +360,60 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
     intro i
     simp[noninf]
 
-
-
-
-
-
-
-
-
-
-
-
-
-lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: f (k: T) (bo: Bool) ≠ 0)(noninf: f (k: T) (bo: Bool) ≠ ⊤):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
-    ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
-    rw[List.append_assoc] at h1
-    rw[List.append_assoc] at h2
-    let c := List.take a.length x
-    have c_def : c = List.take a.length x := rfl
-    let d := List.drop a.length x
-    have d_def : d = List.drop a.length x := by rfl
-    have leq: a.length < x.length := by {
-      rw[← hx]
+theorem reduction_final (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
+    (∏' (i : Fin (l₂.length)), f (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f (l₁[(a.length)]'(by rw[h1];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) := by
+    have h_len : l₁.length - 1 + 1 = l₁.length := by
+      rw[Nat.sub_add_cancel]
       rw[h1]
       simp
-    }
-    have ac: a.length = c.length := by {
-      rw[c_def]
-      rw[List.length_take]
-      rw[min_eq_left_of_lt leq]
-    }
-    rw[prod_split f l₁ a ([n]++b) x c d (by exact h1) (by rw[List.take_append_drop a.length x]) (by simp[hx]) (by exact ac)]
-    rw[prod_split f l₂ a ([m]++b) x c d (by exact h2) (by rw[List.take_append_drop a.length x]) (by simp[hy]) (by exact ac)]
-    rw[@tprod_fintype]
-    rw[ENNReal.mul_div_mul_left]
-    let e := List.take ([n].length) d
-    have e_def : e = List.take [n].length d := by rfl
-    let g := List.drop ([n].length) d
-    rw[prod_split f ([n]++b) [n] b d e g (by rfl) (by rw[List.take_append_drop])]
-    rw[prod_split f ([m]++b) [m] b d e g (by rfl) (by rw[List.take_append_drop])]
-    rw[@tprod_fintype]
-    rw[ENNReal.mul_div_mul_right]
-    simp only [List.length_singleton, Fin.coe_fin_one, List.getElem_cons_zero]
-    rw [tprod_fintype]
-    rw [@Fin.prod_univ_one]
-    rw [@Fin.prod_univ_one]
-    rw [h1]
-    rw [h2]
-    rw[List.getElem_append_right]
-    case h =>
+      linarith
+    have h_len2 : l₂.length - 1 + 1 = l₂.length := by
+      rw[Nat.sub_add_cancel]
+      rw[h2]
       simp
-    case h'' =>
-      simp
-    rw[List.getElem_append_right a]
-    case h =>
-      simp
-    case h'' =>
-      simp
+      linarith
+    rw[tprod_fintype]
+    rw[tprod_fintype]
+    rw[Fintype.prod_equiv (Equiv.cast (congr_arg Fin h_len.symm))]
+    rw[Fintype.prod_equiv (Equiv.cast (congr_arg Fin h_len2.symm))]
+    rw[← tprod_fintype]
+    rw[← tprod_fintype]
+    rw [reduction2 l₁ l₂ x f h1 h2 hx hy nonzero noninf]
     simp
-    have xx : x = c++(e++g) := by
-    {
-    rw[List.take_append_drop]
-    rw[List.take_append_drop]
-    }
-    rw[xx]
-    rw[List.getElem_append_right]
+    intro i
+    congr
+    rw[Nat.sub_add_cancel]
+    rw[h2]
+    simp
+    linarith
+    rw [← propext cast_eq_iff_heq]
+
+    rw[Nat.sub_add_cancel]
+    rw[h2]
+    simp
+    linarith
+
+    rw [← propext cast_eq_iff_heq]
+    intro i
+    congr
+    rw[Nat.sub_add_cancel]
+    rw[h1]
+    simp
+    linarith
+
+    simp
+    rw[← propext cast_eq_iff_heq]
+    rw[Nat.sub_add_cancel]
+    rw[h1]
+    simp
+    linarith
+
+    simp
+    rw[← propext cast_eq_iff_heq]
 
 
-    rw[List.getElem_append_left]
-    simp [ac]
 
+<<<<<<< HEAD
     case h =>
       rw[ac]
       simp
@@ -466,6 +465,47 @@ lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ 
       rw [@Finset.prod_ne_zero_iff]
       intro a ha
       sorry
+=======
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ---
+
+
+
+
+
+>>>>>>> origin/main
 
 open Finset
 open scoped BigOperators
@@ -488,6 +528,7 @@ cases xlen1 : l₁.length == x.length with
                         have xlen2 : l₂.length = x.length := by aesop
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
+<<<<<<< HEAD
                         rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
                         have i1: a.length < x.length := by
                           rw[←xlen3]
@@ -508,6 +549,9 @@ cases xlen1 : l₁.length == x.length with
                         {apply RRSingleSample_finite query num den h}
                         {aesop}
                         {aesop}
+=======
+                        rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+>>>>>>> origin/main
 
 | false => simp at xlen1
            rw [←Ne.eq_def] at xlen1
