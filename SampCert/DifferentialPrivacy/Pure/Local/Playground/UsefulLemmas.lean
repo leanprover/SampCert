@@ -7,3 +7,4 @@ import SampCert
 #check tsum_eq_tsum_diff_singleton
 #check tsum_ite_eq
 #check tsum_eq_single
+#check ENNReal.div_self
