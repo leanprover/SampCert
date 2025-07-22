@@ -598,7 +598,7 @@ cases xlen1 : l₁.length == x.length with
                         have xlen2 : l₂.length = x.length := by aesop
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
-                        rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+                        rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
 
 
 
