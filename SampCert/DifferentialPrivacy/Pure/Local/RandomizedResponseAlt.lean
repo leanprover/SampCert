@@ -125,7 +125,25 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                 sorry
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                  rw[ENNReal.div_self]
-                 {sorry}
+                 { rw [@Decidable.le_iff_lt_or_eq]
+                   cases hnum : num == 0 with
+                   | true => simp at hnum
+                             apply Or.inr
+                             subst hnum
+                             simp
+                             rw [ENNReal.div_self]
+                             norm_num
+                             apply pnat_zero_imp_false
+                             simp
+                   | false => simp at hnum
+                              apply Or.inl
+                              apply quot_gt_one_rev
+                              simp
+                              have h1: 0 < (2 : ENNReal) * num + 2 * num := by sorry
+                              have h2: den < den + (2 : ENNReal) * num + 2 * num := by sorry
+                              aesop
+                              sorry
+                  }
                  {rw [@ENNReal.div_ne_zero]
                   apply And.intro
                   simp

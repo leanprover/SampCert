@@ -118,6 +118,7 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
               apply hb
               apply hbT
 
+
 lemma quot_lt_one (a b : ENNReal): a/b < 1 -> a < b := by sorry
 
 lemma div_ineq_flip (a b c : ENNReal): a / b > c -> b / a < c := by sorry
