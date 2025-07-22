@@ -376,16 +376,11 @@ lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.lengt
         List.length_eq_zero, one_ne_zero, and_false]
       | cons xh xt x => simp
     simp_all only [ne_eq, not_false_eq_true]
-lemma prod_split (f: T → SLang Bool)(l a b : List T)(x c d : List Bool)(hl: l = a++b)(hx: x = c++d)(xl : x.length = l.length)(ac: a.length = c.length) :
-∏' (i: Fin l.length), f l[i.val] x[i.val] = (∏'(i :Fin a.length), f a[i.val] c[i.val]) * ∏'(i: Fin b.length), f b[i.val] (d[i.val]'(by sorry)) := by
-  rw[tprod_fintype]
 
-lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: f (k: T) (bo: Bool) ≠ 0)(noninf: f (k: T) (bo: Bool) ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo < ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
     (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
-    have f₁ := fun(b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))
-    have f₂ := fun(b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))
     rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
 
     have ind: a.length < x.length := by
@@ -395,15 +390,100 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
     conv =>
       enter[1,2]
       rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
-    have helper:  ∀i : Fin (l₁.length - 1), l₁[↑(Fin.succAbove a.length i)]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by sorry
-    have helper2: ∀i : Fin (l₁.length - 1), f₁ i = f₂ i := by sorry
-    have helper3: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by sorry
+    have helper:  ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
+      intro i
+      simp only [h1,h2]
+      by_cases i < a.length
+      case pos h =>
+        unfold Fin.succAbove
+        have h' : i.castSucc < ↑a.length := by
+          rw [@Fin.castSucc_lt_iff_succ_le]
+          rw [@Fin.le_iff_val_le_val]
+          simp
+          have mod: a.length % (l₁.length-1+1) = a.length := by
+            rw[Nat.mod_eq_of_lt]
+            rw[hx]
+            rw[Nat.sub_add_cancel]
+            exact ind
+            rw[← hx]
+            rw[h1]
+            simp
+            linarith
+          rw[mod]
+          simp[Nat.succ_le_of_lt h]
+
+
+
+        simp only[h']
+        simp only [↓reduceIte, Fin.coe_castSucc,
+          Fin.getElem_fin]
+        rw[List.getElem_append_left]
+        rw[List.getElem_append_left]
+        rw[List.getElem_append_left]
+        rw[List.getElem_append_left]
+        exact h
+        simp[h]
+        linarith
+        simp[h]
+        linarith
+      case neg h =>
+        unfold Fin.succAbove
+        have h' : ¬ i.castSucc < ↑a.length := by
+          simp at h
+          simp
+          rw [@Fin.le_castSucc_iff]
+          apply Nat.lt_succ_of_le
+          simp
+          have mod: a.length % (l₁.length-1+1) = a.length := by
+            rw[Nat.mod_eq_of_lt]
+            rw[hx]
+            rw[Nat.sub_add_cancel]
+            exact ind
+            rw[← hx]
+            rw[h1]
+            simp
+            linarith
+          rw[mod]
+          exact h
+
+
+        simp only[h']
+        simp only [↓reduceIte, Fin.coe_castSucc,
+          Fin.getElem_fin]
+        rw[List.getElem_append_right]
+        rw[List.getElem_append_right]
+        simp
+        simp
+        linarith
+        simp
+
+        have ile : i < l₁.length - 1 := by exact i.is_lt
+        simp[h1] at ile
+        rw[tsub_lt_iff_left]
+        exact ile
+        simp at h
+        exact h
+
+        simp
+        linarith
+        simp
+
+        have ile : i < l₁.length - 1 := by exact i.is_lt
+        simp[h1] at ile
+        rw[tsub_lt_iff_left]
+        exact ile
+        simp at h
+        exact h
+
+    have helper2: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by aesop
+    have helper3: l₁.length - 1 = l₂.length - 1 := by aesop
     have hlp: (∏ i : Fin (l₁.length - 1), f l₁[(Fin.succAbove a.length i).val] x[↑(Fin.succAbove a.length i).val]) = ∏ i : Fin (l₂.length - 1), f l₂[(Fin.succAbove a.length i).val] x[(Fin.succAbove a.length i).val] := by
-      rw[Finset.prod_congr]
-
-
-
-
+      apply Fintype.prod_equiv (Equiv.cast (congr_arg Fin helper3))
+      simp[helper]
+      intro i
+      congr
+      rw [← propext cast_eq_iff_heq]
+      rw [← propext cast_eq_iff_heq]
     rw[hlp]
     rw[ENNReal.mul_div_mul_right]
     simp
@@ -415,12 +495,18 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
       rw[← hx]
       rw[h1]
       simp
-      sorry
+      linarith
     simp[mod]
     rw[hx] at mod
     rw[← hy] at mod
     simp[mod]
 
+    rw[Finset.prod_ne_zero_iff]
+    intro i
+    simp[nonzero]
+
+    rw[← lt_top_iff_ne_top]
+    sorry
 
 
 
@@ -433,8 +519,6 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
 
 
 
-
-lemma reduction_aux (a b c List T)(x: List Bool)(f:  T → SLang Bool): ∏' (i: Fin (a++b).length)
 
 lemma reduction (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: f (k: T) (bo: Bool) ≠ 0)(noninf: f (k: T) (bo: Bool) ≠ ⊤):(∏' (i : Fin l₁.length), f (l₁[i.val]) (x[i.val])) /
     ∏' (i : Fin l₂.length), f (l₂[i.val]) (x[i.val])  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
