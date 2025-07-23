@@ -10,7 +10,7 @@ open RandomizedResponse
 #check RandomizedResponse.RRSingleSample
 #check SLang.BernoulliSample_normalizes
 
-lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
+lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) :
   HasSum (RRSingleSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     rw [@tsum_bool]
@@ -32,7 +32,7 @@ lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den :
       rw [@AddCommMonoidWithOne.add_comm]
     }
 
-lemma RRSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
+lemma RRSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) :
   HasSum (RRSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     unfold RRSample
@@ -41,15 +41,5 @@ lemma RRSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RRSingleSample_PMF_helper
 
-/- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
-  HasSum (RRSample2 query s l) 1 := by
-  rw[RRSample2]
-  simp_all only [bind, pure]
-  rw[Summable.hasSum_iff ENNReal.summable]
-  rw[←MultiBernoulliSample_normalizes s]
-  simp_all only [bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
-  sorry
--/
-
-def RRSample_PMF [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
+def RRSample_PMF [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
   ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩

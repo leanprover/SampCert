@@ -2,6 +2,8 @@ import SampCert
 
 open SLang
 
+/- In this file, we instantiate SLang as a LawfulMonad. This makes simp much stronger.-/
+
 instance SLang.LawfulMonad : LawfulMonad SLang where
   map_const := by
                intro a b

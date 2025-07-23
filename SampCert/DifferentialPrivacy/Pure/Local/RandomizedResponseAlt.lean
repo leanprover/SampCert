@@ -4,143 +4,15 @@ import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.Samplers.Bernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.BasicLemmas
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.DPProof
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
+import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 /-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 open SLang
-/- open MultiBernoulli -/
-
-lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num ≤ den): den - 2*num ≤ 2 * den := by
-  simp_all only [tsub_le_iff_right]
-  linarith
-
-/- Eventually, we may want query to return more than just a Boolean -/
-def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) : SLang Bool := do
-  let r ← SLang.BernoulliSample (den - 2*num) (2 * den) (arith_0 num den h)
-  return Bool.xor (query l) r
-
-lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = true):
-  RRSingleSample query num den h l true = (den + 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
-  simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
-    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
-    Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
-  sorry /- This is arithmetically true, but proving arithmetic things is a mess -/
-
-lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = true):
-  RRSingleSample query num den h l false = (den - 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
-  simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
-    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, Bool.not_eq_false', mul_ite, ↓reduceIte,
-    mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
-  apply Eq.refl
-
-lemma RRSingleSample_false_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = false):
-  RRSingleSample query num den h l true = (den - 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
-  simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
-    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
-    Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
-  apply Eq.refl
-
-lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (hq : query l = false):
-  RRSingleSample query num den h l false = (den + 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
-  simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
-    Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, mul_ite, Bool.false_eq_true, ↓reduceIte,
-    mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
-  /- This is the same state as the first lemma that's not working,
-     again it's just annoying arithmetic. -/
-  sorry
-
-lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) (b : Bool):
-  RRSingleSample query num den h l b ≠ 0 := by
-  cases hb: b with
-  | true => cases hq: query l with
-      | true => rw [RRSingleSample_true_true _ _ _ _ _ hq]
-                sorry
-      | false => rw [RRSingleSample_false_true _ _ _ _ _ hq]
-                 sorry
-  | false => cases hq: query l with
-      | true => rw [RRSingleSample_true_false _ _ _ _ _ hq]
-                sorry
-      | false => rw [RRSingleSample_false_false _ _ _ _ _ hq]
-                 sorry
-
-def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : SLang (List Bool) := do
-/- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
- l.mapM (fun x => RRSingleSample query num den h x)
-
-/- def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
-  let r ← MultiBernoulliSample seed_list
-  return List.zipWith (fun u s => Bool.xor (query u) s) l r -/
-
-/- At this point, we should be set to prove that RRSample is normalized and that it is
-   differentially private. The definition is computable, as we need. -/
-
-lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : T) :
-  HasSum (RRSingleSample query num den h l) 1 := by
-    rw [Summable.hasSum_iff ENNReal.summable]
-    rw [@tsum_bool]
-    rw[RRSingleSample]
-    cases query l
-    {
-      simp_all only [bind, pure, Bool.false_bne, SLang.bind_apply, ENNReal.natCast_sub,
-      Nat.cast_mul, Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, SLang.pure_apply, Bool.false_eq, mul_ite,
-      Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, Bool.true_eq]
-      rw[←SLang.BernoulliSample_normalizes (den - 2 * num) (2 * den) (arith_0 num den h)]
-      rw[tsum_bool]
-    }
-    {
-      simp_all only [bind, pure, Bool.true_bne, SLang.bind_apply, ENNReal.natCast_sub,
-      Nat.cast_mul, Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, SLang.pure_apply, Bool.false_eq, Bool.not_eq_false',
-      mul_ite, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, Bool.true_eq, Bool.not_eq_true', Bool.false_eq_true]
-      rw[←SLang.BernoulliSample_normalizes (den - 2 * num) (2 * den) (arith_0 num den h)]
-      rw[tsum_bool]
-      rw [@AddCommMonoidWithOne.add_comm]
-    }
-
-lemma nil_case {T : Type} (query : T -> Bool) (num : Nat) (den: PNat) (h: 2 * num ≤ den):
-  ∑' (b : List Bool), (RRSample query num den h) [] b = 1 := by
-    have h1: ∑' (b : List Bool), mapM (fun x => RRSingleSample query num den h x) [] b =
-             mapM (fun x => RRSingleSample query num den h x) [] [] := by
-              rw [@List.mapM_nil]
-              simp_all only [pure, SLang.pure_apply, ↓reduceIte]
-              rw [ENNReal.tsum_eq_add_tsum_ite []]
-              simp_all only [↓reduceIte, ite_self, tsum_zero, add_zero]
-    rw[RRSample]
-    rw[h1]
-    rw [@List.mapM_nil]
-    simp
-
-lemma cons_case {T: Type} (query : T -> Bool) (num : Nat) (den: PNat) (h : 2 * num ≤ den)
-  (l : List T) : ∑' (b : List Bool), RRSample query num den h l b = 1 := by
-    rw[RRSample]
-    sorry
-
-/- This should now follow from Renee's abstraction of the MultiBernoulli proof -/
-lemma RRSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) :
-  HasSum (RRSample query num den h l) 1 := by
-    rw [Summable.hasSum_iff ENNReal.summable]
-    rw[RRSample]
-    induction l with
-    | nil => exact nil_case query num den h
-    | cons hd tl tail_ih => sorry
-
-/- lemma RRSample2_PMF_helper {T : Type} (query: T -> Bool) (s : List SeedType) (l : List T) :
-  HasSum (RRSample2 query s l) 1 := by
-  rw[RRSample2]
-  simp_all only [bind, pure]
-  rw[Summable.hasSum_iff ENNReal.summable]
-  rw[←MultiBernoulliSample_normalizes s]
-  simp_all only [bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
-  sorry
--/
-
-
-def RRSample_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (l : List T) : PMF (List Bool) :=
-  ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
-
-
+open ENNRealLemmas
+open RandomizedResponse
 
 namespace SLang
 lemma simplifier_1 (f : T -> SLang Bool):
@@ -152,12 +24,6 @@ simp_all only [ne_eq, mapM, ite_eq_right_iff]
 intro a
 subst a
 simp_all only [not_true_eq_false]
-
-
-
-
-
-
 
 lemma mapM_dist_cons (f: T → SLang Bool) (b: Bool)(c: List Bool)(hd: T)(tl: List T):
 mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
@@ -176,17 +42,14 @@ conv =>
   enter [1, 2]
   rw [simplifier_1]
 
-lemma RRSample_rec (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num ≤ den) (hd: T)(tl : List T)(b: Bool)(c: List Bool):
+lemma RRSample_rec (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (hd: T)(tl : List T)(b: Bool)(c: List Bool):
 RRSample query num den h (hd::tl) (b::c) = RRSingleSample query num den h hd b * RRSample query num den h tl c := by
 unfold RRSample
 set f := fun x => RRSingleSample query num den h x
 rw[mapM_dist_cons f b c hd tl]
 
 
-
-
-
-lemma prod_of_ind_prob(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den)(a: List Bool)(l: List T)(k: l.length = a.length):
+lemma prod_of_ind_prob(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
 RRSample query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by
 induction l generalizing a with
 | nil =>
@@ -216,66 +79,12 @@ induction l generalizing a with
   simp at k
   exact k
 
-theorem prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den)(a: List Bool)(l: List T)(k: l.length = a.length):
+theorem prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
 RRSample_PMF query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
-
-open Classical
-
-theorem singleton_to_event2 (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_withUpdateNeighbour m ε) :
-  DP_withUpdateNeighbour m ε := by
-  simp [DP_withUpdateNeighbour]
-  simp [DP_singleton_withUpdateNeighbour] at h
-  intros l₁ l₂ h1 S
-  replace h1 := h l₁ l₂ h1
-  have A : ∀ (x : U), (if x ∈ S then m l₁ x else 0) / (if x ∈ S then m l₂ x else 0) ≤ ENNReal.ofReal ε.exp := by
-    aesop
-  have B : ∀ b : ENNReal, b ≠ 0 ∨ ENNReal.ofReal ε.exp ≠ ⊤ := by
-    aesop
-  have C : ∀ b : ENNReal, b ≠ ⊤ ∨ ENNReal.ofReal ε.exp ≠ 0 := by
-    intro b
-    right
-    simp
-    exact Real.exp_pos ε
-  have D := fun { x : U } => @ENNReal.div_le_iff_le_mul (if x ∈ S then m l₁ x else 0) (if x ∈ S then m l₂ x else 0) (ENNReal.ofReal ε.exp) (B (if x ∈ S then m l₂ x else 0)) (C (if x ∈ S then m l₂ x else 0))
-  have E := fun x : U => D.1 (A x)
-  have F := ENNReal.tsum_le_tsum E
-  rw [ENNReal.tsum_mul_left] at F
-  rw [← ENNReal.div_le_iff_le_mul] at F
-  · clear h1 A B C D
-    trivial
-  · aesop
-  · right
-    simp
-    exact Real.exp_pos ε
-
-
-
-#check ENNReal.div_self
-
-lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
-  intro h
-  cases hb: b == 0 with
-  | true => simp at hb
-            sorry
-  | false => sorry
-
-
-lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
-  sorry
-
-lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
-  sorry
-
-lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
-  intro h1
-  sorry
-
-lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
-
-lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ den) (a a' : T) (b : Bool):
+lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (a a' : T) (b : Bool):
   RRSingleSample query num den h a b / RRSingleSample query num den h a' b
-  < (den + 2 * num) / (den - 2 * num) := by
+  ≤ (den + 2 * num) / (den - 2 * num) := by
   cases b with
   | true =>
     cases hqa : query a with
@@ -316,10 +125,30 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                 sorry
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                  rw[ENNReal.div_self]
-                 {sorry}
+                 { rw [@Decidable.le_iff_lt_or_eq]
+                   cases hnum : num == 0 with
+                   | true => simp at hnum
+                             apply Or.inr
+                             subst hnum
+                             simp
+                             rw [ENNReal.div_self]
+                             norm_num
+                             apply pnat_zero_imp_false
+                             simp
+                   | false => simp at hnum
+                              apply Or.inl
+                              apply quot_gt_one_rev
+                              simp
+                              have h1: 0 < (2 : ENNReal) * num + 2 * num := by sorry
+                              have h2: den < den + (2 : ENNReal) * num + 2 * num := by sorry
+                              aesop
+                              sorry
+                  }
                  {rw [@ENNReal.div_ne_zero]
                   apply And.intro
                   simp
+                  norm_cast
+                  simp [Nat.cast_mul]
                   intro hd
                   sorry /- For this sorry, we need the h hypothesis to be a strict inequality -/
                   apply mult_ne_top
@@ -354,7 +183,32 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num ≤ 
                  -- arithmetic now
                  sorry
 
-lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b): ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
+lemma valid_index0 (l₁ : List T)(h1: l₁ = a++[n]++b) (i : Fin (l₁.length - 1)): (Fin.succAbove (a.length) i).val < l₁.length := by
+  have hl : l₁.length - 1 + 1 = l₁.length := by
+      rw [Nat.sub_add_cancel]
+      rw [h1]
+      simp
+      linarith
+  simp [Fin.succAbove]
+  split
+  simp [Fin.castSucc]
+  {calc
+  i.val < l₁.length - 1 := i.2
+  _ < l₁.length := by aesop}
+  {
+    calc
+    i.succ.val = i.val + 1 := by simp
+    _ < l₁.length - 1 + 1 := by linarith[i.2]
+    _ = l₁.length := by rw [hl]
+  }
+
+lemma valid_index1 (l₁ l₂ : List T)(h1: l₁ = a++[n]++b) (h2: l₂ = a++[m]++b) (i : Fin ((l₁.length - 1))): (Fin.succAbove (a.length) i).val < l₂.length := by
+  have hl: l₁.length = l₂.length := by aesop
+  rw[←hl]
+  apply valid_index0
+  exact h1
+
+lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b): ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(valid_index0 l₁ h1 i) = l₂[Fin.succAbove a.length i]'(valid_index1 l₁ l₂ h1 h2 i) := by
       intro i
       simp only [h1,h2]
       by_cases i < a.length
@@ -374,8 +228,6 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
             linarith
           rw[mod]
           simp[Nat.succ_le_of_lt h]
-
-
 
         simp only[h']
         simp only [↓reduceIte, Fin.coe_castSucc,
@@ -407,8 +259,6 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
             linarith
           rw[mod]
           exact h
-
-
         simp only[h']
         simp only [↓reduceIte, Fin.coe_castSucc,
           Fin.getElem_fin]
@@ -437,11 +287,26 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
         simp at h
         exact h
 
-lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
-    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
+lemma valid_index2 {l₁ : List T} (h1: l₁ = a++[n]++b) (i : Fin ((l₁.length - 1) + 1)):
+  i.val < l₁.length := by
+    have hl1: l₁.length - 1 + 1 = l₁.length := by
+      rw [Nat.sub_add_cancel]
+      subst h1
+      simp
+      linarith
+    exact Nat.lt_of_lt_of_eq i.2 hl1
+
+lemma valid_index3 {l₁ : List T} {x : List Bool} (h1: l₁ = a++[n]++b) (hx: l₁.length = x.length) (i : Fin ((l₁.length - 1) + 1)):
+  i.val < x.length := by
+    rw[←hx]
+    apply valid_index2 h1 i
+
+
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
+    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(valid_index2 h2 i)) (x[i.val]'(valid_index3 h2 hy i)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
-    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(valid_index2 h1 b)) (x[b.val]'(valid_index3 h1 hx b))) a.length]
 
     have ind: a.length < x.length := by
       rw[← hx]
@@ -449,7 +314,7 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
       simp
     conv =>
       enter[1,2]
-      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(valid_index2 h2 b)) (x[b.val]'(valid_index3 h2 hy b))) a.length]
     have helper2: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by aesop
     have helper3: l₁.length - 1 = l₂.length - 1 := by aesop
     have hlp: (∏ i : Fin (l₁.length - 1), f l₁[(Fin.succAbove a.length i).val] x[↑(Fin.succAbove a.length i).val]) = ∏ i : Fin (l₂.length - 1), f l₂[(Fin.succAbove a.length i).val] x[(Fin.succAbove a.length i).val] := by
@@ -536,61 +401,20 @@ theorem reduction_final (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h
     simp
     rw[← propext cast_eq_iff_heq]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ---
-
-
-
-
-
-
 open Finset
 open scoped BigOperators
 
-
-theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num ≤ den) :
+theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den) :
 DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((1/2 + num / den) / (1/2 - num / den))) := by
--- let ε := ↑num / NNReal.ofPNat den
-apply singleton_to_event2
+apply singleton_to_event_update
 intros l₁ l₂ h_adj x
 cases xlen1 : l₁.length == x.length with
 | true =>
           rw[prod_of_ind_prob_PMF query num den h x l₁ (by aesop)]
-          rw[prod_of_ind_prob_PMF query num den h x l₂ (by sorry)]
+          rw[prod_of_ind_prob_PMF query num den h x l₂
+          (by rw[←UpdateNeighbour_length h_adj]
+              simp at xlen1
+              exact xlen1)]
           cases h_adj with
           | Update hl₁ hl₂ =>
                         rename_i a n b m
@@ -599,12 +423,28 @@ cases xlen1 : l₁.length == x.length with
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
                         rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
-
-
-
-
-
-| false => sorry
-
-
--- rw[reduction l₁ l₂ x (RRSingleSample query num den h) hl₁ hl₂ xlen xlen2]
+                        have i1: a.length < x.length := by
+                          rw[←xlen3]
+                          subst hl₁ hl₂
+                          simp_all only [List.append_assoc, List.singleton_append, List.length_append,
+                            List.length_cons, beq_iff_eq]
+                          rw[←xlen1]
+                          rw [@Nat.lt_add_right_iff_pos]
+                          simp
+                        {calc
+                        RRSingleSample query num den h (l₁[a.length]'(by aesop)) (x[a.length]'(by aesop))
+                        / RRSingleSample query num den h (l₂[a.length]'(by aesop)) (x[a.length]'(by aesop)) ≤ (den + 2 * num) / (den - 2 * num) := by apply final_bound
+                        _ ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
+                          apply final_step_combined
+                          exact h
+                        _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop}
+                        {apply RRSingleSample_non_zero query num den h}
+                        {apply RRSingleSample_finite query num den h}
+| false => simp at xlen1
+           rw [←Ne.eq_def] at xlen1
+           have numerator_zero: RRSample_PMF query num den h l₁ x = 0 := by
+            rw [RRSamplePMF_diff_lengths]
+            exact xlen1
+           rw [numerator_zero]
+           rw [@ENNReal.zero_div]
+           simp
