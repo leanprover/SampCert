@@ -183,53 +183,32 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                  -- arithmetic now
                  sorry
 
-<<<<<<< HEAD
-lemma head_tail_prod (x: List Bool)(l : List T)(f: T → SLang Bool) (h: l.length = x.length)(h1: l ≠ [])(h2 : x≠ []) :
- (∏' (i: Fin l.length), f l[i.val] x[i.val]) = f (l[0]'(by sorry)) (x[0]'(by sorry )) * ∏' (i : Fin l.tail.length), f (l.tail)[i.val] (x.tail[i.val]'(by sorry)):= by
-  induction l generalizing x with
-  | nil => aesop
-  | cons l ls hl =>
-    rw [tprod_fintype]
-    rw[tprod_fintype]
-    simp only [List.getElem_cons_zero]
-    simp only [List.tail_cons]
-    simp [Finset.prod_eq_multiset_prod]
-
-    rw [@Fin.prod_ofFn]
-    rw[@Fin.prod_ofFn]
-    have h3 : ∀(i: Fin ls.length), (x[i.val+1]'(by sorry)) = (x.tail[i.val]'(by sorry)) := by
-      intro i
-      induction x with
-      | nil => simp_all only [ne_eq, not_false_eq_true, List.length_cons, List.length_nil, add_eq_zero,
-        List.length_eq_zero, one_ne_zero, and_false]
-      | cons xh xt x => simp
-    simp_all only [ne_eq, not_false_eq_true]
-lemma prod_split (f: T → SLang Bool)(l a b : List T)(x c d : List Bool)(hl: l = a++b)(hx: x = c++d)(xl : x.length = l.length)(ac: a.length = c.length) :
-∏' (i: Fin l.length), f l[i.val] x[i.val] = (∏'(i :Fin a.length), f a[i.val] c[i.val]) * ∏'(i: Fin b.length), f b[i.val] (d[i.val]'(by sorry)) := by
-  rw[@tprod_fintype, @tprod_fintype, @tprod_fintype]
-  have h1 : l.length = a.length + b.length := by aesop
-  have h2: Fin l.length = Fin (a.length + b.length) := by aesop
-  sorry
-  -- rw [@Fin.prod_univ_add]
-  -- simp_all only [Fin.coe_castAdd, Fin.coe_natAdd]
-
-lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
-    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by sorry)) (x[a.length]'(by sorry)) / f (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) := by
-    rw[tprod_fintype]
-    rw[tprod_fintype]
-    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
-
-    have ind: a.length < x.length := by
-      rw[← hx]
-      rw[h1]
+lemma valid_index0 (l₁ : List T)(h1: l₁ = a++[n]++b) (i : Fin (l₁.length - 1)): (Fin.succAbove (a.length) i).val < l₁.length := by
+  have hl : l₁.length - 1 + 1 = l₁.length := by
+      rw [Nat.sub_add_cancel]
+      rw [h1]
       simp
-    conv =>
-      enter[1,2]
-      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
-    have helper:  ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
-=======
-lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b): ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(by sorry) = l₂[Fin.succAbove a.length i]'(by sorry) := by
->>>>>>> origin/main
+      linarith
+  simp [Fin.succAbove]
+  split
+  simp [Fin.castSucc]
+  {calc
+  i.val < l₁.length - 1 := i.2
+  _ < l₁.length := by aesop}
+  {
+    calc
+    i.succ.val = i.val + 1 := by simp
+    _ < l₁.length - 1 + 1 := by linarith[i.2]
+    _ = l₁.length := by rw [hl]
+  }
+
+lemma valid_index1 (l₁ l₂ : List T)(h1: l₁ = a++[n]++b) (h2: l₂ = a++[m]++b) (i : Fin ((l₁.length - 1))): (Fin.succAbove (a.length) i).val < l₂.length := by
+  have hl: l₁.length = l₂.length := by aesop
+  rw[←hl]
+  apply valid_index0
+  exact h1
+
+lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b): ∀i : Fin (l₁.length - 1), l₁[(Fin.succAbove a.length i).val]'(valid_index0 l₁ h1 i) = l₂[Fin.succAbove a.length i]'(valid_index1 l₁ l₂ h1 h2 i) := by
       intro i
       simp only [h1,h2]
       by_cases i < a.length
@@ -249,8 +228,6 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
             linarith
           rw[mod]
           simp[Nat.succ_le_of_lt h]
-
-
 
         simp only[h']
         simp only [↓reduceIte, Fin.coe_castSucc,
@@ -282,8 +259,6 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
             linarith
           rw[mod]
           exact h
-
-
         simp only[h']
         simp only [↓reduceIte, Fin.coe_castSucc,
           Fin.getElem_fin]
@@ -312,11 +287,26 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
         simp at h
         exact h
 
-lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry))) /
-    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(by sorry)) (x[i.val]'(by sorry)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
+lemma valid_index2 {l₁ : List T} (h1: l₁ = a++[n]++b) (i : Fin ((l₁.length - 1) + 1)):
+  i.val < l₁.length := by
+    have hl1: l₁.length - 1 + 1 = l₁.length := by
+      rw [Nat.sub_add_cancel]
+      subst h1
+      simp
+      linarith
+    exact Nat.lt_of_lt_of_eq i.2 hl1
+
+lemma valid_index3 {l₁ : List T} {x : List Bool} (h1: l₁ = a++[n]++b) (hx: l₁.length = x.length) (i : Fin ((l₁.length - 1) + 1)):
+  i.val < x.length := by
+    rw[←hx]
+    apply valid_index2 h1 i
+
+
+lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
+    (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(valid_index2 h2 i)) (x[i.val]'(valid_index3 h2 hy i)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
-    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+    rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₁.length-1)+1)) => f (l₁[b.val]'(valid_index2 h1 b)) (x[b.val]'(valid_index3 h1 hx b))) a.length]
 
     have ind: a.length < x.length := by
       rw[← hx]
@@ -324,7 +314,7 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
       simp
     conv =>
       enter[1,2]
-      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(by sorry)) (x[b.val]'(by sorry))) a.length]
+      rw[Fin.prod_univ_succAbove (fun (b: Fin ((l₂.length-1)+1)) => f (l₂[b.val]'(valid_index2 h2 b)) (x[b.val]'(valid_index3 h2 hy b))) a.length]
     have helper2: Fin (l₁.length - 1) = Fin (l₂.length - 1) := by aesop
     have helper3: l₁.length - 1 = l₂.length - 1 := by aesop
     have hlp: (∏ i : Fin (l₁.length - 1), f l₁[(Fin.succAbove a.length i).val] x[↑(Fin.succAbove a.length i).val]) = ∏ i : Fin (l₂.length - 1), f l₂[(Fin.succAbove a.length i).val] x[(Fin.succAbove a.length i).val] := by
@@ -411,102 +401,6 @@ theorem reduction_final (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h
     simp
     rw[← propext cast_eq_iff_heq]
 
-
-
-<<<<<<< HEAD
-    case h =>
-      rw[ac]
-      simp
-      rw[e_def]
-      simp
-      rw[d_def]
-      simp
-      exact leq
-    case h' =>
-      rw[ac]
-      simp
-      left
-      rw[e_def]
-      simp
-      rw[d_def]
-      simp
-      exact leq
-    case h =>
-      rw[ac]
-      simp
-
-    case xl =>
-      rw[d_def]
-      simp
-      rw[← hx]
-      rw[h1]
-      simp
-    case ac =>
-      rw[e_def]
-      rw[d_def]
-      simp
-      have aux: 1 ≤ x.length - a.length := by linarith [Nat.sub_pos_of_lt leq]
-      simp[aux]
-    case xl =>
-      rw[d_def]
-      simp
-      rw[← hx]
-      rw[h1]
-      simp
-    case ac =>
-      rw[e_def]
-      simp
-      rw[d_def]
-      simp
-      have aux: 1 ≤ x.length - a.length := by linarith [Nat.sub_pos_of_lt leq]
-      simp[aux]
-    case hc =>
-      rw[@tprod_fintype]
-      rw [@Finset.prod_ne_zero_iff]
-      intro a ha
-      sorry
-=======
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ---
-
-
-
-
-
->>>>>>> origin/main
-
 open Finset
 open scoped BigOperators
 
@@ -528,8 +422,7 @@ cases xlen1 : l₁.length == x.length with
                         have xlen2 : l₂.length = x.length := by aesop
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
-<<<<<<< HEAD
-                        rw[reduction l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+                        rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
                         have i1: a.length < x.length := by
                           rw[←xlen3]
                           subst hl₁ hl₂
@@ -547,12 +440,6 @@ cases xlen1 : l₁.length == x.length with
                         _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop}
                         {apply RRSingleSample_non_zero query num den h}
                         {apply RRSingleSample_finite query num den h}
-                        {aesop}
-                        {aesop}
-=======
-                        rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
->>>>>>> origin/main
-
 | false => simp at xlen1
            rw [←Ne.eq_def] at xlen1
            have numerator_zero: RRSample_PMF query num den h l₁ x = 0 := by
