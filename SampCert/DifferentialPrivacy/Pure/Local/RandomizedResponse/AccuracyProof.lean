@@ -6,6 +6,7 @@ open SLang
 open PMF
 open RandomizedResponse
 
+-- UNDER CONSTRUCTION --
 def toSingletonLists {α : Type u} (l : List α) : List (List α) :=
   l.map (fun x => [x])
 
