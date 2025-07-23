@@ -1,4 +1,4 @@
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.DPProof
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProof
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.AccuracyProof
