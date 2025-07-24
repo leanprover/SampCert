@@ -4,6 +4,7 @@ import SampCert
 import SampCert.SLang
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Basic
+import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 
 /- In this file, we show that if a function f : α -> SLang Bool
    normalizes, in the sense that ∑' (b : List Bool) f a b = 1
@@ -87,11 +88,9 @@ lemma simplifier2_gen (α : Type)(f: α → SLang Bool)(hd : α) (tl : List α) 
   apply symm
   apply list_bool_tsum_only_tl b
 
-lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
-
 lemma simplifier3_gen [LawfulMonad SLang] (α : Type)(f : α → SLang Bool)(hd : α)(tl : List α) (h : ∑' (b : Bool), f hd b = 1): ∑' (a : Bool), f hd a * mapM f tl b = mapM f tl b := by
   rw [tsum_bool]
-  rw [ennreal_mul_assoc]
+  rw [ENNRealLemmas.ennreal_mul_assoc]
   rw [←tsum_bool]
   rw [h]
   rw [@CanonicallyOrderedCommSemiring.one_mul]
@@ -111,9 +110,6 @@ lemma Norm_func_norm_on_list [LawfulMonad SLang] (α : Type)(f: α → SLang Boo
       enter [1, 1, b, 1, a]
       simp [-mapM]
       rw [simplifier1_gen]
-      /- rewrite as a double sum, the first sum being over possible a.heads, and the second
-         some being over all list Bools, with the conditional now being on the Boolean
-         in the first sum. Afterwards, it should be straightforward to use the inductive hypothesis -/
     rw [@ENNReal.tsum_comm]
     conv =>
       enter [1, 1, b]

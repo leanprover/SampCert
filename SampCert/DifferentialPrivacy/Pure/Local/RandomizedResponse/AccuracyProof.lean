@@ -6,6 +6,7 @@ open SLang
 open PMF
 open RandomizedResponse
 
+-- UNDER CONSTRUCTION --
 def toSingletonLists {α : Type u} (l : List α) : List (List α) :=
   l.map (fun x => [x])
 
@@ -18,7 +19,7 @@ noncomputable def coeff {T : Type} (X : List T) (num : Nat) (den : PNat) : ℝ :
 noncomputable def constants {T : Type} (X : List T) (num : Nat) (den : PNat) : ℝ :=
   (- (X.length) / 2) + (num * X.length) / den
 
-def applying_RR_individually {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num ≤ den) : List (SLang Bool) :=
+def applying_RR_individually {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den) : List (SLang Bool) :=
   X.map (fun x => RRSingleSample query num den h x)
 
 
@@ -52,13 +53,13 @@ noncomputable def pmf.sum_list : List (PMF α) → PMF α
 | (x::xs) => pmf.add x (pmf.sum_list xs)
 -/
 
-def p {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num ≤ den) : ℚ :=
+def p {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den) : ℚ :=
   let bool_lst := X.map query
   let true_count := (bool_lst.filter (fun b => b)).length
   (true_count) / X.length
 
 
-noncomputable def unbiased_estimator {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num ≤ den):=
+noncomputable def unbiased_estimator {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den):=
   let coef := coeff X num den
   let cons := constants X num den
   let s := applying_RR_individually query X num den h
