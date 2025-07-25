@@ -6,15 +6,15 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Basic
 import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 
-/- In this file, we show that if a function f : α -> SLang Bool
-   normalizes, in the sense that ∑' (b : List Bool) f a b = 1
+/- In this file, we show that if a function f : α -> SLang β
+   normalizes, in the sense that ∑' (b : List β) f a b = 1
    for any fixed a : α,
    then the function obtained by applying monadic map
    to f also normalizes.
 -/
 
-lemma simplifier1_gen (α : Type)(f: α → SLang Bool) (a : List Bool) (b : Bool)(tl : List α):
-(∑' (a_1 : List Bool), if a = b :: a_1 then mapM f tl a_1 else 0) =
+lemma simplifier1_gen (α β : Type) [DecidableEq β](f: α → SLang β) (a : List β) (b : β)(tl : List α):
+(∑' (a_1 : List β), if a = b :: a_1 then mapM f tl a_1 else 0) =
 (if a.head? = b then mapM f tl a.tail else 0) := by
   cases a with
   | nil => simp
@@ -39,8 +39,8 @@ lemma simplifier1_gen (α : Type)(f: α → SLang Bool) (a : List Bool) (b : Boo
 
 open Set
 
-lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
-∑' (a : List Bool), f a = ∑' (a : List Bool), if a.head? = some b then f a.tail else 0 := by
+lemma list_beta_tsum_only_tl (β : Type) [DecidableEq β] (b : β) (f : List β -> ENNReal):
+∑' (a : List β), f a = ∑' (a : List β), if a.head? = some b then f a.tail else 0 := by
   apply Equiv.tsum_eq_tsum_of_support
   intro x
   case e =>
@@ -81,22 +81,20 @@ lemma list_bool_tsum_only_tl (b : Bool) (f : List Bool -> ENNReal):
     exact e₁.trans e₂
   case he => simp
 
-lemma simplifier2_gen (α : Type)(f: α → SLang Bool)(hd : α) (tl : List α) (b : Bool):
-(∑' (a : List Bool), f hd b * if a.head? = some b then mapM f tl a.tail else 0) =
- ∑' (a : List Bool), f hd b * mapM f tl a := by
+lemma simplifier2_gen (α β : Type) [DecidableEq β] (f: α → SLang β)(hd : α) (tl : List α) (b : β):
+(∑' (a : List β), f hd b * if a.head? = some b then mapM f tl a.tail else 0) =
+ ∑' (a : List β), f hd b * mapM f tl a := by
   simp_all only [mul_ite, mul_zero]
   apply symm
-  apply list_bool_tsum_only_tl b
+  apply list_beta_tsum_only_tl β b
 
-lemma simplifier3_gen [LawfulMonad SLang] (α : Type)(f : α → SLang Bool)(hd : α)(tl : List α) (h : ∑' (b : Bool), f hd b = 1): ∑' (a : Bool), f hd a * mapM f tl b = mapM f tl b := by
-  rw [tsum_bool]
-  rw [ENNRealLemmas.ennreal_mul_assoc]
-  rw [←tsum_bool]
-  rw [h]
-  rw [@CanonicallyOrderedCommSemiring.one_mul]
+lemma simplifier3_gen [LawfulMonad SLang] (α β : Type)(f : α → SLang β)(hd : α)(tl : List α) (b : List β) (h : ∑' (b : β), f hd b = 1): ∑' (a : β), f hd a * mapM f tl b = mapM f tl b := by
+  have : ∑' (a : β), f hd a * mapM f tl b = (∑' (a : β), f hd a) * mapM f tl b := by
+    rw [ENNReal.tsum_mul_right]
+  rw [this, h, one_mul]
 
-lemma Norm_func_norm_on_list [LawfulMonad SLang] (α : Type)(f: α → SLang Bool) (al: List α):
- (∀ a : α, ∑' (b : Bool), f a b = 1) →  ∑' (b : List Bool), mapM f al b = 1 := by
+lemma Norm_func_norm_on_list [LawfulMonad SLang] (α β : Type) [DecidableEq β] (f: α → SLang β) (al: List α):
+ (∀ a : α, ∑' (b : β), f a b = 1) →  ∑' (b : List β), mapM f al b = 1 := by
   intro h
   induction al with
   | nil =>
