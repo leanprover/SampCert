@@ -17,13 +17,13 @@ lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
 
 lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
   RRSingleSample query num den h l true = (den + 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
+  rw[RRSingleSample, RRSinglePushForward]
   aesop
   sorry /- This is arithmetically true, but proving arithmetic things is a mess -/
 
 lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
   RRSingleSample query num den h l false = (den - 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
+  rw[RRSingleSample, RRSinglePushForward]
   simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
     Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, Bool.not_eq_false', mul_ite, ↓reduceIte,
     mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
@@ -31,7 +31,7 @@ lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den :
 
 lemma RRSingleSample_false_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = false):
   RRSingleSample query num den h l true = (den - 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
+  rw[RRSingleSample, RRSinglePushForward]
   simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
     Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
     Bool.false_eq_true, ↓reduceIte, mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
@@ -39,7 +39,7 @@ lemma RRSingleSample_false_true {T : Type} (query: T -> Bool) (num : Nat) (den :
 
 lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = false):
   RRSingleSample query num den h l false = (den + 2 * num) / (2 * den) := by
-  rw[RRSingleSample]
+  rw[RRSingleSample, RRSinglePushForward]
   simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
     Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, mul_ite, Bool.false_eq_true, ↓reduceIte,
     mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
@@ -49,7 +49,7 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
 
 lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ 0 := by
-  simp [RRSingleSample]
+  simp [RRSingleSample, RRSinglePushForward]
   cases hb : b == query l with
   | true => simp at hb
             subst hb
