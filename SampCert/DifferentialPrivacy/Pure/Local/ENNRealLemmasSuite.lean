@@ -17,8 +17,6 @@ lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
 2 * (@Nat.cast ENNReal NonAssocSemiring.toNatCast num) < @Nat.cast ENNReal CanonicallyOrderedCommSemiring.toNatCast ↑den :=
   by norm_cast
 
-
-
 lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b -> a / c < b / c := by
   intro h1
   apply ENNReal.div_lt_of_lt_mul
@@ -94,8 +92,6 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
               exact h1
               apply hb
               apply hbT
-
-
 
 
 lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):

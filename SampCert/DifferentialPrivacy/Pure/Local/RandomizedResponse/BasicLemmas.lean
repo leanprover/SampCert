@@ -154,7 +154,7 @@ lemma RRSample_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNa
 lemma RRSamplePMF_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (l₁ : List T) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
   RRSample_PMF query num den h l₁ l₂ = 0 := RRSample_diff_lengths query num den h l₁ l₂ hlen
 
-lemma mwi1 (n : Nat) (f : Fin n -> Real): ∏ (i : Fin n), f i = ∏ (i : Fin (n + 1 - 1)), f i := by congr
+/- lemma mwi1 (n : Nat) (f : Fin n -> Real): ∏ (i : Fin n), f i = ∏ (i : Fin (n + 1 - 1)), f i := by congr
 
 lemma mwi2 (n : Nat) (f : Real -> Real) (l : List Real) (h : l.length < n): ∏ (i : Fin n), f (l[i]'(by sorry)) = ∏ (i : Fin (n + 1 - 1)), f (l[i]' (by sorry)) := by congr
 
@@ -165,3 +165,4 @@ lemma valid_index2 (n : Nat) (l : List Real) (h : l.length < n) (i : Fin (n + 1 
   sorry
 
 lemma mwi3 (n : Nat) (f : Real -> Real) (l : List Real) (h : l.length < n): ∏ (i : Fin n), f (l[i]'(by apply valid_index1; apply h)) = ∏ (i : Fin (n + 1 - 1)), f (l[i]' (by apply valid_index2; apply h)) := by congr
+-/ 
