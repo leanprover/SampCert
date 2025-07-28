@@ -8,7 +8,6 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.BasicLemmas
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.DPProof
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
 import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
-/-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 open SLang
 open ENNRealLemmas
@@ -287,13 +286,6 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                   rw [Not]
                   intro a_1
                   norm_cast
-
-
-
-
-
-                   /- For this sorry, we need the h hypothesis to be a strict inequality -/
-
                  }
                  { simp
                    rw [@ENNReal.div_eq_top]
@@ -310,7 +302,6 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                    obtain ⟨left⟩ := h_1
                    norm_cast
                  }
-                 -- arithmetic now
 
   | false =>
     cases hqa : query a with
@@ -318,7 +309,6 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
       rw [RRSingleSample_true_false _ _ _ _ _ hqa]
       cases hqa' : query a' with
       | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
-                -- arithmetic now
                 simp
                 rw [@ENNReal.div_eq_inv_mul]
                 rw [@ENNReal.div_eq_inv_mul]
@@ -796,8 +786,9 @@ cases xlen1 : l₁.length == x.length with
                         RRSingleSample query num den h (l₁[a.length]'(by aesop)) (x[a.length]'(by aesop))
                         / RRSingleSample query num den h (l₂[a.length]'(by aesop)) (x[a.length]'(by aesop)) ≤ (den + 2 * num) / (den - 2 * num) := by apply final_bound
                         _ ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
-                          apply final_step_combined
-                          exact h
+                          /- apply final_step_combined
+                          exact h --/
+                          sorry
                         _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop}
                         {apply RRSingleSample_non_zero query num den h}
                         {apply RRSingleSample_finite query num den h}

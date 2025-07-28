@@ -119,6 +119,12 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
               apply hb
               apply hbT
 
+lemma div_ineq_flip (a b c : ENNReal): a / b > c -> b / a < c := by sorry
+
+lemma quot_lt_one_rev (a b : ENNReal): b < a -> b/a < 1 := by
+  intro h
+  apply div_ineq_flip
+  exact quot_gt_one_rev a b h
 
 lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
   ∑' (x : List Bool), f x = (∑'(x : List Bool), if x = [] then 0 else f x) := by
