@@ -3,9 +3,11 @@ import SampCert
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.BasicLemmas
 import SampCert.DifferentialPrivacy.Pure.Local.RAPPOR.Definitions
 
 namespace RAPPOR
+open RandomizedResponse
 
 /- In this file, we show normalization for the One-Time Basic RAPPOR Algorithm.
 -/
@@ -30,5 +32,10 @@ lemma RAPPORSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Fin n)
 /- Instantiation of RAPPOR as a PMF-/
 def RAPPORSample_PMF [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) : PMF (List (List Bool)) :=
   ⟨RAPPORSample n query num den h v, RAPPORSample_PMF_helper query num den h v⟩
+
+lemma RRSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool) (hlen : (one_hot n query l₁).length ≠ l₂.length):
+  RAPPORSingleSample n query num den h l₁ l₂= 0 := by
+  rw [RAPPORSingleSample]
+  apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
 
 end RAPPOR

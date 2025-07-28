@@ -111,6 +111,26 @@ lemma RRSingleSample_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNa
                  aesop
                  exact hden
 
+lemma RRSamplePushForward_diff_lengths (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List Bool) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
+  RRSamplePushForward num den h l₁ l₂ = 0 := by
+  induction l₁ generalizing l₂ with
+  | nil => simp [RRSamplePushForward, -mapM]
+           aesop
+  | cons hd tl ih =>
+  simp [RRSamplePushForward, -mapM]
+  simp [RRSamplePushForward, -mapM] at ih
+  apply And.intro
+  apply Or.inr
+  intro b
+  intro a
+  subst a
+  simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
+  apply Or.inr
+  intro b
+  intro a
+  subst a
+  simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
+
 lemma RRSample_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
   RRSample query num den h l₁ l₂= 0 := by
   induction l₁ generalizing l₂ with
@@ -133,3 +153,15 @@ lemma RRSample_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNa
 
 lemma RRSamplePMF_diff_lengths {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (l₁ : List T) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
   RRSample_PMF query num den h l₁ l₂ = 0 := RRSample_diff_lengths query num den h l₁ l₂ hlen
+
+lemma mwi1 (n : Nat) (f : Fin n -> Real): ∏ (i : Fin n), f i = ∏ (i : Fin (n + 1 - 1)), f i := by congr
+
+lemma mwi2 (n : Nat) (f : Real -> Real) (l : List Real) (h : l.length < n): ∏ (i : Fin n), f (l[i]'(by sorry)) = ∏ (i : Fin (n + 1 - 1)), f (l[i]' (by sorry)) := by congr
+
+lemma valid_index1 (n : Nat) (l : List Real) (h : l.length < n) (i : Fin n): i.val < l.length := by
+  sorry
+
+lemma valid_index2 (n : Nat) (l : List Real) (h : l.length < n) (i : Fin (n + 1 - 1)): i.val < l.length := by
+  sorry
+
+lemma mwi3 (n : Nat) (f : Real -> Real) (l : List Real) (h : l.length < n): ∏ (i : Fin n), f (l[i]'(by apply valid_index1; apply h)) = ∏ (i : Fin (n + 1 - 1)), f (l[i]' (by apply valid_index2; apply h)) := by congr
