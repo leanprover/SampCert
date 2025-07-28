@@ -15,8 +15,8 @@ open ENNRealLemmas
 open RandomizedResponse
 
 namespace SLang
-lemma simplifier_1 (f : T -> SLang Bool):
-(∑' (a : List Bool), if c = a then mapM f tl a else 0) = mapM f tl c := by
+lemma simplifier_1 {β : Type} [DecidableEq β] (f : T -> SLang β) (c : List β):
+(∑' (a : List β), if c = a then mapM f tl a else 0) = mapM f tl c := by
 rw[tsum_eq_single c]
 aesop
 intro b h
@@ -78,6 +78,52 @@ induction l generalizing a with
   simp
   simp at k
   exact k
+
+lemma mapM_dist_cons_general {β : Type} (f: T → SLang β) (b: β)(c: List β)(hd: T)(tl: List T):
+mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
+  rw[List.mapM_cons]
+  simp[-mapM]
+  conv =>
+  enter [1, 1, a, 2, 1, a_1]
+  /- cases b with
+  | true =>
+    simp[-mapM]
+    conv =>
+      enter [1, 2]
+      rw [simplifier_1]
+  | false =>
+    simp [-mapM]
+    conv =>
+      enter [1, 2]
+      rw [simplifier_1] -/
+  sorry
+
+lemma prod_of_ind_prob_general (β : Type) (f : T -> SLang β) (a : List β) (l : List T) (k : l.length = a.length) :
+  mapM f l a = (∏' (i : Fin l.length), f (l.get i) (a.get (Fin.cast k i))) := by
+  induction l generalizing a with
+  | nil =>
+    simp[-mapM]
+    rw[List.length_nil] at k
+    symm at k
+    apply List.eq_nil_of_length_eq_zero at k
+    rw[k]
+  | cons hd tl ih =>
+    cases a with
+    | nil =>
+      simp at k
+    | cons b c =>
+      rw [mapM_dist_cons_general]
+      rw [ih c]
+      rw [@tprod_fintype]
+      rw [@tprod_fintype]
+      simp
+      rw[Fin.prod_univ_succ]
+      simp at k
+      apply Eq.refl
+      aesop
+
+end SLang
+
 
 theorem prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
 RRSample_PMF query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
