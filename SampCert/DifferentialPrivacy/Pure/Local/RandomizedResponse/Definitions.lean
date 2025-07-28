@@ -23,12 +23,8 @@ def Y (query : T -> Bool): Bool -> (T -> Bool) := fun r => (fun l => Bool.xor (q
    from which we sample r.-/
 
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : SLang (List Bool) := do
-/- RRSample uses monadic map to apply RRSingleSample2 on an entire dataset. -/
+/- RRSample uses monadic map to apply RRSingleSample on an entire dataset. -/
  l.mapM (fun x => RRSingleSample query num den h x)
-
- /- def RRSample2 {T : Type} (query : T -> Bool) (seed_list : List SeedType) (l : List T): SLang (List Bool) := do
-  let r ← MultiBernoulliSample seed_list
-  return List.zipWith (fun u s => Bool.xor (query u) s) l r -/
 
 def RRSamplePushForward (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) : SLang (List Bool) := do
  /- For use in RAPPOR -/

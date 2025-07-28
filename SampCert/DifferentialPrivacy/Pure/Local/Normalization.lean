@@ -10,9 +10,13 @@ import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
    normalizes, in the sense that ∑' (b : List β) f a b = 1
    for any fixed a : α,
    then the function obtained by applying monadic map
-   to f also normalizes.
+   to f and some list also normalizes.
+   This is valuable for local algorithms, where
+   a randomizer is first defined for a single user and then
+   applied to a dataset of users.
 -/
 
+/- Helper lemma to simplify a if-then-else statement in a sum-/
 lemma simplifier1_gen (α β : Type) [DecidableEq β](f: α → SLang β) (a : List β) (b : β)(tl : List α):
 (∑' (a_1 : List β), if a = b :: a_1 then mapM f tl a_1 else 0) =
 (if a.head? = b then mapM f tl a.tail else 0) := by
@@ -39,6 +43,9 @@ lemma simplifier1_gen (α β : Type) [DecidableEq β](f: α → SLang β) (a : L
 
 open Set
 
+/- This lemma shows that summing a function over all possible lists is the same as summing a function
+   over all tails of lists with a specified head.
+-/
 lemma list_beta_tsum_only_tl (β : Type) [DecidableEq β] (b : β) (f : List β -> ENNReal):
 ∑' (a : List β), f a = ∑' (a : List β), if a.head? = some b then f a.tail else 0 := by
   apply Equiv.tsum_eq_tsum_of_support
@@ -81,6 +88,7 @@ lemma list_beta_tsum_only_tl (β : Type) [DecidableEq β] (b : β) (f : List β 
     exact e₁.trans e₂
   case he => simp
 
+/- Another simplifying lemma for if-then-else statements within a sum.-/
 lemma simplifier2_gen (α β : Type) [DecidableEq β] (f: α → SLang β)(hd : α) (tl : List α) (b : β):
 (∑' (a : List β), f hd b * if a.head? = some b then mapM f tl a.tail else 0) =
  ∑' (a : List β), f hd b * mapM f tl a := by
@@ -88,11 +96,16 @@ lemma simplifier2_gen (α β : Type) [DecidableEq β] (f: α → SLang β)(hd : 
   apply symm
   apply list_beta_tsum_only_tl β b
 
+/- Simplifying lemma to pull a constant out of a sum. -/
 lemma simplifier3_gen [LawfulMonad SLang] (α β : Type)(f : α → SLang β)(hd : α)(tl : List α) (b : List β) (h : ∑' (b : β), f hd b = 1): ∑' (a : β), f hd a * mapM f tl b = mapM f tl b := by
   have : ∑' (a : β), f hd a * mapM f tl b = (∑' (a : β), f hd a) * mapM f tl b := by
     rw [ENNReal.tsum_mul_right]
   rw [this, h, one_mul]
 
+/- The key normalization lemma, which shows that if a function f
+   normalizes, then the function obtained applying monadic map to f and some list al
+   also normalizes.
+-/
 lemma Norm_func_norm_on_list [LawfulMonad SLang] (α β : Type) [DecidableEq β] (f: α → SLang β) (al: List α):
  (∀ a : α, ∑' (b : β), f a b = 1) →  ∑' (b : List β), mapM f al b = 1 := by
   intro h

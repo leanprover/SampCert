@@ -18,8 +18,8 @@ def one_hot {T : Type} (n : Nat) (query : T -> Fin n) (v : T) : List Bool := Lis
    by Wang et al.
    The rational privacy parameter lambda = num/den relates to the parameter
    f in the paper via the equation lambda = 1/2 (1 - f).
-
 -/
+
 def RAPPORSingleSample {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : T) : SLang (List Bool) := do
   RRSamplePushForward num den h (one_hot n query v)
 
