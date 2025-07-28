@@ -15,32 +15,24 @@ open ENNRealLemmas
 open RandomizedResponse
 
 namespace SLang
-lemma simplifier_1 {β : Type} [DecidableEq β] (f : T -> SLang β) (c : List β):
-(∑' (a : List β), if c = a then mapM f tl a else 0) = mapM f tl c := by
+
+lemma simplifier_3 {β : Type} [DecidableEq β] (f : T -> SLang β) (c : List β) (a b : β):
+(∑' (a_1 : List β), if b = a ∧ c = a_1 then mapM f tl a_1 else 0) = if b = a then mapM f tl c else 0 := by
 rw[tsum_eq_single c]
 aesop
-intro b h
-simp_all only [ne_eq, mapM, ite_eq_right_iff]
-intro a
-subst a
-simp_all only [not_true_eq_false]
+aesop
 
-lemma mapM_dist_cons (f: T → SLang Bool) (b: Bool)(c: List Bool)(hd: T)(tl: List T):
+lemma mapM_dist_cons {β : Type} [DecidableEq β] (f: T → SLang β) (b: β)(c: List β)(hd: T)(tl: List T):
 mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
-rw[List.mapM_cons]
-simp[-mapM]
-rw [@tsum_bool]
-cases b with
-| true =>
-simp[-mapM]
-conv =>
-  enter [1, 2]
-  rw [simplifier_1]
-| false =>
-simp [-mapM]
-conv =>
-  enter [1, 2]
-  rw [simplifier_1]
+  rw[List.mapM_cons]
+  simp[-mapM]
+  conv =>
+    enter [1, 1, a, 2]
+    simp[-mapM]
+    rw [simplifier_3]
+  rw [tsum_eq_single b]
+  aesop
+  aesop
 
 lemma RRSample_rec (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (hd: T)(tl : List T)(b: Bool)(c: List Bool):
 RRSample query num den h (hd::tl) (b::c) = RRSingleSample query num den h hd b * RRSample query num den h tl c := by
@@ -48,57 +40,7 @@ unfold RRSample
 set f := fun x => RRSingleSample query num den h x
 rw[mapM_dist_cons f b c hd tl]
 
-
-lemma prod_of_ind_prob(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
-RRSample query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by
-induction l generalizing a with
-| nil =>
-  simp
-  rw[List.length_nil] at k
-  symm at k
-  apply List.eq_nil_of_length_eq_zero at k
-  rw[k]
-  unfold RRSample
-  rw [List.mapM_nil]
-  simp [pure]
-
-| cons hd tl ih =>
-  simp
-  simp at ih
-  cases a with
-  | nil =>
-  simp at k
-  | cons b c =>
-  rw[RRSample_rec query num den h]
-  rw[ih c]
-  rw [@tprod_fintype]
-  rw [@tprod_fintype]
-
-  rw[Fin.prod_univ_succ]
-  simp
-  simp at k
-  exact k
-
-lemma mapM_dist_cons_general {β : Type} (f: T → SLang β) (b: β)(c: List β)(hd: T)(tl: List T):
-mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
-  rw[List.mapM_cons]
-  simp[-mapM]
-  conv =>
-  enter [1, 1, a, 2, 1, a_1]
-  /- cases b with
-  | true =>
-    simp[-mapM]
-    conv =>
-      enter [1, 2]
-      rw [simplifier_1]
-  | false =>
-    simp [-mapM]
-    conv =>
-      enter [1, 2]
-      rw [simplifier_1] -/
-  sorry
-
-lemma prod_of_ind_prob_general (β : Type) (f : T -> SLang β) (a : List β) (l : List T) (k : l.length = a.length) :
+lemma prod_of_ind_prob (β : Type) [DecidableEq β] (f : T -> SLang β) (a : List β) (l : List T) (k : l.length = a.length) :
   mapM f l a = (∏' (i : Fin l.length), f (l.get i) (a.get (Fin.cast k i))) := by
   induction l generalizing a with
   | nil =>
@@ -112,7 +54,7 @@ lemma prod_of_ind_prob_general (β : Type) (f : T -> SLang β) (a : List β) (l 
     | nil =>
       simp at k
     | cons b c =>
-      rw [mapM_dist_cons_general]
+      rw [mapM_dist_cons]
       rw [ih c]
       rw [@tprod_fintype]
       rw [@tprod_fintype]
