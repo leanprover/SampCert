@@ -70,6 +70,9 @@ end SLang
 theorem prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
 RRSample_PMF query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
+lemma ennreal_div_one (a: ENNReal) : a / 1 = a := by aesop
+
+
 lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (a a' : T) (b : Bool):
   RRSingleSample query num den h a b / RRSingleSample query num den h a' b
   ≤ (den + 2 * num) / (den - 2 * num) := by
@@ -81,36 +84,154 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
       cases hqa' : query a' with
       | true => rw [RRSingleSample_true_true _ _ _ _ _ hqa']
                 rw[ENNReal.div_self]
-                {sorry}
+                {rw [@Decidable.le_iff_lt_or_eq]
+                 cases hnum : num == 0 with
+                   | true => simp at hnum
+                             apply Or.inr
+                             subst hnum
+                             simp
+                             rw [ENNReal.div_self]
+                             norm_num
+                             apply pnat_zero_imp_false
+                             simp
+                   | false => simp at hnum
+                              apply Or.inl
+                              apply quot_gt_one_rev
+                              simp
+                              have h1: 0 < (2 : ENNReal) * num + 2 * num := by
+                                simp
+                                rw [@Nat.pos_iff_ne_zero]
+                                simp
+                                exact hnum
+                              have h2: den < den + (2 : ENNReal) * num + 2 * num := by
+                                simp
+                                rw [add_assoc]
+                                apply ENNReal.lt_add_right
+                                simp
+                                norm_num
+                                exact hnum
+
+                              simp_all only [pos_add_self_iff, CanonicallyOrderedCommSemiring.mul_pos, Nat.ofNat_pos,
+                                Nat.cast_pos, true_and, NNReal.ofPNat, Nonneg.mk_natCast, gt_iff_lt]
+                              apply ENNReal.sub_lt_of_lt_add
+                              rw [@Decidable.le_iff_eq_or_lt]
+                              right
+                              rw [← ENNReal.coe_two]
+                              exact_mod_cast h
+
+                              simp_all only}
                 {rw [@ENNReal.div_ne_zero]
                  apply And.intro
                  simp
                  intro hd
                  apply False.elim
                  apply pnat_zero_imp_false den hd
-                 apply mult_ne_top
                  simp
-                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
                 }
-                { apply div_ne_top
-                  simp
-                  apply mult_ne_top
-                  simp
-                  simp
-                  simp
+                { simp
+                  rw [@ENNReal.div_eq_top]
                   rw[Not]
-                  apply pnat_zero_imp_false den
+                  intro b
+                  rcases b with ⟨_, br⟩
+                  have hh : ¬ den.val = 0 := by simp
+                  simp at br
+                  rw [Not] at hh
+                  apply hh at br
+                  exact br
+                  rename_i h_1
+                  simp_all only [ENNReal.add_eq_top, ENNReal.coe_ne_top, false_or, ne_eq]
+                  obtain ⟨left⟩ := h_1
+                  norm_cast
                 }
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                 -- arithmetic now
-                 aesop
-                 sorry
+                 simp_all only [NNReal.ofPNat, Nonneg.mk_natCast]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [ENNReal.mul_inv]
+                 simp
+                 rw [mul_assoc]
+                 rw [mul_comm]
+                 rw [mul_comm]
+                 rw [← mul_assoc]
+                 rw [← mul_assoc]
+                 conv =>
+                  enter [1, 1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                  enter [1]
+                 rw [ENNReal.inv_mul_cancel]
+                 rw [one_mul]
+                 simp_all only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, ENNReal.coe_eq_zero, Nat.cast_eq_zero,
+                   false_or]
+                 apply pnat_zero_imp_false
+                 simp_all only [ne_eq]
+                 apply Aesop.BuiltinRules.not_intro
+                 intro a_1
+                 norm_cast
+                 left
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+                 left
+                 simp
+                 apply pnat_zero_imp_false
     | false =>
       rw [RRSingleSample_false_true _ _ _ _ _ hqa]
       cases hqa' : query a' with
-      | true => rw [RRSingleSample_true_true _ _ _ _ _ hqa']
-                -- arithmetic now
-                sorry
+      | true =>
+                 rw [RRSingleSample_true_true _ _ _ _ _ hqa']
+                 simp_all only [NNReal.ofPNat, Nonneg.mk_natCast]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [ENNReal.mul_inv]
+                 simp
+                 rw [mul_assoc]
+                 rw [mul_comm]
+                 rw [mul_comm]
+                 rw [← mul_assoc]
+                 rw [← mul_assoc]
+                 conv =>
+                  enter [1, 1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                  enter [1]
+                 rw [ENNReal.inv_mul_cancel]
+                 rw [one_mul]
+                 rw [← @ENNReal.div_eq_inv_mul]
+                 rw  [← @ENNReal.div_eq_inv_mul]
+                 apply ENNReal.div_le_div
+                 simp_all only [tsub_le_iff_right]
+                 rw [add_assoc]
+                 have hh (a b : ENNReal) : a ≤ a + b := by simp
+                 apply hh
+                 simp_all only [tsub_le_iff_right]
+                 rw [add_assoc]
+                 have hh (a b : ENNReal) : a ≤ a + b := by simp
+                 apply hh
+                 simp
+                 apply pnat_zero_imp_false
+                 simp
+                 rw [Not]
+                 intro a
+                 norm_cast
+                 left
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+                 left
+                 simp
+                 apply pnat_zero_imp_false
+
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                  rw[ENNReal.div_self]
                  { rw [@Decidable.le_iff_lt_or_eq]
@@ -127,26 +248,67 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                               apply Or.inl
                               apply quot_gt_one_rev
                               simp
-                              have h1: 0 < (2 : ENNReal) * num + 2 * num := by sorry
-                              have h2: den < den + (2 : ENNReal) * num + 2 * num := by sorry
-                              aesop
-                              sorry
+                              have h1: 0 < (2 : ENNReal) * num + 2 * num := by
+                                simp
+                                rw [@Nat.pos_iff_ne_zero]
+                                simp
+                                exact hnum
+                              have h2: den < den + (2 : ENNReal) * num + 2 * num := by
+                                simp
+                                rw [add_assoc]
+                                apply ENNReal.lt_add_right
+                                simp
+                                norm_num
+                                exact hnum
+
+                              simp_all only [pos_add_self_iff, CanonicallyOrderedCommSemiring.mul_pos, Nat.ofNat_pos,
+                                Nat.cast_pos, true_and, NNReal.ofPNat, Nonneg.mk_natCast, gt_iff_lt]
+                              apply ENNReal.sub_lt_of_lt_add
+                              rw [@Decidable.le_iff_eq_or_lt]
+                              right
+                              rw [← ENNReal.coe_two]
+                              exact_mod_cast h
+
+                              simp_all only
+
                   }
-                 {rw [@ENNReal.div_ne_zero]
+                 {simp
                   apply And.intro
-                  simp
+                  rw [Not]
+                  intro b
+                  rw [@Nat.lt_iff_le_and_not_ge] at h
+                  rw [@tsub_eq_zero_iff_le] at b
+                  rcases h with ⟨hl, hr⟩
+                  rw [← ENNReal.coe_two] at b
+                  have hh : den.val ≤ 2 * num := by
+                    exact_mod_cast b
+                  linarith
+
+                  rw [Not]
+                  intro a_1
                   norm_cast
-                  simp [Nat.cast_mul]
-                  intro hd
-                  sorry /- For this sorry, we need the h hypothesis to be a strict inequality -/
-                  apply mult_ne_top
-                  simp
-                  simp
+
+
+
+
+
+                   /- For this sorry, we need the h hypothesis to be a strict inequality -/
+
                  }
-                 { apply div_ne_top
-                   simp
-                   aesop
-                   apply pnat_zero_imp_false den a_1
+                 { simp
+                   rw [@ENNReal.div_eq_top]
+                   rw[Not]
+                   intro b
+                   rcases b with ⟨_, br⟩
+                   have hh : ¬ den.val = 0 := by simp
+                   simp at br
+                   rw [Not] at hh
+                   apply hh at br
+                   exact br
+                   rename_i h_1
+                   simp_all only [ENNReal.add_eq_top, ENNReal.coe_ne_top, false_or, ne_eq]
+                   obtain ⟨left⟩ := h_1
+                   norm_cast
                  }
                  -- arithmetic now
 
@@ -157,19 +319,230 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
       cases hqa' : query a' with
       | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
                 -- arithmetic now
-                sorry
+                simp
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [ENNReal.mul_inv]
+                simp
+                rw [← mul_assoc]
+                conv =>
+                  enter [1,1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                rw [ENNReal.inv_mul_cancel]
+                rw [one_mul]
+                rw [ENNReal.inv_mul_cancel]
+                rw [ENNReal.le_div_iff_mul_le]
+                rw [one_mul]
+                simp_all only [tsub_le_iff_right]
+                rw [add_assoc]
+                have hh (a b : ENNReal) : a ≤ a + b := by simp
+                apply hh
+
+                right
+                simp_all only [ne_eq, add_eq_zero, ENNReal.coe_eq_zero, Nat.cast_eq_zero, mul_eq_zero,
+                  OfNat.ofNat_ne_zero, false_or, not_and]
+                intro a_1
+                apply Aesop.BuiltinRules.not_intro
+                intro a_2
+                subst a_2
+                simp_all only [mul_zero, PNat.pos]
+                have h' : ¬ (den : Nat) = 0:= PNat.ne_zero den
+                contradiction
+
+                left
+                norm_num
+
+                simp
+                rw [Not]
+                intro b
+                rw [@Nat.lt_iff_le_and_not_ge] at h
+                rw [@tsub_eq_zero_iff_le] at b
+                rcases h with ⟨hl, hr⟩
+                rw [← ENNReal.coe_two] at b
+                have hh : den.val ≤ 2 * num := by
+                  exact_mod_cast b
+                linarith
+
+                norm_num
+                simp
+                apply pnat_zero_imp_false
+
+                simp
+                rw[Not]
+                intro b
+                norm_cast
+
+                left
+                simp
+                rw[Not]
+                intro b
+                norm_cast
+
+                left
+                simp
+                apply pnat_zero_imp_false
+
+
       | false => rw [RRSingleSample_false_false _ _ _ _ _ hqa']
                  -- arithmetic now
-                 sorry
+                 simp
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [ENNReal.mul_inv]
+                 simp
+                 rw [mul_assoc]
+                 rw [mul_comm]
+                 rw [mul_comm]
+                 rw [← mul_assoc]
+                 rw [← mul_assoc]
+                 conv =>
+                  enter [1, 1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                  enter [1]
+                 rw [ENNReal.inv_mul_cancel]
+                 rw [one_mul]
+                 rw [← @ENNReal.div_eq_inv_mul]
+                 rw  [← @ENNReal.div_eq_inv_mul]
+                 apply ENNReal.div_le_div
+                 simp_all only [tsub_le_iff_right]
+                 rw [add_assoc]
+                 have hh (a b : ENNReal) : a ≤ a + b := by simp
+                 apply hh
+                 simp_all only [tsub_le_iff_right]
+                 rw [add_assoc]
+                 have hh (a b : ENNReal) : a ≤ a + b := by simp
+                 apply hh
+                 simp
+                 apply pnat_zero_imp_false
+                 simp
+                 rw [Not]
+                 intro a
+                 norm_cast
+
+                 left
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+
+                 left
+                 simp
+                 apply pnat_zero_imp_false
+
     | false =>
       rw [RRSingleSample_false_false _ _ _ _ _ hqa]
       cases hqa' : query a' with
       | true => rw [RRSingleSample_true_false _ _ _ _ _ hqa']
                 -- arithmetic now
-                sorry
+                simp
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [ENNReal.mul_inv]
+                simp
+                rw [mul_assoc]
+                rw [mul_comm]
+                rw [mul_comm]
+                rw [← mul_assoc]
+                rw [← mul_assoc]
+                conv =>
+                  enter [1, 1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                  enter [1]
+                rw [ENNReal.inv_mul_cancel]
+                rw [one_mul]
+                simp
+                apply pnat_zero_imp_false
+
+                simp
+                rw [Not]
+                intro b
+                norm_cast
+
+                left
+                simp
+                rw[Not]
+                intro b
+                norm_cast
+
+                left
+                simp
+                apply pnat_zero_imp_false
+
+
       | false => rw [RRSingleSample_false_false _ _ _ _ _ hqa']
                  -- arithmetic now
-                 sorry
+                 simp
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [@ENNReal.div_eq_inv_mul]
+                 rw [ENNReal.mul_inv]
+                 simp
+                 rw [← mul_assoc]
+                 conv =>
+                  enter [1,1]
+                  rw [mul_comm]
+                  rw [← mul_assoc]
+                 rw [ENNReal.inv_mul_cancel]
+                 rw [one_mul]
+                 rw [ENNReal.inv_mul_cancel]
+                 rw [ENNReal.le_div_iff_mul_le]
+                 rw [one_mul]
+                 simp_all only [tsub_le_iff_right]
+                 rw [add_assoc]
+                 have hh (a b : ENNReal) : a ≤ a + b := by simp
+                 apply hh
+
+                 right
+                 simp_all only [ne_eq, add_eq_zero, ENNReal.coe_eq_zero, Nat.cast_eq_zero, mul_eq_zero,
+                   OfNat.ofNat_ne_zero, false_or, not_and]
+                 intro a_1
+                 apply Aesop.BuiltinRules.not_intro
+                 intro a_2
+                 subst a_2
+                 simp_all only [mul_zero, PNat.pos]
+                 have h' : ¬ (den : Nat) = 0:= PNat.ne_zero den
+                 contradiction
+
+                 left
+                 norm_num
+
+                 simp
+                 intro b
+                 rw [Not]
+                 intro
+                 have h' : ¬ (den : Nat) = 0:= PNat.ne_zero den
+                 contradiction
+
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+
+                 simp
+                 apply pnat_zero_imp_false
+
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+
+                 left
+                 simp
+                 rw[Not]
+                 intro b
+                 norm_cast
+
+                 left
+                 simp
+                 apply pnat_zero_imp_false
+
+
 
 lemma valid_index0 (l₁ : List T)(h1: l₁ = a++[n]++b) (i : Fin (l₁.length - 1)): (Fin.succAbove (a.length) i).val < l₁.length := by
   have hl : l₁.length - 1 + 1 = l₁.length := by
