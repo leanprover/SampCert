@@ -38,4 +38,20 @@ lemma RRSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -
   rw [RAPPORSingleSample]
   apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
 
+lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
+  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
+  simp_all only [RAPPORSingleSample]
+  set ohv := one_hot n query v
+  set ohu := one_hot n query u
+  cases hlen: ohv.length == b.length with
+  | true => sorry
+  | false =>
+      simp at hlen
+      have h1: RRSamplePushForward num den h ohv b = 0 := RRSample_diff_lengths n query num den h v b hlen
+      rw [h1]
+      rw [@ENNReal.zero_div]
+      simp
+
+
+
 end RAPPOR
