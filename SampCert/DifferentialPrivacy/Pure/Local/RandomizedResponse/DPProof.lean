@@ -78,7 +78,7 @@ lemma final_step (num : Nat) (den : PNat) (h: 2 * num < den):
   rw [@div_pos_iff]
   apply Or.inl
   apply And.intro
-  {apply bruh}
+  {apply pos_helper}
   {apply bruh1 num den h}
 
   /- have h1 : 0 < ((1: ℝ) / 2 + ↑num / ↑(NNReal.ofPNat den)) := bruh query num den h l
