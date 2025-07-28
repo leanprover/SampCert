@@ -17,6 +17,32 @@ lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
 2 * (@Nat.cast ENNReal NonAssocSemiring.toNatCast num) < @Nat.cast ENNReal CanonicallyOrderedCommSemiring.toNatCast ↑den :=
   by norm_cast
 
+/- lemma mult_inv_dist (a b : ENNReal): (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
+  rw [@inv_eq_one_div]
+  rw [@inv_eq_one_div]
+  rw [@inv_eq_one_div]
+  sorry
+-/
+
+lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
+
+
+lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
+  rw [← @ENNReal.inv_ne_zero]
+  rw [← @ENNReal.inv_ne_zero] at h1
+  rw [← @ENNReal.inv_ne_zero] at h2
+  sorry
+
+lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
+  rw [← @ENNReal.inv_ne_zero]
+  rw [← @ENNReal.inv_ne_zero] at h1
+  rw [@ENNReal.div_eq_inv_mul]
+  sorry
+
+lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
+  intro h1
+  sorry
+
 lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b -> a / c < b / c := by
   intro h1
   apply ENNReal.div_lt_of_lt_mul
