@@ -79,7 +79,7 @@ lemma one_hot_different_answer {T : Type} (n : Nat) (query: T -> Fin n) (v u : T
 lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
   RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
-lemma RRSamplePushForward_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
+lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
   RRSamplePushForward num den h l b ≠ 0 := by
   rw [RRSamplePushForward]
   rw [prod_of_ind_prob _ _ _ _ k]
@@ -88,7 +88,7 @@ lemma RRSamplePushForward_non_zero {T : Type} (query: T -> Bool) (num : Nat) (de
   intro a ha
   sorry -- Need a proof that RRSinglePushForward is non-zero, should be easy
 
-lemma RRSamplePushForward_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
+lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
   RRSamplePushForward num den h l b ≠ ⊤ := by
   unfold RRSamplePushForward
   sorry -- Need a proof that RRSinglePushForward is finite, and that this works well with mapM...
@@ -98,24 +98,33 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
   simp_all only [RAPPORSingleSample]
   set ohv := one_hot n query v
   set ohu := one_hot n query u
+  have oh_len: ohu.length = ohv.length := by simp[ohv, ohu]
   cases hlen: ohv.length == b.length with
   | true =>
+   simp at hlen
    cases h_eq: query v == query u with
     | true => simp at h_eq
               have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
               rw [same_answer]
               rw [@ENNReal.div_self]
-              {sorry}
-              {sorry}
-              {sorry}
+              {rw [@sq]
+               aesop
+               sorry
+              }
+              {
+                apply RRSamplePushForward_non_zero
+                exact T
+                rw[←hlen]
+                exact oh_len
+              }
+              { apply RRSamplePushForward_finite
+                exact T
+              }
     | false =>
-      simp at hlen
+      simp at h_eq
       simp_all only [RRSamplePushForward]
-      have hlen2: ohu.length = b.length := by
-        rw [←hlen]
-        simp [ohu, ohv]
       rw [prod_of_ind_prob _ _ _ _ hlen]
-      rw [prod_of_ind_prob _ _ _ _ hlen2]
+      rw [prod_of_ind_prob _ _ _ _ oh_len]
       sorry
   | false =>
       simp at hlen
