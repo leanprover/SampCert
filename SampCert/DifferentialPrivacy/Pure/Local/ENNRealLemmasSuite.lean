@@ -11,6 +11,36 @@ lemma ennreal_mul_eq (a b c : ENNReal): a = b -> c * a = c * b := by
 
 lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
 
+lemma le_add_non_zero (a b :ENNReal)(h: b ≠ 0)(h2: a ≠ ⊤): a < a+b := by
+  rw [@lt_iff_le_and_ne]
+  apply And.intro
+  simp_all
+  simp
+  rw [Not]
+  intro c
+  have gg : a + 0 =a +b := by
+    simp
+    exact c
+  rw [ENNReal.add_right_inj] at gg
+  symm at gg
+  subst gg
+  have hh: (0 ≠ 0) → False := by simp
+  apply hh
+  exact_mod_cast h
+  exact h2
+
+lemma sub_le_add_ennreal (a b :ENNReal)(h1: b ≠ 0)(h3: b ≤ a)(h4: a ≠ ⊤): a -b < a +b := by
+  apply ENNReal.sub_lt_of_lt_add
+  exact h3
+  rw [add_assoc]
+  apply le_add_non_zero
+  simp_all only [ne_eq, add_eq_zero, and_self, not_false_eq_true]
+  exact h4
+
+
+
+
+
 lemma mult_ne_zero (a b : ENNReal) (h1 : a ≠ 0) (h2 : b ≠ 0): a * b ≠ 0 := by aesop
 
 lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
@@ -113,6 +143,8 @@ lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b ->
   exact h1
   exact h.left
   exact h.right
+
+
 
 lemma quot_gt_one_rev (a b : ENNReal): b < a -> 1 < a/b := by
   cases hb : b == 0 with
