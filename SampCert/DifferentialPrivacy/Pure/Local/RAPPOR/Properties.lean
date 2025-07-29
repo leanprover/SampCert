@@ -32,15 +32,16 @@ lemma RAPPORSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Fin n)
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RAPPORSingleSample_PMF_helper query num den h a
 
-/- Instantiation of RAPPOR as a PMF-/
+/- Promotion of RAPPOR to a PMF-/
 def RAPPORSample_PMF [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) : PMF (List (List Bool)) :=
   ⟨RAPPORSample n query num den h v, RAPPORSample_PMF_helper query num den h v⟩
 
+/- In the RAPPOR algorithm with n possible responses, the probability of an output of different length than n is zero.-/
 lemma RAPPORSingleSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool) (hlen : (one_hot n query l₁).length ≠ l₂.length):
   RAPPORSingleSample n query num den h l₁ l₂= 0 := by
   rw [RAPPORSingleSample]
   apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
-
+/- The same as above, but extended to the entire dataset. -/
 lemma RAPPORSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (x : List (List Bool)) (hlen : l₁.length ≠ x.length):
   RAPPORSample n query num den h l₁ x = 0 := by
   induction l₁ generalizing x with
@@ -55,8 +56,8 @@ lemma RAPPORSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query:
   subst hy
   simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
 
-#check List.ofFn_eq_map
-
+/- The next few lemmas are helper lemmas to simplify proofs involving one-hot encodings.
+-/
 lemma List.ofFn_rw {T : Type} (n : Nat) (f : Fin n -> T) (i : Fin n):
   (List.ofFn f)[i] = f i := by
   simp [List.ofFn_eq_map]
@@ -76,9 +77,13 @@ lemma one_hot_different_answer {T : Type} (n : Nat) (query: T -> Fin n) (v u : T
     rw [← @Ne.eq_def]
     exact h
 
+/- This allows us to use prob_ind_prob in the RAPPOR DP proof -/
 lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
   RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
+/- RRSamplePushForward gives a non-zero probability for an output of the same length.
+   This is needed in the DP proof.
+-/
 lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
   RRSamplePushForward num den h l b ≠ 0 := by
   rw [RRSamplePushForward]
@@ -88,11 +93,26 @@ lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * n
   intro a ha
   sorry -- Need a proof that RRSinglePushForward is non-zero, should be easy
 
+/- RRSamplePushForward is always finite. This is needed in the DP proof. -/
 lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
   RRSamplePushForward num den h l b ≠ ⊤ := by
-  unfold RRSamplePushForward
-  sorry -- Need a proof that RRSinglePushForward is finite, and that this works well with mapM...
+  cases hlen: l.length == b.length with
+  | true =>
+    simp at hlen
+    unfold RRSamplePushForward
+    rw [prod_of_ind_prob _ _ _ _ hlen]
+    rw [@tprod_fintype]
+    apply ENNRealLemmas.Finset.prod_ne_top_fin
+    intro i
+    -- Need a proof that RRSinglePushForward is finite
+    sorry
+  | false =>
+    simp at hlen
+    have hzero: RRSamplePushForward num den h l b = 0 := RRSamplePushForward_diff_lengths num den h l b hlen
+    rw [hzero]
+    simp
 
+/- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
   simp_all only [RAPPORSingleSample]
@@ -109,7 +129,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               rw [@ENNReal.div_self]
               {rw [@sq]
                aesop
-               sorry
+               sorry -- have a separate lemma that proves this
               }
               {
                 apply RRSamplePushForward_non_zero
@@ -133,6 +153,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [@ENNReal.zero_div]
       simp
 
+/- This extends the previous lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
   DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num))) -- placeholder
    := by
@@ -149,6 +170,8 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                 | Update hl₁ hl₂ =>
                   rename_i a y b z
                   simp
+                  /- Now we need to apply the generalized reduction lemma,
+                  and then do some arithmetic. -/
                   sorry
       | false => simp at xlen1
                  rw [←Ne.eq_def] at xlen1

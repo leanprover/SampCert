@@ -27,11 +27,65 @@ lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
 lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
 
 
+#check ENNReal.mul_eq_top
+
 lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
-  rw [← @ENNReal.inv_ne_zero]
-  rw [← @ENNReal.inv_ne_zero] at h1
-  rw [← @ENNReal.inv_ne_zero] at h2
-  sorry
+  rw [@Ne.eq_def]
+  intro h
+  rw [ENNReal.mul_eq_top] at h
+  cases h with
+  | inl h =>
+   apply And.right at h
+   contradiction
+  | inr h =>
+   apply And.left at h
+   contradiction
+
+lemma Finset.prod_ne_top (n : Nat) (f : ℕ -> ENNReal) (h : ∀ i, f i ≠ ⊤):
+  ∏ (i : Fin n), f i.val ≠ ⊤ := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    rw [@Fin.prod_univ_add]
+    apply mult_ne_top
+    apply ih
+    rw [@Fin.prod_univ_one]
+    apply h
+
+lemma Finset.prod_ne_top_fin (n : Nat) (f : Fin n -> ENNReal) (h : ∀ i, f i ≠ ⊤):
+  ∏ (i : Fin n), f i ≠ ⊤ := by
+  cases hn : n == 0 with
+| false =>
+  have hn1: n > 0 := by
+     simp at hn
+     exact Nat.zero_lt_of_ne_zero hn
+
+  let g : Nat -> ENNReal := fun i => f (Fin.ofNat' i hn1)
+  have mod: ∀ i : Fin n, i % n = i := by
+    intro i
+    rw [Nat.mod_eq]
+    simp
+  have h0: ∀ i : Fin n, f i = g i := by
+    intro i
+    simp_all [g]
+    have eq: Fin.ofNat' (i.val) hn1 = i := by
+      simp_all [Fin.ofNat']
+    rw [eq]
+  have h1: ∏ i : Fin n, f i = ∏ i : Fin n, g i := by
+    conv =>
+      enter [2, 2, i]
+      rw [←h0 i]
+  have h2: ∀ i : ℕ, g i ≠ ⊤ := by
+    intro i
+    apply h
+  rw [h1]
+  apply Finset.prod_ne_top n g
+  exact h2
+ | true =>
+   simp at hn
+   subst hn
+   simp
+
 
 lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
   rw [← @ENNReal.inv_ne_zero]
