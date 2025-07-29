@@ -73,6 +73,7 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
             }
              {exact ne_of_beq_false rfl}
 
+
 lemma RRSingleSample_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ ⊤ := by
   have hden: ↑(NNReal.ofPNat den) ≠ (0 : ENNReal) := by
@@ -165,4 +166,4 @@ lemma valid_index2 (n : Nat) (l : List Real) (h : l.length < n) (i : Fin (n + 1 
   sorry
 
 lemma mwi3 (n : Nat) (f : Real -> Real) (l : List Real) (h : l.length < n): ∏ (i : Fin n), f (l[i]'(by apply valid_index1; apply h)) = ∏ (i : Fin (n + 1 - 1)), f (l[i]' (by apply valid_index2; apply h)) := by congr
--/ 
+-/

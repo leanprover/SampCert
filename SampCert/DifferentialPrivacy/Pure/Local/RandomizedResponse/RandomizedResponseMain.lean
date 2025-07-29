@@ -65,8 +65,7 @@ lemma prod_of_ind_prob (β : Type) [DecidableEq β] (f : T -> SLang β) (a : Lis
 
 end SLang
 
-
-theorem prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
+theorem RRSample_prod_of_ind_prob_PMF(query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den)(a: List Bool)(l: List T)(k: l.length = a.length):
 RRSample_PMF query num den h l a = (∏'(i: Fin l.length), RRSingleSample query num den h (l.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
 lemma ennreal_div_one (a: ENNReal) : a / 1 = a := by aesop
@@ -761,8 +760,8 @@ apply singleton_to_event_update
 intros l₁ l₂ h_adj x
 cases xlen1 : l₁.length == x.length with
 | true =>
-          rw[prod_of_ind_prob_PMF query num den h x l₁ (by aesop)]
-          rw[prod_of_ind_prob_PMF query num den h x l₂
+          rw[RRSample_prod_of_ind_prob_PMF query num den h x l₁ (by aesop)]
+          rw[RRSample_prod_of_ind_prob_PMF query num den h x l₂
           (by rw[←UpdateNeighbour_length h_adj]
               simp at xlen1
               exact xlen1)]
@@ -782,14 +781,15 @@ cases xlen1 : l₁.length == x.length with
                           rw[←xlen1]
                           rw [@Nat.lt_add_right_iff_pos]
                           simp
-                        {calc
+                        {/- calc
                         RRSingleSample query num den h (l₁[a.length]'(by aesop)) (x[a.length]'(by aesop))
                         / RRSingleSample query num den h (l₂[a.length]'(by aesop)) (x[a.length]'(by aesop)) ≤ (den + 2 * num) / (den - 2 * num) := by apply final_bound
                         _ ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
                           /- apply final_step_combined
                           exact h --/
                           sorry
-                        _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop}
+                        _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop -/
+                        sorry}
                         {apply RRSingleSample_non_zero query num den h}
                         {apply RRSingleSample_finite query num den h}
 | false => simp at xlen1

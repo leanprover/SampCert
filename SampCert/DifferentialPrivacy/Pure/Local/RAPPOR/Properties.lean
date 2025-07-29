@@ -4,10 +4,13 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.BasicLemmas
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.RandomizedResponseMain
 import SampCert.DifferentialPrivacy.Pure.Local.RAPPOR.Definitions
 
 namespace RAPPOR
+
 open RandomizedResponse
+open SLang
 
 /- In this file, we show normalization for the One-Time Basic RAPPOR Algorithm.
 -/
@@ -33,10 +36,62 @@ lemma RAPPORSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Fin n)
 def RAPPORSample_PMF [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) : PMF (List (List Bool)) :=
   ⟨RAPPORSample n query num den h v, RAPPORSample_PMF_helper query num den h v⟩
 
-lemma RRSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool) (hlen : (one_hot n query l₁).length ≠ l₂.length):
+lemma RAPPORSingleSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool) (hlen : (one_hot n query l₁).length ≠ l₂.length):
   RAPPORSingleSample n query num den h l₁ l₂= 0 := by
   rw [RAPPORSingleSample]
   apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
+
+lemma RAPPORSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (x : List (List Bool)) (hlen : l₁.length ≠ x.length):
+  RAPPORSample n query num den h l₁ x = 0 := by
+  induction l₁ generalizing x with
+  | nil => simp [RAPPORSample, -mapM]
+           aesop
+  | cons hd tl ih =>
+  simp [RAPPORSample, -mapM]
+  simp [RAPPORSample, -mapM] at ih
+  intro b
+  apply Or.inr
+  intro y hy
+  subst hy
+  simp_all only [mapM, List.length_cons, ne_eq, add_left_inj, not_false_eq_true]
+
+#check List.ofFn_eq_map
+
+lemma List.ofFn_rw {T : Type} (n : Nat) (f : Fin n -> T) (i : Fin n):
+  (List.ofFn f)[i] = f i := by
+  simp [List.ofFn_eq_map]
+
+lemma one_hot_same_answer {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (h : query v = query u) :
+  one_hot n query v = one_hot n query u := by
+    simp
+    rw [h]
+
+lemma one_hot_same_answer_index {T : Type} (n : Nat) (query: T -> Fin n) (v : T) (j : Fin n) :
+  (one_hot n query v)[j]'(by simp) = true ↔ query v = j := by
+    simp [one_hot]
+
+lemma one_hot_different_answer {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (h : query u ≠ query v):
+  (one_hot n query v)[query v]'(by simp) ≠ (one_hot n query u)[query v]'(by simp) := by
+    simp
+    rw [← @Ne.eq_def]
+    exact h
+
+lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
+  RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
+
+lemma RRSamplePushForward_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
+  RRSamplePushForward num den h l b ≠ 0 := by
+  rw [RRSamplePushForward]
+  rw [prod_of_ind_prob _ _ _ _ k]
+  rw [@tprod_fintype]
+  rw [@Finset.prod_ne_zero_iff]
+  intro a ha
+  sorry -- Need a proof that RRSinglePushForward is non-zero, should be easy
+
+lemma RRSamplePushForward_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
+  RRSamplePushForward num den h l b ≠ ⊤ := by
+  unfold RRSamplePushForward
+  sorry -- Need a proof that RRSinglePushForward is finite, and that this works well with mapM...
 
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
@@ -44,14 +99,53 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
   set ohv := one_hot n query v
   set ohu := one_hot n query u
   cases hlen: ohv.length == b.length with
-  | true => sorry
+  | true =>
+   cases h_eq: query v == query u with
+    | true => simp at h_eq
+              have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
+              rw [same_answer]
+              rw [@ENNReal.div_self]
+              {sorry}
+              {sorry}
+              {sorry}
+    | false =>
+      simp at hlen
+      simp_all only [RRSamplePushForward]
+      have hlen2: ohu.length = b.length := by
+        rw [←hlen]
+        simp [ohu, ohv]
+      rw [prod_of_ind_prob _ _ _ _ hlen]
+      rw [prod_of_ind_prob _ _ _ _ hlen2]
+      sorry
   | false =>
       simp at hlen
-      have h1: RRSamplePushForward num den h ohv b = 0 := RRSample_diff_lengths n query num den h v b hlen
+      have h1: RRSamplePushForward num den h ohv b = 0 := RAPPORSingleSample_diff_lengths n query num den h v b hlen
       rw [h1]
       rw [@ENNReal.zero_div]
       simp
 
-
+lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
+  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num))) -- placeholder
+   := by
+      apply singleton_to_event_update
+      intros l₁ l₂ h_adj x
+      cases xlen1 : l₁.length == x.length with
+      | true => simp at xlen1
+                have xlen2: l₂.length = x.length := by
+                  rw [←xlen1]
+                  rw[←UpdateNeighbour_length h_adj]
+                rw[RAPPOR_prob_of_ind_prob_PMF n query num den h l₁ x xlen1]
+                rw[RAPPOR_prob_of_ind_prob_PMF n query num den h l₂ x xlen2]
+                cases h_adj with
+                | Update hl₁ hl₂ =>
+                  rename_i a y b z
+                  simp
+                  sorry
+      | false => simp at xlen1
+                 rw [←Ne.eq_def] at xlen1
+                 have numerator_zero: RAPPORSample_PMF n query num den h l₁ x = 0 := RAPPORSample_diff_lengths n query num den h l₁ x xlen1
+                 rw [numerator_zero]
+                 rw [@ENNReal.zero_div]
+                 simp
 
 end RAPPOR

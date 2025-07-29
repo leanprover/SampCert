@@ -11,6 +11,7 @@ open RandomizedResponse SLang
 /- Definition of One-Time Basic RAPPOR. -/
 
 /- One-hot encoding of a vector-/
+@[simp]
 def one_hot {T : Type} (n : Nat) (query : T -> Fin n) (v : T) : List Bool := List.ofFn (fun i => query v = i)
 
 /- One-Time Basic RAPPOR for a single user.
