@@ -12,7 +12,20 @@ lemma conversion_RAP {β: Type}(l: List T) (x: List β)(h1: l = a++[n]++b)(hl : 
   rw [fin_prod_cast (by rw [← Nat.sub_add_cancel hl])]
   simp
 
-lemma reduction2_RAP (n : Nat) (l₁ l₂: List T)(x: List (List Bool)) (f: Nat -> T → SLang (List Bool))(h1: l₁ = a++[l]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length) (hx2 : ∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by sorry)).length = n) (hy: l₂.length = x.length) (nonzero: ∀(k: T) (bo: (List Bool)), bo.length = n -> f n k bo ≠ 0) (noninf: ∀(k: T) (bo: (List Bool)), f n k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f n (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
+lemma fin_conv_helper (l₂ : List T) (hl₂: l₂ = a++[m]++b): l₂.length - 1 + 1 = l₂.length := by --this is useful later
+                  rw [Nat.sub_add_cancel]
+                  rw [@Nat.succ_le_iff]
+                  rw [hl₂]
+                  rw [@List.length_append]
+                  aesop
+lemma valid_index4 (l₂ : List T) (hl₂ : l₂ = a++[m]++b)(x : List (List Bool)) (i : Fin (l₂.length - 1 + 1)) (xlen2 : l₂.length = x.length): i.val < x.length := by
+  conv =>
+    enter [2]
+    rw [←xlen2]
+    rw [←fin_conv_helper _ hl₂]
+  exact i.2
+
+lemma reduction2_RAP (n : Nat) (l₁ l₂: List T)(x: List (List Bool)) (f: Nat -> T → SLang (List Bool))(h1: l₁ = a++[l]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length) (hx2 : ∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4; apply h2; aesop)).length = n) (hy: l₂.length = x.length) (nonzero: ∀(k: T) (bo: (List Bool)), bo.length = n -> f n k bo ≠ 0) (noninf: ∀(k: T) (bo: (List Bool)), f n k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f n (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
     (∏' (i : Fin ((l₂.length-1)+1)), f n (l₂[i.val]'(valid_index2 h2 i)) (x[i.val]'(valid_index3 h2 hy i)))  = f n (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f n (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
@@ -45,7 +58,7 @@ lemma reduction2_RAP (n : Nat) (l₁ l₂: List T)(x: List (List Bool)) (f: Nat 
     intro i
     simp[noninf]
 
-theorem reduction_final_RAP (n : Nat) (l₁ l₂: List T)(x: List (List Bool)) (f: Nat -> T → SLang (List Bool)) (h1: l₁ = a++[l]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length) (hx2 : ∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by sorry)).length = n) (hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: (List Bool)), bo.length = n -> f n k bo ≠ 0)(noninf: ∀(k: T) (bo: (List Bool)), f n k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f n (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
+theorem reduction_final_RAP (n : Nat) (l₁ l₂: List T)(x: List (List Bool)) (f: Nat -> T → SLang (List Bool)) (h1: l₁ = a++[l]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length) (hx2 : ∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4; apply h2; aesop)).length = n) (hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: (List Bool)), bo.length = n -> f n k bo ≠ 0)(noninf: ∀(k: T) (bo: (List Bool)), f n k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f n (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
     (∏' (i : Fin (l₂.length)), f n (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f n (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f n (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) := by
     have hl2: l₂.length ≥ 1 := by rw[h2];simp; linarith
     have hl1: l₁.length ≥ 1 := by rw[h1];simp; linarith

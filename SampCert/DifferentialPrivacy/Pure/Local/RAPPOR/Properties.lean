@@ -212,7 +212,7 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                 | Update hl₁ hl₂ =>
                   rename_i a y c z
                   simp
-                  cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by sorry)).length = n) == true with
+                  cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4 _ hl₂; apply xlen2)).length = n) == true with
                   | true =>
                   simp at x_indices
                   /- Now we need to apply the generalized reduction lemma,
@@ -241,16 +241,6 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   simp at x_indices
                   cases x_indices with
                   | intro i hi =>
-                  have i_zero: RAPPORSingleSample n query num den h (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry)) = 0 := by
-                    apply RAPPORSingleSample_diff_lengths n query num den h
-                    simp
-                    aesop
-                  have len_sub_add: l₂.length - 1 + 1 = l₂.length := by
-                    rw [Nat.sub_add_cancel]
-                    rw [@Nat.succ_le_iff]
-                    rw [hl₂]
-                    rw [@List.length_append]
-                    aesop
                   have numerator_zero: (∏' (i : Fin l₁.length), RAPPORSingleSample n query num den h l₁[i.val] x[i.val]) = 0 := by
                     rw [@tprod_fintype]
                     rw[Finset.prod_eq_zero_iff]
@@ -265,12 +255,9 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                     have h_coe: i.val % l₁.length = i.val := by
                      rw [Nat.mod_eq]
                      have hival: i.val < l₁.length := by
-                      conv =>
-                        enter [2]
-                        rw [xlen1]
-                        rw [←xlen2]
-                        rw [←len_sub_add]
-                      exact i.2
+                      rw [xlen1]
+                      apply valid_index4 _ hl₂
+                      exact xlen2
                      aesop
                     conv =>
                      enter[1, 2, 1, 2]
