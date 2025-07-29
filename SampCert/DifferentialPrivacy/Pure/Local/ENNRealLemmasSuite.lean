@@ -196,5 +196,20 @@ lemma tsum_ite_mult (f : T -> ENNReal) (P : T -> Bool):
   (∑' (x : T), f x * if (P x) then 1 else 0) = ∑' (x : T), if (P x) then f x else 0 := by simp_all only [mul_ite,
     mul_one, mul_zero]
 
+lemma sub_add_eq_add_sub (a b :ENNReal)(h : b ≤ a)(h1 : b ≠ ⊤): a - b+ b = a + b-b := by
+  rw [@AddCommMonoidWithOne.add_comm]
+  rw [add_tsub_cancel_of_le h]
+  rw [@AddCommMonoidWithOne.add_comm]
+  symm
+  apply ENNReal.sub_eq_of_add_eq
+  exact h1
+  rw [add_comm]
+
+lemma sub_add_cancel_ennreal (a b :ENNReal)(h:b≤ a)(h1 : b ≠ ⊤): a -b +b =a := by
+  rw [sub_add_eq_add_sub]
+  rw [ENNReal.add_sub_cancel_right h1]
+  exact h
+  exact h1
+
 
 end ENNRealLemmas

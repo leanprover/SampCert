@@ -15,11 +15,61 @@ open ENNRealLemmas
 
 lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
 
+
+
+
+
 lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
   RRSingleSample query num den h l true = (den + 2 * num) / (2 * den) := by
   rw[RRSingleSample, RRSinglePushForward]
-  aesop
-  sorry /- This is arithmetically true, but proving arithmetic things is a mess -/
+  simp_all only [bind, pure, Bool.true_bne, bind_apply, BernoulliSample_apply,
+    pure_apply, Bool.true_eq, Bool.not_eq_true', mul_ite,
+    Bool.false_eq_true, reduceIte, mul_one, mul_zero, tsum_ite_eq]
+  simp
+  rw [ENNReal.sub_eq_of_add_eq]
+  simp
+  rw [@ENNReal.div_eq_top]
+  rw [Not]
+  intro A
+  rcases A with ⟨_,hb⟩
+  simp at hb
+  rename_i h_1
+  simp_all only [ENNReal.sub_eq_top_iff, ENNReal.natCast_ne_top, ne_eq, false_and]
+  have h_le : (2:ENNReal) *num ≤ den.val := by
+    rw [@Nat.lt_iff_le_and_ne] at h
+    rcases h with ⟨hl,_⟩
+    exact mod_cast hl
+  have two_num_fin : (2:ENNReal)* num ≠ ⊤:= by
+    simp
+    rw [Not]
+    intro B
+    norm_cast
+  have hh : 1 = (den.val + (2:ENNReal) * num)/(2 *den) + (den-2*num)/(2*den):= by
+    simp
+    rw [@ENNReal.div_add_div_same]
+    rw [add_comm]
+    conv =>
+      enter [2,1,2]
+      rw [add_comm]
+    rw [← add_assoc]
+    rw [sub_add_cancel_ennreal]
+    have den_den : 1 = ((den.val :ENNReal) + den.val)/(2*(den.val:ENNReal)) := by
+      rw[two_mul]
+      rw [ENNReal.div_self]
+      simp
+      simp
+    norm_cast
+    rw [@ENNReal.le_coe_iff]
+    simp_all only [ne_eq, Nat.cast_mul, Nat.cast_ofNat]
+    apply h_le
+    simp_all only [WithTop.coe_natCast, Nat.cast_inj]
+    apply Eq.refl
+    exact two_num_fin
+  symm
+  exact hh
+
+
+ /- This is arithmetically true, but proving arithmetic things is a mess -/
 
 lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
   RRSingleSample query num den h l false = (den - 2 * num) / (2 * den) := by
@@ -45,7 +95,47 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
     mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
   /- This is the same state as the first lemma that's not working,
      again it's just annoying arithmetic. -/
-  sorry
+  rw [ENNReal.sub_eq_of_add_eq]
+  simp
+  rw [@ENNReal.div_eq_top]
+  rw [Not]
+  intro A
+  rcases A with ⟨_,hb⟩
+  simp at hb
+  rename_i h_1
+  simp_all only [ENNReal.sub_eq_top_iff, ENNReal.natCast_ne_top, ne_eq, false_and]
+  have h_le : (2:ENNReal) *num ≤ den.val := by
+    rw [@Nat.lt_iff_le_and_ne] at h
+    rcases h with ⟨hl,_⟩
+    exact mod_cast hl
+  have two_num_fin : (2:ENNReal)* num ≠ ⊤:= by
+    simp
+    rw [Not]
+    intro B
+    norm_cast
+  have hh : 1 = (den.val + (2:ENNReal) * num)/(2 *den) + (den-2*num)/(2*den):= by
+    simp
+    rw [@ENNReal.div_add_div_same]
+    rw [add_comm]
+    conv =>
+      enter [2,1,2]
+      rw [add_comm]
+    rw [← add_assoc]
+    rw [sub_add_cancel_ennreal]
+    have den_den : 1 = ((den.val :ENNReal) + den.val)/(2*(den.val:ENNReal)) := by
+      rw[two_mul]
+      rw [ENNReal.div_self]
+      simp
+      simp
+    norm_cast
+    rw [@ENNReal.le_coe_iff]
+    simp_all only [ne_eq, Nat.cast_mul, Nat.cast_ofNat]
+    apply h_le
+    simp_all only [WithTop.coe_natCast, Nat.cast_inj]
+    apply Eq.refl
+    exact two_num_fin
+  symm
+  exact hh
 
 lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ 0 := by
@@ -60,10 +150,20 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
             norm_cast
             rw [PNat.mul_coe]
             simp_all only [PNat.val_ofNat]
-            sorry
+            have hh : den.val - 2*num ≤  den.val:= by simp
+            have gg : den.val < 2 *den.val := by simp
+            rw [@Nat.le_iff_lt_or_eq] at hh
+            cases hh with
+            | inl hl =>
+              apply LT.lt.trans hl gg
+            | inr hr =>
+              rw [hr]
+              simp
+
+
   | false => simp at hb
              rw [← Bool.eq_not_of_ne hb]
-             intro j
+             intro
              apply And.intro
              trivial
              apply And.intro
