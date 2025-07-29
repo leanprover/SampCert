@@ -350,13 +350,11 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
     simp[noninf]
 
 lemma fin_prod_cast {n m : ℕ} (h : n = m)(f : Fin n → ENNReal) :
-  ∏ i : Fin n, f i = ∏ i : Fin m, f (Fin.cast h.symm i) := by
+  ∏' i : Fin n, f i = ∏' i : Fin m, f (Fin.cast h.symm i) := by
   subst h
   simp
 
 lemma conversion (l: List T) (x: List Bool)(h1: l = a++[n]++b)(hl : l.length ≥ 1)(hx: l.length = x.length)(f: T → SLang Bool): (∏' (i : Fin (l.length)), f (l[i.val]'(by simp)) (x[i.val]'(by rw[← hx];simp))) = (∏' (i : Fin ((l.length-1)+1)), f (l[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) := by
-  rw[tprod_fintype]
-  rw[tprod_fintype]
   rw [fin_prod_cast (by rw [← Nat.sub_add_cancel hl])]
   simp
 
