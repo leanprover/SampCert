@@ -159,8 +159,43 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               rw [same_answer]
               rw [@ENNReal.div_self]
               {rw [@sq]
-               aesop
-               sorry -- have a separate lemma that proves this
+               simp
+               cases frac_zero : num/den.val == (0:ENNReal) with
+               | true =>
+                simp_all only [beq_iff_eq]
+                rw [@Decidable.le_iff_lt_or_eq]
+                right
+                simp_all only [beq_eq_false_iff_ne, ne_eq, ENNReal.div_eq_zero_iff,
+                 Nat.cast_eq_zero, ENNReal.natCast_ne_top, or_false, Nat.cast_mul, Nat.cast_ofNat]
+                rw [← ENNReal.coe_two]
+                norm_cast
+                simp
+                rw [ENNReal.div_self]
+                simp
+                simp
+               | false =>
+                rw [@Decidable.le_iff_lt_or_eq]
+                left
+                apply ENNRealLemmas.quot_gt_one_rev
+                apply ENNRealLemmas.sub_le_add_ennreal
+                aesop
+                rw [@ENNReal.le_inv_iff_mul_le]
+                rw [@ENNReal.div_eq_inv_mul]
+                rw [mul_assoc]
+                rw [mul_comm]
+                rw [← @ENNReal.le_inv_iff_mul_le]
+                simp
+                rw [@Decidable.le_iff_lt_or_eq]
+                left
+                rw [@Nat.cast_comm]
+                norm_cast
+                simp_all only [beq_eq_false_iff_ne, ne_eq, ENNReal.div_eq_zero_iff,
+                  Nat.cast_eq_zero, ENNReal.natCast_ne_top, or_false, Nat.cast_mul, Nat.cast_ofNat]
+                rw [← ENNReal.coe_two]
+                norm_cast
+                simp
+
+                -- have a separate lemma that proves this
                /- Probably for this we need a version of
                   quot_gt_one_rev in ENNRealLemmasSuite-/
               }
