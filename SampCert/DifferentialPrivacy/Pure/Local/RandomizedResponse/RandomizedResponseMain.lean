@@ -628,7 +628,7 @@ lemma valid_index3 {β: Type}{l₁ : List T} {x : List β} (h1: l₁ = a++[n]++b
     apply valid_index2 h1 i
 
 
-lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: β), f k bo ≠ 0)(noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
+lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length) (nonzero: ∀(k: T) (bo: β), f k bo ≠ 0) (noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
     (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(valid_index2 h2 i)) (x[i.val]'(valid_index3 h2 hy i)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
@@ -657,7 +657,6 @@ lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1
     rw[Finset.prod_ne_zero_iff]
     intro i
     simp[nonzero]
-
     rw[← lt_top_iff_ne_top]
     apply ENNReal.prod_lt_top
     intro i

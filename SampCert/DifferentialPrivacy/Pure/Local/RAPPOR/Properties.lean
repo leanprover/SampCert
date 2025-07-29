@@ -6,6 +6,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.BasicLemmas
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.RandomizedResponseMain
 import SampCert.DifferentialPrivacy.Pure.Local.RAPPOR.Definitions
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Reduction
 
 namespace RAPPOR
 
@@ -144,6 +145,7 @@ lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
+  -- probably want to restate the bound in an arithmetically equivalent way
   simp_all only [RAPPORSingleSample]
   set ohv := one_hot n query v
   set ohu := one_hot n query u
@@ -195,7 +197,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
 
 /- This extends the previous lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
-  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num))) -- placeholder
+  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num)))
    := by
       apply singleton_to_event_update
       intros l₁ l₂ h_adj x
@@ -208,11 +210,75 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                 rw[RAPPOR_prob_of_ind_prob_PMF n query num den h l₂ x xlen2]
                 cases h_adj with
                 | Update hl₁ hl₂ =>
-                  rename_i a y b z
+                  rename_i a y c z
                   simp
+                  cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by sorry)).length = n) == true with
+                  | true =>
+                  simp at x_indices
                   /- Now we need to apply the generalized reduction lemma,
                   and then do some arithmetic. -/
-                  sorry
+                  rw [reduction_final_RAP n l₁ l₂ x (fun f => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
+                  { calc
+                    RAPPORSingleSample n query num den h (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) /
+                    RAPPORSingleSample n query num den h (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) ≤
+                    ((1/2 + num / den) / (1/2 - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
+                    _ ≤ ENNReal.ofReal (Real.exp (2 * Real.log ((↑↑↑den + 2 * ↑num) / (↑↑↑den - 2 * ↑num)))) := by sorry
+                  }
+                  {
+                    intro k bo hbo
+                    rw [RAPPORSingleSample]
+                    apply RRSamplePushForward_non_zero
+                    exact T
+                    aesop
+                  }
+                  { intro k bo
+                    rw [RAPPORSingleSample]
+                    apply RRSamplePushForward_finite
+                    exact T
+                  }
+                  {apply x_indices}
+                  | false => /- This part of the proof is completely disgusting, I am not proud of it -/
+                  simp at x_indices
+                  cases x_indices with
+                  | intro i hi =>
+                  have i_zero: RAPPORSingleSample n query num den h (l₁[i.val]'(by sorry)) (x[i.val]'(by sorry)) = 0 := by
+                    apply RAPPORSingleSample_diff_lengths n query num den h
+                    simp
+                    aesop
+                  have len_sub_add: l₂.length - 1 + 1 = l₂.length := by
+                    rw [Nat.sub_add_cancel]
+                    rw [@Nat.succ_le_iff]
+                    rw [hl₂]
+                    rw [@List.length_append]
+                    aesop
+                  have numerator_zero: (∏' (i : Fin l₁.length), RAPPORSingleSample n query num den h l₁[i.val] x[i.val]) = 0 := by
+                    rw [@tprod_fintype]
+                    rw[Finset.prod_eq_zero_iff]
+                    norm_num
+                    have hl1len:l₁.length > 0 := by
+                     rw[hl₁]
+                     rw [@List.length_append]
+                     aesop
+                    use (Fin.ofNat' i.val (hl1len))
+                    apply RAPPORSingleSample_diff_lengths n query num den h
+                    simp
+                    have h_coe: i.val % l₁.length = i.val := by
+                     rw [Nat.mod_eq]
+                     have hival: i.val < l₁.length := by
+                      conv =>
+                        enter [2]
+                        rw [xlen1]
+                        rw [←xlen2]
+                        rw [←len_sub_add]
+                      exact i.2
+                     aesop
+                    conv =>
+                     enter[1, 2, 1, 2]
+                     rw[h_coe]
+                    aesop
+                  rw [numerator_zero]
+                  rw [@ENNReal.zero_div]
+                  simp
       | false => simp at xlen1
                  rw [←Ne.eq_def] at xlen1
                  have numerator_zero: RAPPORSample_PMF n query num den h l₁ x = 0 := RAPPORSample_diff_lengths n query num den h l₁ x xlen1
