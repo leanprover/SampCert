@@ -115,7 +115,6 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                 }
       | false => rw [RRSingleSample_false_true _ _ _ _ _ hqa']
                 -- arithmetic now
-                 aesop
                  sorry
     | false =>
       rw [RRSingleSample_false_true _ _ _ _ _ hqa]
@@ -291,7 +290,7 @@ lemma valid_index2 {l₁ : List T} (h1: l₁ = a++[n]++b) (i : Fin ((l₁.length
   i.val < l₁.length := by
     have hl1: l₁.length - 1 + 1 = l₁.length := by
       rw [Nat.sub_add_cancel]
-      subst h1
+      rw[h1]
       simp
       linarith
     exact Nat.lt_of_lt_of_eq i.2 hl1
@@ -350,56 +349,28 @@ lemma reduction2 (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁
     intro i
     simp[noninf]
 
+lemma fin_prod_cast {n m : ℕ} (h : n = m)(f : Fin n → ENNReal) :
+  ∏ i : Fin n, f i = ∏ i : Fin m, f (Fin.cast h.symm i) := by
+  subst h
+  simp
+
+lemma conversion (l: List T) (x: List Bool)(h1: l = a++[n]++b)(hl : l.length ≥ 1)(hx: l.length = x.length)(f: T → SLang Bool): (∏' (i : Fin (l.length)), f (l[i.val]'(by simp)) (x[i.val]'(by rw[← hx];simp))) = (∏' (i : Fin ((l.length-1)+1)), f (l[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) := by
+  rw[tprod_fintype]
+  rw[tprod_fintype]
+  rw [fin_prod_cast (by rw [← Nat.sub_add_cancel hl])]
+  simp
+
+
+
+
+
 theorem reduction_final (l₁ l₂: List T)(x: List Bool)(f: T → SLang Bool)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: Bool), f k bo ≠ 0)(noninf: ∀(k: T) (bo: Bool), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
     (∏' (i : Fin (l₂.length)), f (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f (l₁[(a.length)]'(by rw[h1];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) := by
-    have h_len : l₁.length - 1 + 1 = l₁.length := by
-      rw[Nat.sub_add_cancel]
-      rw[h1]
-      simp
-      linarith
-    have h_len2 : l₂.length - 1 + 1 = l₂.length := by
-      rw[Nat.sub_add_cancel]
-      rw[h2]
-      simp
-      linarith
-    rw[tprod_fintype]
-    rw[tprod_fintype]
-    rw[Fintype.prod_equiv (Equiv.cast (congr_arg Fin h_len.symm))]
-    rw[Fintype.prod_equiv (Equiv.cast (congr_arg Fin h_len2.symm))]
-    rw[← tprod_fintype]
-    rw[← tprod_fintype]
+    have hl2: l₂.length ≥ 1 := by rw[h2];simp; linarith
+    have hl1: l₁.length ≥ 1 := by rw[h1];simp; linarith
+    rw[conversion l₂ x h2 hl2 hy f]
+    rw[conversion l₁ x h1 hl1 hx f]
     rw [reduction2 l₁ l₂ x f h1 h2 hx hy nonzero noninf]
-    simp
-    intro i
-    congr
-    rw[Nat.sub_add_cancel]
-    rw[h2]
-    simp
-    linarith
-    rw [← propext cast_eq_iff_heq]
-
-    rw[Nat.sub_add_cancel]
-    rw[h2]
-    simp
-    linarith
-
-    rw [← propext cast_eq_iff_heq]
-    intro i
-    congr
-    rw[Nat.sub_add_cancel]
-    rw[h1]
-    simp
-    linarith
-
-    simp
-    rw[← propext cast_eq_iff_heq]
-    rw[Nat.sub_add_cancel]
-    rw[h1]
-    simp
-    linarith
-
-    simp
-    rw[← propext cast_eq_iff_heq]
 
 open Finset
 open scoped BigOperators
