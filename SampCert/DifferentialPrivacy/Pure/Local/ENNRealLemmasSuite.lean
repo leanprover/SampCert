@@ -34,10 +34,17 @@ lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ �
   sorry
 
 lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
-  rw [← @ENNReal.inv_ne_zero]
-  rw [← @ENNReal.inv_ne_zero] at h1
-  rw [@ENNReal.div_eq_inv_mul]
-  sorry
+  simp
+  rw [Not]
+  intro a
+  rw [@ENNReal.div_eq_top] at a
+  rcases a with ⟨_,ar⟩
+  subst ar
+  simp_all only [ne_eq, not_true_eq_false]
+  rename_i h3
+  rcases h3 with ⟨hl,_⟩
+  subst hl
+  simp_all only [ne_eq, not_true_eq_false]
 
 lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
   intro h1
