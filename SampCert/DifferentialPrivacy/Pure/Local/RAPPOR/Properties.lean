@@ -90,8 +90,8 @@ lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * n
   rw [prod_of_ind_prob _ _ _ _ k]
   rw [@tprod_fintype]
   rw [@Finset.prod_ne_zero_iff]
-  intro a ha
-  sorry -- Need a proof that RRSinglePushForward is non-zero, should be easy
+  intro a _
+  apply RRSinglePushForward_non_zero
 
 /- RRSamplePushForward is always finite. This is needed in the DP proof. -/
 lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
@@ -104,8 +104,7 @@ lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num
     rw [@tprod_fintype]
     apply ENNRealLemmas.Finset.prod_ne_top_fin
     intro i
-    -- Need a proof that RRSinglePushForward is finite
-    sorry
+    apply RRSinglePushForward_finite
   | false =>
     simp at hlen
     have hzero: RRSamplePushForward num den h l b = 0 := RRSamplePushForward_diff_lengths num den h l b hlen
@@ -130,6 +129,8 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               {rw [@sq]
                aesop
                sorry -- have a separate lemma that proves this
+               /- Probably for this we need a version of
+                  quot_gt_one_rev in ENNRealLemmasSuite-/
               }
               {
                 apply RRSamplePushForward_non_zero
@@ -152,6 +153,9 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [h1]
       rw [@ENNReal.zero_div]
       simp
+
+
+#check Real.log_rpow -- we'll need this later
 
 /- This extends the previous lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):

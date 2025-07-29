@@ -16,8 +16,16 @@ open ENNRealLemmas
 lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
 
 
+ /- RRSinglePushForward is like RRSingleSample, but with "query" taken to be the identity map-/
+lemma RRSingleSample_is_RRSinglePushForward (num : Nat) (den : PNat) (h: 2 * num < den) (l : Bool):
+  RRSingleSample (fun x => x) num den h l = RRSinglePushForward num den h l := by
+  simp [RRSingleSample, RRSinglePushForward]
 
-
+ /- RRSamplePushForward is like RRSample, but with "query" taken to be the identity map -/
+lemma RRSample_is_RRSamplePushForward (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool):
+  RRSample (fun x => x) num den h l = RRSamplePushForward num den h l := by
+  simp [RRSample, RRSamplePushForward, -mapM]
+  rfl
 
 lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
   RRSingleSample query num den h l true = (den + 2 * num) / (2 * den) := by
@@ -68,7 +76,6 @@ lemma RRSingleSample_true_true {T : Type} (query: T -> Bool) (num : Nat) (den : 
   symm
   exact hh
 
-
  /- This is arithmetically true, but proving arithmetic things is a mess -/
 
 lemma RRSingleSample_true_false {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (hq : query l = true):
@@ -93,8 +100,6 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
   simp_all only [bind, pure, Bool.false_bne, bind_apply, BernoulliSample_apply, ENNReal.natCast_sub, Nat.cast_mul,
     Nat.cast_ofNat, PNat.mul_coe, PNat.val_ofNat, pure_apply, Bool.false_eq, mul_ite, Bool.false_eq_true, ↓reduceIte,
     mul_one, mul_zero, tsum_ite_eq, NNReal.ofPNat, Nonneg.mk_natCast]
-  /- This is the same state as the first lemma that's not working,
-     again it's just annoying arithmetic. -/
   rw [ENNReal.sub_eq_of_add_eq]
   simp
   rw [@ENNReal.div_eq_top]
@@ -137,9 +142,9 @@ lemma RRSingleSample_false_false {T : Type} (query: T -> Bool) (num : Nat) (den 
   symm
   exact hh
 
-lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
-  RRSingleSample query num den h l b ≠ 0 := by
-  simp [RRSingleSample, RRSinglePushForward]
+lemma RRSinglePushForward_non_zero {T : Type} (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < den) (l : T) (b : Bool):
+  RRSinglePushForward num den h (query l) b ≠ 0 := by
+  simp [RRSinglePushForward]
   cases hb : b == query l with
   | true => simp at hb
             subst hb
@@ -159,8 +164,6 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
             | inr hr =>
               rw [hr]
               simp
-
-
   | false => simp at hb
              rw [← Bool.eq_not_of_ne hb]
              intro
@@ -173,6 +176,10 @@ lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : P
             }
              {exact ne_of_beq_false rfl}
 
+lemma RRSingleSample_non_zero {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
+  RRSingleSample query num den h l b ≠ 0 := by
+  rw [RRSingleSample]
+  apply RRSinglePushForward_non_zero
 
 lemma RRSingleSample_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) (b : Bool):
   RRSingleSample query num den h l b ≠ ⊤ := by
@@ -211,6 +218,14 @@ lemma RRSingleSample_finite {T : Type} (query: T -> Bool) (num : Nat) (den : PNa
                  refine mult_ne_zero 2 ↑(NNReal.ofPNat den) ?false.false.h2.h1 ?false.false.h2.h2
                  aesop
                  exact hden
+
+/- Given what was already proved, the simplest way to prove the next lemma
+   is to note that RRSinglePushForward and RRSample with the identity query are the same -/
+lemma RRSinglePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l : Bool) (b : Bool):
+  RRSinglePushForward num den h l b ≠ ⊤ := by
+    rw [←RRSingleSample_is_RRSinglePushForward]
+    apply RRSingleSample_finite
+
 
 lemma RRSamplePushForward_diff_lengths (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List Bool) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
   RRSamplePushForward num den h l₁ l₂ = 0 := by
