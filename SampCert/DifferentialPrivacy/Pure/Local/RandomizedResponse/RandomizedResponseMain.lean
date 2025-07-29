@@ -217,6 +217,7 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
       intro i
       simp only [h1,h2]
       by_cases i < a.length
+
       case pos h =>
         unfold Fin.succAbove
         have h' : i.castSucc < ↑a.length := by
@@ -232,6 +233,7 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
         rw[List.getElem_append_left a [n] h]
         rw[List.getElem_append_left (a++[m]) b (by simp[h];linarith)]
         rw[List.getElem_append_left]
+
       case neg h =>
         have iab: i.val - a.length < b.length := by
           have ile : i < l₁.length - 1 := i.is_lt
@@ -250,15 +252,14 @@ lemma succHelp (l₁ l₂ : List T)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b):
           rw[mod_helper (a.length) (l₁.length) (by rw[h1];simp;linarith) (by rw[h1]; simp)]
           exact h
         simp only[h']
-        simp only [↓reduceIte, Fin.coe_castSucc,
-          Fin.getElem_fin]
+        simp only [↓reduceIte, Fin.coe_castSucc,Fin.getElem_fin]
         rw[List.getElem_append_right (a++[n]) b (by simp;linarith)]
         rw[List.getElem_append_right (a++[m]) b (by simp;linarith)]
         simp
         simp
         linarith
         simp
-        exact iab
+        linarith
 
 
 lemma valid_index2 {l₁ : List T} (h1: l₁ = a++[n]++b) (i : Fin ((l₁.length - 1) + 1)):
