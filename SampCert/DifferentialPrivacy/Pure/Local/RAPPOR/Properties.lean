@@ -77,6 +77,28 @@ lemma one_hot_different_answer {T : Type} (n : Nat) (query: T -> Fin n) (v u : T
     rw [← @Ne.eq_def]
     exact h
 
+lemma one_hot_different_answer_ex_two {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (j : Fin n) (h: query v ≠ query u):
+  (one_hot n query v)[j]'(by simp) ≠ (one_hot n query u)[j]'(by simp) ↔ query v = j ∨ query u = j := by
+    simp [one_hot]
+    apply Iff.intro
+    { intro ha
+      by_contra hb -- actually aesop can take it from here
+      rw [Mathlib.Tactic.PushNeg.not_or_eq] at hb
+      apply ha
+      apply Iff.intro
+      intro hc
+      apply And.left at hb
+      contradiction
+      intro hc
+      apply And.right at hb
+      contradiction
+    }
+    { intro ha
+      cases ha with
+      | inl h1 => aesop
+      | inr h1 => aesop
+    }
+
 /- This allows us to use prob_ind_prob in the RAPPOR DP proof -/
 lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
   RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
@@ -110,6 +132,14 @@ lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num
     have hzero: RRSamplePushForward num den h l b = 0 := RRSamplePushForward_diff_lengths num den h l b hlen
     rw [hzero]
     simp
+
+lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
+  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by
+   sorry
+
+/- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
+  ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
+  / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
@@ -181,6 +211,12 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       simp_all only [RRSamplePushForward]
       rw [prod_of_ind_prob _ _ _ _ hlen]
       rw [prod_of_ind_prob _ _ _ _ oh_len]
+      simp_all [@tprod_fintype]
+      have len_eq: ohu.length = ohv.length := by aesop
+      have index_1: ∏ i : Fin ohv.length, RRSinglePushForward num den h ohv[i.val] b[i.val] =
+                    ∏ i : Fin ohu.length, RRSinglePushForward num den h ohv[i.val] b[i.val] := by sorry
+      rw [index_1]
+      rw [prod_over_prod] -- this needs proving
       sorry
   | false =>
       simp at hlen
