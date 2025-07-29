@@ -38,4 +38,3 @@ lemma final_step_combined (num : Nat) (den : PNat) (h : 2 * num < den) :
 (den + (2: ENNReal) * num) / (den - (2 : ENNReal) * num) = ENNReal.ofReal (Real.exp (Real.log ((den + 2 * num) / (den - 2 * num)))) := by
   rw [← step1 num den h]
   exact step2 num den h
-
