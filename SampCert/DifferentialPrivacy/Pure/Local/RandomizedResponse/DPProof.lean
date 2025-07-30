@@ -1,3 +1,4 @@
+import SampCert.Util.Log
 import Mathlib.Topology.Basic
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import Mathlib.Data.Real.Basic
@@ -14,8 +15,10 @@ lemma numerator_pos (num : ℕ) (den : ℕ+) : (0 : ℝ) < ↑↑den + 2 * num :
   exact add_pos_of_pos_of_nonneg den_real_pos two_num_nonneg
 
 lemma denominator_pos (num : ℕ) (den : PNat) (h : 2 * num < den) : (0 : ℝ) < ↑↑den - 2 * ↑num := by
-  rw [sub_pos]
+  simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, sub_pos]
   norm_cast
+  exact Nat.cast_lt.mpr h
+
 
 lemma step1 (num : Nat) (den : PNat) (h : 2 * num < den):
 ENNReal.ofReal ((den + 2 * num) / (den - 2 * num)) = ENNReal.ofReal (Real.exp (Real.log ((den + 2 * num) / (den - 2 * num)))) := by
@@ -26,15 +29,67 @@ ENNReal.ofReal ((den + 2 * num) / (den - 2 * num)) = ENNReal.ofReal (Real.exp (R
   {exact numerator_pos num den}
   {exact denominator_pos num den h}
 
+lemma ennreal_of_nat (n: Nat) : ↑n = ENNReal.ofReal (↑ n) := by simp_all only [ENNReal.ofReal_natCast]
+
+lemma ennreal_of_pnat (d : PNat) : ↑↑d = ENNReal.ofReal (↑↑d) := by simp_all only [NNReal.ofPNat, Nonneg.mk_natCast,
+  ENNReal.ofReal_coe_nnreal]
+
+
 lemma step2 (num : Nat) (den : PNat) (h : 2 * num < den):
     (↑↑den + 2 * ↑num) / (↑↑den - 2 * ↑num) = ENNReal.ofReal ((↑↑den + 2 * ↑num) / (↑↑den - 2 * ↑num)) := by
   rw [ENNReal.ofReal_div_of_pos]
-  · congr
-    norm_cast
-  · have foo : 2 * (num : ℝ) < (den : ℕ) := by exact_mod_cast h
-    exact sub_pos.mpr foo
+  rw [ennreal_of_nat]
+  rw [ennreal_of_pnat]
+  have h1 : 2 = ENNReal.ofReal (2) := by simp
+  rw [h1]
+  rw [← ENNReal.ofReal_mul]
+  rw [← ENNReal.ofReal_add]
+  rw [← ENNReal.ofReal_sub]
+  simp
+  simp
+  simp
+  simp
+  simp_all only [sub_pos]
+  norm_cast
+  rw [Mathlib.Tactic.Zify.natCast_lt] at h
+  simp_all only [Nat.cast_mul, Nat.cast_ofNat, NNReal.ofPNat, Nonneg.mk_natCast]
+  norm_cast
+  norm_cast at h
 
 lemma final_step_combined (num : Nat) (den : PNat) (h : 2 * num < den) :
 (den + (2: ENNReal) * num) / (den - (2 : ENNReal) * num) = ENNReal.ofReal (Real.exp (Real.log ((den + 2 * num) / (den - 2 * num)))) := by
   rw [← step1 num den h]
   exact step2 num den h
+
+lemma reduce (num : Nat) (den : PNat):
+((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num): ℝ) = (1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den)) := by
+  simp
+  rw [inv_eq_one_div]
+  rw [div_add_div]
+  · rw [one_mul]
+    rw [div_sub_div]
+    rw [one_mul]
+    rw [div_div_div_eq]
+    nth_rewrite 2 [div_eq_mul_inv]
+    nth_rewrite 4 [mul_comm]
+    rw [← div_eq_mul_inv]
+    rw [mul_div_mul_left]
+    apply ne_of_gt
+    simp_all only [Nat.ofNat_pos, mul_pos_iff_of_pos_left, NNReal.coe_pos, Nat.cast_pos]
+    exact den.2
+    aesop
+    apply ne_of_gt
+    simp_all only [NNReal.coe_pos, Nat.cast_pos]
+    exact den.2
+  · aesop
+  · apply ne_of_gt
+    simp_all only [NNReal.coe_pos, Nat.cast_pos]
+    exact den.2
+
+
+
+lemma final_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
+(↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) ≤
+  ENNReal.ofReal (Real.exp (Real.log ((1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den))))):= by
+  rw [final_step_combined num den h]
+  rw [reduce num den]
