@@ -531,7 +531,11 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                  simp
                  apply pnat_zero_imp_false
 
-
+lemma RRSamplePushForward_final_bound (num : Nat) (den : PNat) (h : 2 * num < den) (a a' : Bool) (b : Bool):
+  RRSinglePushForward num den h a b / RRSinglePushForward num den h a' b
+  ≤ (den + 2 * num) / (den - 2 * num) := by
+  rw [← RRSingleSample_is_RRSinglePushForward num den h]
+  apply final_bound
 
 lemma valid_index0 (l₁ : List T)(h1: l₁ = a++[n]++b) (i : Fin (l₁.length - 1)): (Fin.succAbove (a.length) i).val < l₁.length := by
   have hl : l₁.length - 1 + 1 = l₁.length := by

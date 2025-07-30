@@ -189,6 +189,13 @@ lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.le
    intro x
    rfl
 
+lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool)
+ (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
+∏ i : Fin (one_hot n query u).length, RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] / RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val]
+ = RRSinglePushForward num den h (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
+ * RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
+ := by sorry
+
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
@@ -230,6 +237,11 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
                       exact hlen
       rw [index_1]
       rw [prod_over_prod] -- this needs proving
+      simp_all only [ohv, ohu]
+      rw [single_DP_reduction n query num den h v u b oh_len hlen]
+      #check RRSamplePushForward_final_bound
+      /- now need a version of final_bound for RRPushForward -/
+      /- use the "calc" tactic to prove this-/
       sorry
   | false =>
       simp at hlen
@@ -266,7 +278,8 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   have valid_index5: a.length < l₁.length := by
                     rw [hl₁]
                     rw [@List.length_append]
-                    aesop
+                    simp_all only [List.append_assoc, List.singleton_append, List.length_append, List.length_cons,
+                      List.length_singleton]
                     linarith
                   have valid_index6: a.length < x.length := by
                     rw [←xlen1]

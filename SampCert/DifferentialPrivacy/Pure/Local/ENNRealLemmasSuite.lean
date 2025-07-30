@@ -37,10 +37,6 @@ lemma sub_le_add_ennreal (a b :ENNReal)(h1: b ≠ 0)(h3: b ≤ a)(h4: a ≠ ⊤)
   simp_all only [ne_eq, add_eq_zero, and_self, not_false_eq_true]
   exact h4
 
-
-
-
-
 lemma mult_ne_zero (a b : ENNReal) (h1 : a ≠ 0) (h2 : b ≠ 0): a * b ≠ 0 := by aesop
 
 lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
