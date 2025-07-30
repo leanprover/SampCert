@@ -756,7 +756,7 @@ open Finset
 open scoped BigOperators
 
 theorem RRSample_is_DP (query: T → Bool)(num: Nat)(den:PNat)(h: 2*num < den) :
-DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((den + 2 * num) / (den - 2 * num))) := by
+DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by
 apply singleton_to_event_update
 intros l₁ l₂ h_adj x
 cases xlen1 : l₁.length == x.length with
@@ -788,8 +788,10 @@ cases xlen1 : l₁.length == x.length with
                         _ ≤ ENNReal.ofReal (Real.exp (Real.log ((1/2 + num/den) / (1/2 - num/den)))) := by
                           /- apply final_step_combined
                           exact h --/
-                          sorry
-                        _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop}
+                          apply final_coercion
+                          exact h
+                        _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den)))) := by aesop
+                        }
                         {apply RRSingleSample_non_zero query num den h}
                         {apply RRSingleSample_finite query num den h}
 | false => simp at xlen1
