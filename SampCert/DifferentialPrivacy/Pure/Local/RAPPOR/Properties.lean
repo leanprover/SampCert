@@ -149,8 +149,7 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     simp
 
 lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
-  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by
-   sorry
+  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by sorry
 
 /- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
   ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
@@ -261,7 +260,6 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
     else if query u = (finCongr (by aesop) i) then 1
     else 1 := by
     simp[-one_hot]
-    rw?
     sorry
 
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
