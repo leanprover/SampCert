@@ -142,23 +142,9 @@ lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
   ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
   / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
 
-/- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
-lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
-  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
-  -- probably want to restate the bound in an arithmetically equivalent way
-  simp_all only [RAPPORSingleSample]
-  set ohv := one_hot n query v
-  set ohu := one_hot n query u
-  have oh_len: ohu.length = ohv.length := by simp[ohv, ohu]
-  cases hlen: ohv.length == b.length with
-  | true =>
-   simp at hlen
-   cases h_eq: query v == query u with
-    | true => simp at h_eq
-              have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
-              rw [same_answer]
-              rw [@ENNReal.div_self]
-              {rw [@sq]
+lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
+(1 : ENNReal) ≤ ((1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
+               rw [@sq]
                simp
                cases frac_zero : num/den.val == (0:ENNReal) with
                | true =>
@@ -195,10 +181,33 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
                 norm_cast
                 simp
 
-                -- have a separate lemma that proves this
-               /- Probably for this we need a version of
-                  quot_gt_one_rev in ENNRealLemmasSuite-/
-              }
+lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.length) (h2 : l.length = b.length)
+  (f : α -> β -> ENNReal):
+  ∏ (i : Fin l.length), f l[i] b[i] = ∏ (i : Fin v.length), f l[i] b[i] := by
+   let e : Fin l.length ≃ Fin v.length := by
+      rw [h1]
+   apply Fintype.prod_equiv e
+   intro x
+   simp
+   sorry
+
+/- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
+lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
+  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
+  -- probably want to restate the bound in an arithmetically equivalent way
+  simp_all only [RAPPORSingleSample]
+  set ohv := one_hot n query v
+  set ohu := one_hot n query u
+  have oh_len: ohu.length = ohv.length := by simp[ohv, ohu]
+  cases hlen: ohv.length == b.length with
+  | true =>
+   simp at hlen
+   cases h_eq: query v == query u with
+    | true => simp at h_eq
+              have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
+              rw [same_answer]
+              rw [@ENNReal.div_self]
+              {exact arith_1 num den h} /- The statement of arith_1 might have to change...-/
               {
                 apply RRSamplePushForward_non_zero
                 exact T
@@ -216,7 +225,11 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       simp_all [@tprod_fintype]
       have len_eq: ohu.length = ohv.length := by aesop
       have index_1: ∏ i : Fin ohv.length, RRSinglePushForward num den h ohv[i.val] b[i.val] =
-                    ∏ i : Fin ohu.length, RRSinglePushForward num den h ohv[i.val] b[i.val] := by sorry
+                    ∏ i : Fin ohu.length, RRSinglePushForward num den h ohv[i.val] b[i.val] := by
+                      apply reindex
+                      symm at len_eq
+                      exact len_eq
+                      exact hlen
       rw [index_1]
       rw [prod_over_prod] -- this needs proving
       sorry
@@ -252,10 +265,21 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   simp at x_indices
                   /- Now we need to apply the generalized reduction lemma,
                   and then do some arithmetic. -/
+                  have valid_index5: a.length < l₁.length := by
+                    rw [hl₁]
+                    rw [@List.length_append]
+                    aesop
+                    linarith
+                  have valid_index6: a.length < x.length := by
+                    rw [←xlen1]
+                    exact valid_index5
+                  have valid_index7: a.length < l₂.length := by
+                    rw [xlen2]
+                    exact valid_index6 
                   rw [reduction_final_RAP n l₁ l₂ x (fun f => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
                   { calc
-                    RAPPORSingleSample n query num den h (l₁[a.length]'(by sorry)) (x[a.length]'(by sorry)) /
-                    RAPPORSingleSample n query num den h (l₂[a.length]'(by sorry)) (x[a.length]'(by sorry)) ≤
+                    RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
+                    RAPPORSingleSample n query num den h (l₂[a.length]'(valid_index7)) (x[a.length]'(valid_index6)) ≤
                     ((1/2 + num / den) / (1/2 - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
                     _ ≤ ENNReal.ofReal (Real.exp (2 * Real.log ((↑↑↑den + 2 * ↑num) / (↑↑↑den - 2 * ↑num)))) := by sorry
                   }
