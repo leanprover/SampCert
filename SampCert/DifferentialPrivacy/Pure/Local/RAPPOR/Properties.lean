@@ -100,6 +100,20 @@ lemma one_hot_different_answer_ex_two {T : Type} (n : Nat) (query: T -> Fin n) (
       | inr h1 => aesop
     }
 
+lemma one_hot_different_answer_ex_two_contrp {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (j : Fin n) (h: query v ≠ query u):
+  (one_hot n query v)[j]'(by simp) = (one_hot n query u)[j]'(by simp) ↔ query v ≠ j ∧ query u ≠ j := by
+    have h1: query v ≠ j ∧ query u ≠ j ↔ ¬ (query v = j ∨ query u = j) := by simp_all only [ne_eq, not_or]
+    rw [h1]
+    rw [←one_hot_different_answer_ex_two n query v u j h]
+    simp
+
+lemma one_hot_different_answer_ex_two_contrp' {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (j : Fin n) (h: query v ≠ query u):
+  (one_hot n query v)[j.val]'(by simp) = (one_hot n query u)[j.val]'(by simp) ↔ query v ≠ j ∧ query u ≠ j := by
+  have h1: (one_hot n query v)[j.val]'(by simp) = (one_hot n query v)[j]'(by simp) := by simp
+  have h2: (one_hot n query u)[j.val]'(by simp) = (one_hot n query u)[j]'(by simp) := by simp
+  rw [h1, h2]
+  rw [one_hot_different_answer_ex_two_contrp n query v u j h]
+
 /- This allows us to use prob_ind_prob in the RAPPOR DP proof -/
 lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
   RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
@@ -107,7 +121,7 @@ lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num 
 /- RRSamplePushForward gives a non-zero probability for an output of the same length.
    This is needed in the DP proof.
 -/
-lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
+lemma RRSamplePushForward_non_zero (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool) (k: l.length = b.length):
   RRSamplePushForward num den h l b ≠ 0 := by
   rw [RRSamplePushForward]
   rw [prod_of_ind_prob _ _ _ _ k]
@@ -117,7 +131,7 @@ lemma RRSamplePushForward_non_zero {T : Type} (num : Nat) (den : PNat) (h: 2 * n
   apply RRSinglePushForward_non_zero
 
 /- RRSamplePushForward is always finite. This is needed in the DP proof. -/
-lemma RRSamplePushForward_finite {T : Type} (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
+lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):
   RRSamplePushForward num den h l b ≠ ⊤ := by
   cases hlen: l.length == b.length with
   | true =>
@@ -189,12 +203,86 @@ lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.le
    intro x
    rfl
 
-lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool)
+lemma reduction_helper1 {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool)
+ (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length) (h_users: query u ≠ query v) (i : Fin (one_hot n query u).length):
+  RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] /
+  RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val] =
+  if query v = (finCongr (by aesop) i) then RRSinglePushForward num den h (one_hot n query v)[query v] (b[query v]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[query v] (b[query v]'(by aesop))
+  else if query u = (finCongr (by aesop) i) then RRSinglePushForward num den h (one_hot n query v)[query u] (b[query u]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[query u] (b[query u]'(by aesop))
+  else 1 := by
+  cases hi : (finCongr (by aesop) i) == query v with
+  | true => simp at hi
+            have h1: i.val = (query v).val := by
+              rw [← hi]
+              simp
+            aesop
+  | false => simp at hi
+             cases hi2: (finCongr (by aesop) i) == query u with
+             | true => simp at hi2
+                       have h1: i.val = (query u).val := by
+                          rw [← hi2]
+                          simp
+                       simp [h1, -one_hot]
+                       simp_all only [not_false_eq_true, List.getElem_ofFn, Fin.eta, decide_True,
+                         decide_False, ↓reduceIte]
+                       split
+                       next h_1 =>
+                         simp_all only [decide_True]
+                       next h_1 => simp_all only [decide_False]
+             | false => simp at hi2
+                        simp_all only [List.getElem_ofFn, finCongr_apply, Fin.getElem_fin, Fin.coe_cast,
+                          Fin.eta]
+                        split
+                        next h_1 => simp_all only [not_true_eq_false]
+                        next h_1 =>
+                          split
+                          next h_2 => simp_all only [not_true_eq_false]
+                          next h_2 =>
+                          have h1: (one_hot n query v)[i.val]'(by omega) = (one_hot n query u)[i.val]'(by omega) :=
+                            by convert one_hot_different_answer_ex_two_contrp' n query v u (finCongr (by aesop) i)
+                               aesop
+                              -- simp_all only [ne_eq, not_or, not_and]
+                          rw [h1]
+                          rw [ENNReal.div_self]
+                          apply RRSinglePushForward_non_zero
+                          apply RRSinglePushForward_finite
+
+
+lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SLang Bool) (v u : T) (b : List Bool)
+ (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
+  (∏ i : Fin (one_hot n query u).length,
+    if query v = (finCongr (by aesop) i) then f (one_hot n query v)[query v] (b[query v]'(by aesop)) / f (one_hot n query u)[query v] (b[query v]'(by aesop))
+    else if query u = (finCongr (by aesop) i) then f (one_hot n query v)[query u] (b[query u]'(by aesop)) / f (one_hot n query u)[query u] (b[query u]'(by aesop))
+    else 1) =
+  f (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop))
+  * f (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop))
+  * ∏ i : Fin (one_hot n query u).length,
+    if query v = (finCongr (by aesop) i) then 1
+    else if query u = (finCongr (by aesop) i) then 1
+    else 1 := by
+    simp[-one_hot]
+    rw?
+    sorry
+
+lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
 ∏ i : Fin (one_hot n query u).length, RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] / RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val]
  = RRSinglePushForward num den h (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
- * RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
- := by sorry
+ * RRSinglePushForward num den h (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
+ := by
+ conv =>
+  enter [1, 2, i]
+  rw [reduction_helper1 n query num den h v u b ohu_len onhv_len h_users i]
+ rw [reduction_helper2]
+ have reduction_helper3:
+  ∏ i : Fin (one_hot n query u).length, (if query v = (finCongr (by aesop) i) then 1
+    else if query u = (finCongr (by aesop) i) then 1 else 1) = 1 := by simp
+ conv =>
+  enter [1, 2]
+  simp [reduction_helper3]
+ simp_all only [mul_one]
+ exact ohu_len
+ exact onhv_len
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
@@ -215,12 +303,10 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               {exact arith_1 num den h} /- The statement of arith_1 might have to change...-/
               {
                 apply RRSamplePushForward_non_zero
-                exact T
                 rw[←hlen]
                 exact oh_len
               }
               { apply RRSamplePushForward_finite
-                exact T
               }
     | false =>
       simp at h_eq
@@ -238,10 +324,11 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [index_1]
       rw [prod_over_prod] -- this needs proving
       simp_all only [ohv, ohu]
-      rw [single_DP_reduction n query num den h v u b oh_len hlen]
+      rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
       #check RRSamplePushForward_final_bound
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
+      /- We should wait for Perryn to give an exact statement of the bound to match RR-/
       sorry
   | false =>
       simp at hlen
@@ -298,13 +385,11 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                     intro k bo hbo
                     rw [RAPPORSingleSample]
                     apply RRSamplePushForward_non_zero
-                    exact T
                     aesop
                   }
                   { intro k bo
                     rw [RAPPORSingleSample]
                     apply RRSamplePushForward_finite
-                    exact T
                   }
                   {apply x_indices}
                   | false => /- This part of the proof is completely disgusting, I am not proud of it -/
