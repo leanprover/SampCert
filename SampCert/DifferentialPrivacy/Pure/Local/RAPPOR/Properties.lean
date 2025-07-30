@@ -181,15 +181,13 @@ lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
                 norm_cast
                 simp
 
+/- Good tip: use finCongr for re-indexing... -/
 lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.length) (h2 : l.length = b.length)
   (f : α -> β -> ENNReal):
   ∏ (i : Fin l.length), f l[i] b[i] = ∏ (i : Fin v.length), f l[i] b[i] := by
-   let e : Fin l.length ≃ Fin v.length := by
-      rw [h1]
-   apply Fintype.prod_equiv e
+   apply Fintype.prod_equiv (finCongr h1)
    intro x
-   simp
-   sorry
+   rfl
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
@@ -275,7 +273,7 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                     exact valid_index5
                   have valid_index7: a.length < l₂.length := by
                     rw [xlen2]
-                    exact valid_index6 
+                    exact valid_index6
                   rw [reduction_final_RAP n l₁ l₂ x (fun f => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
                   { calc
                     RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
