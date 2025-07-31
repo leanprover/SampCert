@@ -100,20 +100,6 @@ lemma one_hot_different_answer_ex_two {T : Type} (n : Nat) (query: T -> Fin n) (
       | inr h1 => aesop
     }
 
-lemma one_hot_different_answer_ex_two_contrp {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (j : Fin n) (h: query v ≠ query u):
-  (one_hot n query v)[j]'(by simp) = (one_hot n query u)[j]'(by simp) ↔ query v ≠ j ∧ query u ≠ j := by
-    have h1: query v ≠ j ∧ query u ≠ j ↔ ¬ (query v = j ∨ query u = j) := by simp_all only [ne_eq, not_or]
-    rw [h1]
-    rw [←one_hot_different_answer_ex_two n query v u j h]
-    simp
-
-lemma one_hot_different_answer_ex_two_contrp' {T : Type} (n : Nat) (query: T -> Fin n) (v u : T) (j : Fin n) (h: query v ≠ query u):
-  (one_hot n query v)[j.val]'(by simp) = (one_hot n query u)[j.val]'(by simp) ↔ query v ≠ j ∧ query u ≠ j := by
-  have h1: (one_hot n query v)[j.val]'(by simp) = (one_hot n query v)[j]'(by simp) := by simp
-  have h2: (one_hot n query u)[j.val]'(by simp) = (one_hot n query u)[j]'(by simp) := by simp
-  rw [h1, h2]
-  rw [one_hot_different_answer_ex_two_contrp n query v u j h]
-
 /- This allows us to use prob_ind_prob in the RAPPOR DP proof -/
 lemma RAPPOR_prob_of_ind_prob_PMF {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v : List T) (a: List (List Bool)) (k : v.length = a.length) :
   RAPPORSample_PMF n query num den h v a = (∏'(i: Fin v.length), RAPPORSingleSample n query num den h (v.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
@@ -151,144 +137,10 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
 lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
   (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by sorry
 
-/- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
-  ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
-  / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
 
-lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
-(1 : ENNReal) ≤ ((1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
-               rw [@sq]
-               simp
-               cases frac_zero : num/den.val == (0:ENNReal) with
-               | true =>
-                simp_all only [beq_iff_eq]
-                rw [@Decidable.le_iff_lt_or_eq]
-                right
-                simp_all only [beq_eq_false_iff_ne, ne_eq, ENNReal.div_eq_zero_iff,
-                 Nat.cast_eq_zero, ENNReal.natCast_ne_top, or_false, Nat.cast_mul, Nat.cast_ofNat]
-                rw [← ENNReal.coe_two]
-                norm_cast
-                simp
-                rw [ENNReal.div_self]
-                simp
-                simp
-               | false =>
-                rw [@Decidable.le_iff_lt_or_eq]
-                left
-                apply ENNRealLemmas.quot_gt_one_rev
-                apply ENNRealLemmas.sub_le_add_ennreal
-                aesop
-                rw [@ENNReal.le_inv_iff_mul_le]
-                rw [@ENNReal.div_eq_inv_mul]
-                rw [mul_assoc]
-                rw [mul_comm]
-                rw [← @ENNReal.le_inv_iff_mul_le]
-                simp
-                rw [@Decidable.le_iff_lt_or_eq]
-                left
-                rw [@Nat.cast_comm]
-                norm_cast
-                simp_all only [beq_eq_false_iff_ne, ne_eq, ENNReal.div_eq_zero_iff,
-                  Nat.cast_eq_zero, ENNReal.natCast_ne_top, or_false, Nat.cast_mul, Nat.cast_ofNat]
-                rw [← ENNReal.coe_two]
-                norm_cast
-                simp
 
-/- Good tip: use finCongr for re-indexing... -/
-lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.length) (h2 : l.length = b.length)
-  (f : α -> β -> ENNReal):
-  ∏ (i : Fin l.length), f l[i] b[i] = ∏ (i : Fin v.length), f l[i] b[i] := by
-   apply Fintype.prod_equiv (finCongr h1)
-   intro x
-   rfl
 
-lemma reduction_helper1 {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool)
- (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length) (h_users: query u ≠ query v) (i : Fin (one_hot n query u).length):
-  RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] /
-  RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val] =
-  if query v = (finCongr (by aesop) i) then RRSinglePushForward num den h (one_hot n query v)[query v] (b[query v]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[query v] (b[query v]'(by aesop))
-  else if query u = (finCongr (by aesop) i) then RRSinglePushForward num den h (one_hot n query v)[query u] (b[query u]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[query u] (b[query u]'(by aesop))
-  else 1 := by
-  cases hi : (finCongr (by aesop) i) == query v with
-  | true => simp at hi
-            have h1: i.val = (query v).val := by
-              rw [← hi]
-              simp
-            aesop
-  | false => simp at hi
-             cases hi2: (finCongr (by aesop) i) == query u with
-             | true => simp at hi2
-                       have h1: i.val = (query u).val := by
-                          rw [← hi2]
-                          simp
-                       simp [h1, -one_hot]
-                       simp_all only [not_false_eq_true, List.getElem_ofFn, Fin.eta, decide_True,
-                         decide_False, ↓reduceIte]
-                       split
-                       next h_1 =>
-                         simp_all only [decide_True]
-                       next h_1 => simp_all only [decide_False]
-             | false => simp at hi2
-                        simp_all only [List.getElem_ofFn, finCongr_apply, Fin.getElem_fin, Fin.coe_cast,
-                          Fin.eta]
-                        split
-                        next h_1 => simp_all only [not_true_eq_false]
-                        next h_1 =>
-                          split
-                          next h_2 => simp_all only [not_true_eq_false]
-                          next h_2 =>
-                          have h1: (one_hot n query v)[i.val]'(by omega) = (one_hot n query u)[i.val]'(by omega) :=
-                            by convert one_hot_different_answer_ex_two_contrp' n query v u (finCongr (by aesop) i)
-                               aesop
-                              -- simp_all only [ne_eq, not_or, not_and]
-                          rw [h1]
-                          rw [ENNReal.div_self]
-                          apply RRSinglePushForward_non_zero
-                          apply RRSinglePushForward_finite
 
-lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SLang Bool) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
- (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
-  (∏ i : Fin (one_hot n query u).length,
-    if query v = (finCongr (by aesop) i) then f (one_hot n query v)[query v] (b[query v]'(by aesop)) / f (one_hot n query u)[query v] (b[query v]'(by aesop))
-    else if query u = (finCongr (by aesop) i) then f (one_hot n query v)[query u] (b[query u]'(by aesop)) / f (one_hot n query u)[query u] (b[query u]'(by aesop))
-    else 1) =
-  f (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop))
-  * f (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop))
-   := by
-    simp_all only [finCongr_apply, Fin.getElem_fin, Fin.coe_cast, List.getElem_ofFn, Fin.eta]
-    have h4 (g : Fin b.length -> ENNReal) : ∏ i : Fin b.length, g i = ∏ (i ∈ Finset.univ), g i := by aesop
-    conv =>
-      enter [1]
-      rw [@Finset.prod_ite]
-      simp [-one_hot]
-      rw [@Finset.prod_ite]
-      simp [-one_hot]
-      -- rw [Finset.prod_ite_ite_one]
-      -- rw [Finset.prod_set_coe]
-    simp_all only [finCongr_apply, implies_true, List.getElem_ofFn, Fin.eta, decide_True]
-    have hblen : b.length = n := by aesop
-    have h5 (k : T): Finset.filter (fun x => query k = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)) = {finCongr (by aesop) (query k)} := by aesop
-    have h6: (Finset.filter (fun x => query u = Fin.cast (by sorry) x) (Finset.filter (fun x => ¬query v = Fin.cast (by sorry) x) (Finset.univ : Finset (Fin (one_hot n query u).length)))).card = 1 := by
-        rw [@Finset.card_eq_one]
-        use (finCongr (by aesop) (query u))
-        aesop
-    have h8: ∏ x ∈ Finset.filter (fun x => query v = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)),
-             f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
-             = f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry)) := by
-              subst hblen
-              simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
-              conv =>
-                enter [1, 2]
-                simp
-              simp
-    have h9: ∏ x ∈ Finset.filter (fun x => query u = Fin.cast (by aesop) x) (Finset.filter (fun x => ¬query v = Fin.cast (by aesop) x) Finset.univ : Finset (Fin (one_hot n query u).length)),
-             f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
-             = f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry)) := by
-             simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
-             simp
-    rw [h8]
-    rw [h9]
-    rw [@mul_div]
 
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
@@ -345,12 +197,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
                       exact hlen
       rw [index_1]
       rw [prod_over_prod] -- this needs proving
-      simp_all only [ohv, ohu]
-      rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
-      #check RRSamplePushForward_final_bound
-      /- now need a version of final_bound for RRPushForward -/
-      /- use the "calc" tactic to prove this-/
-      /- We should wait for Perryn to give an exact statement of the bound to match RR-/
       sorry
   | false =>
       simp at hlen
@@ -379,9 +225,6 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                 | Update hl₁ hl₂ =>
                   rename_i a y c z
                   simp
-                  cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4 _ hl₂; apply xlen2)).length = n) == true with
-                  | true =>
-                  simp at x_indices
                   /- Now we need to apply the generalized reduction lemma,
                   and then do some arithmetic. -/
                   have valid_index5: a.length < l₁.length := by
