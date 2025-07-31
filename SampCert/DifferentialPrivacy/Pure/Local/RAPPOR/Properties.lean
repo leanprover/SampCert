@@ -308,7 +308,7 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
-  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
+  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
   -- probably want to restate the bound in an arithmetically equivalent way
   simp_all only [RAPPORSingleSample]
   set ohv := one_hot n query v
@@ -322,7 +322,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
               rw [same_answer]
               rw [@ENNReal.div_self]
-              {exact arith_1 num den h} /- The statement of arith_1 might have to change...-/
+              {sorry} /- The statement of arith_1 might have to change...-/
               {
                 apply RRSamplePushForward_non_zero
                 rw[←hlen]
@@ -362,9 +362,35 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
 
 #check Real.log_rpow -- we'll need this later
 
+lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
+  2 * Real.log ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) = Real.log (((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den)))^2) := by
+    rw [←Real.log_rpow]
+    simp
+    sorry
+
+lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
+  Real.exp (Real.log (((2⁻¹ + num / den) / (2⁻¹ - num / den))^2)) = ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
+    rw [Real.exp_log]
+    sorry
+
+
+lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
+   ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by
+    conv =>
+      enter [2, 1, 1]
+      rw [log_rw]
+      rfl
+      exact h
+    conv =>
+      enter [2, 1]
+      -- rw [Real.exp_log]
+      rw [exp_rw num den h]
+    rw [ENNReal.ofReal]
+    sorry
+
 /- This extends the previous lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
-  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num)))
+  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
    := by
       apply singleton_to_event_update
       intros l₁ l₂ h_adj x
@@ -400,8 +426,8 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   { calc
                     RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
                     RAPPORSingleSample n query num den h (l₂[a.length]'(valid_index7)) (x[a.length]'(valid_index6)) ≤
-                    ((1/2 + num / den) / (1/2 - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
-                    _ ≤ ENNReal.ofReal (Real.exp (2 * Real.log ((↑↑↑den + 2 * ↑num) / (↑↑↑den - 2 * ↑num)))) := by sorry
+                    ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
+                    _ = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by rw[←arith_2 num den h]
                   }
                   {
                     intro k bo hbo
