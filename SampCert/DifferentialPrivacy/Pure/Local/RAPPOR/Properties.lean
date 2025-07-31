@@ -355,7 +355,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
               rw [same_answer]
               rw [@ENNReal.div_self]
-              {sorry} /- The statement of arith_1 might have to change...-/
+              {apply arith_1 _ _ h}
               {
                 apply RRSamplePushForward_non_zero
                 rw[←hlen]
@@ -392,15 +392,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       apply RRSamplePushForward_final_bound
       apply RRSinglePushForward_div_finite
       apply RRSinglePushForward_div_finite
-
-
-
-
-
-      /- now need a version of final_bound for RRPushForward -/
-      /- use the "calc" tactic to prove this-/
-      /- We should wait for Perryn to give an exact statement of the bound to match RR-/
-      sorry
       intro i
       apply RRSinglePushForward_non_zero
       intro i
@@ -411,8 +402,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [h1]
       rw [@ENNReal.zero_div]
       simp
-
-#check Real.log_rpow -- we'll need this later
 
 lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
   num / den  < (2⁻¹ : ℝ)  := by
