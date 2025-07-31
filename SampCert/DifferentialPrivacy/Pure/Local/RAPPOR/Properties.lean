@@ -148,8 +148,41 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     rw [hzero]
     simp
 
-lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
-  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by sorry
+  lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal)(nonzero: ∀i, g i ≠ 0)(noninf: ∀i, g i ≠ ⊤):
+  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    conv =>
+      enter[2]
+      simp [@Fin.prod_univ_add]
+    rw[← ih]
+    simp [@Fin.prod_univ_add]
+    conv =>
+      enter[1]
+      rw[div_eq_mul_inv]
+      rw[ENNReal.mul_inv]
+      rw[mul_assoc]
+      conv =>
+        enter[2]
+        rw[mul_comm]
+      rw[← mul_assoc]
+      rw[← mul_assoc]
+      conv =>
+        enter [1,1]
+        rw[mul_comm]
+        rw[← ENNReal.div_eq_inv_mul]
+      rw[mul_assoc]
+      rw[← ENNReal.div_eq_inv_mul]
+      rfl
+      apply Or.inr
+      apply noninf
+      apply Or.inr
+      apply nonzero
+    intro i
+    apply nonzero
+    intro i
+    apply noninf
 
 /- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
   ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
@@ -351,6 +384,8 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
+      sorry
+      sorry
       sorry
   | false =>
       simp at hlen
