@@ -301,13 +301,13 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
     simp_all only [finCongr_apply, implies_true, List.getElem_ofFn, Fin.eta, decide_True]
     have hblen : b.length = n := by aesop
     have h5 (k : T): Finset.filter (fun x => query k = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)) = {finCongr (by aesop) (query k)} := by aesop
-    have h6: (Finset.filter (fun x => query u = Fin.cast (by sorry) x) (Finset.filter (fun x => ¬query v = Fin.cast (by sorry) x) (Finset.univ : Finset (Fin (one_hot n query u).length)))).card = 1 := by
+    have h6: (Finset.filter (fun x => query u = Fin.cast (by aesop) x) (Finset.filter (fun x => ¬query v = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)))).card = 1 := by
         rw [@Finset.card_eq_one]
         use (finCongr (by aesop) (query u))
         aesop
     have h8: ∏ x ∈ Finset.filter (fun x => query v = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)),
-             f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
-             = f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry)) := by
+             f (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop))
+             = f (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop)) := by
               subst hblen
               simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
               conv =>
@@ -315,9 +315,11 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
                 simp
               simp
     have h9: ∏ x ∈ Finset.filter (fun x => query u = Fin.cast (by aesop) x) (Finset.filter (fun x => ¬query v = Fin.cast (by aesop) x) Finset.univ : Finset (Fin (one_hot n query u).length)),
-             f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
-             = f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry)) := by
-             simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
+             f (one_hot n query v)[(query u).val] (b[(query u).val]'(by
+             simp_all only [List.getElem_ofFn, Fin.eta, decide_True, decide_False, Fin.is_lt])) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by
+             simp_all only [one_hot, List.getElem_ofFn, Fin.eta, decide_True, decide_False, Fin.is_lt]))
+             = f (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop)) := by
+             simp_all only [List.getElem_ofFn, Fin.eta, decide_True, Finset.prod_const]
              simp
     rw [h8]
     rw [h9]
@@ -326,8 +328,8 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
 ∏ i : Fin (one_hot n query u).length, RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] / RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val]
- = RRSinglePushForward num den h (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
- * RRSinglePushForward num den h (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
+ = RRSinglePushForward num den h (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop))
+ * RRSinglePushForward num den h (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / RRSinglePushForward num den h (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop))
  := by
  conv =>
   enter [1, 2, i]
@@ -397,7 +399,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       simp
 
 #check Real.log_rpow -- we'll need this later
-
 lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
   num / den  < (2⁻¹ : ℝ)  := by
   rw [@div_lt_iff]
@@ -491,6 +492,9 @@ lemma arith_2_mult_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
 (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) * (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
 ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) * ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
 rw [arith_2_helper num den h]
+
+
+
 
 lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
    ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by
