@@ -189,7 +189,7 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
   / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
 
 lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
-(1 : ENNReal) ≤ ((1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
+(1 : ENNReal) ≤ ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
                rw [@sq]
                simp
                cases frac_zero : num/den.val == (0:ENNReal) with
@@ -380,7 +380,23 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [prod_over_prod] -- this needs proving
       simp_all only [ohv, ohu]
       rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
-      #check RRSamplePushForward_final_bound
+      rw [@mul_div_assoc]
+      rw [@sq]
+      have exp_eq :  ((2:ENNReal)⁻¹ + num / den) / (2⁻¹ - num / den) = (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := by
+        apply ENNRealLemmas.exp_change_form
+        exact h
+      simp at exp_eq
+      rw [exp_eq]
+      apply ENNRealLemmas.le_double
+      apply RRSamplePushForward_final_bound
+      apply RRSamplePushForward_final_bound
+      apply RRSinglePushForward_div_finite
+      apply RRSinglePushForward_div_finite
+
+
+
+
+
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
