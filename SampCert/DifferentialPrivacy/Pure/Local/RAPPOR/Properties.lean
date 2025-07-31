@@ -385,15 +385,16 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
       sorry
-      sorry
-      sorry
+      intro i
+      apply RRSinglePushForward_non_zero
+      intro i
+      apply RRSinglePushForward_finite
   | false =>
       simp at hlen
       have h1: RRSamplePushForward num den h ohv b = 0 := RAPPORSingleSample_diff_lengths n query num den h v b hlen
       rw [h1]
       rw [@ENNReal.zero_div]
       simp
-
 
 #check Real.log_rpow -- we'll need this later
 
@@ -423,7 +424,7 @@ lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
     rw [ENNReal.ofReal]
     sorry
 
-/- This extends the previous lemma to a dataset of arbitrary size -/
+/- This extends the previous DP lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
   DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
    := by
