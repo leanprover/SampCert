@@ -421,6 +421,52 @@ lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     sorry
     sorry
 
+lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
+(((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
+  ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
+  have h1: ENNReal.ofReal 2⁻¹ = (2⁻¹ : ENNReal) := by
+    field_simp
+    rw [ENNReal.ofReal_div_of_pos]
+    simp
+    linarith
+  have h2: (0 : ℝ) ≤ num / den.val := by
+   rw [@div_nonneg_iff]
+   apply Or.inl
+   apply And.intro
+   aesop
+   aesop
+  rw [ENNReal.ofReal_div_of_pos]
+  congr
+  {
+   rw [ennreal_of_nat]
+   rw [ennreal_of_pnat]
+   rw [ENNReal.ofReal_add]
+   rw [ENNReal.ofReal_div_of_pos]
+   norm_cast
+   rw [h1]
+   aesop
+   aesop
+   aesop
+   simp [h2]
+  }
+  { rw [ENNReal.ofReal_sub]
+    rw [h1]
+    rw [ENNReal.ofReal_div_of_pos]
+    aesop
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, NNReal.coe_pos, Nat.cast_pos]
+    exact den.2
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast]
+    convert h2
+  }
+  { rw [@sub_pos]
+    rw [←one_div]
+    sorry
+  }
+
+lemma arith_2_mult_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
+(((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) * (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
+ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) * ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
+rw [arith_2_helper num den h]
 
 lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
    ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by
@@ -433,8 +479,18 @@ lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
       enter [2, 1]
       -- rw [Real.exp_log]
       rw [exp_rw num den h]
-    rw [ENNReal.ofReal]
-    sorry
+    rw [@sq, @sq]
+    simp
+    rw [ENNReal.ofReal_mul]
+    convert arith_2_mult_helper num den h
+    -- now prove the single version, can use format similar to step 2
+    {
+      rw [@div_nonneg_iff]
+      apply Or.inl
+      apply And.intro
+      {sorry} -- this is also the same as a previous proof
+      {sorry} -- this is exactly the same as the proof in helper
+    }
 
 /- This extends the previous DP lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
