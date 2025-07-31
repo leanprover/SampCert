@@ -156,7 +156,7 @@ lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
   / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
 
 lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
-(1 : ENNReal) ≤ ((1 / 2 + ↑num / ↑(NNReal.ofPNat den)) / (1 / 2 - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
+(1 : ENNReal) ≤ ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
                rw [@sq]
                simp
                cases frac_zero : num/den.val == (0:ENNReal) with
@@ -284,7 +284,7 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
-  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((1/2 + num / den) / (1/2 - num / den))^2 := by
+  (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
   -- probably want to restate the bound in an arithmetically equivalent way
   simp_all only [RAPPORSingleSample]
   set ohv := one_hot n query v
@@ -323,11 +323,30 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [prod_over_prod] -- this needs proving
       simp_all only [ohv, ohu]
       rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
-      #check RRSamplePushForward_final_bound
+      rw [@mul_div_assoc]
+
+      rw [← @Fin.getElem_fin]
+      rw [← @Fin.getElem_fin]
+      rw [← @Fin.getElem_fin]
+      rw [← @Fin.getElem_fin]
+      rw [← @Fin.getElem_fin]
+      rw [← @Fin.getElem_fin]
+      have single : RRSinglePushForward num den h (one_hot n query v)[query v] (b[query v]'(by sorry)) /
+       RRSinglePushForward num den h (one_hot n query u)[query v] (b[query v]'(by sorry)) ≤
+       (den + 2 * num) / (den - 2 * num) := by
+         apply RRSamplePushForward_final_bound
+
+      rw [@sq]
+      have exp_eq : (den + 2 * num) / (den - 2 * num) = ((2:ENNReal)⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den) := by sorry
+      rw [exp_eq] at single
+
+
+      --#check RRSamplePushForward_final_bound
+
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
-      sorry
+
   | false =>
       simp at hlen
       have h1: RRSamplePushForward num den h ohv b = 0 := RAPPORSingleSample_diff_lengths n query num den h v b hlen

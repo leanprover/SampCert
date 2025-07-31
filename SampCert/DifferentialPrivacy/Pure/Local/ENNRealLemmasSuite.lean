@@ -246,5 +246,7 @@ lemma sub_add_cancel_ennreal (a b :ENNReal)(h:b≤ a)(h1 : b ≠ ⊤): a -b +b =
   exact h
   exact h1
 
+lemma le_double (a b : ENNReal)(h: a ≤ b): a * a ≤ b * b := by sorry
+
 
 end ENNRealLemmas
