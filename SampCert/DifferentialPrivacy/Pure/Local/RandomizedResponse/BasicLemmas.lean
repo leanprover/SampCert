@@ -226,6 +226,21 @@ lemma RRSinglePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     rw [←RRSingleSample_is_RRSinglePushForward]
     apply RRSingleSample_finite
 
+lemma RRSinglePushForward_div_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ l₂ : Bool) (b : Bool):
+  RRSinglePushForward num den h l₁ b /  RRSinglePushForward num den h l₂ b ≠ ⊤ := by
+    simp
+    rw [Not]
+    intro h1
+    rw [@ENNReal.div_eq_top] at h1
+    cases h1 with
+    | inl hl =>
+      apply And.right at hl
+      have hcontr : RRSinglePushForward num den h l₂ b ≠  0 := by apply RRSinglePushForward_non_zero (fun x : Bool => x)
+      contradiction
+    | inr hr =>
+      apply And.left at hr
+      have hcontr: RRSinglePushForward num den h l₁ b ≠ ⊤ := by apply RRSinglePushForward_finite
+      contradiction
 
 lemma RRSamplePushForward_diff_lengths (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List Bool) (l₂ : List Bool) (hlen : l₁.length ≠ l₂.length):
   RRSamplePushForward num den h l₁ l₂ = 0 := by

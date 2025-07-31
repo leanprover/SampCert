@@ -148,6 +148,8 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     rw [hzero]
     simp
 
+
+
 lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
   (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by sorry
 
@@ -348,24 +350,21 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       simp_all only [ohv, ohu]
       rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
       rw [@mul_div_assoc]
-
-      rw [← @Fin.getElem_fin]
-      rw [← @Fin.getElem_fin]
-      rw [← @Fin.getElem_fin]
-      rw [← @Fin.getElem_fin]
-      rw [← @Fin.getElem_fin]
-      rw [← @Fin.getElem_fin]
-      have single : RRSinglePushForward num den h (one_hot n query v)[query v] (b[query v]'(by sorry)) /
-       RRSinglePushForward num den h (one_hot n query u)[query v] (b[query v]'(by sorry)) ≤
-       (den + 2 * num) / (den - 2 * num) := by
-         apply RRSamplePushForward_final_bound
-
       rw [@sq]
-      have exp_eq : (den + 2 * num) / (den - 2 * num) = ((2:ENNReal)⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den) := by sorry
-      rw [exp_eq] at single
+      have exp_eq :  ((2:ENNReal)⁻¹ + num / den) / (2⁻¹ - num / den) = (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := by
+        apply ENNRealLemmas.exp_change_form
+        exact h
+      simp at exp_eq
+      rw [exp_eq]
+      apply ENNRealLemmas.le_double
+      apply RRSamplePushForward_final_bound
+      apply RRSamplePushForward_final_bound
+      apply RRSinglePushForward_div_finite
+      apply RRSinglePushForward_div_finite
 
 
-      --#check RRSamplePushForward_final_bound
+
+
 
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
