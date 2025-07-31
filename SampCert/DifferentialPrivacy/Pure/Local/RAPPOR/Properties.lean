@@ -402,11 +402,23 @@ lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
   2 * Real.log ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) = Real.log (((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den)))^2) := by
     rw [←Real.log_rpow]
     simp
+    rw [@div_pos_iff]
+    apply Or.inl
+    apply And.intro
+    norm_num
+    rw [@one_div]
+    sorry
+    norm_num
+    simp_all only [one_div]
     sorry
 
 lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
   Real.exp (Real.log (((2⁻¹ + num / den) / (2⁻¹ - num / den))^2)) = ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
     rw [Real.exp_log]
+    rw [@sq_pos_iff]
+    rw [@div_ne_zero_iff]
+    apply And.intro
+    sorry
     sorry
 
 
