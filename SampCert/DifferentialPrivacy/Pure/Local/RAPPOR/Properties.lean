@@ -398,6 +398,9 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
 
 #check Real.log_rpow -- we'll need this later
 
+lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
+  num / den  < (2⁻¹ : ℝ)  := by sorry
+
 lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
   2 * Real.log ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) = Real.log (((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den)))^2) := by
     rw [←Real.log_rpow]
@@ -410,7 +413,7 @@ lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     positivity
     norm_num
     simp_all only [one_div]
-    sorry
+    convert num_den_simper num den h
 
 lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
   Real.exp (Real.log (((2⁻¹ + num / den) / (2⁻¹ - num / den))^2)) = ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
@@ -430,13 +433,7 @@ lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     rw [mul_comm] at a
     sorry
     simp
-    aesop?
-
-
-
-
-
-
+    aesop
 
 
 lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
@@ -477,8 +474,7 @@ lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
     convert h2
   }
   { rw [@sub_pos]
-    rw [←one_div]
-    sorry
+    convert num_den_simper num den h
   }
 
 lemma arith_2_mult_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
