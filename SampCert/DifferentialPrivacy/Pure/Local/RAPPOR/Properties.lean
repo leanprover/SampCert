@@ -407,7 +407,7 @@ lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     apply And.intro
     norm_num
     rw [@one_div]
-    sorry
+    positivity
     norm_num
     simp_all only [one_div]
     sorry
@@ -418,8 +418,26 @@ lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     rw [@sq_pos_iff]
     rw [@div_ne_zero_iff]
     apply And.intro
+    positivity
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, ne_eq]
+    apply Aesop.BuiltinRules.not_intro
+    intro a
+    rw[sub_eq_zero] at a
+    rw [inv_eq_one_div] at a
+    rw [div_eq_div_iff] at a
+    rw[one_mul] at a
+    symm at a
+    rw [mul_comm] at a
     sorry
-    sorry
+    simp
+    aesop?
+
+
+
+
+
+
+
 
 lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
 (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =

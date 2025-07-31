@@ -362,6 +362,7 @@ lemma final_bound (query : T -> Bool) (num : Nat) (den : PNat) (h : 2 * num < de
                 intro b
                 norm_cast
 
+
                 left
                 simp
                 rw[Not]
