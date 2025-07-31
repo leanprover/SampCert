@@ -433,18 +433,9 @@ lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
     apply And.intro
     positivity
     simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, ne_eq]
-    apply Aesop.BuiltinRules.not_intro
-    intro a
-    rw[sub_eq_zero] at a
-    rw [inv_eq_one_div] at a
-    rw [div_eq_div_iff] at a
-    rw[one_mul] at a
-    symm at a
-    rw [mul_comm] at a
-    sorry
-    simp
+    rw [@sub_eq_zero]
+    have h1 : num / den  < (2⁻¹ : ℝ) := num_den_simper num den h
     aesop
-
 
 lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
 (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
