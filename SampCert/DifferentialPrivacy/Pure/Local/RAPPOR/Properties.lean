@@ -148,10 +148,41 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     rw [hzero]
     simp
 
-
-
-lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal):
-  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by sorry
+  lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal)(nonzero: ∀i, g i ≠ 0)(noninf: ∀i, g i ≠ ⊤):
+  (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by
+  induction n with
+  | zero => simp
+  | succ m ih =>
+    conv =>
+      enter[2]
+      simp [@Fin.prod_univ_add]
+    rw[← ih]
+    simp [@Fin.prod_univ_add]
+    conv =>
+      enter[1]
+      rw[div_eq_mul_inv]
+      rw[ENNReal.mul_inv]
+      rw[mul_assoc]
+      conv =>
+        enter[2]
+        rw[mul_comm]
+      rw[← mul_assoc]
+      rw[← mul_assoc]
+      conv =>
+        enter [1,1]
+        rw[mul_comm]
+        rw[← ENNReal.div_eq_inv_mul]
+      rw[mul_assoc]
+      rw[← ENNReal.div_eq_inv_mul]
+      rfl
+      apply Or.inr
+      apply noninf
+      apply Or.inr
+      apply nonzero
+    intro i
+    apply nonzero
+    intro i
+    apply noninf
 
 /- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
   ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
@@ -324,7 +355,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
               have same_answer: ohv = ohu := one_hot_same_answer n query v u h_eq
               rw [same_answer]
               rw [@ENNReal.div_self]
-              {exact arith_1 num den h} /- The statement of arith_1 might have to change...-/
+              {sorry} /- The statement of arith_1 might have to change...-/
               {
                 apply RRSamplePushForward_non_zero
                 rw[←hlen]
@@ -369,7 +400,11 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
-
+      sorry
+      intro i
+      apply RRSinglePushForward_non_zero
+      intro i
+      apply RRSinglePushForward_finite
   | false =>
       simp at hlen
       have h1: RRSamplePushForward num den h ohv b = 0 := RAPPORSingleSample_diff_lengths n query num den h v b hlen
@@ -377,12 +412,132 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [@ENNReal.zero_div]
       simp
 
-
 #check Real.log_rpow -- we'll need this later
 
-/- This extends the previous lemma to a dataset of arbitrary size -/
+lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
+  num / den  < (2⁻¹ : ℝ)  := by
+  rw [@div_lt_iff]
+  have h1 : 2 * (num : ℝ) < den.val := by exact_mod_cast h
+  have h2: 2 * (num : ℝ) < den := by aesop
+  have h3 : 2⁻¹ * (2 * (num : ℝ)) < 2⁻¹ * den := by
+    rw [@mul_lt_mul_left]
+    apply h2
+    aesop
+  aesop
+  simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, NNReal.coe_pos, Nat.cast_pos]
+  exact den.2
+
+lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
+  2 * Real.log ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) = Real.log (((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den)))^2) := by
+    rw [←Real.log_rpow]
+    simp
+    rw [@div_pos_iff]
+    apply Or.inl
+    apply And.intro
+    norm_num
+    rw [@one_div]
+    positivity
+    norm_num
+    simp_all only [one_div]
+    convert num_den_simper num den h
+
+lemma exp_rw (num : Nat) (den : PNat) (h: 2 * num < den):
+  Real.exp (Real.log (((2⁻¹ + num / den) / (2⁻¹ - num / den))^2)) = ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
+    rw [Real.exp_log]
+    rw [@sq_pos_iff]
+    rw [@div_ne_zero_iff]
+    apply And.intro
+    positivity
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, ne_eq]
+    apply Aesop.BuiltinRules.not_intro
+    intro a
+    rw[sub_eq_zero] at a
+    rw [inv_eq_one_div] at a
+    rw [div_eq_div_iff] at a
+    rw[one_mul] at a
+    symm at a
+    rw [mul_comm] at a
+    sorry
+    simp
+    aesop
+
+
+lemma arith_2_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
+(((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
+  ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
+  have h1: ENNReal.ofReal 2⁻¹ = (2⁻¹ : ENNReal) := by
+    field_simp
+    rw [ENNReal.ofReal_div_of_pos]
+    simp
+    linarith
+  have h2: (0 : ℝ) ≤ num / den.val := by
+   rw [@div_nonneg_iff]
+   apply Or.inl
+   apply And.intro
+   aesop
+   aesop
+  rw [ENNReal.ofReal_div_of_pos]
+  congr
+  {
+   rw [ennreal_of_nat]
+   rw [ennreal_of_pnat]
+   rw [ENNReal.ofReal_add]
+   rw [ENNReal.ofReal_div_of_pos]
+   norm_cast
+   rw [h1]
+   aesop
+   aesop
+   aesop
+   simp [h2]
+  }
+  { rw [ENNReal.ofReal_sub]
+    rw [h1]
+    rw [ENNReal.ofReal_div_of_pos]
+    aesop
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, NNReal.coe_pos, Nat.cast_pos]
+    exact den.2
+    simp_all only [NNReal.ofPNat, Nonneg.mk_natCast]
+    convert h2
+  }
+  { rw [@sub_pos]
+    convert num_den_simper num den h
+  }
+
+lemma arith_2_mult_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
+(((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) * (((2⁻¹ : ENNReal) + ↑num / den) / (2⁻¹ - ↑num / ↑↑↑den.val)) =
+ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) * ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
+rw [arith_2_helper num den h]
+
+lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
+   ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by
+    conv =>
+      enter [2, 1, 1]
+      rw [log_rw]
+      rfl
+      exact h
+    conv =>
+      enter [2, 1]
+      -- rw [Real.exp_log]
+      rw [exp_rw num den h]
+    rw [@sq, @sq]
+    simp
+    rw [ENNReal.ofReal_mul]
+    convert arith_2_mult_helper num den h
+    {
+      rw [@div_nonneg_iff]
+      apply Or.inl
+      apply And.intro
+      {positivity}
+      { rw [@sub_nonneg]
+        rw [@Decidable.le_iff_lt_or_eq]
+        apply Or.inl
+        convert num_den_simper num den h
+      }
+    }
+
+/- This extends the previous DP lemma to a dataset of arbitrary size -/
 lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
-  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((den + 2 * num) / (den - 2 * num)))
+  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
    := by
       apply singleton_to_event_update
       intros l₁ l₂ h_adj x
@@ -418,8 +573,8 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   { calc
                     RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
                     RAPPORSingleSample n query num den h (l₂[a.length]'(valid_index7)) (x[a.length]'(valid_index6)) ≤
-                    ((1/2 + num / den) / (1/2 - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
-                    _ ≤ ENNReal.ofReal (Real.exp (2 * Real.log ((↑↑↑den + 2 * ↑num) / (↑↑↑den - 2 * ↑num)))) := by sorry
+                    ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
+                    _ = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by rw[←arith_2 num den h]
                   }
                   {
                     intro k bo hbo
