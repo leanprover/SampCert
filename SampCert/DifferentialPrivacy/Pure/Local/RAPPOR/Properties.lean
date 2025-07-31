@@ -399,7 +399,17 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
 #check Real.log_rpow -- we'll need this later
 
 lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
-  num / den  < (2⁻¹ : ℝ)  := by sorry
+  num / den  < (2⁻¹ : ℝ)  := by
+  rw [@div_lt_iff]
+  have h1 : 2 * (num : ℝ) < den.val := by exact_mod_cast h
+  have h2: 2 * (num : ℝ) < den := by aesop
+  have h3 : 2⁻¹ * (2 * (num : ℝ)) < 2⁻¹ * den := by
+    rw [@mul_lt_mul_left]
+    apply h2
+    aesop
+  aesop
+  simp_all only [NNReal.ofPNat, Nonneg.mk_natCast, NNReal.coe_pos, Nat.cast_pos]
+  exact den.2
 
 lemma log_rw (num : Nat) (den : PNat) (h: 2 * num < den):
   2 * Real.log ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) = Real.log (((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den)))^2) := by
@@ -497,13 +507,16 @@ lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
     simp
     rw [ENNReal.ofReal_mul]
     convert arith_2_mult_helper num den h
-    -- now prove the single version, can use format similar to step 2
     {
       rw [@div_nonneg_iff]
       apply Or.inl
       apply And.intro
-      {sorry} -- this is also the same as a previous proof
-      {sorry} -- this is exactly the same as the proof in helper
+      {positivity}
+      { rw [@sub_nonneg]
+        rw [@Decidable.le_iff_lt_or_eq]
+        apply Or.inl
+        convert num_den_simper num den h
+      }
     }
 
 /- This extends the previous DP lemma to a dataset of arbitrary size -/
