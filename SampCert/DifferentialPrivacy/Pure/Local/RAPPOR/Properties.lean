@@ -246,8 +246,7 @@ lemma reduction_helper1 {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (de
                           apply RRSinglePushForward_non_zero
                           apply RRSinglePushForward_finite
 
-
-lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SLang Bool) (v u : T) (b : List Bool)
+lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SLang Bool) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
   (∏ i : Fin (one_hot n query u).length,
     if query v = (finCongr (by aesop) i) then f (one_hot n query v)[query v] (b[query v]'(by aesop)) / f (one_hot n query u)[query v] (b[query v]'(by aesop))
@@ -255,12 +254,41 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
     else 1) =
   f (one_hot n query v)[(query v).val] (b[(query v).val]'(by aesop)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by aesop))
   * f (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop))
-  * ∏ i : Fin (one_hot n query u).length,
-    if query v = (finCongr (by aesop) i) then 1
-    else if query u = (finCongr (by aesop) i) then 1
-    else 1 := by
-    simp[-one_hot]
-    sorry
+   := by
+    simp_all only [finCongr_apply, Fin.getElem_fin, Fin.coe_cast, List.getElem_ofFn, Fin.eta]
+    have h4 (g : Fin b.length -> ENNReal) : ∏ i : Fin b.length, g i = ∏ (i ∈ Finset.univ), g i := by aesop
+    conv =>
+      enter [1]
+      rw [@Finset.prod_ite]
+      simp [-one_hot]
+      rw [@Finset.prod_ite]
+      simp [-one_hot]
+      -- rw [Finset.prod_ite_ite_one]
+      -- rw [Finset.prod_set_coe]
+    simp_all only [finCongr_apply, implies_true, List.getElem_ofFn, Fin.eta, decide_True]
+    have hblen : b.length = n := by aesop
+    have h5 (k : T): Finset.filter (fun x => query k = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)) = {finCongr (by aesop) (query k)} := by aesop
+    have h6: (Finset.filter (fun x => query u = Fin.cast (by sorry) x) (Finset.filter (fun x => ¬query v = Fin.cast (by sorry) x) (Finset.univ : Finset (Fin (one_hot n query u).length)))).card = 1 := by
+        rw [@Finset.card_eq_one]
+        use (finCongr (by aesop) (query u))
+        aesop
+    have h8: ∏ x ∈ Finset.filter (fun x => query v = Fin.cast (by aesop) x) (Finset.univ : Finset (Fin (one_hot n query u).length)),
+             f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry))
+             = f (one_hot n query v)[(query v).val] (b[(query v).val]'(by sorry)) / f (one_hot n query u)[(query v).val] (b[(query v).val]'(by sorry)) := by
+              subst hblen
+              simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
+              conv =>
+                enter [1, 2]
+                simp
+              simp
+    have h9: ∏ x ∈ Finset.filter (fun x => query u = Fin.cast (by aesop) x) (Finset.filter (fun x => ¬query v = Fin.cast (by aesop) x) Finset.univ : Finset (Fin (one_hot n query u).length)),
+             f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry))
+             = f (one_hot n query v)[(query u).val] (b[(query u).val]'(by sorry)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by sorry)) := by
+             simp_all only [List.getElem_ofFn, Fin.eta, Finset.prod_const]
+             simp
+    rw [h8]
+    rw [h9]
+    rw [@mul_div]
 
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
@@ -271,15 +299,11 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
  conv =>
   enter [1, 2, i]
   rw [reduction_helper1 n query num den h v u b ohu_len onhv_len h_users i]
- rw [reduction_helper2]
+ rw [reduction_helper2 _ _ _ _ _ _ h_users]
  have reduction_helper3:
   ∏ i : Fin (one_hot n query u).length, (if query v = (finCongr (by aesop) i) then 1
     else if query u = (finCongr (by aesop) i) then 1 else 1) = 1 := by simp
- conv =>
-  enter [1, 2]
-  simp [reduction_helper3]
  simp_all only [mul_one]
- exact ohu_len
  exact onhv_len
 
 /- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
