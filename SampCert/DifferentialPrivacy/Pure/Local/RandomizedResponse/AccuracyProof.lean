@@ -33,6 +33,7 @@ def addMulRealToRV (Y : SLang Nat) (R : Real) (S: Real): SLang Real := do
   let n ← Y            -- Sample a Nat from Y
   return S * ((n : Real) + R) -- Convert to Real and add R
 /-
+
 variables {α : Type*} [AddMonoid α]
 
 instance : AddMonoid (List α) where

@@ -148,6 +148,8 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     rw [hzero]
     simp
 
+  /- The quotient of two products is the product of the quotients, under the condition that the denominators are non-zero and non-infinite -/
+  /- This is needed in the DP proof -/
   lemma prod_over_prod (n : Nat) (f : Fin n -> ENNReal) (g : Fin n -> ENNReal)(nonzero: ∀i, g i ≠ 0)(noninf: ∀i, g i ≠ ⊤):
   (∏ i : Fin n, f i) / (∏ i : Fin n, g i) = ∏ i : Fin n, (f i / g i) := by
   induction n with
@@ -184,10 +186,7 @@ lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l 
     intro i
     apply noninf
 
-/- lemma RAPPOR_cancel {T : Type} (n : Nat) (query : T -> Fin n) (num : Nat) (den : PNat) (h : 2 * num < den) (v u : T) (len_eq: (one_hot n query v).length = (one_hot n query u).length) (b : List Bool) (hlen: (one_hot n query u).length = b.length):
-  ∏ i : Fin ohu.length, RRSinglePushForward num den h ((one_hot n query v)[i.val]'(by sorry)) (b[↑i.val]'(by sorry))
-  / RRSinglePushForward num den h ((one_hot n query u)[↑i.val](by sorry)) (b[↑i.val](by sorry)) = 1 := by sorry -/
-
+/- Arithmetic step for the RAPPOR DP proof-/
 lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
 (1 : ENNReal) ≤ ((2⁻¹ + ↑num / ↑(NNReal.ofPNat den)) / (2⁻¹ - ↑num / ↑(NNReal.ofPNat den))) ^ 2 := by
                rw [@sq]
@@ -227,7 +226,7 @@ lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
                 norm_cast
                 simp
 
-/- Good tip: use finCongr for re-indexing... -/
+/- Good tip: use finCongr for re-indexing... --/
 lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.length) (h2 : l.length = b.length)
   (f : α -> β -> ENNReal):
   ∏ (i : Fin l.length), f l[i] b[i] = ∏ (i : Fin v.length), f l[i] b[i] := by
@@ -235,6 +234,7 @@ lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.le
    intro x
    rfl
 
+/- Uses the one-hot-encoding lemmas to rewrite a quotient of RRSinglePushForward applications into an if-then-else statement -/
 lemma reduction_helper1 {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length) (h_users: query u ≠ query v) (i : Fin (one_hot n query u).length):
   RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] /
@@ -335,9 +335,6 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
   enter [1, 2, i]
   rw [reduction_helper1 n query num den h v u b ohu_len onhv_len h_users i]
  rw [reduction_helper2 _ _ _ _ _ _ h_users]
- have reduction_helper3:
-  ∏ i : Fin (one_hot n query u).length, (if query v = (finCongr (by aesop) i) then 1
-    else if query u = (finCongr (by aesop) i) then 1 else 1) = 1 := by simp
  simp_all only [mul_one]
  exact onhv_len
 
@@ -379,7 +376,7 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
                       exact len_eq
                       exact hlen
       rw [index_1]
-      rw [prod_over_prod] -- this needs proving
+      rw [prod_over_prod]
       simp_all only [ohv, ohu]
       rw [single_DP_reduction n query num den h v u b (by aesop) oh_len hlen]
       rw [@mul_div_assoc]
@@ -491,9 +488,6 @@ lemma arith_2_mult_helper (num : Nat) (den : PNat) (h : 2 * num < den) :
 ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) * ENNReal.ofReal ((2⁻¹ + ↑num / ↑↑ den.val) / (2⁻¹ - ↑num / ↑↑↑den)) := by
 rw [arith_2_helper num den h]
 
-
-
-
 lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
    ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by
     conv =>
@@ -503,7 +497,6 @@ lemma arith_2 (num : Nat) (den : PNat) (h: 2 * num < den):
       exact h
     conv =>
       enter [2, 1]
-      -- rw [Real.exp_log]
       rw [exp_rw num den h]
     rw [@sq, @sq]
     simp
@@ -555,7 +548,7 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   have valid_index7: a.length < l₂.length := by
                     rw [xlen2]
                     exact valid_index6
-                  rw [reduction_final_RAP n l₁ l₂ x (fun f => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
+                  rw [reduction_final_RAP n l₁ l₂ x (fun _ => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
                   { calc
                     RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
                     RAPPORSingleSample n query num den h (l₂[a.length]'(valid_index7)) (x[a.length]'(valid_index6)) ≤
