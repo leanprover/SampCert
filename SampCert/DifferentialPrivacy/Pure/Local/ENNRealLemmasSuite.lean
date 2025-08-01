@@ -53,7 +53,7 @@ lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
 lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
 
 
-#check ENNReal.mul_eq_top
+
 
 lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
   rw [@Ne.eq_def]
@@ -290,7 +290,121 @@ lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d)(htop1: a ≠ ⊤)(
       exact hr
       exact h2r
 
-lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)⁻¹ + num / den) / (2⁻¹ - num / den) = (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := by sorry
+lemma pnat_zero_imp_false2 (den : PNat): (den : Nat) = 0 -> False := by aesop
+
+
+lemma mult_div_comm_mult_div (a b c :ENNReal): a*(b/c) = b*(a/c):= by
+  rw [@ENNReal.div_eq_inv_mul]
+  rw [@ENNReal.div_eq_inv_mul]
+  rw [mul_comm]
+  rw[← mul_assoc]
+  conv =>
+    enter [1,1]
+    rw[mul_comm]
+
+lemma div_mult_eq_mult_div (a b c :ENNReal) : a/b*c = c*(a/b) := by rw [@CanonicallyOrderedCommSemiring.mul_comm]
+
+lemma lt_sub_left (a b : Nat):a-b>0 ↔ b< a := by aesop
+
+lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)⁻¹ + num / den) / (2⁻¹ - num / den)
+ = (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := by
+  simp
+  rw [ENNReal.div_eq_div_iff]
+  rw [mul_comm]
+  rw [← ennreal_mul_assoc]
+  conv =>
+    enter [2]
+    rw [mul_comm]
+    rw [← ennreal_mul_assoc]
+  rw [ENNReal.mul_sub]
+  rw [ENNReal.mul_sub]
+  rw [ENNReal.mul_sub]
+  rw [ENNReal.mul_sub]
+  rw [← mul_assoc]
+  rw [@ENNReal.mul_comm_div]
+  rw [ENNReal.inv_mul_cancel]
+  rw [ENNReal.div_self]
+  rw [mul_one]
+  rw [one_mul]
+  conv =>
+   enter [2,2,1]
+   rw[mul_comm]
+   rw[← mul_assoc]
+  rw [ENNReal.inv_mul_cancel]
+  rw [one_mul]
+  rw [mul_comm]
+  rw [mult_div_comm_mult_div]
+  rw [ENNReal.div_self]
+  rw [mul_one]
+  rw[div_mult_eq_mult_div]
+
+  simp
+  apply pnat_zero_imp_false2
+
+  norm_cast
+  rw [Not]
+  intro B
+  contradiction
+
+  simp
+  simp
+
+  simp
+  apply pnat_zero_imp_false2
+
+  norm_cast
+  rw [Not]
+  intro B
+  contradiction
+
+  simp
+  simp
+
+  intro B
+  intro C
+  norm_cast
+  rw[Not]
+  intro D
+  contradiction
+
+  intro b
+  intro C
+  norm_cast
+  rw [Not]
+  intro D
+  contradiction
+
+  intro B
+  intro C
+  simp_all
+  rw [@ENNReal.div_eq_top]
+  rw[Not]
+  intro D
+  cases D with
+  | inl dl =>
+    apply And.right at dl
+    have hh : ¬ den.val = 0 := by simp
+    norm_num at dl
+    contradiction
+  | inr dr =>
+    apply And.left at dr
+    contradiction
+
+  intro A
+  intro B
+  simp_all
+
+  rw [← lt_sub_left] at h
+  rw [@ne_iff_lt_or_gt]
+  right
+  sorry
+  aesop
+  sorry
+  aesop
+
+
+
+
 
 
 end ENNRealLemmas

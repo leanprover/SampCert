@@ -400,7 +400,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       /- now need a version of final_bound for RRPushForward -/
       /- use the "calc" tactic to prove this-/
       /- We should wait for Perryn to give an exact statement of the bound to match RR-/
-      sorry
       intro i
       apply RRSinglePushForward_non_zero
       intro i
