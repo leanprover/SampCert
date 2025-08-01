@@ -50,7 +50,7 @@ lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
   sorry
 -/
 
-lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
+-- lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
 
 
 
@@ -126,9 +126,9 @@ lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ 
   subst hl
   simp_all only [ne_eq, not_true_eq_false]
 
-lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
+/- lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
   intro h1
-  sorry
+  sorry -/
 
 lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b -> a / c < b / c := by
   intro h1
@@ -208,12 +208,13 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
               apply hb
               apply hbT
 
-lemma div_ineq_flip (a b c : ENNReal): a / b > c -> b / a < c := by sorry
+-- lemma div_ineq_flip (a b c : ENNReal): a / b > c -> b / a < c := by sorry
 
 lemma quot_lt_one_rev (a b : ENNReal): b < a -> b/a < 1 := by
   intro h
-  apply div_ineq_flip
-  exact quot_gt_one_rev a b h
+  apply ENNReal.div_lt_of_lt_mul'
+  rw [mul_one]
+  exact h
 
 lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
   ∑' (x : List Bool), f x = (∑'(x : List Bool), if x = [] then 0 else f x) := by
@@ -223,6 +224,7 @@ lemma tsum_func_zero_simp (f : List Bool -> ENNReal) (h : f [] = 0):
     intro i
     aesop
 
+/- The unused variable "assm" is here on purpose -/
 lemma tsum_ite_not (f : List Bool -> ENNReal):
   ∑' (x : List Bool), (if x = [] then 0 else f x) =
   ∑' (x : List Bool), if assm : x ≠ [] then f x else 0 := by simp_all [ite_not]
@@ -292,7 +294,6 @@ lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d)(htop1: a ≠ ⊤)(
 
 lemma pnat_zero_imp_false2 (den : PNat): (den : Nat) = 0 -> False := by aesop
 
-
 lemma mult_div_comm_mult_div (a b c :ENNReal): a*(b/c) = b*(a/c):= by
   rw [@ENNReal.div_eq_inv_mul]
   rw [@ENNReal.div_eq_inv_mul]
@@ -306,8 +307,18 @@ lemma div_mult_eq_mult_div (a b c :ENNReal) : a/b*c = c*(a/b) := by rw [@Canonic
 
 lemma lt_sub_left (a b : Nat):a-b>0 ↔ b< a := by aesop
 
+lemma lt_cancel (a b c : ENNReal) (h1: c ≠ 0) (h2 : c ≠ ⊤): c * a < c * b -> a < b := by
+ intro h
+ apply (ENNReal.mul_lt_mul_right h1 h2).mp
+ rw [mul_comm]
+ nth_rw 2 [mul_comm]
+ exact h
+
+
 lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)⁻¹ + num / den) / (2⁻¹ - num / den)
  = (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := by
+  have h1: ENNReal.ofNNReal ((@Subtype.val ℕ (fun n => 0 < n) den) : NNReal) = (den : ENNReal) := by norm_cast
+  have h2: (2 : ENNReal) * num < ENNReal.ofNNReal ((@Subtype.val ℕ (fun n => 0 < n) den) : NNReal) := by norm_cast
   simp
   rw [ENNReal.div_eq_div_iff]
   rw [mul_comm]
@@ -360,15 +371,15 @@ lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)
   simp
   simp
 
-  intro B
-  intro C
+  intro _
+  intro _
   norm_cast
   rw[Not]
   intro D
   contradiction
 
-  intro b
-  intro C
+  intro _
+  intro _
   norm_cast
   rw [Not]
   intro D
@@ -390,21 +401,38 @@ lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)
     apply And.left at dr
     contradiction
 
-  intro A
-  intro B
+  intro _
+  intro _
   simp_all
-
   rw [← lt_sub_left] at h
   rw [@ne_iff_lt_or_gt]
   right
-  sorry
+  simp_all only [gt_iff_lt, tsub_pos_iff_lt, ENNReal.coe_natCast, NNReal.ofPNat, Nonneg.mk_natCast]
+  norm_cast
   aesop
-  sorry
+  rw [← @zero_lt_iff]
+  rw [@tsub_pos_iff_lt]
+  rw [h1]
+  have h3: ↑(2 * num) / ↑(NNReal.ofPNat den) < (1 : ENNReal) := by
+    apply ENNReal.div_lt_of_lt_mul'
+    rw [mul_one]
+    aesop
+  have h4: ↑(2 * num) / ↑(NNReal.ofPNat den) < 2 * (2⁻¹ : ENNReal) := by
+    have ha: 2 * (2⁻¹ : ENNReal) = 1 := by
+      rw [ENNReal.mul_inv_cancel]
+      aesop
+      decide
+    rw [ha]
+    exact h3
+  set s : ENNReal := (num/ ↑(NNReal.ofPNat den))
+  have h5: 2 * s < 2 * (2⁻¹ : ENNReal) := by
+    rw [mul_div]
+    convert h4
+    norm_cast
+  apply lt_cancel _ _ 2
   aesop
-
-
-
-
-
+  decide
+  exact h5
+  aesop
 
 end ENNRealLemmas
