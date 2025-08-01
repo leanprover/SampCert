@@ -6,6 +6,8 @@ import Mathlib.Data.Complex.Exponential
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
+/- We prove the arithmetic bounds necessary for the proof of DP for Randomized Response. -/
+
 lemma numerator_pos (num : ℕ) (den : ℕ+) : (0 : ℝ) < ↑↑den + 2 * num := by
   have den_pos : 0 < (den : ℕ) := den.property
   have den_real_pos : (0 : ℝ) < ↑(den : ℕ) := Nat.cast_pos.mpr den_pos
@@ -85,7 +87,6 @@ lemma reduce (num : Nat) (den : PNat):
   · apply ne_of_gt
     simp_all only [NNReal.coe_pos, Nat.cast_pos]
     exact den.2
-
 
 
 lemma final_coercion (num : Nat) (den : PNat) (h : 2 * num < den):

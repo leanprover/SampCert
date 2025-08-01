@@ -1,7 +1,8 @@
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.RandomizedResponseMain
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.DPProof
 
 open RandomizedResponse
 
+/- Step 2 of the DP Proof over a dataset: cancellation of probabilities in the numerator and denominator. -/
 
 lemma fin_prod_cast_RAP {n m : ℕ} (h : n = m)(f : Fin n → ENNReal) :
   ∏' i : Fin n, f i = ∏' i : Fin m, f (Fin.cast h.symm i) := by

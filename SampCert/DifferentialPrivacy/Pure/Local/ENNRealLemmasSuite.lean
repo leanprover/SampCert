@@ -2,12 +2,26 @@ import SampCert
 
 namespace ENNRealLemmas
 
+/- Lemmas mostly having to do with mathematically trivial arithmetic in the
+   extended non-negative reals.
+-/
+
+lemma pnat_zero_imp_false (den : PNat): (den : Nat) = 0 -> False := by aesop
+
 lemma tsum_equal_comp {α β: Type} [AddCommMonoid β] [TopologicalSpace β] (f g : α -> β) (h: ∀i : α, f i = g i ):
    ∑' (i : α), f i = ∑' (i : α), g i := by simp_all
+
+lemma simplifier_3 {β : Type} [DecidableEq β] (f : T -> SLang β) (c : List β) (a b : β):
+(∑' (a_1 : List β), if b = a ∧ c = a_1 then mapM f tl a_1 else 0) = if b = a then mapM f tl c else 0 := by
+rw[tsum_eq_single c]
+aesop
+aesop
 
 lemma ennreal_mul_eq (a b c : ENNReal): a = b -> c * a = c * b := by
   intro h
   rw[h]
+
+lemma ennreal_div_one (a: ENNReal) : a / 1 = a := by simp_all only [div_one]
 
 lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
 
@@ -42,18 +56,6 @@ lemma mult_ne_zero (a b : ENNReal) (h1 : a ≠ 0) (h2 : b ≠ 0): a * b ≠ 0 :=
 lemma ineq_coercion (num : Nat) (den : PNat) (h : 2 * num < den):
 2 * (@Nat.cast ENNReal NonAssocSemiring.toNatCast num) < @Nat.cast ENNReal CanonicallyOrderedCommSemiring.toNatCast ↑den :=
   by norm_cast
-
-/- lemma mult_inv_dist (a b : ENNReal): (a * b)⁻¹ = a⁻¹ * b⁻¹ := by
-  rw [@inv_eq_one_div]
-  rw [@inv_eq_one_div]
-  rw [@inv_eq_one_div]
-  sorry
--/
-
--- lemma mult_ne_zero_inv (a b : ENNReal) (h1 : a ≠ T) (h2 : b ≠ T): (a * b)⁻¹ ≠ 0 := by sorry
-
-
-
 
 lemma mult_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ ⊤): a * b ≠ ⊤ := by
   rw [@Ne.eq_def]
@@ -112,7 +114,6 @@ lemma Finset.prod_ne_top_fin (n : Nat) (f : Fin n -> ENNReal) (h : ∀ i, f i �
    subst hn
    simp
 
-
 lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ := by
   simp
   rw [Not]
@@ -126,10 +127,6 @@ lemma div_ne_top (a b : ENNReal) (h1 : a ≠ ⊤) (h2 : b ≠ 0): a / b ≠ ⊤ 
   subst hl
   simp_all only [ne_eq, not_true_eq_false]
 
-/- lemma div_div_cancel (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a/c = b/c -> a = b := by
-  intro h1
-  sorry -/
-
 lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b -> a / c < b / c := by
   intro h1
   apply ENNReal.div_lt_of_lt_mul
@@ -139,8 +136,6 @@ lemma div_div_cancel_rev (a b c : ENNReal) (h : c ≠ 0 ∧ c ≠ ⊤): a < b ->
   exact h1
   exact h.left
   exact h.right
-
-
 
 lemma quot_gt_one_rev (a b : ENNReal): b < a -> 1 < a/b := by
   cases hb : b == 0 with
@@ -207,8 +202,6 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
               exact h1
               apply hb
               apply hbT
-
--- lemma div_ineq_flip (a b c : ENNReal): a / b > c -> b / a < c := by sorry
 
 lemma quot_lt_one_rev (a b : ENNReal): b < a -> b/a < 1 := by
   intro h
