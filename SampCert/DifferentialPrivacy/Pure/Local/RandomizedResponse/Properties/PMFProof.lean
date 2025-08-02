@@ -11,6 +11,7 @@ open RandomizedResponse
 #check RandomizedResponse.RRSingleSample
 #check SLang.BernoulliSample_normalizes
 
+/- Instantiation of RRSinglePushForward as a PMF. -/
 lemma RRSinglePushForward_PMF (num : Nat) (den : PNat) (h: 2 * num < den) (l : Bool) :
   HasSum (RRSinglePushForward num den h l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
@@ -32,6 +33,7 @@ lemma RRSinglePushForward_PMF (num : Nat) (den : PNat) (h: 2 * num < den) (l : B
       rw [@AddCommMonoidWithOne.add_comm]
   }
 
+/- The next lemmas lead towards the instantiation of RRSample as a PMF. -/
 lemma RRSingleSample_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) :
   HasSum (RRSingleSample query num den h l) 1 := by
     rw [RRSingleSample]
@@ -55,5 +57,6 @@ lemma RRSamplePushForward_PMF_helper [LawfulMonad SLang] (num : Nat) (den : PNat
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RRSinglePushForward_PMF
 
+/- Instantiation of RRSample as a PMF. -/
 def RRSample_PMF [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
   ⟨RRSample query num den h l, RRSample_PMF_helper query num den h l⟩
