@@ -8,3 +8,4 @@ import SampCert.Samplers.Bernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
+import SampCert.DifferentialPrivacy.Pure.Local.ProbabilityProduct

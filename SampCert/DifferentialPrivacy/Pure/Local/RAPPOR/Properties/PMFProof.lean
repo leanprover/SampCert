@@ -19,7 +19,7 @@ lemma RAPPORSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Fin n)
   HasSum (RAPPORSample n query num den h v) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     unfold RAPPORSample
-    apply Norm_func_norm_on_list
+    apply norm_func_norm_on_list
     intro a
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RAPPORSingleSample_PMF_helper query num den h a

@@ -53,12 +53,12 @@ lemma reduction_helper1 {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (de
                           have h1: (one_hot n query v)[i.val]'(by omega) = (one_hot n query u)[i.val]'(by omega) :=
                             by convert one_hot_different_answer_ex_two_contrp' n query v u (finCongr (by aesop) i)
                                aesop
-                              -- simp_all only [ne_eq, not_or, not_and]
                           rw [h1]
                           rw [ENNReal.div_self]
                           apply RRSinglePushForward_non_zero
                           apply RRSinglePushForward_finite
 
+/- Rewrites the if-then-else statement from above into a simpler form, with most terms cancelled. -/
 lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SLang Bool) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
   (∏ i : Fin (one_hot n query u).length,
@@ -103,6 +103,7 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
     rw [h9]
     rw [@mul_div]
 
+/- Cancellation of terms in the DP proof by using the above two lemmas.-/
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
 ∏ i : Fin (one_hot n query u).length, RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] / RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val]
@@ -116,7 +117,7 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
  simp_all only [mul_one]
  exact onhv_len
 
-/- This shows that that RAPPOR algorithm applied to a single user is differentially private. -/
+/- This gives the RAPPOR bound when the algorithm is applied to a single user. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
   -- probably want to restate the bound in an arithmetically equivalent way
@@ -200,8 +201,6 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                   cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4 _ hl₂; apply xlen2)).length = n) == true with
                   | true =>
                   simp at x_indices
-                  /- Now we need to apply the generalized reduction lemma,
-                  and then do some arithmetic. -/
                   have valid_index5: a.length < l₁.length := by
                     rw [hl₁]
                     rw [@List.length_append]

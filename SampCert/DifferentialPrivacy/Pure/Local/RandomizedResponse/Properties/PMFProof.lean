@@ -43,7 +43,7 @@ lemma RRSample_PMF_helper [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num
   HasSum (RRSample query num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     unfold RRSample
-    apply Norm_func_norm_on_list
+    apply norm_func_norm_on_list
     intro a
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RRSingleSample_PMF_helper
@@ -52,7 +52,7 @@ lemma RRSamplePushForward_PMF_helper [LawfulMonad SLang] (num : Nat) (den : PNat
   HasSum (RRSamplePushForward num den h l) 1 := by
     rw [Summable.hasSum_iff ENNReal.summable]
     unfold RRSamplePushForward
-    apply Norm_func_norm_on_list
+    apply norm_func_norm_on_list
     intro a
     rw [← Summable.hasSum_iff ENNReal.summable]
     apply RRSinglePushForward_PMF
