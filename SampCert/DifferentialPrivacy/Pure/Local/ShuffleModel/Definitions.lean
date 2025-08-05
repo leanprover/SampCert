@@ -2,13 +2,14 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.Samplers.Uniform.Code
 import SampCert.Samplers.Uniform.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
+import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
+import Mathlib.Probability.ProbabilityMassFunction.Basic
+
 
 namespace SLang
 
-
-def UniformSample2 (n : PNat) : IO (Fin n) := do
-  let r ← IO.rand 0 (n.val - 1)
-  return ⟨r, by decide⟩
+open SLang
+open RandomizedResponse
 
 def Shuffler {α: Type}(l:List α) := do
   let mut a := l.toArray
@@ -21,4 +22,15 @@ def Shuffler {α: Type}(l:List α) := do
 
 def ShuffleModel(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
   let l ← RandomizedResponse.RRSample query num den h l
-  return Shuffler l
+  let b ←  Shuffler l
+  return b
+
+
+lemma ShuffleModel_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) :
+  HasSum (ShuffleModel query num den h l) 1 := by sorry
+
+def ShuffleModel_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
+  ⟨ShuffleModel query num den h l ,ShuffleModel_PMF_helper query num den h l⟩
+
+theorem ShuffleDP (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) :
+DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by sorry
