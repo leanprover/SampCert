@@ -25,10 +25,3 @@ def Shuffler {α: Type}(l:List α) := do
    let j ← UniformSample (Nat.toPNat' i)
    a := a.swap ⟨i, sorry⟩ ⟨j, sorry⟩
   return a
-
-def Shuffler{α: Type}(l:Array α) : SLang (List α) :=  do
-  let j ← UniformSample (Nat.toPNat' i)
-
-  match l with
-  | [] => []
-  | hd::tl =>  hd.index
