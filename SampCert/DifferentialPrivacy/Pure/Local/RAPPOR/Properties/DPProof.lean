@@ -69,7 +69,7 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
   * f (one_hot n query v)[(query u).val] (b[(query u).val]'(by aesop)) / f (one_hot n query u)[(query u).val] (b[(query u).val]'(by aesop))
    := by
     simp_all only [finCongr_apply, Fin.getElem_fin, Fin.coe_cast, List.getElem_ofFn, Fin.eta]
-    have h4 (g : Fin b.length -> ENNReal) : ∏ i : Fin b.length, g i = ∏ (i ∈ Finset.univ), g i := by aesop
+    have _ (g : Fin b.length -> ENNReal) : ∏ i : Fin b.length, g i = ∏ (i ∈ Finset.univ), g i := by aesop
     conv =>
       enter [1]
       rw [@Finset.prod_ite]

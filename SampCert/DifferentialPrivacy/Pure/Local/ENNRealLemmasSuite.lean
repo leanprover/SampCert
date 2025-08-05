@@ -285,8 +285,6 @@ lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d)(htop1: a ≠ ⊤)(
       exact hr
       exact h2r
 
-lemma pnat_zero_imp_false2 (den : PNat): (den : Nat) = 0 -> False := by aesop
-
 lemma mult_div_comm_mult_div (a b c :ENNReal): a*(b/c) = b*(a/c):= by
   rw [@ENNReal.div_eq_inv_mul]
   rw [@ENNReal.div_eq_inv_mul]
@@ -343,7 +341,7 @@ lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)
   rw[div_mult_eq_mult_div]
 
   simp
-  apply pnat_zero_imp_false2
+  apply pnat_zero_imp_false
 
   norm_cast
   rw [Not]
@@ -354,7 +352,7 @@ lemma exp_change_form (num : Nat) (den : PNat) (h: 2 * num < den) : ((2:ENNReal)
   simp
 
   simp
-  apply pnat_zero_imp_false2
+  apply pnat_zero_imp_false
 
   norm_cast
   rw [Not]
