@@ -25,7 +25,8 @@ def Shuffler {α: Type}(l:List α) := do
 
 def ShuffleModel(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
   let l ← RandomizedResponse.RRSample query num den h l
-  return Shuffler l
+  let b ← Shuffler l
+  return b
 
 lemma Shuffle_norms [LawfulMonad SLang] {α : Type}(l: List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
@@ -44,3 +45,15 @@ HasSum (ShuffleModel query num den h l) 1 := by
   rename_i inst
   simp_all only [bind, pure, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   sorry
+  let b ←  Shuffler l
+  return b
+
+
+lemma ShuffleModel_PMF_helper {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) :
+  HasSum (ShuffleModel query num den h l) 1 := by sorry
+
+def ShuffleModel_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
+  ⟨ShuffleModel query num den h l ,ShuffleModel_PMF_helper query num den h l⟩
+
+theorem ShuffleDP (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) :
+DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by sorry
