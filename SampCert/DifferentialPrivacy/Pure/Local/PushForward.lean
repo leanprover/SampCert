@@ -3,7 +3,7 @@ import SampCert
 open SLang
 
 /- This proves that the push-forward of a probability measure is a probability measure.
-We do not actually use this anywhere yet.-/
+We use this when defining UniformSample', i.e., UniformSample as an SLang (Fin n). -/
 
 noncomputable def push_forward {T S: Type} [DecidableEq S] (p : SLang T) (f : T -> S) : SLang S :=
   fun s => ∑' (t : T), if f t = s then p t else 0
