@@ -4,6 +4,7 @@ import SampCert.Samplers.Uniform.Properties
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.PushForward
+import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 
 namespace SLang
 
@@ -108,18 +109,15 @@ lemma Shuffle_norms [LawfulMonad SLang] {α : Type}(l: List α): HasSum (Shuffle
     mul_ite, mul_one, mul_zero]
   unfold probBind
   simp [pure, bind]
-  set
   sorry
 
 
-lemma ShuffleModel_norms [LawfulMonad SLang] (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) :
+lemma ShuffleModel_PMF_helper (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) :
 HasSum (ShuffleModel query num den h l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   unfold ShuffleModel
   simp [pure,bind]
   unfold RandomizedResponse.RRSample
-  rename_i inst
-  simp_all only [bind, pure, bind_apply, pure_apply, mul_ite, mul_one, mul_zero]
   sorry
 
 
