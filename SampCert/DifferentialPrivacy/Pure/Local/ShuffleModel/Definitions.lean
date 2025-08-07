@@ -17,9 +17,6 @@ def Shuffler {α: Type}(l:List α) := do
   let mut b : Array α := Array.empty
   for h: i in [1:a.size] do
    let j ← UniformSample' (Nat.toPNat' i+1)
-   let j ← UniformSample' (Nat.toPNat' i+1)
-   have hj : j < a.size := by
-    have hi : j ≤ i := by
 
    b := a.swap ⟨i, by aesop; exact Membership.get_elem_helper h rfl⟩ ⟨j, by
    aesop
