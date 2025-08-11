@@ -9,6 +9,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 namespace SLang
 
 
+/- Uniform Sample allows to draw a uniform sample n, but returns type Fin n. This allows
+us to prove the index is valid in the Shuffler function -/
 def UniformSample' (n : PNat) : SLang (Fin n) := do
   let r ← UniformSample n
   return (r : Fin n)
@@ -22,6 +24,8 @@ lemma fin_helper (x : Nat)(n : PNat) : x = x % n ↔  x < n := by
   intro h
   exact Eq.symm (Nat.mod_eq_of_lt h)
 
+/- Proves that an output drawn from the Uniform Sample has the same probability as
+an output drawn for UniformSample' given the n values are the same. -/
 lemma  UniformSample'_eq_UnformSample (n : PNat)(x : Fin n) : UniformSample' n x = UniformSample n x := by
   unfold UniformSample'
   conv =>
@@ -48,7 +52,6 @@ lemma UniformSample'_uniform (n : PNat) (x: Fin n) : UniformSample' n x = 1 / n 
   rw [UniformSample'_eq_UnformSample]
   exact UniformSample_apply n x.val (Fin.is_lt x)
 
-
 lemma UniformSample'_norms (n : PNat) : HasSum (UniformSample' n) 1 := by
   rw [UniformSample']
   simp
@@ -67,7 +70,7 @@ lemma UniformSample'_norms (n : PNat) : HasSum (UniformSample' n) 1 := by
   simp [p]
 
 
-
+/- The Shuffler follows the Fischer-Yates method for shuffling lists. -/
 def Shuffler {α: Type}(l:List α) := do
   let mut a := l.toArray
   let mut b : Array α := Array.empty
@@ -94,12 +97,31 @@ def Shuffler {α: Type}(l:List α) := do
 
 #check Shuffler
 
+def BinomialSample (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) := do
+  let mut acc := 0
+  for _ in [0:n] do
+    let b ← BernoulliSample num den h
+    if b=True then
+      acc := acc + 1
+  return acc
+
+theorem BinomialSample_norms (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) :
+  HasSum (BinomialSample num den h n) 1 := by sorry
+
+theorem BinomialSample_kprob (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) (k : Nat) :
+  BinomialSample num den h n k = ((n: Nat).choose k) * ((num / den) ^ k) * ((1 - (num / den)) ^ (n - k)) := by
+  sorry
+
+
+
+/- This is the Shuffle Model. -/
 def ShuffleModel(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
   let l ← RandomizedResponse.RRSample query num den h l
   let b ← Shuffler l
   return b
 
 #check ShuffleModel
+
 
 lemma Shuffle_norms [LawfulMonad SLang] {α : Type}(l: List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
