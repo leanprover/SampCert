@@ -5,6 +5,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.PushForward
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
+import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
+import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
 
 namespace SLang
 
@@ -94,22 +96,40 @@ def Shuffler {α: Type}(l:List α) := do
    ⟩
   return b.toList
 
+def BinomialSample (seed: MultiBernoulli.SeedType)(n: PNat) := do
+  let list := List.replicate n seed
+  let list ← MultiBernoulli.MultiBernoulliSample (list)
+  let k := List.count true list
+  return k
 
-#check Shuffler
 
-def BinomialSample (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) := do
-  let mut acc := 0
-  for _ in [0:n] do
-    let b ← BernoulliSample num den h
-    if b=True then
-      acc := acc + 1
-  return acc
+theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType) (n : PNat) :
+  HasSum (BinomialSample seed n) 1 := by
+  rw [BinomialSample]
+  simp
+  unfold probBind
+  simp [Summable.hasSum_iff ENNReal.summable]
+  have h: (push_forward (MultiBernoulli.MultiBernoulliSample (List.replicate (↑n) seed))
+        (fun (a : List Bool) => (List.count true a))) = (fun (b : Nat) =>
+        (∑' (a : List Bool), if b = List.count true a then MultiBernoulli.MultiBernoulliSample
+        (List.replicate (↑n) seed) a else 0)) := by
+          unfold push_forward
+          have h1 (x: List Bool): (fun a => List.count true a) x = List.count true x := by aesop
+          conv =>
+            enter [1,s,1 ,t ]
+            rw [h1]
+          have h2 (x:ENNReal)(s: Nat)(t: List Bool): (if List.count true t = s then x else 0) = (if s =List.count true t then x else 0) := by aesop
+          conv =>
+            enter [1,s,1,t]
+            rw [h2]
+  rw [← h]
+  rw [push_forward_prob_is_prob]
+  simp [MultiBernoulli.MultiBernoulliSample_normalizes]
 
-theorem BinomialSample_norms (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) :
-  HasSum (BinomialSample num den h n) 1 := by sorry
 
-theorem BinomialSample_kprob (num : Nat) (den : PNat) (h: num ≤ den) (n : PNat) (k : Nat) :
-  BinomialSample num den h n k = ((n: Nat).choose k) * ((num / den) ^ k) * ((1 - (num / den)) ^ (n - k)) := by
+
+theorem BinomialSample_kprob (seed : MultiBernoulli.SeedType) (n : PNat) (k : Nat) :
+  BinomialSample seed n k = ((n: Nat).choose k) * ((num / den) ^ k) * ((1 - (num / den)) ^ (n - k)) := by
   sorry
 
 
