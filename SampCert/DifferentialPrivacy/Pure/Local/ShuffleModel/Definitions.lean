@@ -61,14 +61,11 @@ lemma UniformSample'_norms (n : PNat) : HasSum (UniformSample' n) 1 := by
   simp [Summable.hasSum_iff ENNReal.summable]
   set f : ℕ → Fin n := fun a => a
   set p : SLang ℕ := UniformSample n
-  have h1: push_forward p f = (fun (b : Fin n) => ∑' (a : ℕ), if f a = b then p a else 0) := by
-    rfl
   rw [←push_forward_prob_is_prob p f]
+  have h1: push_forward p f = (fun (b : Fin n) => ∑' (a : ℕ), if b= f a then p a else 0) := by
+    unfold push_forward
+    rfl
   simp [h1]
-  have h2 (b : Fin n.val) (a : Nat): (if b = f a then p a else 0) = if f a = b then p a else 0 := by aesop
-  conv =>
-    enter [2, 1, z, 1, a]
-    rw [←h2]
   simp [p]
 
 
@@ -114,14 +111,7 @@ theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType
         (∑' (a : List Bool), if b = List.count true a then MultiBernoulli.MultiBernoulliSample
         (List.replicate (↑n) seed) a else 0)) := by
           unfold push_forward
-          have h1 (x: List Bool): (fun a => List.count true a) x = List.count true x := by aesop
-          conv =>
-            enter [1,s,1 ,t ]
-            rw [h1]
-          have h2 (x:ENNReal)(s: Nat)(t: List Bool): (if List.count true t = s then x else 0) = (if s =List.count true t then x else 0) := by aesop
-          conv =>
-            enter [1,s,1,t]
-            rw [h2]
+          rfl
   rw [← h]
   rw [push_forward_prob_is_prob]
   simp [MultiBernoulli.MultiBernoulliSample_normalizes]
@@ -166,5 +156,21 @@ HasSum (ShuffleModel query num den h l) 1 := by
 def ShuffleModel_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
   ⟨ShuffleModel query num den h l ,ShuffleModel_PMF_helper query num den h l⟩
 
+
+def ShuffleModel_is_privPostProcess (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) :
+ShuffleModel query num den h l = privPostProcess (RandomizedResponse.RRSample query num den h l) (Shuffler) (l) := by
+  unfold ShuffleModel
+  unfold RandomizedResponse.RRSample
+  simp [privPostProcess]
+  sorry
+
 theorem Shuffle_is_DP (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) :
-DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by sorry
+DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by
+  unfold ShuffleModel_PMF
+  unfold ShuffleModel
+  simp [pure, bind]
+  unfold probBind
+
+  sorry
+
+end SLang

@@ -6,13 +6,13 @@ open SLang
 We use this when defining UniformSample', i.e., UniformSample as an SLang (Fin n). -/
 
 noncomputable def push_forward {T S: Type} [DecidableEq S] (p : SLang T) (f : T -> S) : SLang S :=
-  fun s => ∑' (t : T), if f t = s then p t else 0
+  fun s => ∑' (t : T), if s = f t then p t else 0
 
 lemma push_forward_prob_is_prob {T S : Type} [DecidableEq S] (p : SLang T) (f : T -> S) (h : ∑' (t : T), p t = 1) :
   ∑' (s : S), (push_forward p f) s = 1 := by
     simp [push_forward]
     rw [@ENNReal.tsum_comm]
-    have h1: ∀b : T, ∑' (a : S), (if f b = a then p b else 0 : ENNReal) = p b := by
+    have _: ∀b : T, ∑' (a : S), (if f b = a then p b else 0 : ENNReal) = p b := by
       intro b
       rw [tsum_eq_single (f b)]
       simp
