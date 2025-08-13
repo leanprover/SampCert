@@ -26,22 +26,7 @@ lemma ennreal_div_one (a: ENNReal) : a / 1 = a := by simp_all only [div_one]
 lemma ennreal_mul_assoc (a b c : ENNReal): a * c + b * c = (a + b) * c := by ring
 
 lemma le_add_non_zero (a b :ENNReal)(h: b ≠ 0)(h2: a ≠ ⊤): a < a+b := by
-  rw [@lt_iff_le_and_ne]
-  apply And.intro
-  simp_all
-  simp
-  rw [Not]
-  intro c
-  have gg : a + 0 =a +b := by
-    simp
-    exact c
-  rw [ENNReal.add_right_inj] at gg
-  symm at gg
-  subst gg
-  have hh: (0 ≠ 0) → False := by simp
-  apply hh
-  exact_mod_cast h
-  exact h2
+  exact ENNReal.lt_add_right h2 h
 
 lemma sub_le_add_ennreal (a b :ENNReal)(h1: b ≠ 0)(h3: b ≤ a)(h4: a ≠ ⊤): a -b < a +b := by
   apply ENNReal.sub_lt_of_lt_add
@@ -243,47 +228,9 @@ lemma sub_add_cancel_ennreal (a b :ENNReal)(h:b≤ a)(h1 : b ≠ ⊤): a -b +b =
 
 
 lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d)(htop1: a ≠ ⊤)(htop2 : c ≠ ⊤): a * c ≤ b * d := by
-  rw [@Decidable.le_iff_eq_or_lt]
-  rw [@Decidable.le_iff_eq_or_lt] at h1
-  rw [@Decidable.le_iff_eq_or_lt] at h2
-  cases h1 with
-  | inl h1l =>
-    cases h2 with
-    | inl h2l =>
-      left
-      rw [h1l]
-      rw [h2l]
-    | inr h2r =>
-      cases bzero : b == 0 with
-      | true =>
-        left
-        subst h1l
-        simp_all only [ne_eq, not_false_eq_true, beq_iff_eq, zero_mul]
-      | false =>
-        right
-        subst h1l
-        simp_all only [beq_eq_false_iff_ne]
-        rw [propext (ENNReal.mul_lt_mul_left bzero htop1)]
-        exact h2r
-  | inr hr =>
-    cases h2 with
-    | inl h2l =>
-      rw [← h2l]
-      cases czero : c == 0 with
-      | true =>
-         left
-         subst h2l
-         simp_all only [ne_eq, beq_iff_eq, mul_zero]
-      | false =>
-        right
-        rw [@beq_eq_false_iff_ne] at czero
-        rw [propext (ENNReal.mul_lt_mul_right czero htop2)]
-        exact hr
-    | inr h2r =>
-      right
-      apply ENNReal.mul_lt_mul
-      exact hr
-      exact h2r
+  apply mul_le_mul_of_nonneg
+  all_goals aesop
+
 
 lemma pnat_zero_imp_false2 (den : PNat): (den : Nat) = 0 -> False := by aesop
 
