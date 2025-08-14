@@ -95,8 +95,14 @@ lemma valid_index3 {β: Type}{l₁ : List T} {x : List β} (h1: l₁ = a++[n]++b
     rw[←hx]
     apply valid_index2 h1 i
 
+lemma valid_index8 {β: Type}{l₁ : List T} {x : List β} (h1: l₁ = a++[n]++b) (hx: l₁.length = x.length) (i : Fin ((l₁.length - 1) + 1)):
+  i.val < x.length := by
+    rw[←hx]
+    apply valid_index2 h1 i
 
-lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length) (nonzero: ∀(k: T) (bo: β), f k bo ≠ 0) (noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
+lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)
+ (nonzero: ∀ (i : Fin (l₂.length - 1)), f (l₂[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) (x[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) ≠ 0)
+ (noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin ((l₁.length-1)+1)), f (l₁[i.val]'(valid_index2 h1 i)) (x[i.val]'(valid_index3 h1 hx i))) /
     (∏' (i : Fin ((l₂.length-1)+1)), f (l₂[i.val]'(valid_index2 h2 i)) (x[i.val]'(valid_index3 h2 hy i)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx]; rw[h1]; simp)) := by
     rw[tprod_fintype]
     rw[tprod_fintype]
@@ -123,8 +129,8 @@ lemma reduction2 {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1
     simp[mod_helper (a.length) (l₂.length) (by rw[h2];simp;linarith) (by rw[h2]; simp)]
 
     rw[Finset.prod_ne_zero_iff]
-    intro i
-    simp[nonzero]
+    intro i _
+    apply nonzero i
     rw[← lt_top_iff_ne_top]
     apply ENNReal.prod_lt_top
     intro i
@@ -139,10 +145,12 @@ lemma conversion {β: Type}(l: List T) (x: List β)(h1: l = a++[n]++b)(hl : l.le
   rw [fin_prod_cast (by rw [← Nat.sub_add_cancel hl])]
   simp
 
-theorem reduction_final {β: Type}(l₁ l₂: List T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)(nonzero: ∀(k: T) (bo: β), f k bo ≠ 0)(noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
-    (∏' (i : Fin (l₂.length)), f (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f (l₁[(a.length)]'(by rw[h1];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) := by
-    have hl2: l₂.length ≥ 1 := by rw[h2];simp; linarith
-    have hl1: l₁.length ≥ 1 := by rw[h1];simp; linarith
+theorem reduction_final {β: Type}(l₁ l₂ a b: List T)(n m : T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)
+   (nonzero: ∀ (i : Fin (l₂.length - 1)), f (l₂[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) (x[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) ≠ 0)
+   (noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
+    (∏' (i : Fin (l₂.length)), f (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f (l₁[(a.length)]'(by rw[h1]; simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) := by
+    have hl2: l₂.length ≥ 1 := by rw[h2];simp; omega
+    have hl1: l₁.length ≥ 1 := by rw[h1];simp; omega
     rw[conversion l₂ x h2 hl2 hy f]
     rw[conversion l₁ x h1 hl1 hx f]
     rw [reduction2 l₁ l₂ x f h1 h2 hx hy nonzero noninf]

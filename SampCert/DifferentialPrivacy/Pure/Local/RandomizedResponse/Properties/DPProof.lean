@@ -1,6 +1,7 @@
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Basic
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.BasicLemmas
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.Reduction
+import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.LocalToDataset
 
 open SLang
 open ENNRealLemmas
@@ -31,7 +32,7 @@ cases xlen1 : l₁.length == x.length with
                         have xlen2 : l₂.length = x.length := by aesop
                         simp
                         have xlen3 : l₁.length = x.length := by aesop
-                        rw[reduction_final l₁ l₂ x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
+                        rw[reduction_final l₁ l₂ a b n m x (RRSingleSample query num den h ) hl₁ hl₂ xlen3 xlen2]
                         have i1: a.length < x.length := by
                           rw[←xlen3]
                           subst hl₁ hl₂
@@ -48,7 +49,8 @@ cases xlen1 : l₁.length == x.length with
                           exact h
                         _ ≤   ENNReal.ofReal (Real.exp (Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by aesop
                         }
-                        {apply RRSingleSample_non_zero query num den h}
+                        {intro i
+                         apply RRSingleSample_non_zero query num den h}
                         {apply RRSingleSample_finite query num den h}
 | false => simp at xlen1
            rw [←Ne.eq_def] at xlen1
@@ -58,3 +60,25 @@ cases xlen1 : l₁.length == x.length with
            rw [numerator_zero]
            rw [@ENNReal.zero_div]
            simp
+
+/- A different perspective-/
+def RRSingle_Local (query : T → Bool) (num: Nat) (den : PNat) (h: 2 * num < den): LocalMechanism T Bool :=
+  fun l => ⟨RRSingleSample query num den h l, RRSingleSample_PMF_helper query num den h l⟩
+
+lemma RR_Local_DP (query : T → Bool) (num : Nat) (den : PNat) (h : 2 * num < den): Local_DP (RRSingle_Local query num den h) (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num))) := by
+  rw [Local_DP]
+  intro u₁ u₂ y
+  simp [RRSingle_Local]
+  have h1: RRSingleSample query num den h u₁ y / RRSingleSample query num den h u₂ y ≤ ENNReal.ofReal (Real.exp (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num)))) := by
+    calc
+    RRSingleSample query num den h u₁ y / RRSingleSample query num den h u₂ y ≤ (↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num) := final_bound query num den h u₁ u₂ y
+    _ = ENNReal.ofReal (Real.exp (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num)))) := by rw [final_step_combined num den h]
+  apply h1
+
+lemma RRSample_DP (query : T → Bool) (num : Nat) (den : PNat) (h : 2 * num < den): DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num))) := by
+  have h1: RRSample_PMF query num den h = local_to_dataset_PMF (RRSingle_Local query num den h) := rfl
+  rw [h1]
+  apply LocalDP_to_dataset
+  apply RRSingleSample_non_zero query num den h
+  apply RRSingleSample_finite query num den h
+  apply RR_Local_DP
