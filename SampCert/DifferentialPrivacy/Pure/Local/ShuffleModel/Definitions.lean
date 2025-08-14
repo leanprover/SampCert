@@ -6,6 +6,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.PushForward
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
+import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
+
 namespace SLang
 
 
@@ -173,5 +175,21 @@ HasSum (ShuffleModel query num den h l) 1 := by
 def ShuffleModel_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
   ⟨ShuffleModel query num den h l ,ShuffleModel_PMF_helper query num den h l⟩
 
+
+def ShuffleModel_is_privPostProcess (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) :
+ShuffleModel query num den h l = privPostProcess (RandomizedResponse.RRSample query num den h l) (Shuffler) (l) := by
+  unfold ShuffleModel
+  unfold RandomizedResponse.RRSample
+  simp [privPostProcess]
+  sorry
+
 theorem Shuffle_is_DP (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) :
-DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by sorry
+DP_withUpdateNeighbour (ShuffleModel_PMF query num den h) (Real.log ((2⁻¹ + ↑num / ↑↑↑den) / (2⁻¹ - ↑num / ↑↑↑den))) := by
+  unfold ShuffleModel_PMF
+  unfold ShuffleModel
+  simp [pure, bind]
+  unfold probBind
+
+  sorry
+
+end SLang
