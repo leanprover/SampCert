@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.ShuffleModel.Definitions
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
 
 
 namespace SLang
@@ -16,7 +17,8 @@ lemma Shuffler_empty {α: Type}(l:List α)(h: l = []): Shuffler l [] = 1 := by
   rw [h]
   simp [pure]
 
-lemma Shuffler_norm {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
+
+lemma Shuffler_PMF {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   induction l with
   | nil =>
@@ -32,7 +34,7 @@ lemma Shuffler_norm {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shu
     rw [Summable.hasSum_iff ENNReal.summable]
     simp
     rw [ENNReal.tsum_comm]
-    let hpf (b: Nat)(i: List α):  (fun (i: List α) => ∑'(a : List α), (if i = List.insertNth b h a then Shuffler t a else 0)) =
+    let hpf (b: Nat)(_: List α):  (fun (i: List α) => ∑'(a : List α), (if i = List.insertNth b h a then Shuffler t a else 0)) =
                                   (push_forward (Shuffler t) (fun (a: List α) => List.insertNth b h a)) := by
                                   unfold push_forward
                                   rfl
@@ -44,6 +46,10 @@ lemma Shuffler_norm {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shu
       apply push_forward_prob_is_prob_gen
     rw [ih]
     simp
+
+lemma Shuffler_norms {α: Type} [DecidableEq α][BEq α] (l:List α):  ∑' (b : List α), Shuffler l b = 1 := by
+  rw [← Summable.hasSum_iff ENNReal.summable]
+  apply Shuffler_PMF
 
 theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType) (n : PNat) :
   HasSum (BinomialSample seed n) 1 := by
@@ -61,6 +67,21 @@ theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType
   rw [← h]
   rw [push_forward_prob_is_prob]
   simp [MultiBernoulli.MultiBernoulliSample_normalizes]
+
+theorem RRShuffle_norms [LawfulMonad SLang]{T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
+  unfold RRShuffle
+  simp_all only [bind, pure, bind_pure]
+  unfold probBind
+  simp [Summable.hasSum_iff ENNReal.summable]
+  rw [ENNReal.tsum_comm]
+  conv =>
+    enter [1,1,b]
+    rw [ENNReal.tsum_mul_left]
+    enter [2]
+    apply Shuffler_norms
+  simp
+  rw [← Summable.hasSum_iff ENNReal.summable]
+  apply RRSample_PMF_helper
 
 
 theorem BinomialSample_kprob (seed: MultiBernoulli.SeedType) (n : PNat) (k : Nat) :
@@ -102,3 +123,4 @@ lemma Shuffle_permutes {α: Type} [BEq α] (l₁ l₂: List α)(hlen1:  l₁.len
       rfl
 
     rw[tsum_eq_single]
+    sorry
