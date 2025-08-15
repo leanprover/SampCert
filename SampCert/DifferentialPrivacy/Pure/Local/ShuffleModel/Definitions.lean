@@ -51,3 +51,40 @@ theorem BinomialSample_kprob (seed: MultiBernoulli.SeedType) (n : PNat) (k : Nat
   simp [pure, bind]
 
   sorry
+
+  /- This is the Shuffle Model. -/
+def ShuffleModel(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
+  let l ← RandomizedResponse.RRSample query num den h l
+  let b ← Shuffler l
+  return b
+
+lemma Shuffle_permutes {α: Type} [BEq α] (l₁ l₂: List α)(hlen1:  l₁.length = n)(hlen2: l₂.length = n)(h: List.isPerm l₁ l₂): Shuffler l₁ l₂ = 1/Nat.factorial n := by
+  induction l₁ generalizing l₂ n
+  simp at hlen1
+  rw[symm hlen1]
+  simp
+  unfold Shuffler
+  simp
+  symm at hlen1
+  rw[hlen1] at hlen2
+  rw[List.length_eq_zero] at hlen2
+  exact hlen2
+
+  case cons hd tl ih =>
+    unfold Shuffler
+    simp
+    simp at hlen1
+    rw[symm hlen1]
+    conv =>
+      enter[1,1,a,2]
+      rw[tsum_eq_single (List.eraseIdx l₂ a ) (by
+      intro b' h
+      simp
+
+      aesop
+      have h2: b' = List.eraseIdx (List.insertNth a hd b') a := by rw[List.eraseIdx_insertNth]
+      contradiction
+       )]
+      rfl
+
+    rw[tsum_eq_single]
