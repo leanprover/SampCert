@@ -30,29 +30,45 @@ lemma Shuffler_empty {α: Type}(l:List α)(h: l = []): Shuffler l [] = 1 := by
   simp [pure]
 
 
-
-lemma Shuffler_norm [DecidableEq α]{α: Type}(l:List α): HasSum (Shuffler l) 1 := by
+lemma Shuffler_norm {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   induction l with
   | nil =>
     unfold Shuffler
     simp [pure]
     unfold probPure
-    simp
+    rw [ENNReal.tsum_eq_add_tsum_ite []]
+    aesop
   | cons h t ih =>
     unfold Shuffler
     simp [pure]
     rw [← Summable.hasSum_iff ENNReal.summable]
     rw [Summable.hasSum_iff ENNReal.summable]
     simp
+    rw [ENNReal.tsum_comm]
+    let hpf (b: Nat)(i: List α):  (fun (i: List α) => ∑'(a : List α), (if i = List.insertNth b h a then Shuffler t a else 0)) =
+                                  (push_forward (Shuffler t) (fun (a: List α) => List.insertNth b h a)) := by
+                                  unfold push_forward
+                                  rfl
     conv =>
-      enter [1,1,b,1,a,2,1,a_1]
-      rw [insertNth_helper]
-    rename_i α_1 inst
-    conv =>
-      enter [1, 1, b, 1, a, 2, 1, a_1]
-    rw [tsum_add]
-    have h (a_1:List α)(b:List α)(a : Nat): (if a_1 = b.eraseIdx a then Shuffler t a_1 else 0) = Shuffler t a_1 := by sorry
+      enter [1,1,b]
+      rw [ENNReal.tsum_mul_left]
+      rw [hpf b t]
+      enter [2]
+      apply push_forward_prob_is_prob_gen
+    rw [ih]
+    simp
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -75,6 +91,7 @@ theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType
         (List.replicate (↑n) seed) a else 0)) := by
           unfold push_forward
           rfl
+
   rw [← h]
   rw [push_forward_prob_is_prob]
   simp [MultiBernoulli.MultiBernoulliSample_normalizes]
