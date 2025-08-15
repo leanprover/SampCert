@@ -10,7 +10,9 @@ lemma RAPPORSingleSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (
   RAPPORSingleSample n query num den h l₁ l₂= 0 := by
   rw [RAPPORSingleSample]
   apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
-/- The same as above, but extended to the entire dataset. -/
+
+
+/- The same "diff_lenghts" theorem as above, but extended to the entire dataset. -/
 lemma RAPPORSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (x : List (List Bool)) (hlen : l₁.length ≠ x.length):
   RAPPORSample n query num den h l₁ x = 0 := by
   induction l₁ generalizing x with
@@ -89,6 +91,17 @@ lemma RRSamplePushForward_non_zero (num : Nat) (den : PNat) (h: 2 * num < den) (
   rw [@Finset.prod_ne_zero_iff]
   intro a _
   apply RRSinglePushForward_non_zero
+
+lemma RAPPORSingleSample_non_zero [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool) (hlen : n = l₂.length):
+  RAPPORSingleSample n query num den h l₁ l₂ ≠ 0 := by
+  rw [RAPPORSingleSample]
+  apply RRSamplePushForward_non_zero num den h (one_hot n query l₁) l₂ (by simp[hlen])
+
+lemma RAPPORSingleSample_zero_imp_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : T) (l₂ : List Bool)
+  (hlen: RAPPORSingleSample n query num den h l₁ l₂ = 0): n ≠ l₂.length := by
+  by_contra hx
+  have h_contr: RAPPORSingleSample n query num den h l₁ l₂ ≠ 0 := RAPPORSingleSample_non_zero n query num den h l₁ l₂ (by simp[hx])
+  contradiction
 
 /- RRSamplePushForward is always finite. This is needed in the DP proof. -/
 lemma RRSamplePushForward_finite (num : Nat) (den : PNat) (h: 2 * num < den) (l : List Bool) (b : List Bool):

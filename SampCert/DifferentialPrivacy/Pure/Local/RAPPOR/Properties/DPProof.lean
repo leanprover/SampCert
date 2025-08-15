@@ -267,4 +267,63 @@ lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (d
                  rw [@ENNReal.zero_div]
                  simp
 
+/- A different perspective -/
+
+def RAPPORSingle_Local (n : Nat) (query : T → Fin n) (num: Nat) (den : PNat) (h: 2 * num < den): LocalMechanism T (List Bool) :=
+  fun l => ⟨RAPPORSingleSample n query num den h l, RAPPORSingleSample_PMF_helper query num den h l⟩
+
+lemma RAPPOR_Local_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den):
+  Local_DP (RAPPORSingle_Local n query num den h) (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den))) := by
+  rw [Local_DP]
+  intro u₁ u₂ y
+  simp [RAPPORSingle_Local]
+  calc
+   RAPPORSingleSample n query num den h u₁ y /
+   RAPPORSingleSample n query num den h u₂ y ≤
+   ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
+   _ = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by rw[←arith_2 num den h]
+
+
+lemma RAPPORSample_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
+  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
+   := by
+   have h1: RAPPORSample_PMF n query num den h = local_to_dataset_PMF (RAPPORSingle_Local n query num den h) := rfl
+   rw [h1]
+   let P : T → List Bool → Bool := fun _ bo => (n == bo.length)
+   apply LocalDP_to_dataset _ _ P
+   {intro k bo
+    simp [P, -ne_eq]
+    apply Iff.intro
+    simp [RAPPORSingle_Local, -ne_eq]
+    intro hlen
+    apply RAPPORSingleSample_non_zero
+    simp [one_hot, hlen]
+    simp [RAPPORSingle_Local, -ne_eq]
+    intro hbo
+    by_contra bol
+    have hcontr: RAPPORSingleSample n query num den h k bo = 0 := by
+      apply RAPPORSingleSample_diff_lengths
+      simp [one_hot]
+      exact bol
+    contradiction
+   }
+   {intro l₁ l₂ b k bo i
+    apply Iff.intro
+    simp [RAPPORSingle_Local]
+    intro h0
+    apply RAPPORSingleSample_diff_lengths
+    apply RAPPORSingleSample_zero_imp_diff_lengths at h0
+    simp [one_hot, h0]
+    intro h0
+    apply RAPPORSingleSample_diff_lengths
+    apply RAPPORSingleSample_zero_imp_diff_lengths at h0
+    simp [←ne_eq]
+    apply h0
+   }
+   {
+    intro k bo
+    exact PMF.apply_ne_top (RAPPORSingle_Local n query num den h k) bo
+   }
+   {apply RAPPOR_Local_DP n query num den h}
+
 end RAPPOR
