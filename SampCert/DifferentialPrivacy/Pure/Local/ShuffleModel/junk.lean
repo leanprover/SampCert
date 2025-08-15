@@ -92,11 +92,7 @@ def Shuffler2 {α: Type}(l:List α) := do
    ⟩
   return a.toList
 
-  /- This is the Shuffle Model. -/
-def ShuffleModel(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
-  let l ← RandomizedResponse.RRSample query num den h l
-  let b ← Shuffler l
-  return b
+
 
 lemma Shuffle_norms [LawfulMonad SLang] {α : Type}(l: List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
