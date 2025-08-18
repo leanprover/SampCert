@@ -7,6 +7,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.PushForward
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
+import SampCert.DifferentialPrivacy.Pure.Postprocessing
 import SampCert.DifferentialPrivacy.Generic
 
 namespace SLang
@@ -76,6 +77,7 @@ HasSum (ShuffleAlgorithm (fun x => (m x).1) f h l) 1  := by
 
 def ShuffleAlgorithm_PMF {U: Type}[BEq U] (m : Mechanism T (List U ))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T) : PMF (List U) :=
   ⟨ShuffleAlgorithm (fun x => (m x).1) f h l, ShuffleAlgorithm_norms m f h l⟩
+
 
 theorem ShuffleAlgorithm_is_DP [BEq U](m : Mechanism T (List U))(f : List U → SLang (List U))(ε : ℝ)(hdp: DP_withUpdateNeighbour m ε)
 (hsa: UniformShuffler f → True): DP_withUpdateNeighbour (ShuffleAlgorithm_PMF m f hsa) ε := by sorry
