@@ -99,6 +99,8 @@ lemma contains_idx {α: Type}[BEq α](l: List α)(a: α)(h: l.contains a): ∃i:
 lemma insertNth_eq_iff {α : Type} [DecidableEq α]
   {l : List α} (a : Nat){x : α} {l' : List α}(h: l = l'.insertNth a x):
   l = l'.insertNth a x ↔ l' = l.eraseIdx a ∧ l[a]'(sorry) = x := sorry
+
+lemma erase_eq_eraseIdx [BEq α]{l : List α} {i : Fin l.length} {x : α} (h : l[i] = x) : l.eraseIdx i = l.erase x := by sorry
 lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: List α)(hlen1:  l₁.length = n)(hlen2: l₂.length = n)(h: List.isPerm l₁ l₂): Shuffler l₁ l₂ = 1/Nat.factorial n := by
   induction l₁ generalizing l₂ n
   simp at hlen1
@@ -125,31 +127,29 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
     rename_i j ht
     conv =>
       enter[1,1,a,2]
-      rw[tsum_eq_single (l₂.eraseIdx j) (by
+      rw[tsum_eq_single (l₂.eraseIdx a) (by
         intro l h
         simp
         intro h1
         rw[insertNth_eq_iff] at h1
         cases h1
-        rename_i left right
+        rename_i left2 right2
         simp at h
-        sorry
-
-
-
-
-
+        contradiction
+        exact h1
        )]
       rfl
     simp
     rw[tsum_eq_single j.val (by
     intro a h
-    sorry
+    simp
+    intro h1
+
     )]
     have h2: l₂ = List.insertNth j hd (l₂.eraseIdx j) := by sorry
     rw[if_pos]
 
-    rw[ih (n-1) (l₂.eraseIdx ↑j) (by simp[symm hlen1]) (by sorry) (by sorry)]
+    rw[ih (n-1) (l₂.eraseIdx ↑j) (by simp[symm hlen1]) (by rw[symm hlen2, List.length_eraseIdx];simp) (by rw[erase_eq_eraseIdx ht];exact right)]
     rw[UniformSample_apply]
     rw[hlen1]
     rw[inv_eq_one_div]
@@ -159,7 +159,14 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
     rw[if_pos nonzero]
     rw[← ENNReal.mul_inv]
     rw[inv_inj]
-    linarith[Nat.mul_factorial_pred]
+    sorry
+    left
+    simp
+    linarith
+
+    left
+    simp
+    /-rw[Nat.mul_factorial_pred nonzero]-/
     rw[hlen1]
     rw[symm hlen2]
     have nonzero: n > 0 := by rw[symm hlen1]; linarith
