@@ -1,4 +1,3 @@
-import SampCert
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithGeneralNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.UpdateNeighbour
 

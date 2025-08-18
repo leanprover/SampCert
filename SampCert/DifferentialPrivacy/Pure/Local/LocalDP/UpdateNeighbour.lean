@@ -20,5 +20,5 @@ lemma UpdateNeighbour_length {T : Type} {l₁ l₂ : List T} (H : UpdateNeighbou
   rename_i _ _ _ _ Hl1 Hl2
   rw[Hl1, Hl2]
   simp
-  
+
 end SLang
