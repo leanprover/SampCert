@@ -22,7 +22,8 @@ lemma arith_0 (num : Nat) (den : PNat) (_ : 2 * num < den): den - 2*num ≤ 2 * 
 def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : T) : SLang Bool := do
   RRSinglePushForward num den h (query l)
 
-/- Extentio of Randomized Response to a dataset by use of monadic map. -/
+/- Extension of Randomized Response to a dataset by use of monadic map. -/
+
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : SLang (List Bool) := do
  l.mapM (fun x => RRSingleSample query num den h x)
 

@@ -1,5 +1,4 @@
-import SampCert
-
+import SampCert.DifferentialPrivacy.Generic
 namespace SLang
 
 open SLang

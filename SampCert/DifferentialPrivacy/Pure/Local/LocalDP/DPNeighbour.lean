@@ -1,4 +1,4 @@
-import SampCert
+import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithGeneralNeighbour
 import SampCert.DifferentialPrivacy.Neighbours
 
@@ -17,4 +17,3 @@ theorem DP_withARUNeighbour_isDP (m : Mechanism T U) (ε : ℝ) :
   DP_withARUNeighbour m ε ↔ DP m ε := by simp [DP_withARUNeighbour, DP_withGeneralNeighbour, DP]
 
 end SLang
-
