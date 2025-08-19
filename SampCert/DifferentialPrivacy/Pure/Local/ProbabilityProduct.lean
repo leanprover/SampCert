@@ -16,8 +16,7 @@ mapM f (hd :: tl) (b :: c) = f hd b * mapM f tl c := by
   aesop
   aesop
 
-/- Proof that using `mapM f l` is the same as sampling from f (l.get i) for all i independently
-   as a product of probabilities. -/
+/- Proof that using `mapM f l` is the same as sampling from f (l.get i) for all i independently -/
 lemma prod_of_ind_prob (β : Type) [LawfulMonad SLang] [DecidableEq β] (f : T -> SLang β) (a : List β) (l : List T) (k : l.length = a.length) :
   mapM f l a = (∏' (i : Fin l.length), f (l.get i) (a.get (Fin.cast k i))) := by
   induction l generalizing a with

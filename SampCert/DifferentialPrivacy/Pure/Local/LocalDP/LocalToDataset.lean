@@ -49,12 +49,6 @@ lemma local_to_dataset_diff_lengths (l₁ : List T) (x : List U) (hlen : l₁.le
 lemma local_to_dataset_prob_of_ind_prob_PMF (m: LocalMechanism T U) (l : List T) (a: List U) (k : l.length = a.length) :
   local_to_dataset_PMF m l a = (∏'(i: Fin l.length), m (l.get i) (a.get (Fin.cast k i ))):= by apply prod_of_ind_prob
 
-/- theorem local_to_dataset_reduction {T β: Type} (a b : List T) (n m : T) (l₁ l₂: List T)(x: List β)(f: T → PMF β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)
-(nonzero: ∀ (i : Fin (l₂.length - 1)), f (l₂[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) (x[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) ≠ 0)
-(noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /
-    (∏' (i : Fin (l₂.length)), f (l₂[i.val]'(by simp)) (x[i.val]'(by rw[← hy];simp)))  = f (l₁[(a.length)]'(by rw[h1];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp)) / f (l₂[a.length]'(by rw[h2];simp)) (x[a.length]'(by rw[← hx];rw[h1];simp))
-    := reduction_final l₁ l₂ a b n m x _ h1 h2 hx hy nonzero noninf -/
-
 /- This lemma states that, under a technical assumption, the algorithm
    that applies the same local randomizer to each row of data satisfies the same
    DP bound as the local randomizer.
