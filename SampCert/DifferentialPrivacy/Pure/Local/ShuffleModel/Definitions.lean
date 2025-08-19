@@ -204,3 +204,4 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
       enter[1,1,a]
       rw[UniformSample_apply (tl.length + 1).toPNat']
       rfl
+

@@ -52,7 +52,7 @@ lemma bernoulli_helper [LawfulMonad SLang] (hd : Bool) (hd_1 : SeedType) : berno
 lemma MultiBernoulliSample_normalizes [LawfulMonad SLang] (seeds : List SeedType) :
   ∑' (b: List Bool), MultiBernoulliSample seeds b = 1 := by
   unfold MultiBernoulliSample
-  apply Norm_func_norm_on_list
+  apply norm_func_norm_on_list
   intro a
   rw [bernoulli_mapper_sums_to_1]
 

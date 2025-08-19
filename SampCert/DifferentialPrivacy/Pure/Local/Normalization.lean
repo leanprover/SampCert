@@ -6,6 +6,8 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Set.Basic
 import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
 
+namespace SLang
+
 /- In this file, we show that if a function f : α -> SLang β
    normalizes, in the sense that ∑' (b : List β) f a b = 1
    for any fixed a : α,
@@ -14,6 +16,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
    This is valuable for local algorithms, where
    a randomizer is first defined for a single user and then
    applied to a dataset of users.
+   The proof is by induction and follows by a straightforward
+   application of the Fubini-Tonelli theorem.
 -/
 
 /- Helper lemma to simplify a if-then-else statement in a sum-/
@@ -106,7 +110,7 @@ lemma simplifier3_gen [LawfulMonad SLang] (α β : Type)(f : α → SLang β)(hd
    normalizes, then the function obtained applying monadic map to f and some list al
    also normalizes.
 -/
-lemma Norm_func_norm_on_list [LawfulMonad SLang] (α β : Type) [DecidableEq β] (f: α → SLang β) (al: List α):
+lemma norm_func_norm_on_list [LawfulMonad SLang] (α β : Type) [DecidableEq β] (f: α → SLang β) (al: List α):
  (∀ a : α, ∑' (b : β), f a b = 1) →  ∑' (b : List β), mapM f al b = 1 := by
   intro h
   induction al with
@@ -132,3 +136,5 @@ lemma Norm_func_norm_on_list [LawfulMonad SLang] (α β : Type) [DecidableEq β]
       rfl
       rw[h hd]
     apply ih
+
+end SLang

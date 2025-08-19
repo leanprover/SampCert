@@ -26,7 +26,6 @@ Simplified consequence of absolute continuity between PMF's.
 -/
 def AbsCts (p q : T -> ENNReal) : Prop := ∀ x : T, q x = 0 -> p x = 0
 
-
 /--
 All PMF's are absolutely continuous with respect to themselves.
 -/

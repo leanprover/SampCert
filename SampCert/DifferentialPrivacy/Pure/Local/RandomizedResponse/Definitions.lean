@@ -23,6 +23,7 @@ def RRSingleSample  {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2
   RRSinglePushForward num den h (query l)
 
 /- Extension of Randomized Response to a dataset by use of monadic map. -/
+
 def RRSample {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : SLang (List Bool) := do
  l.mapM (fun x => RRSingleSample query num den h x)
 
