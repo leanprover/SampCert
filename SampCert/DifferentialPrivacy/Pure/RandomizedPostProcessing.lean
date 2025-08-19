@@ -217,7 +217,7 @@ lemma randPostProcess_DP_bound_with_UpdateNeighbour {T U V : Type} {nq : Mechani
   have hDen : (∑' v : V, if v ∈ S then (privPostProcessRand nq g l₂) v else 0)
               = ∑' u : U, p₂ u * w u := by
     simpa [privPostProcessRand, p₂] using tsum_bind_indicator (nq l₂) g S
-  have hpt := DP.pointwise_ratio_bound_for_Update_neighbour (T:=T) (U:=U) (m:=nq) (ε:=ε) h hN
+  have hpt := DP.pointwise_ratio_bound_for_UpdateNeighbour (T:=T) (U:=U) (m:=nq) (ε:=ε) h hN
   have hsum :
       (∑' u : U, p₁ u * w u)
       ≤ ENNReal.ofReal (Real.exp ε) * (∑' u : U, p₂ u * w u) := by
