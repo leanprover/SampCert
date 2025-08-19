@@ -11,6 +11,7 @@ import SampCert.DifferentialPrivacy.Generic
 
 namespace SLang
 
+-- Implementation of the Shuffler for the Shuffle Model.
 def Shuffler {α: Type}(l:List α) := do
 match l with
 | [] => pure []
@@ -20,7 +21,7 @@ match l with
     let rest : List α ← Shuffler tl
     return rest.insertNth i hd
 
-  /- This is the Shuffle Model. -/
+  /- This is the  implementation of the Shuffle algorithm using Randomized Response as the local randomizer.  -/
 def RRShuffle(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
   let l ← RandomizedResponse.RRSample query num den h l
   let b ← Shuffler l
@@ -30,11 +31,12 @@ def RRShuffle(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: L
 #check RandomizedResponse.RRSample
 #check Mechanism
 
+/- Definition of a function that uniformly permutes a given list.-/
 def UniformShuffler {U: Type}[BEq U](f: List U → SLang (List U)) : Prop :=
   ∀ l₁ l₂: List U, f l₁ l₂ = if List.isPerm l₁ l₂ then (1: ENNReal)/(l₁.length.factorial) else (0: ENNReal)
 
-
-def ShuffleAlgorithm [BEq U](m : List T → SLang (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
-  let x ← m l
+/- Generalized version of the shuffle algorithm that takes in any mechanism -/
+def ShuffleAlgorithm [BEq U](m : Mechanism T  (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
+  let x ← (m l).toSLang
   let b ← f x
   return b

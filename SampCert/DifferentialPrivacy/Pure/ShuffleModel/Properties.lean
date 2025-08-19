@@ -12,12 +12,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.PMF
 
 namespace SLang
 
-lemma Shuffler_empty {α: Type}(l:List α)(h: l = []): Shuffler l [] = 1 := by
-  unfold Shuffler
-  rw [h]
-  simp [pure]
-
-lemma Shuffler_PMF {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
+/- Shuffler function normalizes-/
+lemma Shuffler_PMF_helper {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   induction l with
   | nil =>
@@ -48,55 +44,8 @@ lemma Shuffler_PMF {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuf
 
 lemma Shuffler_norms {α: Type} [DecidableEq α][BEq α] (l:List α):  ∑' (b : List α), Shuffler l b = 1 := by
   rw [← Summable.hasSum_iff ENNReal.summable]
-  apply Shuffler_PMF
+  apply Shuffler_PMF_helper
 
-lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f)
-:∀(b: List U),∑' (i : List U), f b i = 1 := by
-  intro b
-  have h2 :∀ x i: List U, f x i  = (if List.isPerm x i then  (1: ENNReal)/(x.length.factorial) else (0: ENNReal)) := by
-    unfold UniformShuffler at h
-    exact h
-  conv =>
-    enter [1,1,i]
-    rw [h2]
-
-  rw [← @ENNRealLemmas.tsum_ite_mult]
-  conv =>
-    enter [1]
-    rw[ENNReal.tsum_mul_left]
-  sorry
-
-lemma ShuffleAlgorithm_norms {U: Type} [BEq U] (m : Mechanism T (List U))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T):
-HasSum (ShuffleAlgorithm (fun x => (m x).1) f h l) 1  := by
-  unfold ShuffleAlgorithm
-  simp_all only [bind, pure, bind_pure]
-  unfold probBind
-  simp [Summable.hasSum_iff ENNReal.summable]
-  rw [ENNReal.tsum_comm]
-  conv =>
-    enter [1,1,b]
-    rw [ENNReal.tsum_mul_left]
-    enter [2]
-    apply UniformShuffler_norms
-    exact h
-  simp
-  rw [← Summable.hasSum_iff ENNReal.summable]
-  exact (m l).2
-
-theorem RRShuffle_norms [LawfulMonad SLang]{T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
-  unfold RRShuffle
-  simp_all only [bind, pure, bind_pure]
-  unfold probBind
-  simp [Summable.hasSum_iff ENNReal.summable]
-  rw [ENNReal.tsum_comm]
-  conv =>
-    enter [1,1,b]
-    rw [ENNReal.tsum_mul_left]
-    enter [2]
-    apply Shuffler_norms
-  simp
-  rw [← Summable.hasSum_iff ENNReal.summable]
-  apply RRSample_PMF_helper
 
 lemma contains_idx {α: Type}[BEq α](l: List α)(a: α)(h: l.contains a): ∃i: Fin l.length, l[i] = a := by sorry
 
@@ -105,6 +54,8 @@ lemma insertNth_eq_iff {α : Type} [DecidableEq α]
   l = l'.insertNth a x ↔ l' = l.eraseIdx a ∧ l[a]'(sorry) = x := sorry
 
 lemma erase_eq_eraseIdx [BEq α]{l : List α} {i : Fin l.length} {x : α} (h : l[i] = x) : l.eraseIdx i = l.erase x := by sorry
+
+/- Shuffler l outputs 1/n! for any permutation of a list l.-/
 lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: List α)(hlen1:  l₁.length = n)(hlen2: l₂.length = n)(h: List.isPerm l₁ l₂): Shuffler l₁ l₂ = 1/Nat.factorial n := by
   induction l₁ generalizing l₂ n
   simp at hlen1
@@ -179,9 +130,62 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
     simp[nonzero]
     exact h2
 
+/- RRShuffle normalizes. -/
+theorem RRShuffle_PMF_helper [LawfulMonad SLang]{T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
+  unfold RRShuffle
+  simp_all only [bind, pure, bind_pure]
+  unfold probBind
+  simp [Summable.hasSum_iff ENNReal.summable]
+  rw [ENNReal.tsum_comm]
+  conv =>
+    enter [1,1,b]
+    rw [ENNReal.tsum_mul_left]
+    enter [2]
+    apply Shuffler_norms
+  simp
+  rw [← Summable.hasSum_iff ENNReal.summable]
+  apply RRSample_PMF_helper
+
+
+/- Unsolved proof that any Uniform Shuffler normalizes. TODO-/
+lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f)
+:∀(b: List U),∑' (i : List U), f b i = 1 := by
+  intro b
+  have h2 :∀ x i: List U, f x i  = (if List.isPerm x i then  (1: ENNReal)/(x.length.factorial) else (0: ENNReal)) := by
+    unfold UniformShuffler at h
+    exact h
+  conv =>
+    enter [1,1,i]
+    rw [h2]
+
+  rw [← @ENNRealLemmas.tsum_ite_mult]
+  conv =>
+    enter [1]
+    rw[ENNReal.tsum_mul_left]
+  sorry
+
+/- Any shuffle algorithm normalizes. -/
+lemma ShuffleAlgorithm_PMF_helper {U: Type} [BEq U] (m : Mechanism T (List U))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T):
+HasSum (ShuffleAlgorithm m f h l) 1  := by
+  unfold ShuffleAlgorithm
+  simp_all only [bind, pure, bind_pure]
+  unfold probBind
+  simp [Summable.hasSum_iff ENNReal.summable]
+  rw [ENNReal.tsum_comm]
+  conv =>
+    enter [1,1,b]
+    rw [ENNReal.tsum_mul_left]
+    enter [2]
+    apply UniformShuffler_norms
+    exact h
+  simp
+
+
+
+/- Conversion of SLang output to PMF.-/
 def ShuffleAlgorithm_PMF {U: Type}[BEq U] (m : Mechanism T (List U ))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T) : PMF (List U) :=
-  ⟨ShuffleAlgorithm (fun x => (m x).1) f h l, ShuffleAlgorithm_norms m f h l⟩
+  ⟨ShuffleAlgorithm m f h l, ShuffleAlgorithm_PMF_helper m f h l⟩
 
-
+/- Shuffle Algorithm is ε-differentially private, given that local randomized ε-DP. -/
 theorem ShuffleAlgorithm_is_DP [BEq U](m : Mechanism T (List U))(f : List U → SLang (List U))(ε : ℝ)(hdp: DP_withUpdateNeighbour m ε)
 (hsa: UniformShuffler f): DP_withUpdateNeighbour (ShuffleAlgorithm_PMF m f hsa) ε := by sorry
