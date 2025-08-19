@@ -11,8 +11,6 @@ open Classical
 /- We define a general way to transform local randomizers into algorithms on datasets,
    and prove that the dataset-level algorithm satisfies the same DP bound as the local randomizer. -/
 
-/- Test -/
-
 /- Transforms a local randomizer into a dataset-level algorithm. -/
 def local_to_dataset (m : LocalMechanism T U) (l : List T) : SLang (List U) :=
   (l.mapM (fun x => (m x).1))
