@@ -44,6 +44,7 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε : NNReal} (h : PureDP nq
       exact Real.exp_pos ε
   · simp
 
+/-
 def privPostProcessRand {T U V : Type} (nq : Mechanism T U) (g : U → PMF V) : Mechanism T V :=
   fun l => (nq l).bind g
 
@@ -214,7 +215,7 @@ lemma randPostProcess_DP_bound {T U V : Type} {nq : Mechanism T U} {ε : NNReal}
   · have hpos : (0 : ENNReal) < (∑' u : U, p₂ u * w u) := lt_of_le_of_ne' (by exact bot_le) hDen0
     have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := by (exact bruh hsum hpos)
     simpa [hNum, hDen] using this
-
+-/
 
 /--
 ``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.
