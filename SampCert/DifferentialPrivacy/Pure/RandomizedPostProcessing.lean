@@ -156,7 +156,7 @@ lemma randPostProcess_DP_bound {T U V : Type} {nq : Mechanism T U} {ε : NNReal}
 
 
 lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
-    {m : Mechanism T U} {ε : ℝ}
+    {m : Mechanism T U} {ε : Real}
     (h : DP_withUpdateNeighbour m ε) {l₁ l₂ : List T} (hN : UpdateNeighbour l₁ l₂) :
     ∀ u : U, m l₁ u ≤ ENNReal.ofReal (Real.exp ε) * m l₂ u := by
       intro u
@@ -205,7 +205,7 @@ lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
           · aesop
         simpa using this
 
-lemma randPostProcess_DP_bound_with_UpdateNeighbour {T U V : Type} {nq : Mechanism T U} {ε : NNReal} (h : DP_withUpdateNeighbour nq ε) (g : U → PMF V) :
+lemma randPostProcess_DP_bound_with_UpdateNeighbour {T U V : Type} {nq : Mechanism T U} {ε : Real} (h : DP_withUpdateNeighbour nq ε) (g : U → PMF V) :
   DP_withUpdateNeighbour (privPostProcessRand nq g) ε := by
   intro l₁ l₂ hN S
   let p₁ := nq l₁

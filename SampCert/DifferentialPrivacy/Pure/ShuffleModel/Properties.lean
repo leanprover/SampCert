@@ -8,6 +8,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
 import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
 import SampCert.DifferentialPrivacy.Pure.ShuffleModel.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.PMFProof
+import SampCert.DifferentialPrivacy.Pure.RandomizedPostProcessing
 
 
 namespace SLang
@@ -201,10 +202,11 @@ lemma shuffling_is_postprocessing [LawfulMonad SLang] [BEq U] (m : Mechanism T (
   simp [privPostProcessRand, ShuffleAlgorithm_PMF, ShuffleAlgorithm]
   congr
 
-/- Shuffle Algorithm is ε-differentially private, given that local randomized ε-DP. -/
+/- Shuffle Algorithm is ε-differentially private, given that the local algorithm is ε-differentially private. -/
 theorem ShuffleAlgorithm_is_DP [LawfulMonad SLang] [BEq U](m : Mechanism T (List U))(f : List U → SLang (List U))(ε : ℝ)(hdp: DP_withUpdateNeighbour m ε)
 (h_uniform: UniformShuffler f): DP_withUpdateNeighbour (ShuffleAlgorithm_PMF m f h_uniform) ε := by
 conv =>
   enter [1]
   rw [←shuffling_is_postprocessing]
-sorry
+let g : List U → PMF (List U) := (fun u => ⟨f u, UniformShuffler_norms' f h_uniform u⟩)
+apply @randPostProcess_DP_bound_with_UpdateNeighbour T _ _ m ε hdp g
