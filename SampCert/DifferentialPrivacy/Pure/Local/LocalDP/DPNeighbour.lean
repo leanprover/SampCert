@@ -12,8 +12,8 @@ open SLang
 def DP_withARUNeighbour (m : Mechanism T U) (ε : ℝ) : Prop :=
   DP_withGeneralNeighbour m (Neighbour) ε
 
-/- Proof that our definitions are equivalent -/
+/- Proof that our definitions is equivalent to SampCert's definition -/
 theorem DP_withARUNeighbour_isDP (m : Mechanism T U) (ε : ℝ) :
-  DP_withARUNeighbour m ε ↔ DP m ε := by simp [DP_withARUNeighbour, DP_withGeneralNeighbour, DP]
+  DP_withARUNeighbour m ε ↔ DP m ε := by rfl
 
 end SLang

@@ -6,11 +6,14 @@ open Classical
 
 namespace SLang
 
+/- DP with the update neighbour relation. -/
 def DP_withUpdateNeighbour (m : Mechanism T U) (ε : ℝ) : Prop :=
  DP_withGeneralNeighbour m (UpdateNeighbour) ε
 
+/- Instantiation of DP_singleton with the update neighbour relation-/
 def DP_singleton_withUpdateNeighbour (m : Mechanism T U) (ε : ℝ) : Prop :=
   DP_singleton_withGeneralNeighbour m (UpdateNeighbour) ε
+
 end SLang
 
 theorem singleton_to_event_update (m : Mechanism T U) (ε : ℝ) (h : DP_singleton_withUpdateNeighbour m ε) :

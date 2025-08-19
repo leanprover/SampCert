@@ -8,9 +8,6 @@ import SampCert.Samplers.Bernoulli.Properties
 open SLang
 open RandomizedResponse
 
-#check RandomizedResponse.RRSingleSample
-#check SLang.BernoulliSample_normalizes
-
 /- Instantiation of RRSinglePushForward as a PMF. -/
 lemma RRSinglePushForward_PMF (num : Nat) (den : PNat) (h: 2 * num < den) (l : Bool) :
   HasSum (RRSinglePushForward num den h l) 1 := by

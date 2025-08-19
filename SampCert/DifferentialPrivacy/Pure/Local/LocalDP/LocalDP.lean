@@ -10,6 +10,7 @@ open Classical
 
 abbrev LocalMechanism (T U : Type) := T → PMF U
 
+/-Local Differential Privacy-/
 def Local_DP (m : LocalMechanism T U) (ε : ℝ) : Prop :=
   ∀ u₁ u₂ : T, ∀ y : U,
   m u₁ y / m u₂ y ≤ ENNReal.ofReal (Real.exp ε)

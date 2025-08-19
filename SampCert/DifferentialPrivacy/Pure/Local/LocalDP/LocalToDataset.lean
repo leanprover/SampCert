@@ -2,7 +2,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.LocalDP
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
 import SampCert.DifferentialPrivacy.Pure.Local.ProbabilityProduct
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.Reduction
+import SampCert.DifferentialPrivacy.Pure.Local.Reduction
 
 namespace SLang
 
@@ -10,8 +10,6 @@ open Classical
 
 /- We define a general way to transform local randomizers into algorithms on datasets,
    and prove that the dataset-level algorithm satisfies the same DP bound as the local randomizer. -/
-
-/- Test -/
 
 /- Transforms a local randomizer into a dataset-level algorithm. -/
 def local_to_dataset (m : LocalMechanism T U) (l : List T) : SLang (List U) :=
@@ -55,7 +53,7 @@ lemma local_to_dataset_prob_of_ind_prob_PMF (m: LocalMechanism T U) (l : List T)
    that applies the same local randomizer to each row of data satisfies the same
    DP bound as the local randomizer.
    The hypotheses "nonzero" and "equiv" should be regarded as technical conditions.
-   Essentially, they require that there exists a precise characterization of which
+   Essentially, they require the user to provide a precise characterization of which
    outputs of the local randomizer occur with probability zero.
    This is necessary in order to apply the reduction lemma.
    This lemma is applied in the proof of DP for both Randomized Response and One-Time Basic RAPPOR.

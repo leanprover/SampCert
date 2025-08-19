@@ -49,14 +49,12 @@ lemma arith_1 (num : Nat) (den : PNat) (h : 2 * num < den):
                 norm_cast
                 simp
 
-/- Good tip: use finCongr for re-indexing... --/
 lemma reindex (α β : Type) (l v : List α) (b : List β) (h1 : l.length = v.length) (h2 : l.length = b.length)
   (f : α -> β -> ENNReal):
   ∏ (i : Fin l.length), f l[i] b[i] = ∏ (i : Fin v.length), f l[i] b[i] := by
    apply Fintype.prod_equiv (finCongr h1)
    intro x
    rfl
-
 
 lemma num_den_simper (num : Nat) (den : PNat) (h : 2 * num < den):
   num / den  < (2⁻¹ : ℝ)  := by
