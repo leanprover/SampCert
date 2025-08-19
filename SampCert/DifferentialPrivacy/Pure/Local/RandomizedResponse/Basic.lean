@@ -1,4 +1,11 @@
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.DPProof
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.PMFProperties
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.Arithmetic
+import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.PMFProof
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.AccuracyProof
+import Mathlib.Probability.ProbabilityMassFunction.Basic
+import SampCert.DifferentialPrivacy.Pure.DP
+import SampCert.Samplers.Bernoulli.Properties
+import SampCert.DifferentialPrivacy.Pure.Local.LawfulMonadSLang
+import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
+import SampCert.DifferentialPrivacy.Pure.Local.ENNRealLemmasSuite
+import SampCert.DifferentialPrivacy.Pure.Local.ProbabilityProduct

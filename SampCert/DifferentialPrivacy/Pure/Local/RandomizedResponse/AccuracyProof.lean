@@ -19,8 +19,8 @@ noncomputable def coeff {T : Type} (X : List T) (num : Nat) (den : PNat) : ℝ :
 noncomputable def constants {T : Type} (X : List T) (num : Nat) (den : PNat) : ℝ :=
   (- (X.length) / 2) + (num * X.length) / den
 
-def applying_RR_individually {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den) : List (SLang Bool) :=
-  X.map (fun x => RRSingleSample query num den h x)
+/- def applying_RR_individually {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den) : List (SLang Bool) :=
+  X.map (fun x => RRSingleSample query num den h x) -/
 
 
 def sumBernoulli (xs : List (SLang Bool)) : SLang Nat :=
@@ -33,6 +33,7 @@ def addMulRealToRV (Y : SLang Nat) (R : Real) (S: Real): SLang Real := do
   let n ← Y            -- Sample a Nat from Y
   return S * ((n : Real) + R) -- Convert to Real and add R
 /-
+
 variables {α : Type*} [AddMonoid α]
 
 instance : AddMonoid (List α) where
@@ -59,10 +60,10 @@ def p {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2
   (true_count) / X.length
 
 
-noncomputable def unbiased_estimator {T : Type} (query: T -> Bool) (X : List T) (num : Nat) (den : PNat) (h : 2 * num < den):=
-  let coef := coeff X num den
-  let cons := constants X num den
-  let s := applying_RR_individually query X num den h
+/- noncomputable def unbiased_estimator {T : Type} (query: T -> Bool) (l : List T) (num : Nat) (den : PNat) (h : 2 * num < den):=
+  let coef := coeff l num den
+  let cons := constants l num den
+  let s := RRSample query num den h l
   let sum_of_ys := sumBernoulli s
   let p_estimate := addMulRealToRV sum_of_ys cons coef
-  p_estimate
+  p_estimate -/
