@@ -21,15 +21,11 @@ match l with
     let rest : List α ← Shuffler tl
     return rest.insertNth i hd
 
-  /- This is the  implementation of the Shuffle algorithm using Randomized Response as the local randomizer.  -/
+/- This is the  implementation of the Shuffle algorithm using Randomized Response as the local randomizer.  -/
 def RRShuffle(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: List T) := do
   let l ← RandomizedResponse.RRSample query num den h l
   let b ← Shuffler l
   return b
-
-#check Shuffler
-#check RandomizedResponse.RRSample
-#check Mechanism
 
 /- Definition of a function that uniformly permutes a given list.-/
 def UniformShuffler {U: Type}[BEq U](f: List U → SLang (List U)) : Prop :=

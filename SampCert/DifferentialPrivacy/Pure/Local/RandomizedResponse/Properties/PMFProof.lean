@@ -4,9 +4,8 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.Normalization
 import SampCert.Samplers.Bernoulli.Properties
 
-
+namespace RandomizedResponse
 open SLang
-open RandomizedResponse
 
 /- Instantiation of RRSinglePushForward as a PMF. -/
 lemma RRSinglePushForward_PMF (num : Nat) (den : PNat) (h: 2 * num < den) (l : Bool) :

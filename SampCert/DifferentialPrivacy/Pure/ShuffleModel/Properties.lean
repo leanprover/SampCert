@@ -11,6 +11,7 @@ import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.PMF
 
 
 namespace SLang
+open RandomizedResponse
 
 /- Shuffler function normalizes-/
 lemma Shuffler_PMF_helper {α: Type} [DecidableEq α][BEq α] (l:List α): HasSum (Shuffler l) 1 := by
@@ -46,6 +47,8 @@ lemma Shuffler_norms {α: Type} [DecidableEq α][BEq α] (l:List α):  ∑' (b :
   rw [← Summable.hasSum_iff ENNReal.summable]
   apply Shuffler_PMF_helper
 
+def Shuffler_PMF {α : Type} [DecidableEq α] [BEq α] (l : List α) : PMF (List α) :=
+  ⟨Shuffler l, Shuffler_PMF_helper l⟩
 
 lemma contains_idx {α: Type}[BEq α](l: List α)(a: α)(h: l.contains a): ∃i: Fin l.length, l[i] = a := by sorry
 
@@ -146,10 +149,12 @@ theorem RRShuffle_PMF_helper [LawfulMonad SLang]{T : Type}(query: T -> Bool) (nu
   rw [← Summable.hasSum_iff ENNReal.summable]
   apply RRSample_PMF_helper
 
+def RRShuffle_PMF [LawfulMonad SLang] {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
+  ⟨RRShuffle query num den h l, RRShuffle_PMF_helper query num den h l⟩
 
 /- Unsolved proof that any Uniform Shuffler normalizes. TODO-/
-lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f)
-:∀(b: List U),∑' (i : List U), f b i = 1 := by
+lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f):
+∀(b: List U),∑' (i : List U), f b i = 1 := by
   intro b
   have h2 :∀ x i: List U, f x i  = (if List.isPerm x i then  (1: ENNReal)/(x.length.factorial) else (0: ENNReal)) := by
     unfold UniformShuffler at h
@@ -163,6 +168,11 @@ lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:Un
     enter [1]
     rw[ENNReal.tsum_mul_left]
   sorry
+
+lemma UniformShuffler_norms' {U : Type} [BEq U] (f : List U → SLang (List U)) (h : UniformShuffler f) (u : List U):
+ HasSum (f u) 1 := by
+  simp [Summable.hasSum_iff]
+  apply UniformShuffler_norms f h
 
 /- Any shuffle algorithm normalizes. -/
 lemma ShuffleAlgorithm_PMF_helper {U: Type} [BEq U] (m : Mechanism T (List U))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T):
@@ -186,6 +196,15 @@ HasSum (ShuffleAlgorithm m f h l) 1  := by
 def ShuffleAlgorithm_PMF {U: Type}[BEq U] (m : Mechanism T (List U ))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T) : PMF (List U) :=
   ⟨ShuffleAlgorithm m f h l, ShuffleAlgorithm_PMF_helper m f h l⟩
 
+lemma shuffling_is_postprocessing [LawfulMonad SLang] [BEq U] (m : Mechanism T (List U)) (f : List U → SLang (List U)) (h_uniform : UniformShuffler f): privPostProcessRand m (fun u => ⟨f u, UniformShuffler_norms' f h_uniform u⟩) = ShuffleAlgorithm_PMF m f h_uniform := by
+  funext x
+  simp [privPostProcessRand, ShuffleAlgorithm_PMF, ShuffleAlgorithm]
+  congr
+
 /- Shuffle Algorithm is ε-differentially private, given that local randomized ε-DP. -/
-theorem ShuffleAlgorithm_is_DP [BEq U](m : Mechanism T (List U))(f : List U → SLang (List U))(ε : ℝ)(hdp: DP_withUpdateNeighbour m ε)
-(hsa: UniformShuffler f): DP_withUpdateNeighbour (ShuffleAlgorithm_PMF m f hsa) ε := by sorry
+theorem ShuffleAlgorithm_is_DP [LawfulMonad SLang] [BEq U](m : Mechanism T (List U))(f : List U → SLang (List U))(ε : ℝ)(hdp: DP_withUpdateNeighbour m ε)
+(h_uniform: UniformShuffler f): DP_withUpdateNeighbour (ShuffleAlgorithm_PMF m f h_uniform) ε := by
+conv =>
+  enter [1]
+  rw [←shuffling_is_postprocessing]
+sorry
