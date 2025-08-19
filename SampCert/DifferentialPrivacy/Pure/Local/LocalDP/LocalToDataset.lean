@@ -59,11 +59,13 @@ lemma local_to_dataset_prob_of_ind_prob_PMF (m: LocalMechanism T U) (l : List T)
    This lemma is applied in the proof of DP for both Randomized Response and One-Time Basic RAPPOR.
    -/
 lemma LocalDP_to_dataset (m : LocalMechanism T U) (ε : ℝ)
-  (P : T → U → Bool)
-  (nonzero: ∀ (k : T), ∀ (bo : U), P k bo ↔ (m k) bo ≠ 0)
-  (equiv: ∀ l₁ l₂ : List T, ∀ b : List U, (blen1: l₁.length = b.length) → (blen2: l₂.length = b.length) → (∀ i : Fin l₁.length, (m l₁[i]) (b[i]) = 0 ↔ (m l₂[i]) b[i] = 0))
+  (equiv: ∀ l₁ l₂ : List T, (h_upd: UpdateNeighbour l₁ l₂) → ∀ b : List U, (blen1: l₁.length = b.length) →
+  (∀ i : Fin l₁.length, (m l₁[i]) (b[i]) = 0 ↔ (m (l₂[i]'(by
+                                                          have h: l₂.length = b.length := by rw[←blen1]; apply (Eq.symm (UpdateNeighbour_length h_upd))
+                                                          omega))) b[i] = 0))
   (noninf: ∀ (k : T) (bo : U), (m k) bo ≠ ⊤):
   Local_DP m ε → DP_withUpdateNeighbour (local_to_dataset_PMF m) ε := by
+    let P: T → U → Bool := fun k bo => (m k) bo ≠ 0
     intro hloc
     apply singleton_to_event_update
     intros l₁ l₂ h_adj x
@@ -91,16 +93,14 @@ lemma LocalDP_to_dataset (m : LocalMechanism T U) (ε : ℝ)
                   simp[Local_DP] at hloc
                   apply hloc
                   intro i
-                  apply (nonzero _ _).mp
-                  simp at P_true
+                  simp[P] at P_true
                   apply P_true i
                   | false =>
                     simp at P_true
                     have nonzero2: ∀ (k : T) (bo : U), P k bo = false ↔ (m k) bo = 0 := by
                           intro k bo
                           apply not_iff_not.mp
-                          simp
-                          apply nonzero k bo
+                          simp [P]
                     /- The next several "have" statements are just to prove index validity.
                        The proofs can undoubtedly be simplfied with some effort. -/
                     have h1: a.length + (c.length + 1) = l₂.length := by
@@ -147,9 +147,8 @@ lemma LocalDP_to_dataset (m : LocalMechanism T U) (ε : ℝ)
                         use ⟨(@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove z, valid_index13⟩
                         apply And.intro
                         simp
-                        apply (equiv l₁ l₂ x xlen1 xlen2 _).mpr
-                        apply (nonzero2 _ _).mp
-                        apply hz
+                        apply (equiv l₁ l₂ (UpdateNeighbour.Update hl₁ hl₂) x xlen1 _).mpr
+                        simp_all [P]
                     rw [h2]
                     rw [@ENNReal.zero_div]
                     simp

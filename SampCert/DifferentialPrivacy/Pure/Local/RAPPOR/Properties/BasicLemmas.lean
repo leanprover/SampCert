@@ -12,7 +12,7 @@ lemma RAPPORSingleSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (
   apply RRSamplePushForward_diff_lengths num den h (one_hot n query l₁) l₂ hlen
 
 
-/- The same "diff_lenghts" theorem as above, but extended to the entire dataset. -/
+/- The same "diff_lengths" theorem as above, but extended to the entire dataset. -/
 lemma RAPPORSample_diff_lengths [LawfulMonad SLang] {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (l₁ : List T) (x : List (List Bool)) (hlen : l₁.length ≠ x.length):
   RAPPORSample n query num den h l₁ x = 0 := by
   induction l₁ generalizing x with

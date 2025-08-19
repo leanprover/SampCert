@@ -201,24 +201,7 @@ theorem RAPPORSample_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (de
    := by
    have h1: RAPPORSample_PMF n query num den h = local_to_dataset_PMF (RAPPORSingle_Local n query num den h) := rfl
    rw [h1]
-   let P : T → List Bool → Bool := fun _ bo => (n == bo.length)
-   apply LocalDP_to_dataset _ _ P
-   {intro k bo
-    simp [P, -ne_eq]
-    apply Iff.intro
-    simp [RAPPORSingle_Local, -ne_eq]
-    intro hlen
-    apply RAPPORSingleSample_non_zero
-    simp [one_hot, hlen]
-    simp [RAPPORSingle_Local, -ne_eq]
-    intro hbo
-    by_contra bol
-    have hcontr: RAPPORSingleSample n query num den h k bo = 0 := by
-      apply RAPPORSingleSample_diff_lengths
-      simp [one_hot]
-      exact bol
-    contradiction
-   }
+   apply LocalDP_to_dataset _ _
    {intro l₁ l₂ b k bo i
     apply Iff.intro
     simp [RAPPORSingle_Local]

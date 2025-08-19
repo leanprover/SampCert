@@ -466,25 +466,18 @@ lemma RR_Local_DP (query : T → Bool) (num : Nat) (den : PNat) (h : 2 * num < d
 theorem RRSample_DP (query : T → Bool) (num : Nat) (den : PNat) (h : 2 * num < den): DP_withUpdateNeighbour (RRSample_PMF query num den h) (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num))) := by
   have h1: RRSample_PMF query num den h = local_to_dataset_PMF (RRSingle_Local query num den h) := rfl
   rw [h1]
-  let P : T → Bool → Bool := fun _ _ => true
-  have hP: ∀ k : T, ∀ bo : Bool, P k bo ↔ RRSingle_Local query num den h k bo ≠ 0 := by
-    intro k bo
-    simp[RRSingle_Local, -ne_eq]
-    apply RRSingleSample_non_zero
-    exact h
-  apply LocalDP_to_dataset _ _ P
-  { apply hP }
-  { simp [RRSingle_Local]
-    intro l₁ l₂ b blen1 blen2 i
-    apply Iff.intro
-    intro hx
-    have h_contr: RRSingleSample query num den h l₁[i.val] b[i.val] = 0 := by aesop
-    have h_contr2: RRSingleSample query num den h l₁[i.val] b[i.val] ≠ 0 := RRSingleSample_non_zero query num den h l₁[i.val] b[i.val]
-    contradiction
-    intro hx
-    have h_contr: RRSingleSample query num den h l₂[i.val] b[i.val] = 0 := by aesop
-    have h_contr2: RRSingleSample query num den h l₂[i.val] b[i.val] ≠ 0 := RRSingleSample_non_zero query num den h l₂[i.val] b[i.val]
-    contradiction
-  }
+  apply LocalDP_to_dataset _ _
+  simp [RRSingle_Local]
+  intro l₁ l₂ h_upd b blen1 i
+  have hlen: l₂.length = b.length := by rw[←blen1]; apply Eq.symm (UpdateNeighbour_length h_upd)
+  apply Iff.intro
+  intro hx
+  have h_contr: RRSingleSample query num den h l₁[i.val] b[i.val] = 0 := by aesop
+  have h_contr2: RRSingleSample query num den h l₁[i.val] b[i.val] ≠ 0 := RRSingleSample_non_zero query num den h l₁[i.val] b[i.val]
+  contradiction
+  intro hx
+  have h_contr: RRSingleSample query num den h l₂[i.val] b[i.val] = 0 := by aesop
+  have h_contr2: RRSingleSample query num den h l₂[i.val] b[i.val] ≠ 0 := RRSingleSample_non_zero query num den h l₂[i.val] b[i.val]
+  contradiction
   apply RRSingleSample_finite query num den h
   apply RR_Local_DP
