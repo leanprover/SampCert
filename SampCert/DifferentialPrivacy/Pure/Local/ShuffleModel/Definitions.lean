@@ -51,10 +51,7 @@ lemma Shuffler_norm [DecidableEq α]{α: Type}(l:List α): HasSum (Shuffler l) 1
     rename_i α_1 inst
     conv =>
       enter [1, 1, b, 1, a, 2, 1, a_1]
-    rw [tsum_add]
-    have h (a_1:List α)(b:List α)(a : Nat): (if a_1 = b.eraseIdx a then Shuffler t a_1 else 0) = Shuffler t a_1 := by sorry
-
-
+    sorry
 
 
 def BinomialSample (seed: MultiBernoulli.SeedType)(n:PNat) := do
@@ -204,4 +201,3 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
       enter[1,1,a]
       rw[UniformSample_apply (tl.length + 1).toPNat']
       rfl
-

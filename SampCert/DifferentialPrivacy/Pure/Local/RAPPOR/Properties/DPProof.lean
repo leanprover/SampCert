@@ -103,7 +103,7 @@ lemma reduction_helper2 {T : Type} (n : Nat) (query: T -> Fin n) (f : Bool -> SL
     rw [h9]
     rw [@mul_div]
 
-/- Cancellation of terms in the DP proof by using the above two lemmas.-/
+/- Cancellation of terms for the single-user DP proof by using the above two lemmas.-/
 lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool) (h_users: query u ≠ query v)
  (ohu_len : (one_hot n query u).length = b.length) (onhv_len : (one_hot n query v).length = b.length):
 ∏ i : Fin (one_hot n query u).length, RRSinglePushForward num den h (one_hot n query v)[i.val] b[i.val] / RRSinglePushForward num den h (one_hot n query u)[i.val] b[i.val]
@@ -117,10 +117,9 @@ lemma single_DP_reduction {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (
  simp_all only [mul_one]
  exact onhv_len
 
-/- This gives the RAPPOR bound when the algorithm is applied to a single user. -/
+/- This gives the RAPPOR DP bound when the algorithm is applied to a single user. -/
 lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (v u : T) (b : List Bool):
   (RAPPORSingleSample n query num den h v b) / (RAPPORSingleSample n query num den h u b) ≤ ((2⁻¹ + num / den) / (2⁻¹ - num / den))^2 := by
-  -- probably want to restate the bound in an arithmetically equivalent way
   simp_all only [RAPPORSingleSample]
   set ohv := one_hot n query v
   set ohu := one_hot n query u
@@ -168,8 +167,6 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       apply ENNRealLemmas.le_double
       apply RRSamplePushForward_final_bound
       apply RRSamplePushForward_final_bound
-      apply RRSinglePushForward_div_finite
-      apply RRSinglePushForward_div_finite
       intro i
       apply RRSinglePushForward_non_zero
       intro i
@@ -181,97 +178,11 @@ lemma RAPPORSingle_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
       rw [@ENNReal.zero_div]
       simp
 
-/- This extends the previous DP lemma to a dataset of arbitrary size -/
-lemma RAPPORSample_is_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
-  DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
-   := by
-      apply singleton_to_event_update
-      intros l₁ l₂ h_adj x
-      cases xlen1 : l₁.length == x.length with
-      | true => simp at xlen1
-                have xlen2: l₂.length = x.length := by
-                  rw [←xlen1]
-                  rw[←UpdateNeighbour_length h_adj]
-                rw[RAPPOR_prob_of_ind_prob_PMF n query num den h l₁ x xlen1]
-                rw[RAPPOR_prob_of_ind_prob_PMF n query num den h l₂ x xlen2]
-                cases h_adj with
-                | Update hl₁ hl₂ =>
-                  rename_i a y c z
-                  simp
-                  cases x_indices: (∀ i : Fin (l₂.length - 1 + 1), (x[i]'(by apply valid_index4 _ hl₂; apply xlen2)).length = n) == true with
-                  | true =>
-                  simp at x_indices
-                  have valid_index5: a.length < l₁.length := by
-                    rw [hl₁]
-                    rw [@List.length_append]
-                    simp_all only [List.append_assoc, List.singleton_append, List.length_append, List.length_cons,
-                      List.length_singleton]
-                    linarith
-                  have valid_index6: a.length < x.length := by
-                    rw [←xlen1]
-                    exact valid_index5
-                  have valid_index7: a.length < l₂.length := by
-                    rw [xlen2]
-                    exact valid_index6
-                  rw [reduction_final_RAP n l₁ l₂ x (fun _ => RAPPORSingleSample n query num den h ) hl₁ hl₂ xlen1 _ xlen2]
-                  { calc
-                    RAPPORSingleSample n query num den h (l₁[a.length]'(valid_index5)) (x[a.length]'(valid_index6)) /
-                    RAPPORSingleSample n query num den h (l₂[a.length]'(valid_index7)) (x[a.length]'(valid_index6)) ≤
-                    ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
-                    _ = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by rw[←arith_2 num den h]
-                  }
-                  {
-                    intro k bo hbo
-                    rw [RAPPORSingleSample]
-                    apply RRSamplePushForward_non_zero
-                    aesop
-                  }
-                  { intro k bo
-                    rw [RAPPORSingleSample]
-                    apply RRSamplePushForward_finite
-                  }
-                  {apply x_indices}
-                  | false =>
-                  simp at x_indices
-                  cases x_indices with
-                  | intro i hi =>
-                  have numerator_zero: (∏' (i : Fin l₁.length), RAPPORSingleSample n query num den h l₁[i.val] x[i.val]) = 0 := by
-                    rw [@tprod_fintype]
-                    rw[Finset.prod_eq_zero_iff]
-                    norm_num
-                    have hl1len:l₁.length > 0 := by
-                     rw[hl₁]
-                     rw [@List.length_append]
-                     aesop
-                    use (Fin.ofNat' i.val (hl1len))
-                    apply RAPPORSingleSample_diff_lengths n query num den h
-                    simp
-                    have h_coe: i.val % l₁.length = i.val := by
-                     rw [Nat.mod_eq]
-                     have hival: i.val < l₁.length := by
-                      rw [xlen1]
-                      apply valid_index4 _ hl₂
-                      exact xlen2
-                     aesop
-                    conv =>
-                     enter[1, 2, 1, 2]
-                     rw[h_coe]
-                    aesop
-                  rw [numerator_zero]
-                  rw [@ENNReal.zero_div]
-                  simp
-      | false => simp at xlen1
-                 rw [←Ne.eq_def] at xlen1
-                 have numerator_zero: RAPPORSample_PMF n query num den h l₁ x = 0 := RAPPORSample_diff_lengths n query num den h l₁ x xlen1
-                 rw [numerator_zero]
-                 rw [@ENNReal.zero_div]
-                 simp
-
-/- A different perspective -/
-
+/- Instantiation of RAPPOR as a local randomizer -/
 def RAPPORSingle_Local (n : Nat) (query : T → Fin n) (num: Nat) (den : PNat) (h: 2 * num < den): LocalMechanism T (List Bool) :=
   fun l => ⟨RAPPORSingleSample n query num den h l, RAPPORSingleSample_PMF_helper query num den h l⟩
 
+/- Proof of Local DP for RAPPOR, using the single-DP bound above. -/
 lemma RAPPOR_Local_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den):
   Local_DP (RAPPORSingle_Local n query num den h) (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den))) := by
   rw [Local_DP]
@@ -280,11 +191,12 @@ lemma RAPPOR_Local_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den 
   calc
    RAPPORSingleSample n query num den h u₁ y /
    RAPPORSingleSample n query num den h u₂ y ≤
-   ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := by apply RAPPORSingle_DP n query num den h
+   ((2⁻¹ + num / den) / (2⁻¹ - num / den)) ^ 2 := RAPPORSingle_DP n query num den h _ _ _
    _ = ENNReal.ofReal (Real.exp (2 * Real.log ((2⁻¹ + num / den) / (2⁻¹ - num / den)))) := by rw[←arith_2 num den h]
 
-
-lemma RAPPORSample_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
+/- Proof of the differential privacy bound for our implementation of Basic One-Time RAPPOR, using
+   the lemma in "LocalToDataset."-/
+theorem RAPPORSample_DP {T : Type} (n : Nat) (query: T -> Fin n) (num : Nat) (den : PNat) (h: 2 * num < den) (b : List Bool):
   DP_withUpdateNeighbour (RAPPORSample_PMF n query num den h) (2 * Real.log ((2⁻¹ + num/den) / (2⁻¹ - num/den)))
    := by
    have h1: RAPPORSample_PMF n query num den h = local_to_dataset_PMF (RAPPORSingle_Local n query num den h) := rfl

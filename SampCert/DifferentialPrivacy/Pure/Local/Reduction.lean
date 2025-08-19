@@ -1,6 +1,9 @@
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Basic
 
-/- Step 2 of the DP Proof: cancellation of probalities in the numerator and denominator. -/
+/- Proof of the DP proof step that allows us to reduce from considering the dataset-based algorithm
+ to the considering just the local randomizer.
+ The proof is highly technical, but mathematically trivial.
+ -/
 lemma valid_index0 (l₁ : List T)(h1: l₁ = a++[n]++b) (i : Fin (l₁.length - 1)): (Fin.succAbove (a.length) i).val < l₁.length := by
   have hl : l₁.length - 1 + 1 = l₁.length := by
       rw [Nat.sub_add_cancel]
@@ -145,6 +148,7 @@ lemma conversion {β: Type}(l: List T) (x: List β)(h1: l = a++[n]++b)(hl : l.le
   rw [fin_prod_cast (by rw [← Nat.sub_add_cancel hl])]
   simp
 
+/- The statement we need. This is used to prove the main lemma in "LocalToDataset."-/
 theorem reduction_final {β: Type}(l₁ l₂ a b: List T)(n m : T)(x: List β)(f: T → SLang β)(h1: l₁ = a++[n]++b)(h2: l₂ = a++[m]++b)(hx: l₁.length = x.length)(hy: l₂.length = x.length)
    (nonzero: ∀ (i : Fin (l₂.length - 1)), f (l₂[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) (x[↑((@Nat.cast (Fin (l₂.length - 1 + 1)) Fin.instNatCast a.length).succAbove i)]'(by apply valid_index8 h2; aesop)) ≠ 0)
    (noninf: ∀(k: T) (bo: β), f k bo ≠ ⊤):(∏' (i : Fin (l₁.length)), f (l₁[i.val]'(by simp)) (x[i.val]'(by rw[← hx]; simp))) /

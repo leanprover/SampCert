@@ -227,10 +227,9 @@ lemma sub_add_cancel_ennreal (a b :ENNReal)(h:b≤ a)(h1 : b ≠ ⊤): a -b +b =
   exact h1
 
 
-lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d)(htop1: a ≠ ⊤)(htop2 : c ≠ ⊤): a * c ≤ b * d := by
+lemma le_double (a b c : ENNReal)(h1 : a ≤ b)(h2 : c ≤ d): a * c ≤ b * d := by
   apply mul_le_mul_of_nonneg
   all_goals aesop
-
 
 lemma mult_div_comm_mult_div (a b c :ENNReal): a*(b/c) = b*(a/c):= by
   rw [@ENNReal.div_eq_inv_mul]
