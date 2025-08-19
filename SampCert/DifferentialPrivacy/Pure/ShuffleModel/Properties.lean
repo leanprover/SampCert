@@ -50,6 +50,22 @@ lemma Shuffler_norms {α: Type} [DecidableEq α][BEq α] (l:List α):  ∑' (b :
   rw [← Summable.hasSum_iff ENNReal.summable]
   apply Shuffler_PMF
 
+lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f)
+:∀(b: List U),∑' (i : List U), f b i = 1 := by
+  intro b
+  have h2 :∀ x i: List U, f x i  = (if List.isPerm x i then  (1: ENNReal)/(x.length.factorial) else (0: ENNReal)) := by
+    unfold UniformShuffler at h
+    exact h
+  conv =>
+    enter [1,1,i]
+    rw [h2]
+
+  rw [← @ENNRealLemmas.tsum_ite_mult]
+  conv =>
+    enter [1]
+    rw[ENNReal.tsum_mul_left]
+  sorry
+
 lemma ShuffleAlgorithm_norms {U: Type} [BEq U] (m : Mechanism T (List U))(f : List U → SLang (List U))(h: UniformShuffler f)(l: List T):
 HasSum (ShuffleAlgorithm (fun x => (m x).1) f h l) 1  := by
   unfold ShuffleAlgorithm
@@ -67,24 +83,6 @@ HasSum (ShuffleAlgorithm (fun x => (m x).1) f h l) 1  := by
   rw [← Summable.hasSum_iff ENNReal.summable]
   exact (m l).2
 
-
-theorem BinomialSample_norms [LawfulMonad SLang] (seed : MultiBernoulli.SeedType) (n : PNat) :
-  HasSum (BinomialSample seed n) 1 := by
-  rw [BinomialSample]
-  simp
-  unfold probBind
-  simp [Summable.hasSum_iff ENNReal.summable]
-  have h: (push_forward (MultiBernoulli.MultiBernoulliSample (List.replicate (↑n) seed))
-        (fun (a : List Bool) => (List.count true a))) = (fun (b : Nat) =>
-        (∑' (a : List Bool), if b = List.count true a then MultiBernoulli.MultiBernoulliSample
-        (List.replicate (↑n) seed) a else 0)) := by
-          unfold push_forward
-          rfl
-
-  rw [← h]
-  rw [push_forward_prob_is_prob]
-  simp [MultiBernoulli.MultiBernoulliSample_normalizes]
-
 theorem RRShuffle_norms [LawfulMonad SLang]{T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
   unfold RRShuffle
   simp_all only [bind, pure, bind_pure]
@@ -100,30 +98,6 @@ theorem RRShuffle_norms [LawfulMonad SLang]{T : Type}(query: T -> Bool) (num : N
   rw [← Summable.hasSum_iff ENNReal.summable]
   apply RRSample_PMF_helper
 
-lemma UniformShuffler_norms {U: Type}[BEq U](f: List U → SLang (List U)) (h:UniformShuffler f)
-:∀(b: List U),∑' (i : List U), f b i = 1 := by
-  intro b
-  have h2 :∀ x i: List U, f x i  = (if List.isPerm x i then  (1: ENNReal)/(x.length.factorial) else (0: ENNReal)) := by
-    unfold UniformShuffler at h
-    exact h
-  conv =>
-    enter [1,1,i]
-    rw [h2]
-
-  rw [← @ENNRealLemmas.tsum_ite_mult]
-  conv =>
-    enter [1]
-    rw[ENNReal.tsum_mul_left]
-  sorry
-
-theorem BinomialSample_kprob (seed: MultiBernoulli.SeedType) (n : PNat) (k : Nat) :
-  BinomialSample seed n k = ((n: Nat).choose k) * ((num / den) ^ k) * ((1 - (num / den)) ^ (n - k)) := by
-  rw[BinomialSample]
-  simp
-  unfold MultiBernoulli.MultiBernoulliSample
-  simp [pure, bind]
-
-  sorry
 lemma contains_idx {α: Type}[BEq α](l: List α)(a: α)(h: l.contains a): ∃i: Fin l.length, l[i] = a := by sorry
 
 lemma insertNth_eq_iff {α : Type} [DecidableEq α]
@@ -174,6 +148,7 @@ lemma Shuffle_permutes {α: Type} [DecidableEq α][BEq α] (n: Nat)(l₁ l₂: L
     intro a h
     simp
     intro h1
+    sorry
 
     )]
     have h2: l₂ = List.insertNth j hd (l₂.eraseIdx j) := by sorry

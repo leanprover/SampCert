@@ -38,9 +38,3 @@ def ShuffleAlgorithm [BEq U](m : List T → SLang (List U))(f : List U → SLang
   let x ← m l
   let b ← f x
   return b
-
-def BinomialSample (seed: MultiBernoulli.SeedType)(n:PNat) := do
-  let seeds := List.replicate n seed
-  let list ← MultiBernoulli.MultiBernoulliSample (seeds)
-  let k := List.count true list
-  return k
