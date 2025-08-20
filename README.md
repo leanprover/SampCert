@@ -67,6 +67,6 @@ We prove a lemma showing that the mass of a distribution is preserved under mona
 ### RandomizedPostProcess.lean
 
 This file provides the Lean proof about the post-processing property of differential privacy: If there is an $\epsilon$-DP mechanism $M: X \rightarrow W$ and a (possibly randomized) mapping $F: W \rightarrow Z$, then $F \circ M$ is $\epsilon$-DP. The case where $F$ is deterministic is implemented in SampCert. We implement the case where $F$ is random. The result is in the lemma 
-``lemma randPostProcess_DP_bound_with_UpdateNeighbour``.
+``randPostProcess_DP_bound_with_UpdateNeighbour``.
 
 We would like to thank SampCert for motivating and being the basis for our project. We would also like to thank Google for sponsoring and mentoring this project, and the Institute of Pure and Applied Mathematics (IPAM) for supporting and hosting our work.
