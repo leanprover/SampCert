@@ -122,78 +122,7 @@ lemma DP.pointwise_ratio_bound {T U : Type}
       · aesop
     simpa using this
 
-
-
-lemma tsum_indicator_mul_left {U V : Type} (p : PMF U) (g : U → PMF V) (S : Set V) (u : U) (hsplit : (fun v => if v ∈ S then p u * g u v else 0) = fun v => p u * if v ∈ S then g u v else 0):
-(∑' v : V, if v ∈ S then p u * g u v else 0) = p u * ∑' v : V, if v ∈ S then (g u) v else 0:= by
-    calc
-  (∑' v : V, if v ∈ S then p u * g u v else 0)
-      = ∑' v : V, p u * (if v ∈ S then g u v else 0) := by
-        simp [hsplit]
-  _ = p u * ∑' v : V, (if v ∈ S then g u v else 0) := by
-        simpa using
-          (ENNReal.tsum_mul_left
-            (a := p u)
-            (f := fun v : V => if v ∈ S then g u v else 0))
-
-lemma tsum_bind_indicator {U V : Type}
-    (p : PMF U) (g : U → PMF V) (S : Set V) :
-    (∑' v : V, if v ∈ S then (p.bind g) v else 0) = (∑' u : U, p u * (∑' v : V, if v ∈ S then g u v else 0)) := by
-    classical
-  have hbind : ∀ v, (p.bind g) v = ∑' u, p u * g u v := by
-    intro v; simp [PMF.bind_apply]
-  calc
-    (∑' v : V, if v ∈ S then (p.bind g) v else 0)
-        = ∑' v, if v ∈ S then (∑' u, p u * g u v) else 0 := by
-              simp [hbind]
-    _   = ∑' v, ∑' u, (if v ∈ S then p u * g u v else 0) := by
-              refine tsum_congr ?_
-              intro v; by_cases hv : v ∈ S <;> simp [hv]
-    _   = ∑' u, ∑' v, (if v ∈ S then p u * g u v else 0) := by
-              simpa using
-                ENNReal.tsum_comm (f := fun v u => (if v ∈ S then p u * g u v else 0))
-    _   = ∑' u, p u * (∑' v, if v ∈ S then g u v else 0) := by
-              refine tsum_congr ?_
-              intro u
-              have hsplit :(fun v => if v ∈ S then p u * g u v else 0) = (fun v => p u * (if v ∈ S then g u v else 0)) := by
-                funext v; by_cases hv : v ∈ S <;> simp [hv, mul_comm, mul_left_comm, mul_assoc]
-              exact tsum_indicator_mul_left p g S u hsplit
-
-lemma randPostProcess_DP_bound {T U V : Type} {nq : Mechanism T U} {ε : NNReal} (h : PureDP nq ε) (g : U → PMF V) :
-  DP (privPostProcessRand nq g) ε := by
-  intro l₁ l₂ hN S
-  let p₁ := nq l₁
-  let p₂ := nq l₂
-  let w : U → ENNReal := fun u => (∑' v : V, if v ∈ S then g u v else 0)
-  have hNum : (∑' v : V, if v ∈ S then (privPostProcessRand nq g l₁) v else 0)
-              = ∑' u : U, p₁ u * w u := by
-    simpa [privPostProcessRand, p₁] using tsum_bind_indicator (nq l₁) g S
-  have hDen : (∑' v : V, if v ∈ S then (privPostProcessRand nq g l₂) v else 0)
-              = ∑' u : U, p₂ u * w u := by
-    simpa [privPostProcessRand, p₂] using tsum_bind_indicator (nq l₂) g S
-  have hpt := DP.pointwise_ratio_bound (T:=T) (U:=U) (m:=nq) (ε:=ε) h hN
-  have hsum :
-      (∑' u : U, p₁ u * w u)
-      ≤ ENNReal.ofReal (Real.exp ε) * (∑' u : U, p₂ u * w u) := by
-      have hpt' : ∀ u, p₁ u * w u ≤ (ENNReal.ofReal (Real.exp ε) * p₂ u) * w u := by
-        intro u
-        have := hpt u
-        have hpt' : p₁ u ≤ ENNReal.ofReal (Real.exp ε) * p₂ u := by simpa [p₁, p₂] using hpt u
-        have hw0 : 0 ≤ w u := by aesop
-        have hmul : p₁ u * w u ≤ (ENNReal.ofReal (Real.exp ε) * p₂ u) * w u := mul_le_mul_of_nonneg_right hpt' hw0
-        simpa [mul_left_comm, mul_comm, mul_assoc] using hmul
-      have := ENNReal.tsum_le_tsum hpt'
-      simpa [ENNReal.tsum_mul_left, mul_left_comm, mul_assoc] using this
-  by_cases hDen0 : (∑' u : U, p₂ u * w u) = 0
-  · have hNum0 : (∑' u : U, p₁ u * w u) = 0 := by
-      have : (∑' u : U, p₁ u * w u) ≤ ENNReal.ofReal (Real.exp ε) * 0 := by simpa [hDen0] using hsum
-      exact le_antisymm (le_trans this (by aesop)) (by exact bot_le)
-    simp [hNum, hDen, hNum0, hDen0]
-  · nth_rewrite 1 [mul_comm] at hsum
-    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := by (exact ENNReal.div_le_of_le_mul' hsum)
-    simpa [hNum, hDen] using this
-
-
+/-Provides a pointwise guarantee of a DP bound but for our DP_withUpdateNeighbour-/
 lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
     {m : Mechanism T U} {ε : Real}
     (h : DP_withUpdateNeighbour m ε) {l₁ l₂ : List T} (hN : UpdateNeighbour l₁ l₂) :
