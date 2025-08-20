@@ -32,7 +32,7 @@ In this folder, we provide an implementation of randomized response and give a p
 
 #### ProbabilityProduct.lean
 
-We show that the probability of generating a list of outputs is equal to the product of the probabilities of generating each output independently. This is used to prove our 'LocalDP_toDataset' lemma.
+We show that the probability of generating a list of outputs is equal to the product of the probabilities of generating each output independently. This is used to prove our `LocalDP_toDataset` lemma.
 #### PushForward.lean
 
 We prove that the push-forward of a probability measure is a probability measure. A similar statement already exists in SampCert, but our rephrasing was slightly more convenient for our purposes.
