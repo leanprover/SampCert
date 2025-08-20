@@ -10,7 +10,7 @@ Our implementations are in SampCert/DifferentialPrivacy/Pure. Our additions are 
 
 #### BinomialSample
 
-We implement anod show normalization for a sampler for the Binomial distribution.
+We implement and show normalization for a sampler for the Binomial distribution.
 
 #### LocalDP
 
