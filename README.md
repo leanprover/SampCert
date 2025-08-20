@@ -50,7 +50,7 @@ This contains the definition of the shuffle model. The definition `Shuffler` is 
 
 #### Properties.lean
 
-This instantiates the shuffle algorithm as a PMF, and show that the algorithm for a random permutation that we define is uniform. In the theorem `ShuffleAlgorithm_is_DP`, we show that shuffling the output of a differentially-private algorithm does not worsen the differential privacy bound. 
+This instantiates the shuffle algorithm as a PMF, and show that our algorithm for a random permutation that is indeed uniformly random. In the theorem `ShuffleAlgorithm_is_DP`, we show that shuffling the output of a differentially-private algorithm does not worsen the differential privacy bound. 
 
 #### ENNRealLemmaSuite.lean
 
