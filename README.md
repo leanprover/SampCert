@@ -71,15 +71,4 @@ This file provides the Lean proof about the post-processing property of differen
 
 
 
-We would like to thank SampCert for motivating and being the basis for our project.
-```
-@software{Tristan_SampCert_Verified_2024,
-author = {Tristan, Jean-Baptiste},
-doi = {10.5281/zenodo.11204806},
-month = may,
-title = {{SampCert : Verified Differential Privacy}},
-url = {https://github.com/leanprover/SampCert},
-version = {1.0.0},
-year = {2024}
-}
-```
+We would like to thank SampCert for motivating and being the basis for our project
