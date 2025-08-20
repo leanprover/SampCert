@@ -1,17 +1,9 @@
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
-import SampCert.Samplers.Uniform.Code
-import SampCert.Samplers.Uniform.Properties
-import SampCert.DifferentialPrivacy.Pure.Local.Normalization
-import SampCert.DifferentialPrivacy.Pure.Local.PushForward
-import SampCert.DifferentialPrivacy.Pure.Local.LocalDP.DPwithUpdateNeighbour
-import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Code
-import SampCert.DifferentialPrivacy.Pure.Local.MultiBernoulli.Properties
-import SampCert.DifferentialPrivacy.Pure.Postprocessing
-import SampCert.DifferentialPrivacy.Generic
+import SampCert.DifferentialPrivacy.Pure.ShuffleModel.Basic
 
 namespace SLang
 
--- Implementation of the Shuffler for the Shuffle Model.
+/- Implementation of the Shuffler for the Shuffle Model.
+   Outputs a random permutation of the input list. -/
 def Shuffler {α: Type}(l:List α) := do
 match l with
 | [] => pure []
@@ -27,12 +19,14 @@ def RRShuffle(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: L
   let b ← Shuffler l
   return b
 
+def num_perms {α: Type} (l: List α) [DecidableEq α]: ℕ := (l.permutations.toFinset).card
+
 /- Definition of a function that uniformly permutes a given list.-/
-def UniformShuffler {U: Type}[BEq U](f: List U → SLang (List U)) : Prop :=
-  ∀ l₁ l₂: List U, f l₁ l₂ = if List.isPerm l₁ l₂ then (1: ENNReal)/(l₁.length.factorial) else (0: ENNReal)
+def UniformShuffler {U: Type}[BEq U] [DecidableEq U] (f: List U → SLang (List U)) : Prop :=
+  ∀ l₁ l₂: List U, f l₁ l₂ = if List.isPerm l₁ l₂ then (1: ENNReal)/(num_perms l₁) else (0: ENNReal)
 
 /- Generalized version of the shuffle algorithm that takes in any mechanism -/
-def ShuffleAlgorithm [BEq U](m : Mechanism T  (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
+def ShuffleAlgorithm [BEq U][DecidableEq U] (m : Mechanism T  (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
   let x ← (m l).toSLang
   let b ← f x
   return b

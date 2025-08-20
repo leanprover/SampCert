@@ -83,8 +83,6 @@ lemma DP.pointwise_ratio_bound {T U : Type}
       · aesop
     simpa using this
 
-
-
 lemma tsum_indicator_mul_left {U V : Type} (p : PMF U) (g : U → PMF V) (S : Set V) (u : U) (hsplit : (fun v => if v ∈ S then p u * g u v else 0) = fun v => p u * if v ∈ S then g u v else 0):
 (∑' v : V, if v ∈ S then p u * g u v else 0) = p u * ∑' v : V, if v ∈ S then (g u) v else 0:= by
     calc
