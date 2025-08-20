@@ -39,6 +39,17 @@ def ShuffleAlgorithm [BEq U](m : Mechanism T  (List U))(f : List U → SLang (Li
 
 noncomputable def num_perms (l : List U) [BEq U] [DecidableEq (List U)] : ENNReal := ((List.permutations l).toFinset).card
 
+lemma List.isPerm_iff_mem_permutations {U : Type} [DecidableEq U] [DecidableEq (List U)] (l : List U) (a : List U) : l.isPerm a ↔ a ∈ List.permutations l := by
+  apply Iff.intro
+  simp
+  rw [@List.perm_comm]
+  intro hp
+  apply (@List.isPerm_iff U _ l a).mp hp
+  simp
+  intro hp
+  rw [@List.perm_comm] at hp
+  apply (@List.isPerm_iff U _ l a).mpr hp
+
 def UniformShuffler_v2 {U : Type} [BEq U] [DecidableEq (List U)] (f : List U → SLang (List U)) : Prop :=
  ∀ l : List U, ∀ a : List U, (List.isPerm l a → f l a = (num_perms a)⁻¹) ∧ (¬ List.isPerm l a → f l a = 0)
 
@@ -69,6 +80,8 @@ lemma UniformShuffler_v2_norms {U : Type} [BEq U] [DecidableEq U] [DecidableEq (
     rw [h1]
   have h2: ∑' (b : List U), (if l.isPerm b then ((num_perms l)⁻¹) else 0) = (num_perms l) * (num_perms l)⁻¹ := by
     sorry
+    /- Idea: how about we rewrite l.isPerm in terms of membership in a list,
+    i.e., prove l.isPerm b ↔ b ∈ List.permutations l-/
   rw [h2]
   apply ENNReal.mul_inv_cancel
   simp [num_perms, List.permutations]
