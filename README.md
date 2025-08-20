@@ -2,17 +2,11 @@
 
 The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et al. 2024) was created to implement and formalize differential privacy notions in Lean. It provided support for various notions of differential privacy, a framework for DP mechanisms, and the Gaussian and Laplace mechanisms.
 
-We build upon SampCert, creating support for the local model. We also implement the randomized response and one-time basic RAPPOR mechanisms, as well as implement a more robust post-processing property.
+We build upon SampCert, creating support for the local model using [Lean](https://lean-lang.org/) and the extensive [Mathlib](https://github.com/leanprover-community/mathlib4) library. We also implement the [randomized response](https://www.tandfonline.com/doi/abs/10.1080/01621459.1965.10480775) and [one-time basic RAPPOR](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42852.pdf) mechanisms, as well as implement a more robust post-processing property for randomized mappings.
 
-A verified implementation using [Lean](https://github.com/leanprover/SampCert)) and [Mathlib](https://github.com/leanprover-community/mathlib4) of randomized algorithms including [the discrete Gaussian sampler for differential privacy](https://arxiv.org/abs/2004.00010), key results in [zero concentrated differential privacy](https://arxiv.org/abs/1605.02065), and [some verified (unbounded) private queries](https://arxiv.org/pdf/1909.01917).
 
-SampCert is deployed and used in the [AWS Clean Rooms Differential Privacy service](https://docs.aws.amazon.com/clean-rooms/latest/userguide/differential-privacy.html#dp-overview). SampCert proves deep properties about some of its randomized algorithm and makes heavy use of Mathlib. For example, we use theorems such as [the Poisson summation formula](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/Fourier/PoissonSummation.html#Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay).
 
-The principal developer of SampCert is [Jean-Baptiste Tristan](https://jtristan.github.io/). It is also developed by [Markus de Medeiros](https://www.markusde.ca/). 
-
-Other people have contributed important ideas or tools for deployment including (in no particular order): Leo de Moura, Anjali Joshi, Joseph Tassarotti, Stefan Zetzsche, Aws Albharghouti, Muhammad Naveed, Tristan Ravitch, Fabian Zaiser, Tomas Skrivan.
-
-To cite SampCert you can currently use the following reference:
+We would like to thank SampCert for motivating and being the basis for our project.
 ```
 @software{Tristan_SampCert_Verified_2024,
 author = {Tristan, Jean-Baptiste},
