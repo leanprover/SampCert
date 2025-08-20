@@ -1,6 +1,6 @@
 # Verifying Differential Privacy in Lean
 
-The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et al. 2024) was created to implement and formalize differential privacy notions in Lean. It provided support for various notions of differential privacy, a framework for implementing differentially private mechanisms via verified sampling algorithms, and several differentially private algorithms, including the Gaussian and Laplace mechanisms.
+The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et al. 2024) was created to implement and formalize differential privacy notions in Lean. It provided support for various notions of differential privacy, a framework for implementing differentially private mechanisms via verified sampling algorithms, and implemented several differentially private algorithms, including the Gaussian and Laplace mechanisms.
 
 We build upon SampCert, creating support for the local model using [Lean](https://lean-lang.org/) and the extensive [Mathlib](https://github.com/leanprover-community/mathlib4) library. We also implement the [randomized response](https://www.tandfonline.com/doi/abs/10.1080/01621459.1965.10480775) and [one-time basic RAPPOR](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42852.pdf) mechanisms, as well as implementing a more robust post-processing property for randomized mappings. We additionally move towards an implementation of the shuffle model.
 
