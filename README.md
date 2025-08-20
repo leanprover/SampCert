@@ -4,7 +4,7 @@ The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et a
 
 We build upon SampCert, creating support for the local model using [Lean](https://lean-lang.org/) and the extensive [Mathlib](https://github.com/leanprover-community/mathlib4) library. We also implement the [randomized response](https://www.tandfonline.com/doi/abs/10.1080/01621459.1965.10480775) and [one-time basic RAPPOR](https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/42852.pdf) mechanisms, as well as implementing a more robust post-processing property for randomized mappings. We additionally move towards an implementation of the shuffle model.
 
-Our implementations are in SampCert/DifferentialPrivacy/Pure. Our additions are in the Local folder, Shuffle Model folder, and RandomizedPostProcessing.lean file. 
+Our implementations are in `SampCert/DifferentialPrivacy/Pure`. Our additions are in the Local folder, Shuffle Model folder, and a few separate files in the Pure folder.
 
 ### Local
 
@@ -24,21 +24,21 @@ The files here implement and show normalization for the "multi-Bernoulli" distri
 
 #### RAPPOR
 
-In this folder, we provide an implementation of basic one-time RAPPOR and give a proof of differential privacy. The file Definitions.lean provides our implementation of RAPPOR. The file `Properties/DPProof.lean` provides a proof that our implementation of RAPPOR is differentially private.
+In this folder, we provide an implementation of basic one-time RAPPOR and give a proof of differential privacy. The file `Definitions.lean` provides our implementation of RAPPOR. The file `Properties/DPProof.lean` provides a proof that our implementation of RAPPOR is differentially private.
 
 #### RandomizedResponse
 
-In this folder, we provide an implementation of randomized response and give a proof of differential privacy. The file Definitions.lean provides our implementation of randomized response. The file `Properties/DPProof.lean` provides a proof that our implementation of randomized response is differentially private.
+In this folder, we provide an implementation of randomized response and give a proof of differential privacy. The file `Definitions.lean` provides our implementation of randomized response. The file `Properties/DPProof.lean` provides a proof that our implementation of randomized response is differentially private.
 
 #### ProbabilityProduct.lean
 
-Shows that the probability of generating a list of outputs is equal to the product of the probabilities of generating each output independently. This is used to prove our 'LocalDP_toDataset' lemma.
+We show that the probability of generating a list of outputs is equal to the product of the probabilities of generating each output independently. This is used to prove our 'LocalDP_toDataset' lemma.
 #### PushForward.lean
 
 We prove that the push-forward of a probability measure is a probability measure. A similar statement already exists in SampCert, but our rephrasing was slightly more convenient for our purposes.
 #### Reduction.lean
 
-Helper function used in proving a local algorithm is DP. Allows us to reduce the problem to just considering the local randomizer.
+We prove a helper lemma that is used in proving a local algorithm is DP. Allows us to reduce the problem to just considering the local randomizer.
 
 ### Shuffle model
 
