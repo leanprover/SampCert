@@ -1,6 +1,10 @@
 # Verifying Differential Privacy in Lean
 
-A verified implementation using [Lean](https://github.com/leanprover/lean4) and [Mathlib](https://github.com/leanprover-community/mathlib4) of randomized algorithms including [the discrete Gaussian sampler for differential privacy](https://arxiv.org/abs/2004.00010), key results in [zero concentrated differential privacy](https://arxiv.org/abs/1605.02065), and [some verified (unbounded) private queries](https://arxiv.org/pdf/1909.01917).
+The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et al. 2024) was created to implement and formalize differential privacy notions in Lean. It provided support for various notions of differential privacy, a framework for DP mechanisms, and the Gaussian and Laplace mechanisms.
+
+We build upon SampCert, creating support for the local model. We also implement the randomized response and one-time basic RAPPOR mechanisms, as well as implement a more robust post-processing property.
+
+A verified implementation using [Lean](https://github.com/leanprover/SampCert)) and [Mathlib](https://github.com/leanprover-community/mathlib4) of randomized algorithms including [the discrete Gaussian sampler for differential privacy](https://arxiv.org/abs/2004.00010), key results in [zero concentrated differential privacy](https://arxiv.org/abs/1605.02065), and [some verified (unbounded) private queries](https://arxiv.org/pdf/1909.01917).
 
 SampCert is deployed and used in the [AWS Clean Rooms Differential Privacy service](https://docs.aws.amazon.com/clean-rooms/latest/userguide/differential-privacy.html#dp-overview). SampCert proves deep properties about some of its randomized algorithm and makes heavy use of Mathlib. For example, we use theorems such as [the Poisson summation formula](https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/Fourier/PoissonSummation.html#Real.tsum_eq_tsum_fourierIntegral_of_rpow_decay).
 
