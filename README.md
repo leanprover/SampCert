@@ -14,7 +14,7 @@ We implement and show normalization for a sampler for the Binomial distribution.
 
 #### LocalDP
 
-The files in this folder provide a variety of definitions to support the local model of differential privacy. We create a definition of differential privacy that is parametrized by a neighbour relation, thus generalizing the SampCert definition. For the local model, we use the 'DP_withUpdateNeighbour' definition of neighboring datasets, which considers two lists two be neighbouring if they differ in the update of a single entry.
+The files in this folder provide a variety of definitions to support the local model of differential privacy. We create a definition of differential privacy that is parametrized by a neighbour relation, thus generalizing the SampCert definition. For the local model, we use the 'DP_withUpdateNeighbour' definition of neighboring datasets, which considers two lists to be neighbouring if they differ in the update of a single entry.
 
 We also show that if an $\epsilon$-local randomizer is extended to a dataset via monadic map, the resulting algorithm is $\epsilon$-differentially private. This is proven in `LocalDP_toDataset.`
 
