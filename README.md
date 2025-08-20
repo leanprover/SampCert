@@ -38,7 +38,7 @@ We show that the probability of generating a list of outputs is equal to the pro
 We prove that the push-forward of a probability measure is a probability measure. A similar statement already exists in SampCert, but our rephrasing was slightly more convenient for our purposes.
 #### Reduction.lean
 
-We prove a helper lemma that is used in proving a local algorithm is DP. Allows us to reduce the problem to just considering the local randomizer.
+We prove a helper lemma that is used in proving a local algorithm is DP. It allows us to reduce the problem to just considering the local randomizer.
 
 ### Shuffle model
 
