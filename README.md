@@ -1,3 +1,5 @@
+This contains some personal work done by me after the RIPS 2025 project on Lean and Differential Privacy. I will mostly focus on cleaning up the shuffle model proofs and adding more support for the shuffle model. The rest is the README from the original LeanDP repository:
+
 # Verifying Differential Privacy in Lean
 
 The [SampCert](https://github.com/leanprover/SampCert) project (de Medeiros et al. 2024) was created to implement and formalize differential privacy notions in Lean. It provided support for various notions of differential privacy, a framework for implementing differentially private mechanisms via verified sampling algorithms, and implemented several differentially private algorithms, including the Gaussian and Laplace mechanisms.
