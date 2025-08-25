@@ -1,7 +1,6 @@
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Definitions
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.Arithmetic
 import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.Properties.PMFProof
-import SampCert.DifferentialPrivacy.Pure.Local.RandomizedResponse.AccuracyProof
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.Samplers.Bernoulli.Properties
