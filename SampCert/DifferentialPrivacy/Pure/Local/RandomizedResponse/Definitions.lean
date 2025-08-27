@@ -1,6 +1,5 @@
 import Mathlib.Probability.ProbabilityMassFunction.Basic
 import SampCert
-/-import SampCert.DifferentialPrivacy.Local.MultiBernoulli -/
 
 namespace RandomizedResponse
 

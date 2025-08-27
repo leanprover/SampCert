@@ -20,7 +20,6 @@ def privPostProcessRand {T U V : Type} (nq : Mechanism T U) (g : U → PMF V) : 
 /-The following 3 lemmas are helper functions for the main theorems at the end-/
 lemma tsum_ite_eq_single {T U : Type} (m : Mechanism T U) (l₁ : List T)(u : U):
   (∑' (x : U), if x = u then ((m l₁) x) else 0) = (m l₁) u := by
-  classical
   have hpoint :
     (fun x : U => if x = u then (m l₁) x else 0) =
     (fun x : U => if x = u then (m l₁) u else 0) := by
@@ -31,8 +30,6 @@ lemma tsum_ite_eq_single {T U : Type} (m : Mechanism T U) (l₁ : List T)(u : U)
   have hcollapse : (∑' x : U, if x = u then (m l₁) u else 0) = (m l₁) u := by
     simp [tsum_ite_eq (β := U) (α := ENNReal) u ((m l₁) u)]
   simp [hpoint, hcollapse]
-
-
 
 lemma tsum_indicator_mul_left {U V : Type} (p : PMF U) (g : U → PMF V) (S : Set V) (u : U) (hsplit : (fun v => if v ∈ S then p u * g u v else 0) = fun v => p u * if v ∈ S then g u v else 0):
 (∑' v : V, if v ∈ S then p u * g u v else 0) = p u * ∑' v : V, if v ∈ S then (g u) v else 0:= by
@@ -49,7 +46,6 @@ lemma tsum_indicator_mul_left {U V : Type} (p : PMF U) (g : U → PMF V) (S : Se
 lemma tsum_bind_indicator {U V : Type}
     (p : PMF U) (g : U → PMF V) (S : Set V) :
     (∑' v : V, if v ∈ S then (p.bind g) v else 0) = (∑' u : U, p u * (∑' v : V, if v ∈ S then g u v else 0)) := by
-    classical
   have hbind : ∀ v, (p.bind g) v = ∑' u, p u * g u v := by
     intro v; simp [PMF.bind_apply]
   calc
@@ -130,7 +126,6 @@ lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
       intro u
       have hS := h l₁ l₂ hN ({u} : Set U)
       have hnum : (∑' x : U, (if x ∈ ({u} : Set U) then m l₁ x else 0)) = m l₁ u := by
-        classical
         have : (fun x : U => if x ∈ ({u} : Set U) then m l₁ x else 0)
            = (fun x : U => if x = u then m l₁ u else 0) := by
           funext x
@@ -139,7 +134,6 @@ lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
           · simp [Set.mem_singleton_iff, hx]
         simpa [this] using (tsum_ite_eq_single m l₁ u)
       have hden : (∑' x : U, (if x ∈ ({u} : Set U) then m l₂ x else 0)) = m l₂ u := by
-        classical
         have : (fun x : U => if x ∈ ({u} : Set U) then m l₂ x else 0)
            = (fun x : U => if x = u then m l₂ u else 0) := by
           funext x
@@ -168,9 +162,8 @@ lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
           aesop
         have : m l₁ u ≤ ENNReal.ofReal (Real.exp ε) * m l₂ u := by
           rw [← ENNReal.div_le_iff_le_mul]
-          · exact hratio
-          · aesop
-          · aesop
+          exact hratio
+          all_goals aesop
         simpa using this
 
 /-Proves that combing DP algorithm with post-processor does not worsen the DP bound-/
@@ -202,10 +195,10 @@ theorem randPostProcess_DP_bound {T U V : Type} {nq : Mechanism T U} {ε : NNRea
   by_cases hDen0 : (∑' u : U, p₂ u * w u) = 0
   · have hNum0 : (∑' u : U, p₁ u * w u) = 0 := by
       have : (∑' u : U, p₁ u * w u) ≤ ENNReal.ofReal (Real.exp ε) * 0 := by simpa [hDen0] using hsum
-      exact le_antisymm (le_trans this (by aesop)) (by exact bot_le)
+      exact le_antisymm (le_trans this (by aesop)) bot_le
     simp [hNum, hDen, hNum0, hDen0]
   · nth_rewrite 1 [mul_comm] at hsum
-    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := by (exact ENNReal.div_le_of_le_mul' hsum)
+    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := ENNReal.div_le_of_le_mul' hsum
     simpa [hNum, hDen] using this
 
 /-Same thing as randPostProcess_DP_bound, but uses our DP_withUpdateNeighbour-/
@@ -237,8 +230,8 @@ theorem randPostProcess_DP_bound_with_UpdateNeighbour {T U V : Type} {nq : Mecha
   by_cases hDen0 : (∑' u : U, p₂ u * w u) = 0
   · have hNum0 : (∑' u : U, p₁ u * w u) = 0 := by
       have : (∑' u : U, p₁ u * w u) ≤ ENNReal.ofReal (Real.exp ε) * 0 := by simpa [hDen0] using hsum
-      exact le_antisymm (le_trans this (by aesop)) (by exact bot_le)
+      exact le_antisymm (le_trans this (by aesop)) (bot_le)
     simp [hNum, hDen, hNum0, hDen0]
   · nth_rewrite 1 [mul_comm] at hsum
-    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := by (exact ENNReal.div_le_of_le_mul' hsum)
+    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := ENNReal.div_le_of_le_mul' hsum
     simpa [hNum, hDen] using this

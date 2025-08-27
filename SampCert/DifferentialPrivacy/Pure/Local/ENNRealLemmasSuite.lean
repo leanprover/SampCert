@@ -166,7 +166,7 @@ lemma quot_gt_one (a b : ENNReal): 1 < a/b -> b < a := by
                       have nh: ¬ (1 : ENNReal)  < 0/0 := by simp
                       contradiction
             | false => simp at ha
-                       have ha1: a > 0 := by exact pos_iff_ne_zero.mpr ha
+                       have ha1: a > 0 := pos_iff_ne_zero.mpr ha
                        rw[←hb] at ha1
                        exact ha1
   | false => simp at hb
