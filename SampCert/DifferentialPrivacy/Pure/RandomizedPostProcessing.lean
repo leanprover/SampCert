@@ -162,9 +162,8 @@ lemma DP.pointwise_ratio_bound_for_UpdateNeighbour {T U : Type}
           aesop
         have : m l₁ u ≤ ENNReal.ofReal (Real.exp ε) * m l₂ u := by
           rw [← ENNReal.div_le_iff_le_mul]
-          · exact hratio
-          · aesop
-          · aesop
+          exact hratio
+          all_goals aesop
         simpa using this
 
 /-Proves that combing DP algorithm with post-processor does not worsen the DP bound-/
@@ -196,10 +195,10 @@ theorem randPostProcess_DP_bound {T U V : Type} {nq : Mechanism T U} {ε : NNRea
   by_cases hDen0 : (∑' u : U, p₂ u * w u) = 0
   · have hNum0 : (∑' u : U, p₁ u * w u) = 0 := by
       have : (∑' u : U, p₁ u * w u) ≤ ENNReal.ofReal (Real.exp ε) * 0 := by simpa [hDen0] using hsum
-      exact le_antisymm (le_trans this (by aesop)) (by exact bot_le)
+      exact le_antisymm (le_trans this (by aesop)) bot_le
     simp [hNum, hDen, hNum0, hDen0]
   · nth_rewrite 1 [mul_comm] at hsum
-    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := by (exact ENNReal.div_le_of_le_mul' hsum)
+    have : (∑' u : U, p₁ u * w u) / (∑' u : U, p₂ u * w u) ≤ ENNReal.ofReal (Real.exp ε) := ENNReal.div_le_of_le_mul' hsum
     simpa [hNum, hDen] using this
 
 /-Same thing as randPostProcess_DP_bound, but uses our DP_withUpdateNeighbour-/

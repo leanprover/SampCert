@@ -7,96 +7,6 @@ namespace SLang
 open RandomizedResponse
 open Classical
 
-lemma List.isEmpty_iff (l : List α): l.isEmpty ↔ l = [] := by
- apply Iff.intro
- intro hl
- simp [List.isEmpty] at hl
- cases l with
- | nil => rfl
- | cons hd tl => simp at hl
- intro hl
- simp [List.isEmpty, hl]
-
-lemma Shuffler_on_perm {U : Type} (l₁ l₂ : List U) (hp: l₁.isPerm l₂): Shuffler l₁ l₂ = (num_perms l₁ : ENNReal)⁻¹ := by
-  induction l₁ generalizing l₂ with
-  | nil =>
-   simp_all [List.isPerm]
-   rw [List.isEmpty_iff] at hp
-   subst hp
-   simp [Shuffler, num_perms]
-  | cons hd tl ih =>
-    simp [Shuffler]
-    
-    #check List.eraseIdx
-    sorry
-
-lemma Shuffler_not_perm {U : Type} (l₁ l₂ : List U) (hp: l₁.isPerm l₂ = false): Shuffler l₁ l₂ = 0 := by
-  induction l₁ generalizing l₂ with
-  | nil =>
-  simp_all [List.isPerm]
-  have hp' : ¬l₂ = [] := by aesop
-  simp [Shuffler, hp']
-  | cons hd tl ih =>
-  simp [Shuffler]
-  intro i
-  cases hi: (i < (hd :: tl).length) == true with
-  | false =>
-    simp at hi
-    apply Or.inl
-    refine UniformSample_apply_out (tl.length + 1).toPNat' i ?cons.true.h.support
-    aesop
-  | true =>
-    simp at hi
-    apply Or.inr
-    intro l₂' hl₂'
-    apply ih l₂'
-    by_contra hperm
-    simp at hperm
-    simp [List.isPerm] at hp
-    have: hd ∈ l₂ := by
-      simp [hl₂']
-      refine (List.mem_insertNth ?_).mpr ?_
-      have: l₂'.length = tl.length := by
-        apply List.Perm.length_eq
-        rw [List.isPerm_iff] at hperm
-        rw [@List.perm_comm]
-        exact hperm
-      rw [this]
-      linarith
-      apply Or.inl
-      rfl
-    have hp': tl.isPerm (l₂.erase hd) = false := hp this
-    have h1: l₂.eraseIdx i = l₂' := by simp_all [List.eraseIdx_insertNth]
-    have h2:  tl.isPerm (l₂.eraseIdx i) → tl.isPerm (l₂.erase hd) := by
-      rw [List.isPerm_iff, List.isPerm_iff]
-      intro h
-      constructor
-      apply h
-      have: l₂.erase hd = l₂.eraseIdx (l₂.indexOf hd) := by
-        sorry
-      rw [this]
-      sorry
-    have hp': tl.isPerm (l₂.eraseIdx i) = false := by
-      by_contra x
-      simp at x
-      have: ¬ (tl.isPerm (l₂.erase hd) = false) := by simp [h2 x]
-      contradiction
-    have nothp: ¬ (tl.isPerm l₂' = true) := by rw[h1] at hp'; simp [hp']
-    contradiction
-
-lemma Shuffler_is_uniform {U : Type}: @UniformShuffler U (Shuffler) := by
-  simp [UniformShuffler]
-  intro l₁ l₂
-  cases hp: l₁.isPerm l₂ with
-  | true =>
-    simp
-    apply Shuffler_on_perm
-    exact hp
-  | false =>
-    simp
-    apply Shuffler_not_perm
-    exact hp
-
 /- Shuffler function normalizes-/
 lemma Shuffler_PMF_helper {α: Type} (l:List α): HasSum (Shuffler l) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
@@ -136,6 +46,7 @@ lemma Shuffler_norms {α: Type} (l:List α):  ∑' (b : List α), Shuffler l b =
 def Shuffler_PMF {α : Type} (l : List α) : PMF (List α) :=
   ⟨Shuffler l, Shuffler_PMF_helper l⟩
 
+/- Helper lemma about List.isPerm-/
 lemma List.isPerm_iff_mem_permutations {U : Type} [DecidableEq U] [DecidableEq (List U)] (l : List U) (a : List U) : l.isPerm a ↔ (a ∈ l.permutations) := by
   apply Iff.intro
   simp
@@ -168,7 +79,6 @@ lemma UniformShuffler_norms' {U: Type} (f: List U → SLang (List U))(h: Uniform
      exact List.isPerm_iff_mem_permutations l x
     rw [h0]
     rw [tsum_fintype]
-    clear h0
     simp_all only [Finset.univ_eq_attach, Finset.sum_const, Finset.card_attach, nsmul_eq_mul, mul_one, Nat.cast_inj]
   simp_all [UniformShuffler]
   apply ENNReal.mul_inv_cancel
@@ -200,11 +110,23 @@ HasSum (ShuffleAlgorithm m f h l) 1  := by
 def ShuffleAlgorithm_PMF {U: Type} [DecidableEq U] (m : Mechanism T (List U ))(f : List U → SLang (List U))(h: UniformShuffler f) (l: List T) : PMF (List U) :=
   ⟨ShuffleAlgorithm m f h l, ShuffleAlgorithm_PMF_helper m f h l⟩
 
-/- RRShuffle normalizes. -/
-theorem RRShuffle_PMF_helper {T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
-  have heqv: RRShuffle query num den h = ShuffleAlgorithm (RRSample_PMF query num den h) (Shuffler) (Shuffler_is_uniform) := by rfl
-  rw [heqv]
-  apply ShuffleAlgorithm_PMF_helper
+/- RRShuffle normalizes.
+   This is a bit unsatisfactory: if we had that ''RandomShuffle'' is in fact
+   a UniformShuffler, then the prove would be trivial simply by instantiating RRShuffle as a UniformShuffler-/
+lemma RRShuffle_PMF_helper {T : Type}(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l : List T): HasSum (RRShuffle query num den h l) 1 := by
+  unfold RRShuffle
+  simp_all only [bind, pure, bind_pure]
+  unfold probBind
+  simp [Summable.hasSum_iff ENNReal.summable]
+  rw [ENNReal.tsum_comm]
+  conv =>
+    enter [1,1,b]
+    rw [ENNReal.tsum_mul_left]
+    enter [2]
+    apply Shuffler_norms
+  simp
+  rw [← Summable.hasSum_iff ENNReal.summable]
+  apply RRSample_PMF_helper
 
 /- Instantiation of RRShuffle as a PMF. -/
 def RRShuffle_PMF {T : Type} (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den) (l : List T) : PMF (List Bool) :=
@@ -224,9 +146,3 @@ conv =>
   rw [←shuffling_is_postprocessing]
 let g : List U → PMF (List U) := (fun u => ⟨f u, UniformShuffler_norms f h_uniform u⟩)
 apply @randPostProcess_DP_bound_with_UpdateNeighbour T _ _ m ε hdp g
-
-theorem RRShuffle_is_DP (ε : ℝ) (query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den): DP_withUpdateNeighbour (RRShuffle_PMF query num den h) (Real.log ((↑(NNReal.ofPNat den) + 2 * ↑num) / (↑(NNReal.ofPNat den) - 2 * ↑num))) := by
-  have heqv: RRShuffle_PMF query num den h = ShuffleAlgorithm_PMF (RRSample_PMF query num den h) (Shuffler) (Shuffler_is_uniform) := by rfl
-  rw [heqv]
-  apply ShuffleAlgorithm_is_DP
-  exact RRSample_DP query num den h
