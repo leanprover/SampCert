@@ -1,13 +1,14 @@
 import SampCert.DifferentialPrivacy.Pure.ShuffleModel.Basic
 
 namespace SLang
+open Classical
 
 /- Implementation of the Shuffler for the Shuffle Model.
    Outputs a random permutation of the input list. -/
-def Shuffler {α: Type}(l:List α) := do
+def Shuffler {α: Type}(l:List α): SLang (List α) := do
 match l with
-| [] => pure []
-| hd::tl =>
+| [] => return []
+| hd :: tl =>
     let len := (hd :: tl).length
     let i : Nat ← UniformSample (Nat.toPNat' len)
     let rest : List α ← Shuffler tl
@@ -19,14 +20,16 @@ def RRShuffle(query: T -> Bool) (num : Nat) (den : PNat) (h: 2 * num < den)(l: L
   let b ← Shuffler l
   return b
 
-def num_perms {α: Type} (l: List α) [DecidableEq α]: ℕ := (l.permutations.toFinset).card
+/- Computes the number of permutations of a list, accounting
+   for the number of unique elements in the list. -/
+noncomputable def num_perms {α: Type} (l: List α): ℕ := (l.permutations.toFinset).card
 
 /- Definition of a function that uniformly permutes a given list.-/
-def UniformShuffler {U: Type}[BEq U] [DecidableEq U] (f: List U → SLang (List U)) : Prop :=
-  ∀ l₁ l₂: List U, f l₁ l₂ = if List.isPerm l₁ l₂ then (1: ENNReal)/(num_perms l₁) else (0: ENNReal)
+def UniformShuffler {U: Type} (f: List U → SLang (List U)) : Prop :=
+  ∀ l₁ l₂: List U, f l₁ l₂ = if List.isPerm l₁ l₂ then (num_perms l₁ : ENNReal)⁻¹ else (0: ENNReal)
 
 /- Generalized version of the shuffle algorithm that takes in any mechanism -/
-def ShuffleAlgorithm [BEq U][DecidableEq U] (m : Mechanism T  (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
+def ShuffleAlgorithm (m : Mechanism T  (List U))(f : List U → SLang (List U))(_: UniformShuffler f)(l: List T) := do
   let x ← (m l).toSLang
   let b ← f x
   return b
