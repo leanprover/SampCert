@@ -57,11 +57,9 @@ opaque DirtyIOGet(x : IO ℤ) : UInt32
 lemma UInt32.toNa_of_non_zero {n : UInt32} (h : n ≠ 0) :
   0 < n.toNat := by
   have A : n.toNat ≠ 0 := by
-    rw [← UInt32.zero_toNat]
     by_contra
-    rename_i h'
-    have B := UInt32.toNat.inj h'
-    contradiction
+    apply h
+    exact ((fun {a b} => UInt32.toNat_inj.mp) (id (Eq.symm this))).symm
   exact Nat.zero_lt_of_ne_zero A
 
 @[export dgs_get]

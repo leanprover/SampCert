@@ -87,9 +87,8 @@ lemma laplace_inequality (τ τ' : ℤ) (Δ : ℕ+) :
       (DiscreteLaplaceGenSamplePMF (Δ * ε₂) ε₁ 0) (τ + τ')) := by
     apply le_trans _ ?G1
     case G1 =>
-      apply ENNReal.mul_left_mono
+      apply mul_le_mul_right
       apply laplace_inequality'
-    simp only []
     repeat rw [<- mul_assoc]
     conv =>
       lhs
@@ -119,6 +118,7 @@ lemma laplace_inequality_sub (τ τ' : ℤ) (Δ : ℕ+) :
     apply Eq.le
     simp
 
+include Hqs_sens in
 lemma DSN (N : ℕ) (H : Neighbour L1 L2) : ((qs N L1) : ℝ) - (qs N L2) ≤ 1 := by
   let Hqs_sens' := Hqs_sens N L1 L2 H
   rw [← Int.cast_sub]
@@ -129,6 +129,7 @@ lemma DSN (N : ℕ) (H : Neighbour L1 L2) : ((qs N L1) : ℝ) - (qs N L2) ≤ 1 
   apply le_trans _ X1
   apply le_abs_self
 
+include Hqs_sens in
 lemma Hsens_cov_τ_lemma (HN : Neighbour l₁ l₂) : sv8_sum qs l₁ H v0 - sv8_sum qs l₂ H v0 ≤ OfNat.ofNat 1 := by
   simp only [sv8_sum]
   rw [add_tsub_add_eq_tsub_right]
@@ -141,6 +142,7 @@ lemma Hsens_cov_τ_lemma (HN : Neighbour l₁ l₂) : sv8_sum qs l₁ H v0 - sv8
   apply le_trans X
   simp
 
+include Hqs_sens in
 lemma Hsens_cov_τ (v0 : ℤ) (vs : List ℤ) (l₁ l₂ : List sv_T) (Hneighbour : Neighbour l₁ l₂) : cov_τ_def qs v0 vs l₁ l₂ ≤ sens_cov_τ := by
   dsimp [cov_τ_def, sens_cov_τ]
 
@@ -163,6 +165,7 @@ lemma Hsens_cov_τ (v0 : ℤ) (vs : List ℤ) (l₁ l₂ : List sv_T) (Hneighbou
     · apply IH
 
 -- Prove sensitivity bound
+include Hqs_sens in
 lemma Hsens_cov_vk (v0 : ℤ) (vs : List ℤ) (l₁ l₂ : List sv_T) (point : ℕ) (Hneighbour : Neighbour l₁ l₂) : cov_vk_def qs v0 vs l₁ l₂ point ≤ sens_cov_vk := by
   dsimp [cov_vk_def]
   have X := Hsens_cov_τ qs Hqs_sens v0 vs l₁ l₂ Hneighbour
@@ -176,6 +179,7 @@ lemma Hsens_cov_vk (v0 : ℤ) (vs : List ℤ) (l₁ l₂ : List sv_T) (point : �
   apply le_trans _ X1
   apply le_abs_self
 
+include Hqs_sens in
 lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
     PureDPSystem.prop (@sv9_aboveThresh_SPMF sv_T qs T HL ε₁ ε₂) ε := by
   -- Unfold DP definitions
@@ -236,12 +240,12 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
     · -- Laplace bound
       simp [cov_τ]
       rw [mul_assoc]
-      apply ENNReal.mul_left_mono
+      apply mul_le_mul_right
       simp [privNoiseGuess, privNoiseZero, DPNoise.noise, privNoisedQueryPure]
       apply le_trans
       · apply laplace_inequality_sub
       rw  [mul_comm]
-      apply ENNReal.mul_left_mono
+      apply mul_le_mul_right
       rw [Hε]
       apply ENNReal.ofReal_le_ofReal
       apply Real.exp_monotone
@@ -252,11 +256,8 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
         apply And.intro
         · apply neg_le.mp
           simp only [neg_sub]
-          apply DSN <;> trivial
-        · apply DSN
-          · trivial
-          · apply Neighbour_symm
-            trivial
+          exact DSN qs Hqs_sens 0 Hneighbour
+        · exact DSN qs Hqs_sens 0 (Neighbour_symm _ _ Hneighbour)
 
       ring_nf
       rw [InvolutiveInv.inv_inv]
@@ -274,9 +275,11 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
         rhs
         rw [<- one_mul (abs _)]
       apply mul_le_mul
-      · apply inv_le_one
+      · apply inv_le_one_of_one_le₀
         simp
-      · rfl
+      · dsimp only [cov_vk, cov_τ]
+        push_cast
+        simp
       · apply abs_nonneg
       · simp
 
@@ -326,8 +329,8 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
     intro v0
     apply ENNReal.tsum_le_tsum
     intro vs
-    apply ENNReal.mul_left_mono
-    apply ENNReal.mul_left_mono
+    apply mul_le_mul_right
+    apply mul_le_mul_right
 
     -- Rearrange to put sums on the outside
     conv =>
@@ -398,12 +401,12 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
       rw [mul_assoc]
       rw [mul_comm]
     repeat rw [mul_assoc]
-    apply ENNReal.mul_left_mono
+    apply mul_le_mul_right
     conv =>
       lhs
       rw [mul_comm]
     repeat rw [mul_assoc]
-    apply ENNReal.mul_left_mono
+    apply mul_le_mul_right
 
     -- Apply the ineuqalities
     rw [<- ENNReal.ofReal_mul ?G1]
@@ -417,13 +420,12 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
         apply And.intro
         · dsimp only [cov_τ]
           apply Int.cast_le.mpr
-          apply Hsens_cov_τ <;> trivial
+          apply Hsens_cov_τ _ Hqs_sens <;> trivial
         · dsimp only [cov_τ]
           rw [cov_τ_def_neg]
           simp
           apply Int.cast_le.mpr
-          apply Hsens_cov_τ
-          · trivial
+          apply Hsens_cov_τ _ Hqs_sens
           apply Neighbour_symm
           apply Hneighbour
 

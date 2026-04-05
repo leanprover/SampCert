@@ -38,6 +38,7 @@ local instance : MeasurableSpace (List ℕ) where
 local instance : DiscreteMeasurableSpace (List ℕ) where
   forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
 
+include HDP in
 lemma privSparseAux_DP (ε : NNReal) (c : ℕ) (Hε : ε = ε₁ / ε₂) :
     ∀ N : ℕ, ∀ H, dps.prop (privSparseAux T ε₁ ε₂ (shift_qs N qs) H c) (c * ε) := by
   induction c
@@ -59,6 +60,7 @@ lemma privSparseAux_DP (ε : NNReal) (c : ℕ) (Hε : ε = ε₁ / ε₂) :
       apply IH'
     · ring_nf
 
+include HDP in
 lemma privSparse_DP (ε : NNReal) (c : ℕ) (Hε : ε = ε₁ / ε₂) :
     dps.prop (privSparse T ε₁ ε₂ qs Hqs c) (c * ε) := by
   unfold privSparse
