@@ -34,10 +34,10 @@ def privParNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) 
     | Nat.succ n' => privParNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn)
   privPostProcess
     (privParCompose
-      (privParNoisedBinCount numBins B ε₁ ε₂ n)
+      (privParNoisedBinCount numBins B ε₁ ε₂ ⟨n, Hn⟩)
       privParNoisedHistogramAux_rec
-      (B.bin · = n))
-    (fun z => setCount numBins B z.2 n z.1)
+      (B.bin · = ⟨n, Hn⟩))
+    (fun z => setCount numBins B z.2 ⟨n, Hn⟩ z.1)
 
 /--
 Histogram with noise added to each count

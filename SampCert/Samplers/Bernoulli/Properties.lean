@@ -27,18 +27,22 @@ Total mass of the Bernoulli sampler is 1.
 theorem BernoulliSample_normalizes (num : Nat) (den : PNat) (wf : num ≤ den) :
   ∑' b : Bool, BernoulliSample num den wf b = 1 := by
   simp [BernoulliSample]
-  rw [ENNReal.tsum_comm]
-  rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ den]
-  simp [tsum_bool]
-  simp [UniformSample_support_Sum']
-  exact ENNReal.summable
+  rw [← ENNReal.tsum_add]
+  have hEq : ∀ a : ℕ, (if a < num then UniformSample den a else 0) +
+      (if num ≤ a then UniformSample den a else 0) = UniformSample den a := by
+    intro a
+    by_cases h : a < num
+    · simp [h, Nat.not_le.mpr h]
+    · simp [h, Nat.le_of_not_lt h]
+  simp_rw [hEq]
+  exact UniformSample_normalizes den
 
 /--
 Total mass of the Bernoulli sampler is 1.
 -/
 theorem BernoulliSample_normalizes' (num : Nat) (den : PNat) (wf : num ≤ den) :
   ∑ b : Bool, BernoulliSample num den wf b = 1 := by
-  rw [← @tsum_fintype]
+  rw [← tsum_fintype (L := .unconditional _)]
   apply BernoulliSample_normalizes num den wf
 
 /--
@@ -51,8 +55,8 @@ theorem BernoulliSample_apply_true (num : Nat) (den : PNat) (wf : num ≤ den) :
   simp
   conv =>
     left
-    right
-    intro a
+    arg 1
+    ext a
     rw [UniformSample_apply_ite _ _ _ wf]
   simp
   rw [ENNReal.div_eq_inv_mul]

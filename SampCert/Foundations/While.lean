@@ -18,7 +18,7 @@ noncomputable section
 
 namespace SLang
 
-variable {T} [Preorder T]
+variable {T}
 
 /--
 The ``probWhile`` program is monotonic in terms of the number of unrollings.

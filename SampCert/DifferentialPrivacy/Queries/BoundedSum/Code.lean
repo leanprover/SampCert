@@ -5,7 +5,6 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Abstract
 import Mathlib.Algebra.Group.Defs
-import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 
 /-!

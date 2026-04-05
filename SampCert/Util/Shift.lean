@@ -27,7 +27,7 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
   have h4 : Summable fun x : ℕ => f (- (x + 1)) := by
     apply h3 0
   rw [tsum_of_nat_of_neg_add_one h1]
-  · rw [← sum_add_tsum_nat_add μ h1]
+  · rw [← h1.sum_add_tsum_nat_add μ]
     rw [add_rotate]
     conv =>
       left
@@ -40,17 +40,11 @@ theorem tsum_shift₁ (f : ℤ → ℝ) (μ : ℕ)
     congr 1
     conv =>
       right
-      rw [← sum_add_tsum_nat_add μ (h3 μ)]
-    conv =>
-      right
-      right
-      right
-      intro i
-      ring_nf
-      simp
-      ring_nf
-      rw [← neg_add']
-      rw [add_comm]
+      rw [← (h3 μ).sum_add_tsum_nat_add μ]
+    have hcongr : (fun i : ℕ => f (-(↑(i + μ) + 1) + ↑μ)) = (fun i : ℕ => f (-(↑i + 1))) := by
+      funext i; push_cast; ring_nf
+    rw [hcongr]
+    clear hcongr
     congr 1
     induction μ
     · simp
@@ -79,7 +73,7 @@ theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
   have h4 : Summable fun x : ℕ => f (- (x + 1)) := by
     apply h3 0
   rw [tsum_of_nat_of_neg_add_one]
-  · rw [← sum_add_tsum_nat_add μ (h2 μ)]
+  · rw [← (h2 μ).sum_add_tsum_nat_add μ]
     rw [add_rotate]
     conv =>
       left
@@ -96,7 +90,7 @@ theorem tsum_shift₂ (f : ℤ → ℝ) (μ : ℕ)
       simp
     · conv =>
         right
-        rw [← sum_add_tsum_nat_add μ h4]
+        rw [← h4.sum_add_tsum_nat_add μ]
       congr 1
       · induction μ
         · simp

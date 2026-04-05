@@ -43,7 +43,7 @@ theorem rw1 (n : PNat) :
     gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff, not_ofNat_le_one, or_self,
     pow_eq_zero_iff, OfNat.ofNat_ne_zero]
   · simp only [ne_eq, natCast_ne_top, not_false_eq_true, ENNReal.inv_eq_zero, pow_eq_top_iff,
-    two_ne_top, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
+    ofNat_ne_top, log_eq_zero_iff, gt_iff_lt, ofNat_pos, mul_lt_iff_lt_one_right, lt_one_iff,
     PNat.ne_zero, not_ofNat_le_one, or_self, and_true]
 
 theorem rw2 (n : PNat) : ((↑↑n)⁻¹ : ENNReal) = ((↑↑n)⁻¹ : NNReal) := by
@@ -101,7 +101,10 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
   have X : (∑' (i : ℕ), if decide (↑n ≤ i) = true then UniformPowerOfTwoSample (2 * n) i else 0) +
     (∑' (i : ℕ), if decide (↑n ≤ i) = false then UniformPowerOfTwoSample (2 * n) i else 0) = 1 := by
     have A := UniformPowerOfTwoSample_normalizes (2 * n)
-    have B := @tsum_add_tsum_compl ENNReal ℕ _ _ (fun i => UniformPowerOfTwoSample (2 * n) i) _ _ { i : ℕ | decide (↑n ≤ i) = true} ENNReal.summable ENNReal.summable
+    have B := Summable.tsum_add_tsum_compl
+                (f := fun i => UniformPowerOfTwoSample (2 * n) i)
+                (s := { i : ℕ | decide (↑n ≤ i) = true})
+                ENNReal.summable ENNReal.summable
     rw [A] at B
     clear A
     have C := @tsum_split_coe_right _ (fun i => ↑n ≤ i) (fun i => UniformPowerOfTwoSample (2 * n) i)
@@ -117,8 +120,7 @@ lemma uniformPowerOfTwoSample_autopilot (n : PNat) :
     rw [UniformPowerOfTwoSample_normalizes (2 * n)] at Y
     simp at Y
     clear X
-    by_contra
-    rename_i h
+    by_contra h
     rw [h] at Y
     contradiction
   · simp only [decide_eq_true_eq, decide_eq_false_iff_not, not_le, one_div] at X
@@ -152,8 +154,8 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   conv =>
     left
     right
-    right
-    intro x1
+    arg 1
+    ext x1
     rw [A]
   clear A
   simp only [tsum_zero, add_zero]
@@ -178,8 +180,8 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     right
     right
     right
-    right
-    intro x
+    arg 1
+    ext x
     rw [A]
   rw [uniformPowerOfTwoSample_autopilot]
   simp only [rw_ite, one_div, sum_simple]
@@ -232,9 +234,9 @@ Sum over the whole space of ``UniformSample`` is ``1``.
 @[simp]
 theorem UniformSample_normalizes (n : PNat) :
   ∑' a : ℕ, UniformSample n a = 1 := by
-  rw [← @sum_add_tsum_nat_add' _ _ _ _ _ _ n]
-  · simp [UniformSample_support_Sum']
-  · exact ENNReal.summable
+  rw [← Summable.sum_add_tsum_nat_add'
+        (f := fun i => UniformSample n i) (k := n) ENNReal.summable]
+  simp [UniformSample_support_Sum']
 
 /--
 ``UniformSample`` is a proper distribution

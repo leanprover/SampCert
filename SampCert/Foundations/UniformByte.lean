@@ -32,10 +32,7 @@ namespace SLang
 
 local instance : Finite UInt8 := by
   constructor
-  · apply Equiv.ofBijective (fun v => v.val)
-    apply Function.bijective_iff_has_inverse.mpr
-    exists (fun v => {val := v : UInt8})
-    simp [Function.RightInverse, Function.LeftInverse]
+  · exact ⟨UInt8.toFin, UInt8.ofFin, fun _ => rfl, fun _ => rfl⟩
 
 
 
@@ -52,13 +49,9 @@ def probUniformByte_normalizes : HasSum probUniformByte 1 := by
   simp only [ENNReal.toReal_mul]
   rw [ENNReal.tsum_toReal_eq ?G1]
   case G1 => simp
-  simp only [ENNReal.one_toReal, tsum_const, nsmul_eq_mul, mul_one]
+  simp only [ENNReal.toReal_one, tsum_const, nsmul_eq_mul, mul_one]
   rw [@Nat.card_eq_of_equiv_fin UInt8 256 ?G1]
-  case G1 =>
-    apply Equiv.ofBijective (fun v => v.val)
-    apply Function.bijective_iff_has_inverse.mpr
-    exists (fun v => {val := v : UInt8})
-    simp [Function.RightInverse, Function.LeftInverse]
+  case G1 => exact ⟨UInt8.toFin, UInt8.ofFin, fun _ => rfl, fun _ => rfl⟩
   simp [ENNReal.toReal_inv]
 
 /--
@@ -117,8 +110,6 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
         rw [tsum_eq_finsum ?G1]
         case G1 =>
           simp [Function.support]
-          apply Set.finite_univ_iff.mpr
-          apply Subtype.finite
         simp
         have R := @finsum_induction ENNReal T _ (fun _ => 1) (fun z => z ≠ ⊤) (by simp) (by aesop) (by simp)
         simp at R
@@ -133,6 +124,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
 
     -- Evaluate set cardinality using bijection
     -- Simplify me!
+    rw [← Nat.card_coe_set_eq]
     rw [@Nat.card_eq_of_equiv_fin T (2^(8 - i)) ?G1]
     case G1 =>
       rw [<- HT]
@@ -144,7 +136,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
         exact
           ⟨ v'.toNat - x * (2 ^ (8 - i)),
             by
-              have W := (Nat.le_div_iff_mul_le' (by simp)).mp (Eq.le Hv')
+              have W := (Nat.le_div_iff_mul_le (by simp)).mp (Eq.le Hv')
               have W' := (Nat.div_lt_iff_lt_mul (by simp)).mp (Nat.lt_succ_iff.mpr (Eq.le (Eq.symm Hv')))
               have W'' : v'.toNat - x * 2 ^ (8 - i) < x.succ * 2 ^ (8 - i) - x * 2 ^ (8 - i) := by
                 exact Nat.sub_lt_sub_right W W'
@@ -161,7 +153,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
         intro f
         rcases f with ⟨ f', Hf' ⟩
         exact
-          ⟨ UInt8.ofNatCore (f' + x * 2^(8-i))
+          ⟨ UInt8.ofNatLT (f' + x * 2^(8-i))
             (by
               rw [UInt8.size]
               apply (@LT.lt.trans_le _ _ _ (2^(8-i) + x * 2^(8-i)))
@@ -185,7 +177,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
                 trivial
               ),
             (by
-              unfold UInt8.ofNatCore
+              unfold UInt8.ofNatLT
               unfold UInt8.toNat
               simp
               apply (nat_div_eq_le_lt_iff (by simp)).mpr
@@ -195,41 +187,33 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
       dsimp [Function.RightInverse, Function.LeftInverse]
       apply And.intro
       · intro x'
-        rcases x' with ⟨ ⟨ x'', H2x'' ⟩, Hx'' ⟩
-        unfold UInt8.ofNatCore
-        unfold UInt8.toNat
-        simp
-        congr
-        apply Nat.sub_add_cancel
-        rw [Hx'']
-        rw [UInt8.toNat]
-        apply (Nat.le_div_iff_mul_le (by simp)).mp
-        simp
+        rcases x' with ⟨ v', Hv'' ⟩
+        apply Subtype.ext
+        apply UInt8.toNat_inj.mp
+        have Hle : x * 2 ^ (8 - i) ≤ v'.toNat := by
+          rw [Hv'']
+          apply (Nat.le_div_iff_mul_le (by simp)).mp
+          simp
+        simp [UInt8.toNat_ofNatLT, Nat.sub_add_cancel Hle]
       · intro x'
         rcases x' with ⟨ x'', Hx'' ⟩
-        simp [UInt8.ofNatCore]
-        rw [UInt8.toNat]
-        simp
+        apply Fin.ext
+        show (UInt8.ofNatLT (x'' + x * 2 ^ (8 - i)) _).toNat - x * 2 ^ (8 - i) = x''
+        rw [UInt8.toNat_ofNatLT]
+        omega
     simp
   · rw [max_eq_right (by linarith)]
     rw [min_eq_left (by linarith)] at Hx
-    rw [tsum_eq_single (UInt8.ofNatCore x Hx) ?G1]
+    rw [tsum_eq_single (UInt8.ofNatLT x Hx) ?G1]
     case G1 =>
       intro b' Hb'
       simp
       intro Hx'
       exfalso
       apply Hb'
-      rcases b' with ⟨ ⟨ b'', Hb'' ⟩ ⟩
-      simp [UInt8.ofNatCore]
-      congr
-      rw [Hx']
-      simp [UInt8.toNat]
+      apply UInt8.toNat_inj.mp
+      simp [UInt8.toNat_ofNatLT, Hx']
     simp
-    intro HK
-    exfalso
-    apply HK
-    rfl
 
 
 /--
@@ -280,7 +264,7 @@ Evaluation of ``probUniformP2`` for inside the support
 def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
     probUniformP2 i x = (1 / 2 ^ i) := by
   revert x
-  induction' i using Nat.strong_induction_on with i ih
+  induction i using Nat.strong_induction_on with | _ i ih => ?_
   rw [probUniformP2]
   split
   · intro x Hx'
@@ -342,7 +326,7 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
               exfalso
               apply Ht Hk
         simp
-        apply (Decidable.not_and_iff_or_not (p = b) (q = a.toNat)).mp
+        apply Decidable.not_and_iff_or_not.mp
         intro HK
         apply He
         rw [And.comm] at HK
@@ -383,18 +367,14 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
       intro HK'
       exfalso
       exact HK (id (Eq.symm HK'))
-    have X : (UInt8.ofNatCore q Hq).toNat = q := by
-      rw [UInt8.ofNatCore, UInt8.toNat]
-    rw [tsum_eq_single (UInt8.ofNatCore q Hq) ?G1]
+    have X : (UInt8.ofNatLT q Hq).toNat = q := UInt8.toNat_ofNatLT
+    rw [tsum_eq_single (UInt8.ofNatLT q Hq) ?G1]
     case G1 =>
       simp
       intro b HK' HK''
       apply HK'
-      rw [UInt8.ofNatCore]
-      rcases b with ⟨ ⟨ b' , Hb' ⟩ ⟩
-      congr
-      rw [HK'']
-      rw [UInt8.toNat]
+      apply UInt8.toNat_inj.mp
+      simp [UInt8.toNat_ofNatLT, HK'']
     rw [X]
     clear X
     simp
@@ -427,10 +407,10 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
       have Y : 256 = 2^8 := by simp
       rw [Y] at Hx''
       clear Y
-      have W := (Nat.lt_div_iff_mul_lt ?G1 _).mpr Hx''
-      case G1 =>
-        apply Nat.pow_dvd_pow (OfNat.ofNat 2)
-        linarith
+      have Hdvd : (2 ^ 8 : ℕ) ∣ 2 ^ i := Nat.pow_dvd_pow 2 (by linarith)
+      have Hne : (2 ^ 8 : ℕ) ≠ 0 := by positivity
+      rw [mul_comm] at Hx''
+      have W := (Nat.lt_div_iff_mul_lt_of_dvd Hne Hdvd).mpr Hx''
       apply (LT.lt.trans_eq W)
       apply Nat.pow_div <;> linarith
 
@@ -440,7 +420,7 @@ Evaluation of ``probUniformP2`` for zero-shifts outside of the support
 def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
     probUniformP2 i x = 0 := by
   revert x
-  induction' i using Nat.strong_induction_on with i ih
+  induction i using Nat.strong_induction_on with | _ i ih => ?_
   intro x Hk
   rw [probUniformP2]
   split

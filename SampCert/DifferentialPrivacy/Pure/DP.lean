@@ -62,13 +62,7 @@ theorem event_to_singleton (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
   intros l₁ l₂ h1 x
   replace h1 := h l₁ l₂ h1 {x}
   simp at h1
-  rw [tsum_eq_single x] at h1
-  · simp at h1
-    rw [tsum_eq_single x] at h1
-    · simp at h1
-      trivial
-    · aesop
-  · aesop
+  trivial
 
 theorem event_eq_singleton (m : Mechanism T U) (ε : ℝ) :
   DP m ε ↔ DP_singleton m ε := by
