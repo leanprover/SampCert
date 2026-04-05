@@ -5,6 +5,8 @@ Authors: Jean-Baptiste Tristan
 -/
 import SampCert.DifferentialPrivacy.Pure.DP
 import SampCert.DifferentialPrivacy.Generic
+import Mathlib.Probability.ProbabilityMassFunction.Basic
+import Mathlib.Topology.Algebra.InfiniteSum.Basic
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
 
@@ -42,6 +44,7 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε : NNReal} (h : PureDP nq
       simp
       exact Real.exp_pos ε
   · simp
+
 
 /--
 ``privPostProcess`` satisfies pure DP, for any surjective postprocessing function.
