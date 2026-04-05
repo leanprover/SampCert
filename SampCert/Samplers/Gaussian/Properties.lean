@@ -61,28 +61,29 @@ theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) (mix : ℕ) :
   ∑' x, (DiscreteGaussianSampleLoop num den t mix) x = 1 := by
   simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     SLang.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
-    and_true, and_false, ↓reduceIte, add_zero, zero_add]
+    and_true, and_false, ↓reduceIte, add_zero, zero_add, Bool.false_eq_true, Bool.true_eq_false,
+    false_and, and_false]
   rw [DiscreteLaplaceSampleMixed_equiv]
   conv =>
     left
-    right
-    intro a
+    arg 1
+    ext a
     congr
     . rw [ENNReal.tsum_eq_add_tsum_ite a]
       right
-      right
-      intro x
+      arg 1
+      ext x
       rw [ite_simpl_gaussian_1]
     . rw [ENNReal.tsum_eq_add_tsum_ite a]
       right
-      right
-      intro x
+      arg 1
+      ext x
       rw [ite_simpl_gaussian_2]
   simp only [↓reduceIte, tsum_zero, add_zero]
   conv =>
     left
-    right
-    intro a
+    arg 1
+    ext a
     rw [← mul_add]
     rw [← tsum_bool]
     rw [BernoulliExpNegSample_normalizes]
@@ -116,7 +117,8 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) (mix 
     DiscreteLaplaceSample_apply, NNReal.coe_natCast, PNat.one_coe, cast_one, NNReal.coe_one,
     div_one, one_div, Int.cast_abs, SLang.pure_apply, Prod.mk.injEq, mul_ite,
     mul_one, mul_zero, tsum_bool, and_false, ↓reduceIte, and_true, BernoulliExpNegSample_apply_true,
-    cast_pow, NNReal.coe_pow, PNat.mul_coe, PNat.pow_coe, cast_mul, NNReal.coe_mul, zero_add]
+    cast_pow, NNReal.coe_pow, PNat.mul_coe, PNat.pow_coe, cast_mul, NNReal.coe_mul, zero_add,
+    Bool.true_eq_false, Bool.false_eq_true, false_and, and_false]
   rw [ENNReal.tsum_eq_add_tsum_ite (n : ℤ)]
   simp (config := { contextual := true }) only [↓reduceIte, ite_simpl_1', tsum_zero, add_zero]
   rw [ENNReal.ofReal_mul]
@@ -149,7 +151,7 @@ lemma if_simpl_2' (x_1 x : ℤ) (a : ENNReal) :
 lemma alg_auto (num den : ℕ+) (x : ℤ) :
   ENNReal.ofReal (
   rexp (-((Int.natAbs x) / ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1))) *
-    rexp (-((Int.natAbs (Int.sub (|x| * (@HDiv.hDiv ℤ ℤ ℤ instHDiv num den + 1) * den ^ 2) (num ^ 2))) ^ 2 /
+    rexp (-((Int.natAbs (Int.sub (|x| * (((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den : ℕ) : ℤ) + 1) * den ^ 2) (num ^ 2))) ^ 2 /
           ((2 : ℕ+) * num ^ 2 * ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2 * den ^ 2))))
   = ENNReal.ofReal (rexp (-((num ^ 2) / (2 * den ^ 2 * ((@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) *
       ENNReal.ofReal (rexp (- ((x ^ 2 * den ^ 2) /(2 * num ^ 2)))) := by
@@ -169,13 +171,6 @@ lemma alg_auto (num den : ℕ+) (x : ℤ) :
     rw [(neg_add _ _).symm]
     rw [(neg_add _ _).symm]
     congr 1
-    have A : ∀ x : ℤ, (Int.natAbs x)^2 = (x : ℝ)^2 := by
-      intro x
-      rw [cast_natAbs]
-      rw [sq_eq_sq_iff_abs_eq_abs]
-      simp
-    rw [A]
-    clear A
     have A : ∀ x y : ℤ, ((Int.sub x y) : ℝ) = (x : ℝ) - (y : ℝ) := by
       intro x y
       rw [← @Int.cast_sub]
@@ -197,11 +192,6 @@ lemma alg_auto (num den : ℕ+) (x : ℤ) :
     rw [X]
     clear X
 
-    have X : ((Int.natAbs x) : ℝ) = Complex.abs (x : ℂ) := by
-      rw [cast_natAbs]
-      simp
-    rw [X]
-    clear X
     rw [Tau]
 
     let α := (num : ℝ) ^ 2
@@ -212,26 +202,22 @@ lemma alg_auto (num den : ℕ+) (x : ℤ) :
     have Beta : ((den : ℕ+) : ℝ) ^ 2  = β := rfl
     rw [Beta]
 
-    let y := Complex.abs (x : ℂ)
-    have Y : Complex.abs (x : ℂ)  = y := rfl
-    rw [← Complex.abs_ofReal]
-    have Cast : ∀ x : ℤ, @Int.cast ℂ Ring.toIntCast x = Complex.ofReal' (@Int.cast ℝ Ring.toIntCast x) := by
-      simp
-    rw [← Cast]
+    let y : ℝ := |(x : ℝ)|
+    have Y : |(x : ℝ)| = y := rfl
     rw [Y]
 
     have Alpha_ne0 : α ≠ 0 := by
-      unfold_let
+      show ((num : ℝ))^2 ≠ 0
       simp
 
     have Beta_ne0 : β ≠ 0 := by
-      unfold_let
+      show ((den : ℝ))^2 ≠ 0
       simp
 
     field_simp [Alpha_ne0, Beta_ne0, Tau_ne0]
     have xsq_eq_ysq : (x : ℝ) ^ 2 = y ^ 2 := by
       rw [← Y]
-      simp
+      exact (sq_abs _).symm
     rw [xsq_eq_ysq]
     ring
 
@@ -260,21 +246,22 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
 
   conv =>
     left
-    right
-    intro a
+    arg 1
+    ext a
     left
     rw [probUntil_apply_norm _ _ _ A]
   clear A
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
-    PNat.mk_coe, cast_add, cast_one, Int.ofNat_ediv, PNat.pow_coe, cast_pow, zero_add, ite_mul,
-    zero_mul, SLang.pure_apply, NNReal.coe_natCast, div_pow]
+    PNat.mk_coe, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
+    zero_mul, SLang.pure_apply, NNReal.coe_natCast, div_pow, Bool.false_eq_true,
+    Bool.true_eq_false]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>
     left
     right
-    right
-    intro x_1
+    arg 1
+    ext x_1
     rw [if_simpl_2']
   simp only [↓reduceIte, mul_one, tsum_zero, add_zero]
 
@@ -298,9 +285,8 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
         rw [← mul_assoc]
         rw [ENNReal.mul_inv]
         have A : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv num den) + 1) ^ 2)))) ≠ 0 := by
-          refine zero_lt_iff.mp ?ha.h.a
-          simp only [ENNReal.ofReal_pos]
-          simp only [exp_pos]
+          rw [ne_eq, ENNReal.ofReal_eq_zero, not_le]
+          apply exp_pos
         have B  : ENNReal.ofReal (rexp (-(↑↑num ^ 2 / (2 * ↑↑den ^ 2 * (↑(@HDiv.hDiv ℕ ℕ ℕ instHDiv ↑num ↑den) + 1) ^ 2)))) ≠ ⊤ := by
           exact ENNReal.ofReal_ne_top
         · conv =>
@@ -317,7 +303,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
           · simp only [alg_auto']
           · conv =>
               left
-              right
+              arg 1
               intro i
               rw [alg_auto']
             rw [← ENNReal.ofReal_tsum_of_nonneg]
@@ -327,19 +313,19 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
                 simp
               have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
               unfold gauss_term_ℝ at Y
-              simp at Y
+              simp [div_pow] at Y
               exact Y
         · left
           simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
           simp only [exp_pos]
         · left
           exact ENNReal.ofReal_ne_top
-      · apply tsum_pos
+      · apply Summable.tsum_pos
         · have A : ((num : ℝ) / (den : ℝ)) ≠ 0 := by
             simp
           have Y := @summable_gauss_term' ((num : ℝ) / (den : ℝ)) A 0
           unfold gauss_term_ℝ at Y
-          simp at Y
+          simp [div_pow] at Y
           exact Y
         · intro i
           simp only [exp_nonneg]
@@ -357,8 +343,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
         · simp only [zero_le_one]
     · exact ENNReal.ofReal_ne_top
   · left
-    apply zero_lt_iff.mp
-    simp only [ENNReal.ofReal_pos]
+    rw [ne_eq, ENNReal.ofReal_eq_zero, not_le]
     rw [div_pos_iff]
     left
     simp only [sub_pos, one_lt_exp_iff, inv_pos]
@@ -380,8 +365,8 @@ theorem DiscreteGaussianSample_normalizes (num : PNat) (den : PNat) (mix : ℕ) 
     simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
   conv =>
     left
-    right
-    intro x
+    arg 1
+    ext x
     rw [DiscreteGaussianSample_apply]
   rw [← ENNReal.ofReal_tsum_of_nonneg]
   · rw [ENNReal.ofReal_one.symm]

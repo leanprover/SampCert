@@ -30,6 +30,7 @@ variable (B : Bins T numBins)
 
 variable (ε₁ ε₂ : ℕ+) (ε : NNReal) (HN_bin : dpn.noise_priv ε₁ ε₂ ε)
 
+include HN_bin in
 /--
 DP bound for a noised bin count
 -/
@@ -40,6 +41,7 @@ lemma privParNoisedBinCount_DP  (b : Fin numBins) :
   apply exactBinCount_sensitivity
 
 
+include HN_bin in
 lemma privParNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
     dps.prop (privParNoisedHistogramAux numBins B ε₁ ε₂ n Hn) ε := by
   induction n
@@ -65,6 +67,7 @@ lemma privParNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
     case arithmetic => simp
 
 
+include HN_bin in
 /--
 DP bound for a noised histogram
 -/

@@ -33,11 +33,17 @@ lemma normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
   have B : rexp 0 < rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
     exact exp_lt_exp.mpr A
   rw [exp_zero] at B
-  rw [@sub_eq_zero] at h
-  have C : 1 ≠ rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
-    exact _root_.ne_of_lt B
-  rw [h] at C
-  contradiction
+  rw [_root_.div_eq_zero_iff] at h
+  rcases h with h | h
+  · rw [sub_eq_zero] at h
+    have C : 1 ≠ rexp ((ε₁ : ℝ) / (Δ * ε₂)) := by
+      exact _root_.ne_of_lt B
+    rw [h] at C
+    contradiction
+  · have hp : 0 < rexp ((ε₁ : ℝ) / (Δ * ε₂)) + 1 := by
+      have := exp_pos ((ε₁ : ℝ) / (Δ * ε₂))
+      linarith
+    linarith
 
 /--
 Differential privacy bound for a ``privNoisedQueryPure``
@@ -66,7 +72,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
       left
       rw [← mul_assoc]
       left
-      rw [mul_inv_cancel (normalizing_constant_nonzero ε₁ ε₂ Δ)]
+      rw [mul_inv_cancel₀ (normalizing_constant_nonzero ε₁ ε₂ Δ)]
     simp only [one_mul]
     rw [← division_def]
     rw [← exp_sub]
@@ -74,10 +80,8 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
     rw [neg_div']
     rw [div_add_div_same]
     rw [division_def]
-    apply (mul_inv_le_iff' _).mpr
-    · have B : (ε₁ : ℝ) / ε₂ * (Δ * ε₂ / ε₁) = Δ := by
-        ring_nf
-        simp
+    apply (mul_inv_le_iff₀' _).mpr
+    · have B : ((Δ : ℝ) * ε₂ / ε₁) * ((ε₁ : ℝ) / ε₂) = Δ := by
         field_simp
       rw [B]
       clear B
@@ -85,7 +89,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
       rw [add_comm]
       ring_nf
       -- Triangle inequality
-      have C := @abs_sub_abs_le_abs_sub ℝ _ ((x : ℝ) - (query l₂)) ((x : ℝ) - (query l₁))
+      have C := abs_sub_abs_le_abs_sub ((x : ℝ) - ((query l₂ : ℤ) : ℝ)) ((x : ℝ) - ((query l₁ : ℤ) : ℝ))
       apply le_trans C
       clear C
       simp
