@@ -34,7 +34,7 @@ lemma cov_vk_def_neg (v0 : ℤ) (vs : List ℤ) (l₁ l₂ : List sv_T) : cov_vk
 lemma tsum_shift (Δ : ℤ) (f : ℤ → ENNReal) : (∑'(x : ℤ), f x = ∑'(x : ℤ), f (x + Δ)) := by
   apply @tsum_eq_tsum_of_ne_zero_bij
   case i => exact (fun x => x.1 + Δ)
-  · simp [Function.Injective]
+  · simp
   · simp
     intro x Hx
     exists (x - Δ)
@@ -189,7 +189,7 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
   intro l₁ l₂ Hneighbour point
 
   apply ENNReal.div_le_of_le_mul
-  simp [sv9_aboveThresh_SPMF, DFunLike.coe, PMF.instFunLike]
+  simp [sv9_aboveThresh_SPMF, DFunLike.coe]
 
   cases point
   · -- point = 0
@@ -420,7 +420,8 @@ lemma sv9_aboveThresh_pmf_DP HL (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
         apply And.intro
         · dsimp only [cov_τ]
           apply Int.cast_le.mpr
-          apply Hsens_cov_τ _ Hqs_sens <;> trivial
+          apply Hsens_cov_τ _ Hqs_sens
+          trivial
         · dsimp only [cov_τ]
           rw [cov_τ_def_neg]
           simp

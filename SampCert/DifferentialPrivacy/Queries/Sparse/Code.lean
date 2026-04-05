@@ -26,6 +26,7 @@ def snoc {T : Type*} (x : T) (L : List T) := L ++ [x]
 
 def shift_qs (n : ℕ) (qs : sv_query sv_T) : sv_query sv_T := fun i => qs (i + n)
 
+omit dps dpn in
 lemma shift_qs_lucky n (qs' : sv_query sv_T) (H : has_lucky qs' T) : has_lucky (shift_qs n qs') T := by
   intro τ l
   rcases (H τ l) with ⟨ K, HK ⟩
