@@ -23,6 +23,7 @@ namespace SLang
 variable [dps : DPSystem ℕ]
 variable [dpn : DPNoise dps]
 
+omit [DPSystem ℕ] [DPNoise dps] in
 /--
 Sensitivity of the bounded sum is equal to the bound.
 -/

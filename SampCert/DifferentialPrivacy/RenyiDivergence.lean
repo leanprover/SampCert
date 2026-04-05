@@ -116,7 +116,7 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
       have Hp : p x = 0 := by
         apply H
         simp [Hvq, Hvq']
-      simp [Hp, Hvq', Hvq]
+      simp [Hp, Hvq']
       left
       linarith
     · -- q x ∈ ℝ+
@@ -134,8 +134,8 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
           have Hcont' : (vq' : ENNReal) = 0 ∧ 0 < (1-α) ∨ (vq' : ENNReal) = ⊤ ∧ (1-α)< 0 := by
             exact rpow_eq_zero_iff.mp Hcont
           cases Hcont'
-          · simp_all only [some_eq_coe, none_eq_top, zero_ne_top]
-          · simp_all only [some_eq_coe, none_eq_top, top_rpow_of_neg, coe_ne_top, sub_neg, and_true]
+          · simp_all only [zero_ne_top]
+          · simp_all only [top_rpow_of_neg, coe_ne_top, sub_neg, and_true]
         · simp_all
           rw [top_rpow_def]
           split <;> try simp_all
@@ -154,8 +154,8 @@ theorem RenyiDivergenceExpectation (p q : T → ENNReal) {α : ℝ} (h : 1 < α)
             rw [← ENNReal.div_rpow_of_nonneg]
             · rw [ENNReal.rpow_one]
             · apply le_of_lt (lt_trans Real.zero_lt_one h )
-          · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_eq_zero]
-          · simp_all only [some_eq_coe, not_false_eq_true, ne_eq, coe_ne_top]
+          · simp_all only [not_false_eq_true, ne_eq, coe_eq_zero]
+          · simp_all only [not_false_eq_true, ne_eq, coe_ne_top]
 
 
 /--
@@ -225,6 +225,7 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
+omit [MeasurableSingletonClass T] [Countable T] in
 lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : MemLp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
   have X := @MeasureTheory.MemLp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
@@ -251,6 +252,7 @@ lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure 
 
 -- MARKUSDE: This lemma is derivable from ``Renyi_Jensen_strict_real``, however it requires a reduction
 -- to first eliminate all elements (t : T) where q t = 0 from the series.
+omit [Countable T] in
 /--
 Jensen's inequality for the exponential applied to the real-valued function ``(⬝)^α``.
 -/
@@ -300,7 +302,7 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
       apply lt_trans zero_lt_one h
     have Y : ENNReal.ofReal α ≠ ⊤ := by
       simp
-    have Z := @Integrable_rpow T t1 _ _ f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
     rw [toReal_ofReal] at Z
     · exact Z
     · apply le_of_lt
@@ -310,7 +312,7 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
       apply lt_trans zero_lt_one h
     have Y : ENNReal.ofReal α ≠ ⊤ := by
       simp
-    have Z := @Integrable_rpow T t1 _ _ f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
     rw [toReal_ofReal] at Z
     · exact Z
     · apply le_of_lt
@@ -372,7 +374,7 @@ theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 <
       apply lt_trans zero_lt_one h
     have Y : ENNReal.ofReal α ≠ ⊤ := by
       simp
-    have Z := @Integrable_rpow T t1 _ _ f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
     rw [toReal_ofReal] at Z
     · exact Z
     · apply le_of_lt
@@ -438,7 +440,7 @@ theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 <
       apply lt_trans zero_lt_one h
     have Y : ENNReal.ofReal α ≠ ⊤ := by
       simp
-    have Z := @Integrable_rpow T t1 _ _ f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
+    have Z := @Integrable_rpow T t1 f h2 (PMF.toMeasure q) (ENNReal.ofReal α) mem X Y
     rw [toReal_ofReal] at Z
     · exact Z
     · apply le_of_lt
@@ -536,7 +538,7 @@ lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass 
         · rename_i HK'
           rcases HK' with ⟨ HK1 , HK2 ⟩
           rw [AbsCts] at H
-          simp_all only [ne_eq, not_and, Decidable.not_not, ENNReal.zero_div, zero_ne_top]
+          simp_all only [ne_eq, not_and, Decidable.not_not]
         · rename_i HK'
           rcases HK' with ⟨ HK1 , _ ⟩
           apply (Hspecial a)
@@ -708,7 +710,7 @@ lemma Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingle
         · rename_i HK'
           rcases HK' with ⟨ HK1 , HK2 ⟩
           rw [AbsCts] at H
-          simp_all only [ne_eq, not_and, Decidable.not_not, ENNReal.zero_div, zero_ne_top]
+          simp_all only [ne_eq, not_and, Decidable.not_not]
         · rename_i HK'
           rcases HK' with ⟨ HK1 , _ ⟩
           apply (Hspecial a)

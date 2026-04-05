@@ -62,7 +62,7 @@ lemma laplace_inequality' (τ τ' : ℤ) (Δ : ℕ+) :
   · rw [← Real.exp_add]
     apply Real.exp_monotone
     repeat rw [<- neg_div]
-    rw [div_add_div_same]
+    rw [← add_div]
     apply div_le_div_of_nonneg_right
     · simp
       have H := @abs_add_le ℝ _ _ _ τ τ'
@@ -101,7 +101,7 @@ lemma laplace_inequality (τ τ' : ℤ) (Δ : ℕ+) :
       rw [<- Real.exp_add]
       symm
       simp
-      rw [div_add_div_same]
+      rw [← add_div]
       rw [div_eq_zero_iff]
       left
       simp

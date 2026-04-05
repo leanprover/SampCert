@@ -43,7 +43,7 @@ theorem probUntilCut_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : �
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  · simp only [zero_eq, probUntilCut_zero, implies_true]
+  · simp only [probUntilCut_zero, implies_true]
   · rename_i fuel IH
     intro j
     simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
@@ -106,7 +106,7 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
     = ∑ i ∈ range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  · simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
+  · simp only [probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   · rename_i fuel IH
     unfold probWhileCut
     unfold probWhileFunctional

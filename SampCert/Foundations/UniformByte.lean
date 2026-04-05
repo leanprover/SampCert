@@ -66,7 +66,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
     probUniformByteUpperBits i x = 2^(8 - i) / UInt8.size := by
   simp [probUniformByteUpperBits]
   rw [Nat.sub_eq_max_sub]
-  simp [SLang.probBind, SLang.probPure, probUniformByte]
+  simp [probUniformByte]
   cases (Classical.em (i < 8))
 
   · -- Simplify body
@@ -194,7 +194,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
           rw [Hv'']
           apply (Nat.le_div_iff_mul_le (by simp)).mp
           simp
-        simp [UInt8.toNat_ofNatLT, Nat.sub_add_cancel Hle]
+        simp [Nat.sub_add_cancel Hle]
       · intro x'
         rcases x' with ⟨ x'', Hx'' ⟩
         apply Fin.ext
@@ -212,7 +212,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
       exfalso
       apply Hb'
       apply UInt8.toNat_inj.mp
-      simp [UInt8.toNat_ofNatLT, Hx']
+      simp [Hx']
     simp
 
 
@@ -223,7 +223,7 @@ def probUniformByteUpperBits_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ (min 8 i)) :
     probUniformByteUpperBits i x = 0 := by
   simp [probUniformByteUpperBits]
   rw [Nat.sub_eq_max_sub]
-  simp [SLang.probBind, SLang.probPure, probUniformByte]
+  simp [probUniformByte]
   intro v H1
   exfalso
   cases (Classical.em (i < 8))
@@ -374,7 +374,7 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
       intro b HK' HK''
       apply HK'
       apply UInt8.toNat_inj.mp
-      simp [UInt8.toNat_ofNatLT, HK'']
+      simp [HK'']
     rw [X]
     clear X
     simp

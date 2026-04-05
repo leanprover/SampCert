@@ -126,7 +126,7 @@ theorem asymptotics_gauss_term {σ : ℝ} (h : σ ≠ 0) :
   gauss_term_ℂ σ 0 =O[cocompact ℝ] (fun x => |x| ^ (-2 : ℝ)) := by
   apply IsLittleO.isBigO
   unfold gauss_term_ℂ gauss_term_ℝ
-  simp only [ContinuousMap.coe_mk, ofReal_zero, sub_zero]
+  simp only [ContinuousMap.coe_mk, sub_zero]
   have Y : ∀ x : ℝ, -1 / (2 * σ ^ 2) * x ^ 2 = -x ^ 2 / (2 * σ ^ 2) := by
     intro x
     ring_nf

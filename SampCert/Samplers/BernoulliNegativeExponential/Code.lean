@@ -100,7 +100,7 @@ Proof term to apply a a call to ``BernoulliExpNegSampleUnit``.
 lemma rat_less_floor_le1 (num : Nat) (den : PNat) :
   (num % den) ≤ den := by
   have A := Nat.mod_lt num (PNat.pos den)
-  exact Nat.lt_succ.mp (Nat.le.step A)
+  exact Nat.lt_succ_iff.mp (Nat.le.step A)
 
 /--
 ``SLang`` term which samples ``true`` with probability ``exp (- num / den)``.

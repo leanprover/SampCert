@@ -115,7 +115,7 @@ open Classical Nat Int Real ENNReal
 
 instance SPMF.instFunLike : FunLike (SPMF α) α ℝ≥0∞ where
   coe p a := p.1 a
-  coe_injective' _ _ h := Subtype.eq h
+  coe_injective' _ _ h := Subtype.ext h
 
 
 lemma compose_sum_rw_adaptive (nq1 : List T → SPMF U) (nq2 : U -> List T → SPMF V) (u : U) (v : V) (l : List T) :

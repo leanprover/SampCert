@@ -133,14 +133,14 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
         · trivial
   have Hα' : (0 < α.toEReal - 1) := by
     rw [EReal.coe_add]
-    simp only [one_div, mul_neg, EReal.coe_mul, EReal.coe_one]
+    simp only [one_div, EReal.coe_mul, EReal.coe_one]
     rw [add_sub_assoc]
     have HZ : (1 - 1 : EReal) = 0 := by
       rw [← EReal.coe_one]
       rw [← EReal.coe_sub]
       simp
     rw [HZ]
-    simp only [mul_neg, add_zero, gt_iff_lt]
+    simp only [add_zero, gt_iff_lt]
     apply EReal.mul_pos
     · apply EReal.coe_pos.mpr
       exact inv_pos_of_pos Hε_pos
@@ -857,7 +857,7 @@ noncomputable def A_pmf (x : U) : PMF Bool :=
         | false => β ε p q x
         | true => 1 - β ε p q x,
     by
-       simp [(Summable.hasSum_iff ENNReal.summable), tsum_bool, add_tsub_cancel_iff_le]
+       simp [(Summable.hasSum_iff ENNReal.summable)]
        apply β_le_one
        trivial ⟩
 
@@ -1157,7 +1157,7 @@ lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (
     generalize HB : DFunLike.coe (B ε p q Hqp) false = B
 
     -- Convert to Real types
-    apply (ENNReal.toReal_eq_toReal ?G1 ?G2).mp
+    apply (ENNReal.toReal_eq_toReal_iff' ?G1 ?G2).mp
     case G1 =>
       rw [<- HB]
       apply PMF.apply_ne_top
@@ -2015,7 +2015,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       apply (le_trans _ (this x))
       apply Eq.le
 
-      apply (ENNReal.toReal_eq_toReal ?G4 ?G5).mp
+      apply (ENNReal.toReal_eq_toReal_iff' ?G4 ?G5).mp
       case G4 =>
         apply ENNReal.inv_ne_top.mpr
         apply ENNReal.div_ne_zero.mpr
@@ -2071,7 +2071,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     apply (@le_trans _ _ _ (∑' (x : U'), 1 ^ α * q x))
     · apply ENNReal.tsum_le_tsum
       intro i
-      apply (ENNReal.mul_le_mul_right ?G1 ?G2).mpr
+      apply (ENNReal.mul_le_mul_iff_left ?G1 ?G2).mpr
       case G1 =>
         intro HK
         have HK' := Hacpq _ HK

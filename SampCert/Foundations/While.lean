@@ -41,7 +41,7 @@ theorem probWhileCut_monotonic (cond : T → Bool) (body : T → SLang T) (init 
       simp
       apply ENNReal.tsum_le_tsum
       intro a
-      apply mul_le_mul_left'
+      gcongr
       exact IH a
     · simp
 

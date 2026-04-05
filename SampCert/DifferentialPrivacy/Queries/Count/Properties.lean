@@ -23,6 +23,7 @@ variable {T : Type}
 variable [dps : DPSystem T]
 variable [dpn : DPNoise dps]
 
+omit [DPSystem T] [DPNoise dps] in
 /--
 The counting query is 1-sensitive
 -/

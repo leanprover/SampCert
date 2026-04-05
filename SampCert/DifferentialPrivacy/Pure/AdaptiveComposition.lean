@@ -7,7 +7,7 @@ import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
-import Mathlib.Logic.IsEmpty
+import Mathlib.Logic.IsEmpty.Basic
 
 noncomputable section
 
@@ -18,6 +18,7 @@ variable [Hu : Nonempty U]
 namespace SLang
 
 -- Better proof for Pure DP adaptive composition
+omit [Nonempty U] in
 theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ ε : NNReal) (h1 : PureDP nq1 ε₁)  (h2 : ∀ u : U, PureDP (nq2 u) ε₂) (Hε : ε₁ + ε₂ = ε ) :
   PureDP (privComposeAdaptive nq1 nq2) ε := by
   rw [<- Hε]

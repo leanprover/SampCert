@@ -108,8 +108,7 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
   simp only [probWhileCut, probWhileFunctional, geoLoopCond, geoLoopBody, ite_apply,
     Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply, if_true]
   rw [ENNReal.tsum_prod']
-  simp only [tsum_bool, Prod.mk.injEq, false_and, and_false, if_false, mul_zero, zero_mul,
-    add_zero, zero_add, true_and, and_true]
+  simp only [tsum_bool, Prod.mk.injEq, true_and]
   rw [tsum_eq_single (n + 1) (by intro b hb; simp [hb])]
   rw [tsum_eq_single (n + 1) (by intro b hb; simp [hb])]
   simp
@@ -122,7 +121,7 @@ theorem geometric_succ_false (fuel n : ℕ) (st : Bool × ℕ) :
   probWhileCut geoLoopCond (geoLoopBody trial) (succ fuel) (false,n) st =
   if st = (false,n) then 1 else 0 := by
   cases st
-  simp [probWhileCut, probWhileFunctional, geoLoopCond, geoLoopBody, ite_apply, ENNReal.tsum_prod', tsum_bool]
+  simp [probWhileCut, probWhileFunctional, geoLoopCond]
 
 /--
 Evaluation for an unrolling of ``probGeometric`` on a ``(false, -)`` state
@@ -175,7 +174,7 @@ theorem geometric_progress (fuel n : ℕ) :
     intro n
     rw [geometric_succ_true]
     have A : succ fuel + 1 = fuel + 2 := by exact rfl
-    simp [A]
+    simp
     have B : n + succ fuel + 1 = (n + 1) + fuel + 1 := by exact Nat.add_right_comm n (succ fuel) 1
     simp [B]
     simp [IH (n + 1)]
@@ -341,7 +340,7 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
     · rename_i h
       simp at h
       subst h
-      simp [IH]
+      simp
 
 lemma if_simpl_geo (x n : ℕ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 ((trial true ^ (x - 1) * trial false) * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
@@ -364,9 +363,9 @@ theorem probGeometric_apply (n : ℕ) :
   simp only [probGeometric, Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
   rw [ENNReal.tsum_prod']
   rw [tsum_bool]
-  simp only [probWhile, ne_eq, Prod.mk.injEq, false_and, not_false_eq_true,
+  simp only [probWhile,
     geometric_returns_false, ciSup_const, zero_mul, tsum_zero, add_zero]
-  simp only [ne_eq, Prod.mk.injEq, false_and, not_false_eq_true, geometric_pwc_sup, ite_mul,
+  simp only [geometric_pwc_sup, ite_mul,
     zero_mul]
   rw [ENNReal.tsum_eq_add_tsum_ite n]
   simp only [↓reduceIte, mul_one]

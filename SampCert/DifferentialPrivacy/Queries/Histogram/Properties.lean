@@ -29,6 +29,7 @@ variable (B : Bins T numBins)
 
 variable (ε₁ ε₂ : ℕ+) (ε : NNReal) (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins))
 
+omit [DPSystem T] [DPNoise dps] [Inhabited T] in
 /-
 exactBinCount is 1-sensitive
 -/
@@ -40,6 +41,7 @@ theorem exactBinCount_sensitivity (b : Fin numBins) : sensitivity (exactBinCount
   all_goals aesop
 
 include HN_bin in
+omit [Inhabited T] in
 /--
 DP bound for a noised bin count
 -/
@@ -50,6 +52,7 @@ lemma privNoisedBinCount_DP  (b : Fin numBins) :
   apply exactBinCount_sensitivity
 
 include HN_bin in
+omit [Inhabited T] in
 /--
 DP bound for intermediate steps in the histogram calculation.
 -/
@@ -71,6 +74,7 @@ lemma privNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
     case arithmetic => simp; ring_nf
 
 include HN_bin in
+omit [Inhabited T] in
 /--
 DP bound for a noised histogram
 -/

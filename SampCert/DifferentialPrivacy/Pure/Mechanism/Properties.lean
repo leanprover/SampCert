@@ -21,7 +21,7 @@ namespace SLang
 
 lemma natAbs_to_abs (a b : ℤ) :
   (a - b).natAbs = |(a : ℝ) - (b : ℝ)| := by
-  rw [Int.cast_natAbs]
+  rw [Nat.cast_natAbs]
   simp only [cast_abs, Int.cast_sub]
 
 lemma normalizing_constant_nonzero (ε₁ ε₂ Δ : ℕ+) :
@@ -55,7 +55,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
   intros l₁ l₂ neighbours x
   simp [privNoisedQueryPure]
   simp [DiscreteLaplaceGenSamplePMF]
-  simp [DFunLike.coe, PMF.instFunLike]
+  simp [DFunLike.coe]
   rw [← ENNReal.ofReal_div_of_pos]
   · apply ofReal_le_ofReal
     rw [division_def]
@@ -78,7 +78,7 @@ theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : 
     rw [← exp_sub]
     simp only [sub_neg_eq_add, exp_le_exp]
     rw [neg_div']
-    rw [div_add_div_same]
+    rw [← add_div]
     rw [division_def]
     apply (mul_inv_le_iff₀' _).mpr
     · have B : ((Δ : ℝ) * ε₂ / ε₁) * ((ε₁ : ℝ) / ε₂) = Δ := by

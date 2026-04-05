@@ -62,7 +62,7 @@ theorem DiscreteGaussianSampleLoop_normalizes (num den t : ℕ+) (mix : ℕ) :
   simp only [DiscreteGaussianSampleLoop, Bind.bind, Int.natCast_natAbs, Pure.pure, SLang.bind_apply,
     SLang.pure_apply, tsum_bool, ENNReal.tsum_prod', Prod.mk.injEq, mul_ite, mul_one, mul_zero,
     and_true, and_false, ↓reduceIte, add_zero, zero_add, Bool.false_eq_true, Bool.true_eq_false,
-    false_and, and_false]
+    and_false]
   rw [DiscreteLaplaceSampleMixed_equiv]
   conv =>
     left
@@ -100,7 +100,7 @@ lemma ite_simpl_1' (num den t : PNat) (x : ℤ) (n : ℤ) :
   split
   · simp
   · rename_i h
-    simp [h]
+    simp
     intro h
     subst h
     contradiction
@@ -118,7 +118,7 @@ theorem DiscreteGaussianSampleLoop_apply_true (num den t : ℕ+) (n : ℤ) (mix 
     div_one, one_div, Int.cast_abs, SLang.pure_apply, Prod.mk.injEq, mul_ite,
     mul_one, mul_zero, tsum_bool, and_false, ↓reduceIte, and_true, BernoulliExpNegSample_apply_true,
     cast_pow, NNReal.coe_pow, PNat.mul_coe, PNat.pow_coe, cast_mul, NNReal.coe_mul, zero_add,
-    Bool.true_eq_false, Bool.false_eq_true, false_and, and_false]
+    Bool.true_eq_false, and_false]
   rw [ENNReal.tsum_eq_add_tsum_ite (n : ℤ)]
   simp (config := { contextual := true }) only [↓reduceIte, ite_simpl_1', tsum_zero, add_zero]
   rw [ENNReal.ofReal_mul]
@@ -254,8 +254,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
     PNat.mk_coe, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
-    zero_mul, SLang.pure_apply, NNReal.coe_natCast, div_pow, Bool.false_eq_true,
-    Bool.true_eq_false]
+    zero_mul, SLang.pure_apply, div_pow, Bool.false_eq_true]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>
     left

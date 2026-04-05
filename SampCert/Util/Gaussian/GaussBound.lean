@@ -62,7 +62,6 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     have eq1 : (∑' (n : ℤ), ((gauss_term_ℝ σ 0) (-μ + ↑n) : ℂ)) = ∑' (n : ℤ), (gauss_term_ℂ σ 0) (-μ + ↑n) := by
       apply tsum_congr; intro b; simp [gauss_term_ℂ, gauss_term_ℝ]
     rw [eq1, X]
-    push_cast
     rfl
 
   have F : (∑' (i : ℤ), ‖𝓕 ((gauss_term_ℂ σ 0 : ℝ → ℂ)) i‖ * ‖((@fourier 1 i) (-μ))‖) = ∑' (i : ℤ), ‖𝓕 ((gauss_term_ℂ σ 0 : ℝ → ℂ)) i‖ := by
@@ -83,7 +82,7 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     simp [sq]
     congr 1
     · rw [Complex.norm_exp]
-      simp [sq]
+      simp
     · have A : 0 ≤ (2⁻¹ * ((↑σ)⁻¹ * (↑σ)⁻¹ * (↑π)⁻¹)) ^ (2 : ℝ)⁻¹ := by
         apply rpow_nonneg
         rw [mul_nonneg_iff]
@@ -151,7 +150,7 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     have S := summable_fourier_gauss_term' h μ
     rw [← summable_norm_iff] at S
     have Y := @norm_tsum_le_tsum_norm _ _ _ (fun (n : ℤ) => 𝓕 ((gauss_term_ℂ σ 0 : ℝ → ℂ)) n * (@fourier 1 n) (-μ)) S
-    simp only [smul_neg, ofReal_one, div_one, norm_mul] at Y
+    simp only [norm_mul] at Y
     apply Y
 
   rw [A, B, C, D, E]
