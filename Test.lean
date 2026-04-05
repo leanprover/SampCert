@@ -24,7 +24,7 @@ def IntHistogram.index (hist : IntHistogram) (i : ℤ) : ℤ := Id.run do
 def histToSTring (hist : IntHistogram) : String  := Id.run do
   let mut str := ""
   for i in [:hist.repr.size] do
-    str := str ++ s!"({hist.index i},{hist.repr.get! i})  "
+    str := str ++ s!"({hist.index i},{hist.repr[i]!})  "
   return str
 
 instance : ToString IntHistogram where
@@ -39,7 +39,7 @@ instance : ToString IntHistogram where
 def sample (dist : PMF ℤ) (numSamples : ℕ) : IO ((Array ℤ) × ℤ × ℤ) := do
   if numSamples < 2 then
     panic! "sample: 2 samples at least required"
-  let mut samples : Array ℤ := mkArray numSamples 0
+  let mut samples : Array ℤ := Array.replicate numSamples 0
   let s₁ : ℤ ← run <| dist
   samples := samples.set! 0 s₁
   let s₂ : ℤ ← run <| dist
@@ -64,18 +64,18 @@ def sample (dist : PMF ℤ) (numSamples : ℕ) : IO ((Array ℤ) × ℤ × ℤ) 
 def histogram (samples : Array ℤ) (min max : ℤ) : IO IntHistogram := do
   if max < min then
     panic! "histogram: max less than min"
-  let mut hist : Array ℕ := mkArray (1 + max - min).toNat 0
+  let mut hist : Array ℕ := Array.replicate (1 + max - min).toNat 0
   for v in samples do
     let idx := v - min
     if idx < 0 then
       panic! "histogram: index less than 0"
-    hist := hist.set! idx.toNat (hist.get! idx.toNat + 1)
+    hist := hist.set! idx.toNat (hist[idx.toNat]! + 1)
   return { repr := hist, min := min, size := samples.size }
 
 def estimateMean (hist : IntHistogram) : IO Float := do
   let mut acc : Float := 0
   for i in [:hist.repr.size] do
-    acc := acc + Float.ofInt (hist.repr.get! i) * Float.ofInt (hist.index i)
+    acc := acc + Float.ofInt (hist.repr[i]!) * Float.ofInt (hist.index i)
   return acc / (hist.size).toFloat
 
 /--
@@ -86,7 +86,7 @@ def estimateMoment (hist : IntHistogram) (mean : Float) (moment : ℕ) : IO Floa
     panic! "estimateMoment: moment must be at least 2"
   let mut acc : Float := 0
   for i in [:hist.repr.size] do
-    for _ in [:hist.repr.get! i] do
+    for _ in [:hist.repr[i]!] do
       acc := acc + (Float.ofInt (hist.index i) - mean)^moment.toFloat
   return acc / (hist.size).toFloat
 
@@ -108,10 +108,10 @@ def estimateKurtosis (hist : IntHistogram) (mean : Float) (variance : Float) : I
 def estimateCDF (hist : IntHistogram) : IO IntHistogram := do
   if hist.size = 0 then
     panic! "estimateCDF: empty histogram"
-  let mut cdf : Array ℕ := mkArray hist.repr.size 0
-  cdf := cdf.set! 0 <| hist.repr.get! 0
+  let mut cdf : Array ℕ := Array.replicate hist.repr.size 0
+  cdf := cdf.set! 0 <| hist.repr[0]!
   for i in [1:cdf.size] do
-    cdf := cdf.set! i <| cdf.get! (i - 1) + hist.repr.get! i
+    cdf := cdf.set! i <| cdf[i - 1]! + hist.repr[i]!
   return { repr := cdf, min := hist.min, size := hist.size }
 
 def evalUnnormalizedGaussianPDF (x : ℤ) (num den : ℕ+) : IO Float := do
@@ -136,7 +136,7 @@ def KolmogorovDistance (hist : IntHistogram) (num den : ℕ+) : IO Float := do
     let sample := hist.index i
     let refCDFUnnormed ← sumTo (- bound) sample num den
     let refCDF := refCDFUnnormed / norm
-    let estCDF : Float := (Float.ofNat (hist.repr.get! i)) / (Float.ofInt hist.size)
+    let estCDF : Float := (Float.ofNat (hist.repr[i]!)) / (Float.ofInt hist.size)
     let d := (refCDF - estCDF).abs
     if max < d then
       max := d

@@ -2,7 +2,7 @@ import Lake
 open Lake DSL System
 
 package «sampcert» where
-  -- add any package configuration options here
+  testDriver := "test"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.28.0"
@@ -28,7 +28,9 @@ target libleanffi (pkg : NPackage __name__) : FilePath := do
 target libleanffidyn (pkg : NPackage __name__) : Dynlib := do
   let ffiO ← ffi.o.fetch
   let libFile := pkg.sharedLibDir / nameToSharedLib "leanffi"
-  buildLeanSharedLib "leanffi" libFile #[ffiO] #[]
+  let lean ← getLeanInstall
+  let leanLibDir := lean.sysroot / "lib" / "lean"
+  buildLeanSharedLib "leanffi" libFile #[ffiO] #[] (weakArgs := #[s!"-Wl,-rpath,{leanLibDir}"])
 
 @[default_target]
 lean_lib «SampCert» where
