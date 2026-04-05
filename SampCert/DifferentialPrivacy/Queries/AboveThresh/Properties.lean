@@ -18,16 +18,39 @@ variable [dps : DPSystem ℕ]
 variable [dpn : DPNoise dps]
 variable {sv_T : Type}
 
+omit dps dpn in
 /--
 Local replacement for the removed `tsum_eq_tsum_of_ne_zero_bij` lemma.
 TODO: Provide a real proof; the old mathlib lemma was deleted in commit f4bf34de.
 -/
 theorem tsum_eq_tsum_of_ne_zero_bij {α : Type*} [AddCommMonoid α] [TopologicalSpace α]
     {β γ : Type*} {f : β → α} {g : γ → α} (i : Function.support g → β)
-    (_hi : ∀ ⦃x y⦄, i x = i y → (x : γ) = y)
-    (_hf : Function.support f ⊆ Set.range i)
-    (_hfg : ∀ x, f (i x) = g x) : ∑' x, f x = ∑' y, g y := by
-  sorry
+    (hi : ∀ ⦃x y⦄, i x = i y → (x : γ) = y)
+    (hf : Function.support f ⊆ Set.range i)
+    (hfg : ∀ x, f (i x) = g x) : ∑' x, f x = ∑' y, g y := by
+  symm
+  rw [← tsum_subtype_support g, ← tsum_subtype_support f]
+  have hi' : Function.Injective i := fun x y h => Subtype.ext (hi h)
+  -- Build an equiv support g ≃ support f
+  have himem : ∀ x : Function.support g, i x ∈ Function.support f := by
+    intro x
+    rw [Function.mem_support, hfg]
+    exact x.2
+  let i' : Function.support g → Function.support f := fun x => ⟨i x, himem x⟩
+  have hi'inj : Function.Injective i' := fun x y h => hi' (Subtype.ext_iff.mp h)
+  have hi'surj : Function.Surjective i' := by
+    intro ⟨b, hb⟩
+    obtain ⟨x, hx⟩ := hf hb
+    refine ⟨x, ?_⟩
+    apply Subtype.ext
+    exact hx
+  let e : Function.support g ≃ Function.support f :=
+    Equiv.ofBijective i' ⟨hi'inj, hi'surj⟩
+  rw [← Equiv.tsum_eq e]
+  apply tsum_congr
+  intro x
+  show g x = f (i x)
+  exact (hfg x).symm
 
 omit dps dpn in
 /--
@@ -528,7 +551,9 @@ lemma sv3_loop_unroll_1 (qs : sv_query sv_T) (T : ℤ) (τ : ℤ) (ε₁ ε₂ :
     -- Need a sum-eq-single style lemma that I can't seem to invoke directly.
     have tsum_eq_single_stub :
         ∀ (f : sv1_state → ENNReal) (x₀ : sv1_state),
-          (∀ b, b ≠ x₀ → f b = 0) → (∑' b, f b) = f x₀ := by sorry
+          (∀ b, b ≠ x₀ → f b = 0) → (∑' b, f b) = f x₀ := by
+      intro f x₀ hf
+      exact tsum_eq_single x₀ (fun b hb => hf b hb)
     rw [tsum_eq_single_stub _ (L ++ [vk], a) (by
       intro b hb
       rw [if_neg hb]
@@ -589,6 +614,7 @@ lemma sv3_loop_unroll_1_alt (qs : sv_query sv_T) (τ : ℤ) (ε₁ ε₂ : ℕ+)
 def len_list_append_rev {m n : ℕ} (x : { l : List ℤ // l.length = m }) (y: { l : List ℤ // l.length = n }) : { l : List ℤ // l.length = n + m } :=
   ⟨ x.1 ++ y.1 , by simp  [add_comm] ⟩
 
+omit dps dpn in
 lemma vector_sum_singleton (f : { l : List ℤ // l.length = 1 } -> ENNReal) (P : (x : ℤ) -> ([x].length = 1)) :
     (∑'(x : { l : List ℤ // l.length =  1 }), f x) = (∑' (x : ℤ), f ⟨ [x], P x⟩) := by
   apply @tsum_eq_tsum_of_ne_zero_bij
@@ -691,6 +717,7 @@ lemma sv4_presample_eval' (ε₁ ε₂ : ℕ+) (n : ℕ) (s : { l : List ℤ // 
   trivial
 
 
+omit dps dpn in
 lemma vector_sum_merge n (f : ℤ × { l : List ℤ // l.length = n } -> ENNReal) :
     (∑'p, f p) = ∑'(p : {l : List ℤ // l.length = n + 1}), f (vsm_0 p, vsm_rest p) := by
   apply @tsum_eq_tsum_of_ne_zero_bij
@@ -1055,7 +1082,9 @@ def sv3_sv4_loop_eq qs (T : ℤ) (ε₁ ε₂ : ℕ+) (τ : ℤ) (l : List sv_T)
         rw [condition_to_subset]
         have tsum_eq_single_stub :
             ∀ (f : ↑{a : sv4_state | init = a.1} → ENNReal) (x₀ : ↑{a : sv4_state | init = a.1}),
-              (∀ b, b ≠ x₀ → f b = 0) → (∑' b, f b) = f x₀ := by sorry
+              (∀ b, b ≠ x₀ → f b = 0) → (∑' b, f b) = f x₀ := by
+          intro f x₀ hf
+          exact tsum_eq_single x₀ (fun b hb => hf b hb)
         rw [tsum_eq_single_stub _ (⟨(init, []), rfl⟩ : ↑{a : sv4_state | init = a.1})]
         · simp
         · intro b hb
@@ -2352,29 +2381,6 @@ lemma sv1_lb ε₁ ε₂ l :
       rw [ENNReal.tsum_comm]
       rw [ENNReal.tsum_prod']
       apply ENNReal.tsum_lb_single (H ++ [v])
-      -- STUB: bounding the middle → target step.
-      -- The middle is a simpler indicator expression; the target is the full probWhileCut unfold.
-      -- Pointwise: priv a * (small_indicator) ≤ priv a * (big probWhileCut expression).
-      have mid_le_target :
-          (∑' (b : ℤ) (a : ℤ) (c : { t // PLucky t }),
-            (privNoiseGuess ε₁ ε₂) a *
-              @ite ENNReal ((H ++ [v], ↑c) = (H ++ [v], a)) (Classical.propDecidable _)
-                (if H.length + 1 = sv1_threshold (H ++ [v], b) then 1 else 0) 0) ≤
-          (∑' (b : ℤ) (a : ℤ) (c : { t // PLucky t }),
-            (privNoiseGuess ε₁ ε₂) a *
-              @ite ENNReal ((H ++ [v], ↑c) = (H ++ [v], a)) (Classical.propDecidable _)
-                (if H.length + 1 = sv1_threshold (H ++ [v], b) then
-                  (if sv1_aboveThreshC qs T τ l (H ++ [v], ↑c) = true then
-                      (sv1_aboveThreshF ε₁ ε₂ (H ++ [v], ↑c)).probBind fun v =>
-                        probWhileCut (sv1_aboveThreshC qs T τ l) (sv1_aboveThreshF ε₁ ε₂) cut v
-                    else probPure (H ++ [v], ↑c))
-                    (H ++ [v], b)
-                else 0) 0) := by
-        sorry
-      /-
-      Original proof (pre-4.28 port). Needs re-working for gcongr / mul_le_mul_* signature changes
-      and ite_mono_left unification across the pair-vs-scalar condition.
-
       apply le_trans _ ?G1
       case G1 =>
         apply ENNReal.tsum_le_tsum
@@ -2384,20 +2390,6 @@ lemma sv1_lb ε₁ ε₂ l :
         apply ENNReal.tsum_le_tsum
         intro c
         gcongr
-        simp [sv1_threshold]
-        simp [sv1_aboveThreshC]
-        apply ite_mono_left
-        rw [ite_eq_right_iff.mpr (by
-          intro K
-          exfalso
-          rcases c with ⟨ c, Hc ⟩
-          simp [sv1_threshold, sv1_noise] at K
-          have HC' := HLucky c (H.length + 1) Hc
-          apply (LT.lt.not_ge K)
-          apply GE.ge.le
-          apply HC')]
-      -/
-      apply le_trans _ mid_le_target
 
       -- Now move the lucky sum out to the front, so that we can constrain the other sum values to equal it
       conv =>
@@ -2420,8 +2412,13 @@ lemma sv1_lb ε₁ ε₂ l :
       show (∑' (a : { t // PLucky t }), (privNoiseGuess ε₁ ε₂) ↑a) = _
       congr 1
       ext a
-      rw [if_pos]
-      simp [sv1_threshold]
+      rw [if_pos (by simp [sv1_threshold])]
+      rcases a with ⟨a, Ha⟩
+      have hcond : sv1_aboveThreshC qs T τ l (H ++ [v], a) = false := by
+        simp [sv1_aboveThreshC, sv1_noise, sv1_threshold]
+        have := HLucky a (H.length + 1) Ha
+        omega
+      simp [hcond, probPure]
 
     · -- Guess is unlucky
       -- Commute out the samples related to the first sample (which will evenetually become a (1- ρ) factor)
