@@ -85,6 +85,7 @@ lemma privNoisedHistogram_DP :
   case Hdp => apply privNoisedHistogramAux_DP; apply HN_bin
   case HEq => simp [predBins, mul_div_left_comm]
 
+omit HT in
 include HN_bin in
 /--
 DP bound for the thresholding maximum

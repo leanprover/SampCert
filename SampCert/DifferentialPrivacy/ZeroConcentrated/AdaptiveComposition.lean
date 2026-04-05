@@ -22,12 +22,13 @@ variable { T U V : Type }
 variable [HU : Inhabited U] [HU_meas : MeasurableSpace U] [HU_discr : MeasurableSingletonClass U] [HU_count : Countable U]
 variable [HV : Inhabited V] [HV_meas : MeasurableSpace V] [HV_discr : MeasurableSingletonClass V] [HV_count : Countable V]
 
-
+omit HU HU_meas HU_discr HU_count in
 lemma sup_lemma {s : EReal} (HS0 : 0 < s) (HS1 : s < ⊤) (f : U -> EReal) :
     eexp (s * ⨆ (u : U), f u) =  ⨆ (u : U), eexp (s * f u) := by
   rw [@GaloisConnection.l_iSup _ _ _ _ _ _ _ (galois_connection_smul_l HS0 HS1) f]
   apply GaloisConnection.l_iSup galois_connection_eexp
 
+omit HV in
 /--
 Bound on Renyi divergence on adaptively composed queries
 -/
@@ -112,7 +113,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     rw [<- mul_assoc]
     skip
   rw [ENNReal.tsum_mul_left]
-  apply mul_le_mul_left'
+  apply _root_.mul_le_mul_right
 
   -- Apply upper bound lemma
   conv =>
@@ -120,7 +121,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
     rw [mul_comm]
   exact le_iSup_iff.mpr fun b a_1 => a_1 a
 
-
+omit HV in
 /--
 Adaptively Composed queries satisfy zCDP Renyi divergence bound.
 -/
@@ -160,7 +161,7 @@ def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac
   simp [privComposeAdaptive]
   intro l₁ l₂ HN x Hx
   rcases x with ⟨ u, v ⟩
-  simp [DFunLike.coe, PMF.bind, PMF.pure] at *
+  simp [DFunLike.coe] at *
   intro u'
   rcases Hx u' with A | B
   · left
@@ -170,7 +171,7 @@ def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac
     simp_all
     exact Hac2 u' l₁ l₂ HN v B
 
-
+omit HV in
 /--
 ``privComposeAdaptive`` satisfies zCDP
 -/
