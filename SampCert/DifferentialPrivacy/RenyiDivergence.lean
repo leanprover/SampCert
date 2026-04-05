@@ -216,8 +216,6 @@ section Jensen
 
 variable {T : Type}
 variable [t1 : MeasurableSpace T]
-variable [t2 : MeasurableSingletonClass T]
-variable [tcount : Countable T] -- New
 
 variable {U V : Type}
 variable [m2 : MeasurableSpace U]
@@ -225,7 +223,6 @@ variable [count : Countable U]
 variable [disc : DiscreteMeasurableSpace U]
 variable [Inhabited U]
 
-omit [MeasurableSingletonClass T] [Countable T] in
 lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure T) (α : ENNReal) (mem : MemLp f α μ) (h1 : α ≠ 0) (h2 : α ≠ ⊤)  :
   MeasureTheory.Integrable (fun x : T => (f x) ^ α.toReal) μ := by
   have X := @MeasureTheory.MemLp.integrable_norm_rpow T ℝ t1 μ _ f α mem h1 h2
@@ -252,11 +249,10 @@ lemma Integrable_rpow (f : T → ℝ) (nn : ∀ x : T, 0 ≤ f x) (μ : Measure 
 
 -- MARKUSDE: This lemma is derivable from ``Renyi_Jensen_strict_real``, however it requires a reduction
 -- to first eliminate all elements (t : T) where q t = 0 from the series.
-omit [Countable T] in
 /--
 Jensen's inequality for the exponential applied to the real-valued function ``(⬝)^α``.
 -/
-theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : MemLp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
+theorem Renyi_Jensen_real [t2 : MeasurableSingletonClass T] (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : MemLp f (ENNReal.ofReal α) (PMF.toMeasure q)) :
   ((∑' x : T, (f x) * (q x).toReal)) ^ α ≤ (∑' x : T, (f x) ^ α * (q x).toReal) := by
   conv =>
     enter [1, 1, 1, x]
@@ -325,7 +321,7 @@ theorem Renyi_Jensen_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h
 /--
 Strict version of Jensen't inequality applied to the function ``(⬝)^α``.
 -/
-theorem Renyi_Jensen_strict_real (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : MemLp f (ENNReal.ofReal α) (PMF.toMeasure q)) (HT_nz : ∀ t : T, q t ≠ 0):
+theorem Renyi_Jensen_strict_real [t2 : MeasurableSingletonClass T] [tcount : Countable T] (f : T → ℝ) (q : PMF T) (α : ℝ) (h : 1 < α) (h2 : ∀ x : T, 0 ≤ f x) (mem : MemLp f (ENNReal.ofReal α) (PMF.toMeasure q)) (HT_nz : ∀ t : T, q t ≠ 0):
   ((∑' x : T, (f x) * (q x).toReal)) ^ α < (∑' x : T, (f x) ^ α * (q x).toReal) ∨ (∀ x : T, f x = ∑' (x : T), (q x).toReal * f x) := by
   conv =>
     enter [1, 1, 1, 1, x]

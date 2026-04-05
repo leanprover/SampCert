@@ -18,19 +18,16 @@ open Classical Nat
 
 namespace SLang
 
-section Geometric
-
-variable (trial : SLang Bool)
-variable (trial_spec : trial false + trial true = 1)
-variable (trial_spec' : trial true < 1)
-
 lemma ite_test (a b : ℕ) (x y : ENNReal) :
   @ite ENNReal (a = b) (propDecidable (a = b)) x y
    = @ite ENNReal (a = b) (instDecidableEqNat a b) x y := by
   split ; any_goals { trivial }
 
-include trial_spec in
-lemma trial_one_minus :
+section Geometric
+
+variable (trial : SLang Bool)
+
+lemma trial_one_minus (trial_spec : trial false + trial true = 1) :
   trial false = 1 - trial true := by
   by_contra h
   rw [← trial_spec] at h
@@ -40,8 +37,7 @@ lemma trial_one_minus :
     rw [h'] at trial_spec
     simp at trial_spec
 
-include trial_spec in
-lemma trial_le_1 (i : ℕ) :
+lemma trial_le_1 (trial_spec : trial false + trial true = 1) (i : ℕ) :
   trial true ^ i ≤ 1 := by
   induction i
   · simp
@@ -60,11 +56,10 @@ lemma trial_le_1 (i : ℕ) :
       simp at B
     exact Left.mul_le_one IH A
 
-include trial_spec' in
 /--
 A geometric series from a trial result (namely, with ratio less than 1) is finite.
 -/
-theorem trial_sum_ne_top :
+theorem trial_sum_ne_top (trial_spec' : trial true < 1) :
   (∑' (n : ℕ), trial true ^ n) ≠ ⊤ := by
   rw [ENNReal.tsum_geometric]
   rw [ENNReal.inv_ne_top]
@@ -73,8 +68,7 @@ theorem trial_sum_ne_top :
   have A := not_le.mpr trial_spec'
   contradiction
 
-include trial_spec' in
-lemma trial_sum_ne_top' :
+lemma trial_sum_ne_top' (trial_spec' : trial true < 1) :
   ∑' (n : ℕ), trial true ^ n * trial true ≠ ⊤ := by
   have A := trial_sum_ne_top trial trial_spec'
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
@@ -377,13 +371,13 @@ theorem probGeometric_apply (n : ℕ) :
     rw [if_simpl_geo]
   simp only [tsum_zero, add_zero]
 
-include trial_spec trial_spec' in
 /--
 ``probGeometric`` is a proper distribution.
 -/
 @[simp]
-theorem probGeometric_normalizes :
-  (∑' n : ℕ, probGeometric trial n) = 1 := by
+theorem probGeometric_normalizes
+    (trial_spec : trial false + trial true = 1) (trial_spec' : trial true < 1) :
+    (∑' n : ℕ, probGeometric trial n) = 1 := by
   simp only [probGeometric_apply]
   rw [tsum_shift'_1]
   simp only [add_tsub_cancel_right]
@@ -417,12 +411,12 @@ theorem probGeometric_normalizes :
     trivial
 
 
-include trial_spec trial_spec' in
 /--
 ``probGeometric`` is a proper distribution on ``[1, ∞) ⊂ ℕ``.
 -/
-theorem probGeometric_normalizes' :
-  (∑' n : ℕ, probGeometric trial (n + 1)) = 1 := by
+theorem probGeometric_normalizes'
+    (trial_spec : trial false + trial true = 1) (trial_spec' : trial true < 1) :
+    (∑' n : ℕ, probGeometric trial (n + 1)) = 1 := by
   have A := probGeometric_normalizes trial trial_spec trial_spec'
   rw [ENNReal.tsum_eq_add_tsum_ite 0] at A
   simp only [probGeometric_apply, ↓reduceIte, zero_add] at A

@@ -15,10 +15,6 @@ variable (T : ℤ) (ε₁ ε₂ : ℕ+) {sv_T : Type}
 variable (qs : sv_query sv_T)
 variable (HL : has_lucky qs T)
 
-variable [dps : DPSystem ℕ]
-variable [dpn : DPNoise dps]
-
-
 def snoc {T : Type*} (x : T) (L : List T) := L ++ [x]
 
 -- "Sparse" algorithm as described in the proof of 3.25 of
@@ -26,7 +22,6 @@ def snoc {T : Type*} (x : T) (L : List T) := L ++ [x]
 
 def shift_qs (n : ℕ) (qs : sv_query sv_T) : sv_query sv_T := fun i => qs (i + n)
 
-omit dps dpn in
 lemma shift_qs_lucky n (qs' : sv_query sv_T) (H : has_lucky qs' T) : has_lucky (shift_qs n qs') T := by
   intro τ l
   rcases (H τ l) with ⟨ K, HK ⟩
@@ -36,6 +31,8 @@ lemma shift_qs_lucky n (qs' : sv_query sv_T) (H : has_lucky qs' T) : has_lucky (
   apply HK
   trivial
 
+variable [dps : DPSystem ℕ]
+variable [dpn : DPNoise dps]
 
 def privSparseAux {sv_T : Type} (qs' : sv_query sv_T) (HL' : has_lucky qs' T) (c : ℕ) : Mechanism sv_T (List ℕ) :=
   match c with

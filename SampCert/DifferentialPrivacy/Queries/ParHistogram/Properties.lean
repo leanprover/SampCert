@@ -23,28 +23,23 @@ namespace SLang
 variable {T : Type}
 variable [dps : DPPar T]
 variable [dpn : DPNoise dps.toDPSystem]
-variable [HT : Inhabited T]
 
 variable (numBins : ℕ+)
 variable (B : Bins T numBins)
 
-variable (ε₁ ε₂ : ℕ+) (ε : NNReal) (HN_bin : dpn.noise_priv ε₁ ε₂ ε)
+variable (ε₁ ε₂ : ℕ+) (ε : NNReal)
 
-omit [Inhabited T] in
-include HN_bin in
 /--
 DP bound for a noised bin count
 -/
-lemma privParNoisedBinCount_DP  (b : Fin numBins) :
+lemma privParNoisedBinCount_DP (HN_bin : dpn.noise_priv ε₁ ε₂ ε) (b : Fin numBins) :
   dps.prop (privParNoisedBinCount numBins B ε₁ ε₂ b) ε := by
   unfold privParNoisedBinCount
   apply dpn.noise_prop HN_bin
   apply exactBinCount_sensitivity
 
 
-omit [Inhabited T] in
-include HN_bin in
-lemma privParNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
+lemma privParNoisedHistogramAux_DP (HN_bin : dpn.noise_priv ε₁ ε₂ ε) (n : ℕ) (Hn : n < numBins) :
     dps.prop (privParNoisedHistogramAux numBins B ε₁ ε₂ n Hn) ε := by
   induction n
   · unfold privParNoisedHistogramAux
@@ -69,12 +64,10 @@ lemma privParNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
     case arithmetic => simp
 
 
-omit [Inhabited T] in
-include HN_bin in
 /--
 DP bound for a noised histogram
 -/
-lemma privParNoisedHistogram_DP :
+lemma privParNoisedHistogram_DP (HN_bin : dpn.noise_priv ε₁ ε₂ ε) :
   dps.prop (privParNoisedHistogram numBins B ε₁ ε₂) ε := by
   unfold privParNoisedHistogram
   apply (DPSystem_prop_ext _ ?HEq ?Hdp)

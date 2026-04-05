@@ -20,16 +20,9 @@ noncomputable section
 namespace SLang
 
 variable {T : Type}
-variable [dps : DPSystem T]
-variable [dpn : DPNoise dps]
-variable [HT : Inhabited T]
-
 variable (numBins : ℕ+)
 variable (B : Bins T numBins)
 
-variable (ε₁ ε₂ : ℕ+) (ε : NNReal) (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins))
-
-omit [DPSystem T] [DPNoise dps] [Inhabited T] in
 /-
 exactBinCount is 1-sensitive
 -/
@@ -40,24 +33,28 @@ theorem exactBinCount_sensitivity (b : Fin numBins) : sensitivity (exactBinCount
   all_goals simp_all [exactBinCount, exactBinCount, List.filter_cons]
   all_goals aesop
 
-include HN_bin in
-omit [Inhabited T] in
+section DPBounds
+
+variable [dps : DPSystem T]
+variable [dpn : DPNoise dps]
+variable (ε₁ ε₂ : ℕ+) (ε : NNReal)
+
 /--
 DP bound for a noised bin count
 -/
-lemma privNoisedBinCount_DP  (b : Fin numBins) :
-  dps.prop (privNoisedBinCount numBins B ε₁ ε₂ b) (ε / numBins) := by
+lemma privNoisedBinCount_DP (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins))
+    (b : Fin numBins) :
+    dps.prop (privNoisedBinCount numBins B ε₁ ε₂ b) (ε / numBins) := by
   unfold privNoisedBinCount
   apply dpn.noise_prop HN_bin
   apply exactBinCount_sensitivity
 
-include HN_bin in
-omit [Inhabited T] in
 /--
 DP bound for intermediate steps in the histogram calculation.
 -/
-lemma privNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
-  dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε / numBins)) := by
+lemma privNoisedHistogramAux_DP (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins))
+    (n : ℕ) (Hn : n < numBins) :
+    dps.prop (privNoisedHistogramAux numBins B ε₁ ε₂ n Hn) (n.succ * (ε / numBins)) := by
   induction n
   · unfold privNoisedHistogramAux
     simp
@@ -73,28 +70,27 @@ lemma privNoisedHistogramAux_DP (n : ℕ) (Hn : n < numBins) :
     · apply IH
     case arithmetic => simp; ring_nf
 
-include HN_bin in
-omit [Inhabited T] in
 /--
 DP bound for a noised histogram
 -/
-lemma privNoisedHistogram_DP :
-  dps.prop (privNoisedHistogram numBins B ε₁ ε₂) ε := by
+lemma privNoisedHistogram_DP (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins)) :
+    dps.prop (privNoisedHistogram numBins B ε₁ ε₂) ε := by
   unfold privNoisedHistogram
   apply (DPSystem_prop_ext _ ?HEq ?Hdp)
   case Hdp => apply privNoisedHistogramAux_DP; apply HN_bin
   case HEq => simp [predBins, mul_div_left_comm]
 
-omit HT in
-include HN_bin in
 /--
 DP bound for the thresholding maximum
 -/
-lemma privMaxBinAboveThreshold_DP (τ : ℤ) :
-  dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) ε := by
+lemma privMaxBinAboveThreshold_DP (HN_bin : dpn.noise_priv ε₁ (ε₂ * numBins) (ε / numBins))
+    (τ : ℤ) :
+    dps.prop (privMaxBinAboveThreshold numBins B ε₁ ε₂ τ) ε := by
   unfold privMaxBinAboveThreshold
   apply dps.postprocess_prop
   apply privNoisedHistogram_DP
   apply HN_bin
+
+end DPBounds
 
 end SLang

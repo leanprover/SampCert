@@ -754,18 +754,14 @@ lemma ACNeighbour_of_DP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q 
 ## Auxiliary definitions used in the proof of the (ε^2 / 2) bound
 -/
 section ofDP_bound
-variable (ε : NNReal) (Hε : 0 < ε)
+variable (ε : NNReal)
 variable (p q : PMF U)
-variable (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x )
-variable (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε)))
-variable (Hac : AbsCts p q)
 
 
 noncomputable def β (x : U) : ENNReal :=
   (ENNReal.ofReal (Real.exp ε) - (p x / q x)) / (ENNReal.ofReal (Real.exp (ε)) - ENNReal.ofReal (Real.exp (- ε)))
 
-include Hqp in
-lemma β_le_one {x : U} : β ε p q x ≤ 1 := by
+lemma β_le_one (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x) {x : U} : β ε p q x ≤ 1 := by
   unfold β
   apply ENNReal.div_le_of_le_mul
   simp
@@ -777,8 +773,7 @@ lemma β_le_one {x : U} : β ε p q x ≤ 1 := by
   · simp
   · apply Hqp
 
-include Hε in
-lemma β_ne_top : β ε p q x ≠ ⊤ := by
+lemma β_ne_top (Hε : 0 < ε) : β ε p q x ≠ ⊤ := by
   unfold β
   intro HK
   apply ENNReal.div_eq_top.mp at HK
@@ -795,8 +790,7 @@ lemma β_ne_top : β ε p q x ≠ ⊤ := by
     simp at HK'
 
 
-include Hε Hpq in
-lemma one_sub_β (x : U) : 1 - (β ε p q x : ENNReal) =
+lemma one_sub_β (Hε : 0 < ε) (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε))) (x : U) : 1 - (β ε p q x : ENNReal) =
     ((p x / q x) - ENNReal.ofReal (Real.exp (-ε)) ) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
   unfold β
   generalize HC : (p x / q x) = C
@@ -856,11 +850,12 @@ noncomputable def A_pmf (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / 
        rw [add_comm]
        exact tsub_add_cancel_of_le (β_le_one ε p q Hqp) ⟩
 
-include Hε Hpq Hqp Hac in
 /--
 Expectation for the random variable A at each point x
 -/
-lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b = p x / q x := by
+lemma A_expectation (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
+    (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε))) (Hac : AbsCts p q) (x : U) :
+    ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b = p x / q x := by
   rw [tsum_bool]
   unfold A_pmf
   rw [A_val, A_val, DFunLike.coe, PMF.instFunLike]
@@ -869,7 +864,7 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
     lhs
     congr
     · unfold β
-    · rw [one_sub_β _ Hε _ _ Hpq]
+    · rw [one_sub_β _ _ _ Hε Hpq]
   generalize HC : (p x / q x) = C
   generalize HD : (ENNReal.ofReal (Real.exp ε)) = D
   generalize HE : (ENNReal.ofReal (Real.exp (- ε))) = E
@@ -1004,11 +999,10 @@ lemma A_expectation (x : U) : ∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b 
 
 
 
-include Hqp in
 /--
 Jensen's inequality for the random variable A: real reduct
 -/
-lemma A_jensen_real {α : ℝ} (Hα : 1 < α) (x : U) :
+lemma A_jensen_real (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x) {α : ℝ} (Hα : 1 < α) (x : U) :
     (∑'(b : Bool), (A_val ε b).toReal * (A_pmf ε p q Hqp x b).toReal) ^ α ≤ (∑'(b : Bool), ((A_val ε b).toReal)^α * (A_pmf ε p q Hqp x b).toReal) := by
   have HJensen := @ConvexOn.map_integral_le _ _ ⊤ _ _ _ _ _ (fun b => (A_val ε b).toReal) _
           (PMF.toMeasure.isProbabilityMeasure (A_pmf ε p q Hqp x))
@@ -1042,11 +1036,11 @@ lemma A_jensen_real {α : ℝ} (Hα : 1 < α) (x : U) :
   · rw [tsum_bool]; ring
 
 
-include Hε Hqp in
 /--
 Jensen's inequality for the random variable A
 -/
-lemma A_jensen {α : ℝ} (Hα : 1 < α) (x : U) :
+lemma A_jensen (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
+    {α : ℝ} (Hα : 1 < α) (x : U) :
     (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) ^ α ≤ (∑'(b : Bool), (A_val ε b)^α * A_pmf ε p q Hqp x b) := by
 
   have SC1 (b : Bool) : A_val ε b ≠ ⊤ := by cases b <;> simp [A_val]
@@ -1119,11 +1113,11 @@ lemma A_jensen {α : ℝ} (Hα : 1 < α) (x : U) :
 
 noncomputable def B (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x) : PMF Bool := q >>= A_pmf ε p q Hqp
 
-include Hqp in
 /--
 Formula for B which shows up in the main derivation
 -/
-lemma B_eval_open (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x b * q x := by
+lemma B_eval_open (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
+    (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x b * q x := by
   unfold B
   simp
   apply tsum_congr
@@ -1131,11 +1125,12 @@ lemma B_eval_open (b : Bool) : B ε p q Hqp b = ∑'(x : U), A_pmf ε p q Hqp x 
   rw [mul_comm]
 
 
-include Hε Hqp Hpq Hac in
 /--
 closed form for B false
 -/
-lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
+lemma B_eval_false (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
+    (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε))) (Hac : AbsCts p q) :
+    B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
   have H1 : (1 - (B ε p q Hqp) false) = B ε p q Hqp true := by
     apply ENNReal.sub_eq_of_eq_add ?G1
     case G1 => apply PMF.apply_ne_top
@@ -1290,7 +1285,7 @@ lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (
 
   conv =>
     enter [1, 1, x]
-    rw [A_expectation _ Hε _ _ Hqp Hpq Hac]
+    rw [A_expectation _ _ _ Hε Hqp Hpq Hac]
   suffices ∑' (x : U), p x / q x * q x = ∑'(x : U), p x by
     rw [this]
     apply PMF.tsum_coe
@@ -1305,11 +1300,12 @@ lemma B_eval_false : B ε p q Hqp false = (ENNReal.ofReal (Real.exp ε) - 1) / (
 
 
 
-include Hε Hqp Hpq Hac in
 /--
 closed form for B true
 -/
-lemma B_eval_true : B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
+lemma B_eval_true (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
+    (Hpq : ∀ x, (p x / q x ≤ ENNReal.ofReal (Real.exp ε))) (Hac : AbsCts p q) :
+    B ε p q Hqp true = (1 - ENNReal.ofReal (Real.exp (- ε))) / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))):= by
   have H1 : (1 - (B ε p q Hqp) false) = B ε p q Hqp true := by
     apply ENNReal.sub_eq_of_eq_add ?G1
     case G1 => apply PMF.apply_ne_top
@@ -1408,7 +1404,6 @@ lemma lemma_cosh_add {w z : ℝ} : Real.cosh (w + z) = Real.cosh w * Real.cosh z
     _ = Real.cosh w * Real.cosh z * (1 + Real.tanh w * Real.tanh z) := by linarith
 
 variable (x y : ℝ)
-variable (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2)
 
 noncomputable def C := 2 * Real.sinh ((x - y) / 2) * Real.cosh (x / 2) * Real.cosh (y / 2)
 
@@ -1472,8 +1467,7 @@ lemma lemma_sub_sinh : Real.sinh x - Real.sinh y = C x y * (1 + t x y) :=
       rw [lemma_cosh_add]
       linarith
 
-include Hyx in
-lemma C_ne_zero : C x y ≠ 0 := by
+lemma C_ne_zero (Hyx : y < x) : C x y ≠ 0 := by
   unfold C
   repeat apply mul_ne_zero
   · simp
@@ -1482,8 +1476,7 @@ lemma C_ne_zero : C x y ≠ 0 := by
   · linarith [Real.cosh_pos (x / 2)]
   · linarith [Real.cosh_pos (y / 2)]
 
-include Hyx in
-lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) := by
+lemma lemma_step_1 (Hyx : y < x) : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x y) / (1 - t x y) := by
   rw [lemma_sinh_sub]
   rw [lemma_sub_sinh]
   rw [mul_div_mul_comm]
@@ -1492,8 +1485,7 @@ lemma lemma_step_1 : (Real.sinh x - Real.sinh y) / Real.sinh (x - y) = (1 + t x 
   · apply C_ne_zero
     linarith
 
-include Hy Hyx in
-lemma t_nonneg : 0 ≤ t x y := by
+lemma t_nonneg (Hy : 0 ≤ y) (Hyx : y < x) : 0 ≤ t x y := by
   unfold t
   apply mul_nonneg
   · rw [Real.tanh_eq_sinh_div_cosh]
@@ -1525,8 +1517,7 @@ lemma tanh_nonneg {w : ℝ} (HW : 0 ≤ w) : 0 ≤ Real.tanh w := by
   · exact Real.sinh_nonneg_iff.mpr HW
   · exact (LT.lt.le (Real.cosh_pos w))
 
-include Hy Hyx in
-lemma t_le_one : t x y < 1 := by
+lemma t_le_one (Hy : 0 ≤ y) (Hyx : y < x) : t x y < 1 := by
   unfold t
   conv =>
     enter [2]
@@ -1538,8 +1529,7 @@ lemma t_le_one : t x y < 1 := by
     linarith
 
 
-include Hy Hyx in
-lemma lemma_step_2 (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) := by
+lemma lemma_step_2 (Hy : 0 ≤ y) (Hyx : y < x) (H : t x y ≤ Real.tanh (x * y / 4)) : (1 + t x y) / (1 - t x y) ≤ Real.exp (x * y / 2) := by
   apply div_le_of_le_mul₀
   · linarith [t_le_one x y Hy Hyx]
   · apply Real.exp_nonneg
@@ -1663,8 +1653,7 @@ lemma tanh_lt_id_nonneg {x : ℝ} (Hx : 0 ≤ x) : Real.tanh x ≤ x := by
 
 
 -- This proof is repetitive and can be cleaned up
-include Hy Hyx Hx in
-lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) := by
+lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) := by
   let f (z : ℝ) :=  Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)
   suffices 0 ≤ f y by
     dsimp [f] at this
@@ -1849,8 +1838,7 @@ lemma lemma_step_3 : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y 
   · linarith
 
 
-include Hy Hyx Hx in
-lemma sinh_inequality :
+lemma sinh_inequality (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
     (Real.sinh x - Real.sinh y) / Real.sinh (x - y) ≤ Real.exp (x * y / 2) := by
   -- Temp usage of hypothesis so Lean doesn't freak out
   have _ := Hy
@@ -2078,7 +2066,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
 
   conv =>
     enter [1, 1, x]
-    rw [<- A_expectation ε Hε p q Hqp Hpq Hacpq x]
+    rw [<- A_expectation ε p q Hε Hqp Hpq Hacpq x]
 
 
   -- Apply Jensen's inequality
@@ -2097,7 +2085,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       apply Hacpq
       trivial
     case G2 => apply PMF.apply_ne_top
-    apply A_jensen _ Hε _ _ _ Hα
+    apply A_jensen _ _ _ Hε _ Hα
 
   -- Exchange the summations
   conv =>

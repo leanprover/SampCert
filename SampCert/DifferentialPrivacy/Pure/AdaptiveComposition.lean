@@ -13,12 +13,9 @@ noncomputable section
 
 open Classical Set
 
-variable [Hu : Nonempty U]
-
 namespace SLang
 
 -- Better proof for Pure DP adaptive composition
-omit [Nonempty U] in
 theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ ε : NNReal) (h1 : PureDP nq1 ε₁)  (h2 : ∀ u : U, PureDP (nq2 u) ε₂) (Hε : ε₁ + ε₂ = ε ) :
   PureDP (privComposeAdaptive nq1 nq2) ε := by
   rw [<- Hε]

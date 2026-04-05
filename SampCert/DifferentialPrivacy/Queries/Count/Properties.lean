@@ -20,10 +20,7 @@ noncomputable section
 namespace SLang
 
 variable {T : Type}
-variable [dps : DPSystem T]
-variable [dpn : DPNoise dps]
 
-omit [DPSystem T] [DPNoise dps] in
 /--
 The counting query is 1-sensitive
 -/
@@ -38,6 +35,9 @@ theorem exactCount_1_sensitive :
   · rename_i a b n h1 h2
     subst h1 h2
     simp
+
+variable [dps : DPSystem T]
+variable [dpn : DPNoise dps]
 
 /--
 The noised counting query satisfies DP property

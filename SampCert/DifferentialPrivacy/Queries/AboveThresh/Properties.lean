@@ -18,7 +18,7 @@ variable [dps : DPSystem ℕ]
 variable [dpn : DPNoise dps]
 variable {sv_T : Type}
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 /--
 Local replacement for the removed `tsum_eq_tsum_of_ne_zero_bij` lemma.
 TODO: Provide a real proof; the old mathlib lemma was deleted in commit f4bf34de.
@@ -52,7 +52,7 @@ theorem tsum_eq_tsum_of_ne_zero_bij {α : Type*} [AddCommMonoid α] [Topological
   show g x = f (i x)
   exact (hfg x).symm
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 /--
 Stronger congruence rule for probBind: The bound-to functions have to be equal only on the support of
 the bound-from function.
@@ -83,7 +83,7 @@ lemma probBind_congr_strong (p : SLang T) (f : T -> SLang U) (g : T -> SLang U) 
 
 
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma ENNReal.tsum_iSup_comm (f : T -> U -> ENNReal) : ∑' x, ⨆ y, f x y ≥ ⨆ y, ∑' x, f x y := by
   apply LE.le.ge
   rw [iSup_le_iff]
@@ -92,7 +92,7 @@ lemma ENNReal.tsum_iSup_comm (f : T -> U -> ENNReal) : ∑' x, ⨆ y, f x y ≥ 
   intro a
   apply le_iSup
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma ENNReal.tsum_iSup_comm' (f : T -> U -> ENNReal) : ⨆ y, ∑' x, f x y ≤ ∑' x, ⨆ y, f x y  := by
   rw [iSup_le_iff]
   intro i
@@ -614,7 +614,7 @@ lemma sv3_loop_unroll_1_alt (qs : sv_query sv_T) (τ : ℤ) (ε₁ ε₂ : ℕ+)
 def len_list_append_rev {m n : ℕ} (x : { l : List ℤ // l.length = m }) (y: { l : List ℤ // l.length = n }) : { l : List ℤ // l.length = n + m } :=
   ⟨ x.1 ++ y.1 , by simp  [add_comm] ⟩
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma vector_sum_singleton (f : { l : List ℤ // l.length = 1 } -> ENNReal) (P : (x : ℤ) -> ([x].length = 1)) :
     (∑'(x : { l : List ℤ // l.length =  1 }), f x) = (∑' (x : ℤ), f ⟨ [x], P x⟩) := by
   apply @tsum_eq_tsum_of_ne_zero_bij
@@ -717,7 +717,7 @@ lemma sv4_presample_eval' (ε₁ ε₂ : ℕ+) (n : ℕ) (s : { l : List ℤ // 
   trivial
 
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma vector_sum_merge n (f : ℤ × { l : List ℤ // l.length = n } -> ENNReal) :
     (∑'p, f p) = ∑'(p : {l : List ℤ // l.length = n + 1}), f (vsm_0 p, vsm_rest p) := by
   apply @tsum_eq_tsum_of_ne_zero_bij
@@ -809,18 +809,18 @@ lemma sv4_presample_split'' (ε₁ ε₂ : ℕ+) (point : ℕ) (z : ℤ) (p : { 
     privNoiseGuess ε₁ ε₂ z * sv4_presample ε₁ ε₂ point p =
     sv4_presample ε₁ ε₂ (point + 1) ⟨ (p.1 ++ [z]), HP ⟩ := by rw [sv4_presample_split']
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma get_last_lemma (L : List ℤ) H : L.getLastI = L.getLast H := by
   rw [List.getLastI_eq_getLast?_getD]
   rw [List.getLast?_eq_getLast_of_ne_nil H]
   rfl
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma drop_init_lemma (L : List ℤ) (H : L ≠ []) : L.dropLast ++ [L.getLastI] = L := by
   rw [get_last_lemma _ H]
   apply List.dropLast_append_getLast H
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma list_lemma_1 {L : List ℤ} (H : L ≠ []) : List.headI L :: L.tail = L := by
   apply List.cons_head?_tail
   apply Option.mem_def.mpr
@@ -829,7 +829,7 @@ lemma list_lemma_1 {L : List ℤ} (H : L ≠ []) : List.headI L :: L.tail = L :=
     simp at H
   simp
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma list_lemma_2 {L : List ℤ} (H : L ≠ []) : List.dropLast L ++ [L.getLastI] = L := by
   rw [drop_init_lemma L H]
 
@@ -1318,10 +1318,10 @@ def sv6_aboveThresh_hist (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv
   ∀ sp, (is_past_configuration sp s) -> sv4_aboveThreshC qs T τ l sp = true
 
 
-omit dps dpn in
 -- If all past configurations of sp evaluate to True,
 -- and the next one evaluates to true,
 -- then all past configurations for the next one evaluate to True
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv6_aboveThresh_hist_step (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (past fut_rest : List ℤ) (present fut : ℤ) :
     sv6_aboveThresh_hist qs T τ l ((past, present), fut :: fut_rest) ->
     sv4_aboveThreshC qs T τ l ((past ++ [present], fut), fut_rest) ->
@@ -1364,7 +1364,7 @@ def is_past_configuration_strict (sp sc : sv4_state) : Prop :=
 def sv6_aboveThresh_hist_strict (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (s : sv4_state) : Prop :=
   ∀ sp, (is_past_configuration_strict sp s) -> sv4_aboveThreshC qs T τ l sp = true
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv6_aboveThresh_hist_step_strict (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (past fut_rest : List ℤ) (present fut : ℤ) :
     sv6_aboveThresh_hist_strict qs T τ l ((past, present), fut :: fut_rest) ->
     sv4_aboveThreshC qs T τ l ((past, present), fut :: fut_rest) ->
@@ -1412,8 +1412,8 @@ def sv6_loop (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (point :
     then return point
     else probZero
 
-omit dps dpn in
 -- QUESTION: What do we need for equality in the base case?
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv5_sv6_loop_base_case (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (point eval : ℕ) (past future : List ℤ) (pres : ℤ) :
     future = [] ->
     List.length future = eval ->
@@ -1451,8 +1451,8 @@ lemma sv5_sv6_loop_base_case (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : Lis
     intro x
     split_ifs <;> simp_all
 
-omit dps dpn in
 -- QUESTION: What do we need for sv6_loop to be equal to sv6_loop_cond (next)
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv6_loop_ind (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (point : ℕ) (past ff: List ℤ) (pres f: ℤ) :
       (sv4_aboveThreshC qs T τ l ((past, pres), f :: ff) = true) ->
       List.length (past ++ [pres] ++ f :: ff) = point + 1 ->
@@ -1469,8 +1469,8 @@ lemma sv6_loop_ind (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (p
   simp [Hcondition]
 
 
-omit dps dpn in
 -- QUESTION: What do we need for sv5 to be equal to sv5_loop_cond (next) evaluated at point
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv5_loop_ind (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (eval point : ℕ) (past ff: List ℤ) (pres f: ℤ) :
       (sv4_aboveThreshC qs T τ l ((past, pres), f :: ff) = true) ->
       (sv5_loop qs T τ l (eval + 1) ((past, pres), f :: ff)) point = (sv5_loop qs T τ l eval ((past ++ [pres], f), ff)) point := by
@@ -1721,7 +1721,7 @@ def sv8_aboveThresh (qs :  sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (l : Li
         else probZero
   computation point
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma sv7_sv8_cond_eq (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T) (v0 : ℤ) (vs : List ℤ) (vk : ℤ) :
     sv8_cond qs T τ l [] v0 vs vk = sv6_cond qs T τ l (([], v0), vs ++ [vk]) := by
   suffices (∀ init, sv8_cond qs T τ l init v0 vs vk = sv6_cond qs T τ l ((init, v0), vs ++ [vk])) by
@@ -1843,14 +1843,14 @@ def sv8_sv9_eq (qs :  sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (l : List sv
         rw [ENNReal.tsum_mul_left]
 
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma ENNReal.tsum_lb_single (x : T) (f : T -> ENNReal)  (l : ENNReal) :
     l ≤ f x -> l ≤ ∑' (a : T), f a := by
   intro H
   apply le_trans H
   apply ENNReal.le_tsum
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma ENNReal.tsum_lb_subset (P : T -> Prop) (f : T -> ENNReal)  (l : ENNReal) :
     l ≤ (∑'(a : {t : T // P t}), f a.1) -> l ≤ ∑' (a : T), f a := by
   intro H
@@ -1859,7 +1859,7 @@ lemma ENNReal.tsum_lb_subset (P : T -> Prop) (f : T -> ENNReal)  (l : ENNReal) :
   simp
 
 
-omit dps dpn in
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma ENNReal.tsum_split (P : T -> Prop) (f : T -> ENNReal) :
     ∑' (a : T), f a = (∑'(a : {t : T // P t}), f a.1) + (∑'(a : {t : T // ¬P t}), f a.1) := by
   symm
@@ -1887,8 +1887,8 @@ def β_geo' (β : ℝ) : ℕ -> ℝ :=
 def geo_cdf (β : ENNReal) (n : ℕ) : ENNReal := 1 - (1 - β)^n
 
 
-omit dps dpn in
 -- set_option pp.coercions false
+omit [DPSystem ℕ] [DPNoise dps] in
 lemma geo_cdf_rec (β : ENNReal) (Hβ1: β ≤ 1) (n : ℕ) :
       geo_cdf β (n + 1) = β + (1 - β) * geo_cdf β n := by
   unfold geo_cdf
@@ -1970,10 +1970,8 @@ lemma ite_lemma_1 {P : Prop} {D} {f : T -> ENNReal} : ∑'(a : T), @ite _ P D (f
 
 variable (qs :  sv_query sv_T)
 variable (T : ℤ)
-variable (lucky_guess : has_lucky qs T)
 
-include lucky_guess in
-lemma sv1_lb ε₁ ε₂ l :
+lemma sv1_lb (lucky_guess : has_lucky qs T) ε₁ ε₂ l :
     1 ≤ ∑'s, (@sv1_aboveThresh PureDPSystem laplace_pureDPSystem sv_T qs T ε₁ ε₂ l s)  := by
   simp only [sv1_aboveThresh, bind, pure, bind_apply]
   -- Push the sum over s inwards
@@ -2462,7 +2460,7 @@ lemma sv1_lb ε₁ ε₂ l :
       rw [add_comm]
 
 
-def sv1_aboveThresh_PMF (ε₁ ε₂ : ℕ+) (l : List sv_T) : SPMF ℕ :=
+def sv1_aboveThresh_PMF (lucky_guess : has_lucky qs T) (ε₁ ε₂ : ℕ+) (l : List sv_T) : SPMF ℕ :=
   ⟨ sv1_aboveThresh qs T ε₁ ε₂ l,
     by
       rw [Summable.hasSum_iff ENNReal.summable]
@@ -2473,7 +2471,7 @@ def sv1_aboveThresh_PMF (ε₁ ε₂ : ℕ+) (l : List sv_T) : SPMF ℕ :=
 /--
 sv9 normalizes because sv1 normalizes
 -/
-def sv9_aboveThresh_SPMF (ε₁ ε₂ : ℕ+) (l : List sv_T) : SPMF ℕ :=
+def sv9_aboveThresh_SPMF (lucky_guess : has_lucky qs T) (ε₁ ε₂ : ℕ+) (l : List sv_T) : SPMF ℕ :=
   ⟨ @sv9_aboveThresh PureDPSystem laplace_pureDPSystem sv_T qs T ε₁ ε₂ l,
     by
       rw [<- @sv8_sv9_eq]

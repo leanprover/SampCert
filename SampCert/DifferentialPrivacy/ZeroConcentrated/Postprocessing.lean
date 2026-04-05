@@ -18,30 +18,11 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-variable {T : Type}
-variable [t1 : MeasurableSpace T]
-variable [t2 : MeasurableSingletonClass T]
+section postprocess_fibers
 
-variable {U V : Type}
-variable [m2 : MeasurableSpace U]
-variable [count : Countable U]
-variable [disc : DiscreteMeasurableSpace U]
-variable [Inhabited U]
-
-/--
-privPostProcess preserves absolute continuity between neighbours
--/
-def privPostProcess_AC {f : U -> V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
-  rw [ACNeighbour] at *
-  unfold AbsCts at *
-  intro l₁ l₂ Hn v
-  have Hac := Hac l₁ l₂ Hn
-  simp [privPostProcess]
-  simp [DFunLike.coe]
-  intro Hppz i fi
-  apply Hac
-  apply Hppz
-  apply fi
+-- The lemmas in this section work at the level of bare types, with no
+-- measurability / countability / inhabitedness assumptions.
+variable {T U V : Type}
 
 /--
 Normalized fiber
@@ -49,7 +30,6 @@ Normalized fiber
 def δ (nq : SLang U) (f : U → V) (a : V)  : {n : U | a = f n} → ENNReal :=
   fun x : {n : U | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹
 
-omit m2 count disc [Inhabited U] in
 lemma δ_normalizes (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   HasSum (δ nq f a) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
@@ -63,7 +43,6 @@ Normalized fiber distribution
 def δpmf (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) : PMF {n : U | a = f n} :=
   ⟨ δ nq f a , δ_normalizes nq f a h1 h2 ⟩
 
-omit m2 count disc [Inhabited U] in
 theorem δpmf_conv (nq : SLang U) (a : V) (x : {n | a = f n}) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   nq x * (∑' (x : {n | a = f n}), nq x)⁻¹ = (δpmf nq f a h1 h2) x := by
   simp [δpmf]
@@ -73,13 +52,11 @@ theorem δpmf_conv (nq : SLang U) (a : V) (x : {n | a = f n}) (h1 : ∑' (i : �
     left
   rfl
 
-omit m2 count disc [Inhabited U] in
 theorem δpmf_conv' (nq : SLang U) (f : U → V) (a : V) (h1 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ 0) (h2 : ∑' (i : ↑{n | a = f n}), nq ↑i ≠ ⊤) :
   (fun x : {n | a = f n} => nq x * (∑' (x : {n | a = f n}), nq x)⁻¹) = (δpmf nq f a h1 h2) := by
   ext x
   rw [δpmf_conv]
 
-omit m2 count disc [Inhabited U] in
 theorem witness {f : U → V} {i : V} (h : ¬{b | i = f b} = ∅) :
   ∃ x : U, i = f x := by
   rw [← nonempty_subtype]
@@ -94,7 +71,6 @@ theorem norm_simplify (x : ENNReal) (h : x ≠ ⊤) :
     simp
     rfl
 
-omit t1 t2 m2 count disc [Inhabited U] in
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
   rw [← condition_to_subset]
@@ -109,7 +85,6 @@ theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T)
   rw [lt_top_iff_ne_top]
   trivial
 
-omit t1 t2 m2 count disc [Inhabited U] in
 theorem ENNReal.tsum_pos {f : T → ENNReal} (h1 : ∑' x : T, f x ≠ ⊤) (h2 : ∀ x : T, f x ≠ 0) (i : T) :
   0 < ∑' x : T, f x := by
   apply (toNNReal_lt_toNNReal ENNReal.zero_ne_top h1).mp
@@ -146,7 +121,6 @@ lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ �
   apply (ENNReal.rpow_eq_zero_iff).mp
   apply Hk
 
-omit t1 t2 in
 /--
 Jensen's inequality for privPostProcess, restructed to types where ``nq l₁`` is nonzero
 -/
@@ -445,7 +419,17 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
-omit t1 t2 [Inhabited U] in
+end postprocess_fibers
+
+section postprocess_jensen
+
+-- These theorems need measurability/countability on the codomain U, but not
+-- on the input list type T, and do not need U to be inhabited.
+variable {T U V : Type}
+variable [MeasurableSpace U]
+variable [Countable U]
+variable [DiscreteMeasurableSpace U]
+
 /--
 Jensen's inequality for privPostProcess.
 
@@ -534,7 +518,6 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
     simp
     right; left; linarith
 
-omit [Inhabited U] [MeasurableSpace T] in
 /--
 privPostProcess satisfies the zCDP bound
 -/
@@ -577,8 +560,21 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
   · apply Hac l₂ l₁
     exact Neighbour_symm l₁ l₂ h2
 
+/--
+privPostProcess preserves absolute continuity between neighbours
+-/
+def privPostProcess_AC {f : U → V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+  rw [ACNeighbour] at *
+  unfold AbsCts at *
+  intro l₁ l₂ Hn v
+  have Hac := Hac l₁ l₂ Hn
+  simp [privPostProcess]
+  simp [DFunLike.coe]
+  intro Hppz i fi
+  apply Hac
+  apply Hppz
+  apply fi
 
-omit [Inhabited U] [MeasurableSpace T] [MeasurableSingletonClass T] in
 /--
 Postprocessing preserves zCDP
 -/
@@ -590,5 +586,7 @@ theorem privPostProcess_zCDP {f : U → V}
   apply And.intro
   · exact privPostProcess_AC nq Hac1
   · exact privPostProcess_zCDPBound Hb1 f Hac1
+
+end postprocess_jensen
 
 end SLang
