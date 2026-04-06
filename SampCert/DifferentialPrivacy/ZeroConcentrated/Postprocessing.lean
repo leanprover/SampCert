@@ -18,30 +18,11 @@ open Classical Nat Int Real ENNReal MeasureTheory Measure
 
 namespace SLang
 
-variable {T : Type}
-variable [t1 : MeasurableSpace T]
-variable [t2 : MeasurableSingletonClass T]
+section postprocess_fibers
 
-variable {U V : Type}
-variable [m2 : MeasurableSpace U]
-variable [count : Countable U]
-variable [disc : DiscreteMeasurableSpace U]
-variable [Inhabited U]
-
-/--
-privPostProcess preserves absolute continuity between neighbours
--/
-def privPostProcess_AC {f : U -> V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
-  rw [ACNeighbour] at *
-  unfold AbsCts at *
-  intro l₁ l₂ Hn v
-  have Hac := Hac l₁ l₂ Hn
-  simp [privPostProcess]
-  simp [DFunLike.coe, SPMF.instFunLike]
-  intro Hppz i fi
-  apply Hac
-  apply Hppz
-  apply fi
+-- The lemmas in this section work at the level of bare types, with no
+-- measurability / countability / inhabitedness assumptions.
+variable {T U V : Type}
 
 /--
 Normalized fiber
@@ -90,18 +71,15 @@ theorem norm_simplify (x : ENNReal) (h : x ≠ ⊤) :
     simp
     rfl
 
-
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
   rw [← condition_to_subset]
   have A : (∑' (y : T), if x = f y  then p y else 0) ≤ ∑' (x : T), p x := by
-    apply tsum_le_tsum
-    · intro i
-      split
-      · trivial
-      · simp only [_root_.zero_le]
-    · exact ENNReal.summable
-    · exact ENNReal.summable
+    apply ENNReal.tsum_le_tsum
+    intro i
+    split
+    · trivial
+    · simp only [_root_.zero_le]
   rw [← lt_top_iff_ne_top]
   apply lt_of_le_of_lt A
   rw [lt_top_iff_ne_top]
@@ -110,13 +88,13 @@ theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T)
 theorem ENNReal.tsum_pos {f : T → ENNReal} (h1 : ∑' x : T, f x ≠ ⊤) (h2 : ∀ x : T, f x ≠ 0) (i : T) :
   0 < ∑' x : T, f x := by
   apply (toNNReal_lt_toNNReal ENNReal.zero_ne_top h1).mp
-  simp only [zero_toNNReal]
+  simp only [ENNReal.toNNReal_zero]
   rw [ENNReal.tsum_toNNReal_eq (ENNReal.ne_top_of_tsum_ne_top h1)]
   have S : Summable fun a => (f a).toNNReal := by
     rw [← tsum_coe_ne_top_iff_summable]
     conv =>
       left
-      right
+      arg 1
       intro b
       rw [ENNReal.coe_toNNReal (ENNReal.ne_top_of_tsum_ne_top h1 b)]
     trivial
@@ -143,7 +121,6 @@ lemma rpow_nonzero (x : ENNReal) (y : ℝ) (H : ¬(x = 0 ∧ 0 < y ∨ x = ⊤ �
   apply (ENNReal.rpow_eq_zero_iff).mp
   apply Hk
 
-
 /--
 Jensen's inequality for privPostProcess, restructed to types where ``nq l₁`` is nonzero
 -/
@@ -154,7 +131,7 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
   (HNorm2 : HasSum (nq l₂) 1)
   (Habs : AbsCts (nq l₁) (nq l₂))
   (Hnq2 : ∀ (u : U), nq l₁ u ≠ 0)
-  (h2 : Neighbour l₁ l₂) :
+  (_h2 : Neighbour l₁ l₂) :
   (∑' (x : V), (∑' (a : U), if x = f a then nq l₁ a else 0) ^ α * (∑' (a : U), if x = f a then nq l₂ a else 0) ^ (1 - α)) ≤ (∑' (x : U), nq l₁ x ^ α * nq l₂ x ^ (1 - α)) := by
 
   -- By absolute continuity, nq1 is nonzero
@@ -442,6 +419,17 @@ theorem tsum_ne_zero_of_ne_zero {T : Type} [Inhabited T] (f : T → ENNReal) (h 
   have B := CONTRA default
   contradiction
 
+end postprocess_fibers
+
+section postprocess_jensen
+
+-- These theorems need measurability/countability on the codomain U, but not
+-- on the input list type T, and do not need U to be inhabited.
+variable {T U V : Type}
+variable [MeasurableSpace U]
+variable [Countable U]
+variable [DiscreteMeasurableSpace U]
+
 /--
 Jensen's inequality for privPostProcess.
 
@@ -524,19 +512,11 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
     apply HR
   · rename_i x_empty
     simp at *
-    have Hempty : IsEmpty {x // ¬nq l₁ x = 0} := by
+    haveI Hempty : IsEmpty {x // ¬nq l₁ x = 0} := by
       exact Subtype.isEmpty_of_false fun a a_1 => a_1 (x_empty a)
-    rw [@tsum_empty _ _ _ _ _ Hempty]
-    conv =>
-      lhs
-      arg 1
-      intro
-      rw [@tsum_empty _ _ _ _ _ Hempty]
-      rw [@tsum_empty _ _ _ _ _ Hempty]
+    simp only [tsum_empty]
     simp
-    intro
-    left
-    linarith
+    right; left; linarith
 
 /--
 privPostProcess satisfies the zCDP bound
@@ -580,6 +560,20 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
   · apply Hac l₂ l₁
     exact Neighbour_symm l₁ l₂ h2
 
+/--
+privPostProcess preserves absolute continuity between neighbours
+-/
+def privPostProcess_AC {f : U → V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+  rw [ACNeighbour] at *
+  unfold AbsCts at *
+  intro l₁ l₂ Hn v
+  have Hac := Hac l₁ l₂ Hn
+  simp [privPostProcess]
+  simp [DFunLike.coe]
+  intro Hppz i fi
+  apply Hac
+  apply Hppz
+  apply fi
 
 /--
 Postprocessing preserves zCDP
@@ -592,5 +586,7 @@ theorem privPostProcess_zCDP {f : U → V}
   apply And.intro
   · exact privPostProcess_AC nq Hac1
   · exact privPostProcess_zCDPBound Hb1 f Hac1
+
+end postprocess_jensen
 
 end SLang

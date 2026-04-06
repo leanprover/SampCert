@@ -43,7 +43,7 @@ theorem probUntilCut_apply_unsat (body : SLang T) (cond : T → Bool) (fuel : �
   probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x = 0 := by
   revert i
   induction fuel
-  · simp only [zero_eq, probUntilCut_zero, implies_true]
+  · simp only [probUntilCut_zero, implies_true]
   · rename_i fuel IH
     intro j
     simp only [probWhileCut, probWhileFunctional, decide_eq_true_eq, Bind.bind, Pure.pure, ite_apply,
@@ -69,7 +69,7 @@ theorem probUntil_apply_unsat (body : SLang T) (cond : T → Bool) (x : T) (h : 
   simp only [_root_.mul_eq_zero]
   simp only [iSup_eq_zero]
   intro i ; right ; intro j
-  simp only [h, not_false_eq_true, probUntilCut_apply_unsat]
+  exact probUntilCut_apply_unsat _ _ _ _ _ h
 
 lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
   (if x_1 = x then 0 else if cond x_1 = true then if x = x_1 then body x_1 else 0 else 0) = 0 := by
@@ -82,29 +82,6 @@ lemma if_simpl (body : SLang T) (cond : T → Bool) (x_1 x : T) :
         contradiction
       · simp
     · simp
-
--- Dead code
-theorem repeat_1 (body : SLang T) (cond : T → Bool) (x : T) (h : cond x) :
-  ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) 1 i x
-    = body x := by
-  simp [probWhileCut, probWhileFunctional, ite_apply]
-  rw [tsum_split_ite']
-  simp only [tsum_zero, zero_add]
-  have FOO := tsum_split_coe_right cond (fun i => @ite ℝ≥0∞ (x = ↑i) (propDecidable (x = ↑i)) (body ↑i) 0)
-  rw [FOO]
-  clear FOO
-  conv =>
-    left
-    rw [ENNReal.tsum_eq_add_tsum_ite x]
-  simp only [h, zero_apply, mul_zero, tsum_zero, ↓reduceIte, mul_one,
-    zero_add]
-  conv =>
-    left
-    right
-    right
-    intro y
-    rw [if_simpl]
-  simp
 
 lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
   (∑' (i : T), if cond i = false then f i else g i)
@@ -127,9 +104,9 @@ lemma tsum_split_ite_exp (cond : T → Bool) (f g : T → ENNReal) :
 
 theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : ℕ) (x : T) (h1 : cond x) :
   ∑' (i : T), body i * probWhileCut (fun v => decide (cond v = false)) (fun _ => body) fuel i x
-    = ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
+    = ∑ i ∈ range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i := by
   induction fuel
-  · simp only [zero_eq, probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
+  · simp only [probUntilCut_zero, mul_zero, tsum_zero, range_zero, sum_empty]
   · rename_i fuel IH
     unfold probWhileCut
     unfold probWhileFunctional
@@ -141,8 +118,8 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
       right
       rw [ENNReal.tsum_eq_add_tsum_ite x]
       right
-      right
-      intro y
+      arg 1
+      ext y
       rw [if_simpl]
     simp only [h1, ↓reduceIte, tsum_zero, add_zero]
     rw [IH]
@@ -164,21 +141,21 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
       right
       right
       right
-      intro x
+      ext x
       rw [mul_comm]
     rw [← mul_sum]
     have A : ∀ i : T, @ite ℝ≥0∞ (cond i = false) (instDecidableEqBool (cond i) false)
-            (body i * (body x * ∑ i in range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i)) 0
+            (body i * (body x * ∑ i ∈ range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i)) 0
             = @ite ℝ≥0∞ (cond i = false) (instDecidableEqBool (cond i) false)
-            (body i) 0 * (body x * ∑ i in range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i) := by
+            (body i) 0 * (body x * ∑ i ∈ range fuel, (∑' (x : T), @ite ℝ≥0∞ (cond x = true) (instDecidableEqBool (cond x) true) 0 (body x)) ^ i) := by
       intro i
       split
       · simp
       · simp
     conv =>
       left
-      right
-      intro i
+      arg 1
+      ext i
       rw [A]
     rw [ENNReal.tsum_mul_right]
     conv =>
@@ -199,7 +176,7 @@ theorem probUntilCut_closed_form (body : SLang T) (cond : T → Bool) (fuel : �
 Expression for the limit of the closed form of truncated ``until``
 -/
 lemma probUntilCut_convergence (body : SLang T) (cond : T → Bool) (x : T) :
-  ⨆ fuel, ∑ i in range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
+  ⨆ fuel, ∑ i ∈ range fuel, body x * (∑' x : T, if cond x then 0 else body x)^i
     = body x * (1 - ∑' x : T, if cond x then 0 else body x)⁻¹ := by
   rw [← ENNReal.tsum_eq_iSup_nat]
   rw [ENNReal.tsum_mul_left]
@@ -286,11 +263,11 @@ theorem probUntil_apply_norm (body : SLang T) (cond : T → Bool) (x : T) (norm 
   conv =>
     left
     left
-    right
-    intro y
+    arg 1
+    ext y
     rw [A]
   clear A
-  rw [tsum_add ENNReal.summable ENNReal.summable]
+  rw [Summable.tsum_add ENNReal.summable ENNReal.summable]
   intro B
   have F : (∑' (x : T), if cond x = true then 0 else body x) ≠ ⊤ := by
     by_contra h

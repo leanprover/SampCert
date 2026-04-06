@@ -11,26 +11,26 @@ Authors: Jean-Baptiste Tristan
 static int urandom = -1; 
 
 extern "C" lean_object * prob_UniformByte (lean_object * eta) {
-    lean_dec(eta);
+    (void)eta;
     unsigned char r;
     read(urandom, &r,1);
     return lean_box((size_t) r);
 }
 
 extern "C" lean_object * prob_Pure(lean_object * a, lean_object * eta) {
-    lean_dec(eta);
+    (void)eta;
     return a;
-} 
+}
 
 extern "C" lean_object * prob_Bind(lean_object * f, lean_object * g, lean_object * eta) {
-    lean_dec(eta);
+    (void)eta;
     lean_object * exf = lean_apply_1(f,lean_box(0));
     lean_object * pa = lean_apply_2(g,exf,lean_box(0));
     return pa;
-} 
+}
 
 extern "C" lean_object * prob_While(lean_object * condition, lean_object * body, lean_object * init, lean_object * eta) {
-    lean_dec(eta);
+    (void)eta;
     lean_object * state = init; 
     lean_inc(state);
     lean_inc(condition);

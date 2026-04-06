@@ -45,8 +45,8 @@ theorem DiscreteGaussianGenSample_apply (num : PNat) (den : PNat) (μ x : ℤ) :
   conv =>
     left
     right
-    right
-    intro y
+    arg 1
+    ext y
     rw [if_simple_GaussianGen]
   simp only [tsum_zero, add_zero]
   congr 2

@@ -99,7 +99,7 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
   unfold RenyiDivergence'
   have A : 0 < 1 / (α - 1) := by
     simp [h']
-  rw [← le_div_iff' A]
+  rw [← le_div_iff₀' A]
   refine Real.exp_le_exp.mp ?_
   have B : ∀ μ : ℤ, ∀ x : ℝ, 0 ≤ (gauss_term_ℝ σ μ) x := by
     intro μ x
@@ -131,16 +131,16 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
   · conv =>
       left
       ring_nf
-      right
-      intro x
+      arg 1
+      ext x
       rw [mul_rpow (B μ x) (C μ)]
       rw [mul_rpow (B' x) C']
     -- First, I work on the denominator
     rw [shifted_gauss_sum_0 h]
     conv =>
       left
-      right
-      intro x
+      arg 1
+      ext x
       rw [mul_assoc]
       right
       rw [← mul_assoc]
@@ -149,8 +149,8 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
     have X : ∀ x y : ℝ, x - y = x + (-y) := fun x y => rfl
     conv =>
       left
-      right
-      intro x
+      arg 1
+      ext x
       rw [mul_assoc]
       right
       right
@@ -165,8 +165,8 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
     simp
     conv =>
       left
-      right
-      intro x
+      arg 1
+      ext x
       rw [← mul_assoc]
     rw [tsum_mul_right]
     rw [← division_def]
@@ -175,14 +175,14 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       left
       left
       unfold gauss_term_ℝ
-      right
-      intro x
+      arg 1
+      ext x
       rw [← Real.exp_mul]
       rw [← Real.exp_mul]
       rw [← exp_add]
       rw [← mul_div_right_comm]
       rw [← mul_div_right_comm]
-      rw [div_add_div_same]
+      rw [← add_div]
       rw [mul_sub_left_distrib]
       right
       left
@@ -194,8 +194,8 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
     conv =>
       left
       left
-      right
-      intro x
+      arg 1
+      ext x
       rw [E]
       rw [_root_.add_div]
       rw [exp_add]
@@ -211,8 +211,8 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
         right
         rw [← Int.cast_zero]
       apply sum_gauss_term_pos h
-    have G := @div_le_one ℝ _ (∑' (x : ℤ), rexp (-(↑x - α * ↑μ) ^ 2 / (2 * σ^2))) (∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * σ^2)))
-    replace G := (G X).2 F
+    have G : _ ↔ _ := div_le_one (a := (∑' (x : ℤ), rexp (-(↑x - α * ↑μ) ^ 2 / (2 * σ^2)))) (b := (∑' (x : ℤ), rexp (-(↑x - 0) ^ 2 / (2 * σ^2)))) X
+    replace G := G.2 F
     clear X F
     conv =>
       right
@@ -225,39 +225,39 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       rw [← mul_div_assoc]
     apply mul_le_of_le_one_right _ G
     apply exp_nonneg
-  · apply tsum_pos _ _ 0 _
+  · apply Summable.tsum_pos _ _ 0 _
     · simp -- some of this proof is similar to the one just above and needs to be hoisted
       conv =>
-        right
-        intro x
+        arg 1
+        ext x
         rw [division_def]
         rw [division_def]
         rw [mul_rpow (B μ x) (C μ)]
         rw [mul_rpow (B' x) C']
       conv =>
-        right
-        intro x
+        arg 1
+        ext x
         rw [mul_assoc]
         right
         rw [← mul_assoc]
         left
         rw [mul_comm]
       conv =>
-        right
-        intro x
+        arg 1
+        ext x
         ring_nf
       apply Summable.mul_right
       apply Summable.mul_right
       unfold gauss_term_ℝ
       conv =>
-        right
-        intro x
+        arg 1
+        ext x
         rw [← Real.exp_mul]
         rw [← Real.exp_mul]
         rw [← exp_add]
         rw [← mul_div_right_comm]
         rw [← mul_div_right_comm]
-        rw [div_add_div_same]
+        rw [← add_div]
         rw [mul_sub_left_distrib]
         rw [sub_zero]
         rw [mul_one]
@@ -268,10 +268,10 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
         intro x
         ring_nf
       conv =>
-        right
-        intro x
+        arg 1
+        ext x
         rw [X]
-        rw [← div_add_div_same]
+        rw [add_div]
         rw [exp_add]
       apply Summable.mul_right
       apply summable_gauss_term' h
@@ -296,7 +296,7 @@ lemma  sg_mul_simplify (ss : ℝ) (x μ ν : ℤ) :
   rw [← exp_add]
   rw [← mul_div_right_comm]
   rw [← mul_div_right_comm]
-  rw [div_add_div_same]
+  rw [← add_div]
   rw [← neg_mul_eq_neg_mul]
   rw [← neg_mul_eq_neg_mul]
   rw [← neg_add]
@@ -308,14 +308,14 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
   congr 2
   conv =>
     left
-    right
-    intro x
+    arg 1
+    ext x
     rw [SG_Renyi_simplify h]
     rw [division_def]
   conv =>
     right
-    right
-    intro x
+    arg 1
+    ext x
     rw [SG_Renyi_simplify h]
     rw [division_def]
   rw [tsum_mul_right]
@@ -332,8 +332,8 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
     ring_nf
   conv =>
     right
-    right
-    intro x
+    arg 1
+    ext x
     rw [A]
     rw [A]
   clear A
@@ -343,13 +343,13 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
   unfold gauss_term_ℝ
   conv =>
     left
-    right
-    intro x
+    arg 1
+    ext x
     rw [sg_mul_simplify]
   conv =>
     right
-    right
-    intro x
+    arg 1
+    ext x
     rw [sub_sub]
     rw [sub_sub]
     rw [← Int.cast_add]
@@ -366,8 +366,8 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
       ring_nf
   · intro β
     conv =>
-      right
-      intro x
+      arg 1
+      ext x
       rw [Int.cast_add]
       rw [add_sub_assoc]
       rw [add_sub_assoc]
@@ -380,8 +380,8 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
       intro x
       ring_nf
     conv =>
-      right
-      intro x
+      arg 1
+      ext x
       right
       left
       right
@@ -393,8 +393,8 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
           ↑μ ^ 2 * α ^ 2 + α * ↑ν ^ 2 - α ^ 2 * ↑ν ^ 2 + α * ↑μ ^ 2) := by
       ring_nf
     conv =>
-      right
-      intro x
+      arg 1
+      ext x
       rw [X]
       rw [← add_assoc]
     clear X
@@ -402,11 +402,11 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
       intro x
       ring_nf
     conv =>
-      right
-      intro x
+      arg 1
+      ext x
       rw [← X]
       rw [neg_add]
-      rw [← div_add_div_same]
+      rw [add_div]
       rw [exp_add]
     clear X
     apply Summable.mul_right
@@ -421,7 +421,7 @@ theorem Renyi_divergence_bound_pre {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α) (�
                   α ≤ α * (((μ - ν) : ℤ)^2 / (2 * σ^2)) := by
   unfold discrete_gaussian
   rw [SG_Renyi_shift h α μ ν (-ν)]
-  rw [add_right_neg]
+  rw [add_neg_cancel]
   apply  Renyi_divergence_bound h (μ + -ν) α h'
 
 /--
@@ -453,36 +453,36 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
     apply le_of_lt
     apply sum_gauss_term_pos h
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [division_def]
     rw [division_def]
     rw [mul_rpow (B μ x) (C μ)]
     rw [mul_rpow (B ν x) (C ν)]
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [mul_assoc]
     right
     rw [← mul_assoc]
     left
     rw [mul_comm]
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     ring_nf
   apply Summable.mul_right
   apply Summable.mul_right
   unfold gauss_term_ℝ
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [← Real.exp_mul]
     rw [← Real.exp_mul]
     rw [← exp_add]
     rw [← mul_div_right_comm]
     rw [← mul_div_right_comm]
-    rw [div_add_div_same]
+    rw [← add_div]
     rw [mul_sub_left_distrib]
     rw [mul_one]
     right
@@ -495,8 +495,8 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
         intro x
         ring_nf
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [X]
   clear X
 
@@ -505,8 +505,8 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
         ↑μ ^ 2 * α ^ 2 + α * ↑ν ^ 2 - α ^ 2 * ↑ν ^ 2 + α * ↑μ ^ 2) := by
     ring_nf
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [X]
     rw [← add_assoc]
   clear X
@@ -515,11 +515,11 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
     intro x
     ring_nf
   conv =>
-    right
-    intro x
+    arg 1
+    ext x
     rw [← X]
     rw [neg_add]
-    rw [← div_add_div_same]
+    rw [add_div]
     rw [exp_add]
   clear X
   apply Summable.mul_right
@@ -578,7 +578,7 @@ theorem Renyi_Gauss_divergence_bound' {σ α : ℝ} (h : σ ≠ 0) (h' : 1 < α)
         have Hzero'' := Hzero' (0 : ℤ)
         simp at Hzero''
         have C : (0 < discrete_gaussian σ (↑μ) 0 ^ α * discrete_gaussian σ (↑ν) 0 ^ (1 - α)) := by
-          apply Real.mul_pos
+          apply mul_pos
           · apply Real.rpow_pos_of_pos
             have A := discrete_gaussian_pos h μ (0 : ℤ)
             simp at A
@@ -616,7 +616,7 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
   RenyiDivergence ((DiscreteGaussianGenPMF num den μ)) (DiscreteGaussianGenPMF num den ν) α ≤
   (ENNReal.ofReal α) * (ENNReal.ofReal (((μ - ν) : ℤ)^2 : ℝ) / (((2 : ENNReal) * ((num : ENNReal) / (den : ENNReal))^2 : ENNReal))) := by
   have A : (num : ℝ) / (den : ℝ) ≠ 0 := by
-    simp only [ne_eq, div_eq_zero_iff, cast_eq_zero, PNat.ne_zero, or_self, not_false_eq_true]
+    simp only [ne_eq, div_eq_zero_iff]
     cases num
     cases den
     simp
@@ -653,39 +653,23 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
     congr
     rw [ENNReal.ofReal_inv_of_pos ?G1]
     case G1 =>
-      apply Real.mul_pos
+      apply mul_pos
       · simp
-      apply Real.mul_pos
-      · apply sq_pos_of_pos
-        apply NNReal.coe_pos.mpr
-        exact cast_pos.mpr Ha
-      · apply inv_pos_of_pos
-        apply sq_pos_of_pos
-        apply NNReal.coe_pos.mpr
-        exact cast_pos.mpr Hb
+      apply pow_pos
+      apply mul_pos
+      · positivity
+      · apply inv_pos.mpr; positivity
     congr
     rw [ENNReal.ofReal_mul ?G1]
     case G1 => simp
     simp
     congr
-    rw [division_def]
-    rw [← NNReal.coe_pow]
-    repeat rw [mul_pow]
-    rw [ENNReal.ofReal_mul ?G1]
-    case G1 => exact NNReal.zero_le_coe
-    congr
-    · simp
-      rw [← ENNReal.coe_pow]
-      rw [← NNReal.coe_pow]
-      rw [ENNReal.ofReal_coe_nnreal]
-    · rw [← ENNReal.inv_pow]
-      rw [← ENNReal.coe_pow]
-      rw [← NNReal.coe_pow]
-      rw [<- ENNReal.ofReal_coe_nnreal]
-      rw [ENNReal.ofReal_inv_of_pos]
-      apply NNReal.coe_pos.mpr
-      apply pow_two_pos_of_ne_zero
-      intro
-      simp_all
+    rw [division_def, mul_pow]
+    rw [ENNReal.ofReal_mul (by positivity)]
+    rw [ENNReal.ofReal_pow (by positivity)]
+    rw [ENNReal.ofReal_pow (by positivity)]
+    rw [ENNReal.ofReal_inv_of_pos (by positivity)]
+    rw [ENNReal.ofReal_coe_nnreal, ENNReal.ofReal_coe_nnreal]
+    rw [← mul_pow]
 
 end SLang

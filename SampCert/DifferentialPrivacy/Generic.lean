@@ -115,7 +115,7 @@ open Classical Nat Int Real ENNReal
 
 instance SPMF.instFunLike : FunLike (SPMF α) α ℝ≥0∞ where
   coe p a := p.1 a
-  coe_injective' _ _ h := Subtype.eq h
+  coe_injective' _ _ h := Subtype.ext h
 
 
 lemma compose_sum_rw_adaptive (nq1 : List T → SPMF U) (nq2 : U -> List T → SPMF V) (u : U) (v : V) (l : List T) :
@@ -182,8 +182,8 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
       contradiction
   conv =>
     left
-    right
-    intro a
+    arg 1
+    ext a
     right
     rw [A]
   rw [ENNReal.tsum_eq_add_tsum_ite b]
@@ -200,8 +200,8 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
   conv =>
     left
     right
-    right
-    intro x
+    arg 1
+    ext x
     rw [B]
   simp
   congr 1
@@ -219,8 +219,8 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
   conv =>
     left
     right
-    right
-    intro X
+    arg 1
+    ext X
     rw [C]
   simp
 
@@ -236,10 +236,8 @@ theorem ENNReal.HasSum_fiberwise {f : T → ENNReal} {a : ENNReal} (hf : HasSum 
   have C := @HasSum.sigma ENNReal V _ _ _ _ (fun y : V => { x // g x = y }) (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) (fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) a B
   apply C
   intro b
-  have F := @Summable.hasSum_iff ENNReal _ _ _ (fun c => (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) { fst := b, snd := c }) ((fun c => ∑' (b : ↑(g ⁻¹' {c})), f ↑b) b) _
-  apply (F _).2
-  · rfl
-  · apply ENNReal.summable
+  have F : Summable (fun c => (f ∘ ⇑(Equiv.sigmaFiberEquiv g)) ⟨b, c⟩) := ENNReal.summable
+  exact F.hasSum_iff.mpr rfl
 
 /--
 Partition series into fibers. `g` maps an element to its fiber.
@@ -268,8 +266,8 @@ theorem fiberwisation (p : T → ENNReal) (f : T → V) :
     exact eq_comm
   conv =>
     left
-    right
-    intro x
+    arg 1
+    ext x
     rw [A]
   clear A
   apply tsum_congr

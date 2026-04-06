@@ -35,7 +35,7 @@ theorem shifted_gauss_mean_neg (μ : ℝ) (n : ℤ) (k : ℤ) :
 theorem shifted_gauss_summable_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) ((n + k) : ℤ) := by
   conv =>
-    right
+    arg 1
     intro n
     rw [shifted_gauss_mean_pos μ σ n k]
   apply gauss_convergence_nat_pos h
@@ -46,7 +46,7 @@ theorem shifted_gauss_summable_pos {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ
 theorem shifted_gauss_summable_neg {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (k : ℤ) :
   Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) ((-(n + k)) : ℤ) := by
   conv =>
-    right
+    arg 1
     intro n
     rw [shifted_gauss_mean_neg μ n k]
   apply gauss_convergence_nat_pos h
@@ -79,7 +79,7 @@ theorem gauss_sum_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
       simp
       ring_nf
     conv =>
-      right
+      arg 1
       intro n
       rw [X]
     apply shifted_gauss_summable_neg h
@@ -93,7 +93,8 @@ theorem gauss_sum_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
 
   have S5 : Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) (n : ℤ) := by
     apply gauss_convergence_nat_pos h
-  have X5 := @tsum_eq_zero_add ℝ _ _ _ _ (fun (n : ℕ) => (gauss_term_ℝ σ μ) n) S5
+  have X5 := S5.tsum_eq_zero_add
+  push_cast at X5
   rw [X5]; clear X5 S5
 
   have S6 :  Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) (n + 1) := by
@@ -102,18 +103,17 @@ theorem gauss_sum_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     intro b
     simp
 
-  have X6 := @tsum_eq_zero_add ℝ _ _ _ _ (fun (n : ℕ) => (gauss_term_ℝ σ μ) (n + 1)) S6
+  have X6 := S6.tsum_eq_zero_add
   rw [X6]
 
   simp
-
-  rw [X6] ; clear X6 S6
+  clear X6 S6
 
   have S7 : Summable fun (n : ℕ) => (gauss_term_ℝ σ μ) (-1 + -(@Nat.cast ℝ AddMonoidWithOne.toNatCast n)) := by
     have X : ∀ n : ℕ, -(1 : ℝ) + -n = -(n + 1) := by
       simp
     conv =>
-      right
+      arg 1
       intro n
       rw [X]
     have S := @shifted_gauss_summable_neg σ h μ 1
@@ -121,50 +121,10 @@ theorem gauss_sum_1_periodic {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
     intro b
     simp
 
-  have X7 := @tsum_eq_zero_add ℝ _ _ _ _ (fun (n : ℕ) => (gauss_term_ℝ σ μ) (-1 + -(@Nat.cast ℝ AddMonoidWithOne.toNatCast n ))) S7
+  have X7 := S7.tsum_eq_zero_add
   rw [X7] ; clear X7 S7
 
   simp
-
-  ring_nf
-
-  conv =>
-    left
-    left
-    left
-    rw [add_assoc]
-    right
-    rw [add_comm]
-
-  ring_nf
-
-  conv =>
-    left
-    left
-    rw [add_assoc]
-    right
-    rw [add_comm]
-
-  ring_nf
-
-  have X : ∀ (b : ℕ), (2 : ℝ) + b = b + 1 + 1 := by
-    intro b
-    rw [add_comm]
-    rw [add_assoc]
-    congr
-    ring_nf
-
-  conv =>
-    left
-    left
-    right
-    right
-    intro b
-    rw [X]
-
-  congr
-  ext n
-  congr 1
   ring_nf
 
 /--

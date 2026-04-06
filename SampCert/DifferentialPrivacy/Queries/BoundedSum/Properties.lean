@@ -5,7 +5,6 @@ Authors: Jean-Baptiste Tristan
 -/
 
 import Mathlib.Algebra.Group.Defs
-import Mathlib.Init.Algebra.Classes
 import Init.Data.Int.Order
 import SampCert.DifferentialPrivacy.Queries.BoundedSum.Code
 
@@ -20,9 +19,6 @@ open Classical Nat Int Real
 noncomputable section
 
 namespace SLang
-
-variable [dps : DPSystem ℕ]
-variable [dpn : DPNoise dps]
 
 /--
 Sensitivity of the bounded sum is equal to the bound.
@@ -57,6 +53,9 @@ theorem exactBoundedSum_sensitivity (U : ℕ+) : sensitivity (exactBoundedSum U)
     · rename_i h
       rw [h]
       simp
+
+variable [dps : DPSystem ℕ]
+variable [dpn : DPNoise dps]
 
 /--
 The noised bounded sum satisfies the DP property of the DP system.

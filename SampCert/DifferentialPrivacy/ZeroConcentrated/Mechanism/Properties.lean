@@ -40,7 +40,7 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
   (ENNReal.ofReal α *
       (ENNReal.ofReal (Δ ^ OfNat.ofNat 2) /
         (OfNat.ofNat 2 * (ofNNReal (NNReal.ofPNat (Δ * ε₂)) / ofNNReal (NNReal.ofPNat ε₁)) ^ OfNat.ofNat 2))) := by
-      refine (ENNReal.mul_le_mul_left ?G1 ?G2).mpr ?G3
+      refine (ENNReal.mul_le_mul_iff_right ?G1 ?G2).mpr ?G3
       case G1 =>
         intro HK
         simp_all
@@ -52,140 +52,49 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
       refine sq_le_sq.mpr ?G4.h.a
       simp only [NNReal.ofPNat, Nonneg.mk_natCast]
       rw [NNReal.abs_eq]
-      have X1 : NNReal.toReal ((query l₁ - query l₂).natAbs).cast ≤ NNReal.toReal Δ.val.cast := by
-        simp
-        apply bounded_sensitivity
-      apply (le_trans _ X1)
-      clear X1
-      generalize HW : (query l₁ - query l₂) = W
-      rw [NNReal.coe_natCast]
-      rw [natAbs]
-      split <;> simp_all
-      rw [abs_le]
-      apply And.intro
-      · linarith
-      · linarith
+      rw [← Int.cast_abs]
+      have X1 : |query l₁ - query l₂| ≤ (Δ.val : ℤ) := by
+        rw [Int.abs_eq_natAbs]
+        exact_mod_cast bounded_sensitivity
+      have : (|query l₁ - query l₂| : ℝ) ≤ ((Δ.val : ℤ) : ℝ) := by exact_mod_cast X1
+      simpa using this
   apply le_trans
   · apply X
   clear X
   apply Eq.le
-  rw [ENNReal.ofReal_mul ?G1]
-  case G1 =>
-    simp
-    apply div_nonneg
-    · apply sq_nonneg
-    · apply sq_nonneg
-  rw [ENNReal.ofReal_mul ?G1]
-  case G1 => simp
-  rw [mul_comm]
-  congr
-  repeat rw [division_def]
-  rw [ENNReal.mul_inv ?G1 ?G2]
-  case G1 => left ; simp
-  case G2 => left ; simp
-  simp
-  rw [mul_comm]
-  repeat rw [mul_assoc]
-  congr
-  · rw [ENNReal.ofReal_inv_of_pos ?G1]
-    case G1 => simp
-    congr
-    rw [ENNReal.ofReal]
-    simp
-  ring_nf
-  rw [ENNReal.mul_inv ?G1 ?G2]
-  case G1 =>
-    left
-    apply ENNReal.pow_ne_zero
-    apply coe_ne_zero.mpr
-    rw [HMul.hMul]
-    rw [instHMul]
-    simp only [ne_eq, Nat.cast_eq_zero]
-    cases ε₂
-    cases Δ
-    rw [Mul.mul]
-    rw [instPNatMul]
-    rw [Positive.instMulSubtypeLtOfNat_mathlib]
-    simp
-    aesop
-  case G2 =>
-    left
-    exact Ne.symm (ne_of_beq_false rfl)
-  rw [ENNReal.ofReal_mul ?G1]
-  case G1 => apply sq_nonneg
-  rw [mul_assoc]
-  rw [mul_comm]
-  rw [mul_assoc]
-  congr
-  · rw [ENNReal.inv_pow]
-    rw [ENNReal.ofReal_pow ?G1]
-    case G1 => exact NNReal.zero_le_coe
-    congr
-    rw [InvolutiveInv.inv_inv]
-    rw [ENNReal.ofReal]
-    simp
-  · rcases Δ with ⟨ Δ', HΔ ⟩
-    rcases ε₂ with ⟨ ε₂', Hε₂ ⟩
-    simp
-    conv =>
-      enter [1, 2, 1, 1, 1]
-      rw [HMul.hMul]
-      rw [instHMul]
-      simp
-      rw [Mul.mul]
-      rw [instPNatMul]
-      rw [Positive.instMulSubtypeLtOfNat_mathlib]
-      simp
-    rw [ENNReal.inv_pow]
-    rw [<- ENNReal.rpow_neg_one]
-    rw [← ENNReal.rpow_mul_natCast]
-    rw [ENNReal.ofReal]
-    rw [ENNReal.coe_rpow_of_ne_zero ?G1]
-    case G1 =>
-      apply NNReal.coe_ne_zero.mp
-      simp
-      aesop
-    rw [<- ENNReal.coe_mul]
-    rw [ENNReal.ofReal]
-    congr
-    simp
-    rw [NNReal.rpow_neg]
-    rw [NNReal.mul_rpow]
-    simp
-    have X : (0 : NNReal) < (Δ'.cast * Δ'.cast) := by
-      simp
-      intro HK
-      rw [HK] at HΔ
-      simp at HΔ
-    have COE1 : (NNReal.toReal Δ'.cast ^ OfNat.ofNat 2).toNNReal  = (Δ'.cast ^ OfNat.ofNat 2) := by
-      simp
-      rw [Real.toNNReal]
-      -- Only rewriting sq because it's so hard to factor out terms with implicit coercions
-      rw [sq]
-      rw [sq]
-      conv =>
-        rhs
-        rw [<- @max_eq_left_of_lt _ _ (Δ'.cast * Δ'.cast) 0 X]
-      congr
-    rw [COE1]
-    generalize HA : ((Δ'.cast ^ OfNat.ofNat 2) : NNReal) = A
-    rw [mul_comm]
-    rw [mul_assoc]
-    rw [inv_mul_cancel ?G1]
-    case G1 =>
-      intro HK
-      rw [HK] at HA
-      simp at HA
-      rw [HA] at HΔ
-      simp at HΔ
-    clear A HA
-    simp
-    rw [Real.toNNReal_inv]
-    congr
-    rw [Real.toNNReal_pow ?G1]
-    case G1 => exact NNReal.zero_le_coe
-    congr
-    simp only [Real.toNNReal_coe]
+  -- Block 1: Rewrite NNReal.ofPNat everywhere as ↑n (defeq)
+  simp only [show ∀ (n : ℕ+), (NNReal.ofPNat n : NNReal) = ((n.val : ℕ) : NNReal) from fun _ => rfl]
+  -- Block 2: The ↑↑↑(Δ * ε₂) on the LHS is ℝ≥0∞-coerced; on RHS ↑↑↑ε₁, ↑↑↑ε₂ are ℝ-coerced.
+  -- Rewrite LHS to match: ↑↑↑(Δ*ε₂)/↑↑↑ε₁ is ENNReal. We want to wrap everything in ENNReal.ofReal.
+  -- Key: ENNReal.ofReal ↑n = ↑n (when n : ℕ, reading ↑n : ℝ≥0∞ via natCast)
+  have hcoeℝ : ∀ (n : ℕ+), ((((n : ℕ+) : ℕ) : NNReal) : ℝ≥0∞) =
+                          ENNReal.ofReal ((((n : ℕ+) : ℕ) : NNReal) : ℝ) := by
+    intro n
+    rw [ENNReal.ofReal_coe_nnreal]
+  rw [hcoeℝ ε₁, hcoeℝ (Δ * ε₂)]
+  -- Block 3: Consolidate LHS into single ENNReal.ofReal
+  have hε₁pos : (0 : ℝ) < ((((ε₁ : ℕ+) : ℕ) : NNReal) : ℝ) := by
+    exact_mod_cast ε₁.pos
+  rw [← ENNReal.ofReal_div_of_pos hε₁pos]
+  have hdivnn : (0 : ℝ) ≤ (((((Δ * ε₂) : ℕ+) : ℕ) : NNReal) : ℝ) / ((((ε₁ : ℕ+) : ℕ) : NNReal) : ℝ) := by
+    apply div_nonneg <;> simp
+  rw [← ENNReal.ofReal_pow hdivnn]
+  -- Convert `2 : ℝ≥0∞` to `ENNReal.ofReal 2`
+  rw [show (OfNat.ofNat 2 : ℝ≥0∞) = ENNReal.ofReal 2 from by
+    rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) from by norm_num, ENNReal.ofReal_natCast]; rfl]
+  rw [← ENNReal.ofReal_mul (by norm_num : (0 : ℝ) ≤ 2)]
+  rw [← ENNReal.ofReal_div_of_pos (by positivity : (0 : ℝ) < 2 * _)]
+  rw [← ENNReal.ofReal_mul (by linarith : (0 : ℝ) ≤ α)]
+  -- Block 4: Pure Real equality
+  congr 1
+  have hε₁r : (0 : ℝ) < (((ε₁ : ℕ+) : ℕ) : ℝ) := by exact_mod_cast ε₁.pos
+  have hε₂r : (0 : ℝ) < (((ε₂ : ℕ+) : ℕ) : ℝ) := by exact_mod_cast ε₂.pos
+  push_cast
+  -- Normalize NNReal-mediated casts on RHS to direct ℕ→ℝ
+  change α * ((((Δ : ℕ+) : ℕ) : ℝ) ^ 2 /
+    (2 * ((((Δ : ℕ+) : ℕ) : ℝ) * (((ε₂ : ℕ+) : ℕ) : ℝ) / (((ε₁ : ℕ+) : ℕ) : ℝ)) ^ 2))
+    = 2⁻¹ * ((((ε₁ : ℕ+) : ℕ) : ℝ) / (((ε₂ : ℕ+) : ℕ) : ℝ)) ^ 2 * α
+  field_simp
 
 lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) :
   discrete_gaussian σ μ (x - τ) = discrete_gaussian σ (μ + τ) (x) := by

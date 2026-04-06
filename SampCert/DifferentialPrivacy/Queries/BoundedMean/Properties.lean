@@ -20,13 +20,14 @@ noncomputable section
 
 namespace SLang
 
-variable [dps : DPSystem ℕ]
-variable [dpn : DPNoise dps]
-
 lemma budget_split (ε₁ ε₂ : ℕ+) :
   (ε₁ : NNReal) / (ε₂ : NNReal) = (ε₁ : NNReal) / ((2 * ε₂) : ℕ+) + (ε₁ : NNReal) / ((2 * ε₂) : ℕ+) := by
   field_simp
-  ring_nf
+  push_cast
+  ring
+
+variable [dps : DPSystem ℕ]
+variable [dpn : DPNoise dps]
 
 /--
 DP bound for noised mean.
@@ -45,6 +46,5 @@ theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) (ε : NNReal)
 
   case SC1 =>
     ring_nf
-    simp [div_mul]
 
 end SLang

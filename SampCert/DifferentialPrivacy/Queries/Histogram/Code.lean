@@ -42,7 +42,7 @@ A histogram with a fixed binning method and ``i+1`` bins
 Counts in the histogram are permitted to be negative.
 -/
 structure Histogram (T : Type) (num_bins : ℕ+) (B : Bins T num_bins) where
-  count : Mathlib.Vector ℤ num_bins
+  count : List.Vector ℤ num_bins
 
 variable {T : Type}
 variable (B : Bins T numBins)
@@ -51,7 +51,7 @@ variable (B : Bins T numBins)
 Construct an empty histagram
 -/
 def emptyHistogram : Histogram T numBins B :=
-  Histogram.mk (Mathlib.Vector.replicate numBins 0)
+  Histogram.mk (List.Vector.replicate numBins 0)
 
 -- Is there any way to get the discrete measure space for free?
 instance : MeasurableSpace (Histogram T numBins B) where
@@ -63,7 +63,7 @@ instance : MeasurableSpace (Histogram T numBins B) where
 -- There's probably an easier way to do this?
 instance : Countable (Histogram T numBins B) where
   exists_injective_nat' := by
-    have Y : ∃ f : Mathlib.Vector ℤ numBins -> ℕ, Function.Injective f := by exact Countable.exists_injective_nat'
+    have Y : ∃ f : List.Vector ℤ numBins -> ℕ, Function.Injective f := by exact Countable.exists_injective_nat'
     rcases Y with ⟨ f, Hf ⟩
     exists (fun h => f h.count)
     intro h₁ h₂
@@ -111,8 +111,8 @@ def privNoisedHistogramAux (ε₁ ε₂ : ℕ+) (n : ℕ) (Hn : n < numBins) : M
     | Nat.zero => privConst (emptyHistogram numBins B)
     | Nat.succ n' => privNoisedHistogramAux ε₁ ε₂ n' (Nat.lt_of_succ_lt Hn)
   privPostProcess
-    (privCompose (privNoisedBinCount numBins B ε₁ ε₂ n) privNoisedHistogramAux_rec)
-    (fun z => setCount numBins B z.2 n z.1)
+    (privCompose (privNoisedBinCount numBins B ε₁ ε₂ ⟨n, Hn⟩) privNoisedHistogramAux_rec)
+    (fun z => setCount numBins B z.2 ⟨n, Hn⟩ z.1)
 
 
 /--

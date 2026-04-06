@@ -7,13 +7,11 @@ import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
-import Mathlib.Logic.IsEmpty
+import Mathlib.Logic.IsEmpty.Basic
 
 noncomputable section
 
 open Classical Set
-
-variable [Hu : Nonempty U]
 
 namespace SLang
 

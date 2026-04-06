@@ -111,7 +111,7 @@ lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → P
     (fun l => (p l) >>= (fun a : U => (q l) >>= fun b : V => h a b)) =
     fun l => (privCompose p q l) >>= (fun z => h z.1 z.2) := by
   ext l x
-  simp [privCompose, privComposeAdaptive, tsum_prod']
+  simp [privCompose, privComposeAdaptive]
 
 /--
 A noise function for a differential privacy system

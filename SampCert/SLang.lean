@@ -184,10 +184,10 @@ lemma probBind_norm (p : SLang α) (q : α -> SLang β) :
   let q' : α -> PMF β := (fun a => ⟨q a, H2' a ⟩)
   have H : (probBind p (fun x => q x)) = (PMF.bind p' q') := by
     unfold probBind
-    simp [DFunLike.coe, PMF.instFunLike, PMF.bind]
+    simp [DFunLike.coe, PMF.bind, p', q']
   rw [H]
   cases (PMF.bind p' q')
-  simp [DFunLike.coe, PMF.instFunLike]
+  simp [DFunLike.coe]
   rw [<- Summable.hasSum_iff ENNReal.summable]
   trivial
 
