@@ -92,10 +92,10 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
   -- Apply chain rule, and simplify powers
   conv =>
     enter [1, 1, a, 1, b]
-    rw [privComposeChainRule]
-    rw [privComposeChainRule]
-    rw [ENNReal.mul_rpow_of_ne_top (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _)]
-    rw [ENNReal.mul_rpow_of_ne_top (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _)]
+    erw [privComposeChainRule]
+    erw [privComposeChainRule]
+    erw [ENNReal.mul_rpow_of_ne_top (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _)]
+    erw [ENNReal.mul_rpow_of_ne_top (PMF.apply_ne_top _ _) (PMF.apply_ne_top _ _)]
 
   -- Bring sup into the sum
   rw [<- ENNReal.tsum_mul_right]

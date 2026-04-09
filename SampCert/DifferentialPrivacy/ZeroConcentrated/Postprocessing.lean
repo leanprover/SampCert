@@ -204,8 +204,7 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
     repeat rw [δpmf]
     unfold δ
     simp
-    rw [DFunLike.coe]
-    simp [PMF.instFunLike]
+    simp [DFunLike.coe]
     intro H
     cases H
     · rename_i Hl2z

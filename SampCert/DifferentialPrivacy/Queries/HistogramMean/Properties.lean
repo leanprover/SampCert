@@ -27,34 +27,17 @@ variable (numBins : ℕ+)
 variable (B : Bins ℕ numBins)
 variable (unbin : Fin numBins -> ℕ+)
 
--- FIXME: Can I get away without these?
-
-instance : MeasurableSpace (Option (Fin ↑numBins) × Option ℚ) where
-  MeasurableSet' _ := True
-  measurableSet_empty := by simp only
-  measurableSet_compl := by simp only [implies_true]
-  measurableSet_iUnion := by simp only [implies_true]
-
+instance : MeasurableSpace (Option (Fin ↑numBins) × Option ℚ) := ⊤
 instance : DiscreteMeasurableSpace (Option (Fin ↑numBins) × Option ℚ) where
-  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
+  forall_measurableSet _ := .congr trivial rfl
 
-instance : MeasurableSpace (Option ℚ) where
-  MeasurableSet' _ := True
-  measurableSet_empty := by simp only
-  measurableSet_compl := by simp only [implies_true]
-  measurableSet_iUnion := by simp only [implies_true]
-
+instance : MeasurableSpace (Option ℚ) := ⊤
 instance : DiscreteMeasurableSpace (Option ℚ) where
-  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
+  forall_measurableSet _ := .congr trivial rfl
 
-instance : MeasurableSpace (Option (Fin ↑numBins)) where
-  MeasurableSet' _ := True
-  measurableSet_empty := by simp only
-  measurableSet_compl := by simp only [implies_true]
-  measurableSet_iUnion := by simp only [implies_true]
-
+instance : MeasurableSpace (Option (Fin ↑numBins)) := ⊤
 instance : DiscreteMeasurableSpace (Option (Fin ↑numBins)) where
-  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
+  forall_measurableSet _ := .congr trivial rfl
 
 
 /--

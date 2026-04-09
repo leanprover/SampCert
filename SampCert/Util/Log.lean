@@ -193,16 +193,17 @@ noncomputable def ofEReal (e : EReal) : ENNReal :=
   | some (some r) => ENNReal.ofReal r
 
 @[simp]
-lemma ofEReal_bot : ofEReal ⊥ = 0 := by simp [ofEReal]
+lemma ofEReal_bot : ofEReal ⊥ = 0 := by rfl
 
 @[simp]
-lemma ofEReal_top : ofEReal ⊤ = ⊤ := by simp [ofEReal]
+lemma ofEReal_top : ofEReal ⊤ = ⊤ := by rfl
 
 @[simp]
-lemma ofEReal_zero : ofEReal 0 = 0 := by simp [ofEReal]
+lemma ofEReal_zero : ofEReal 0 = 0 := by
+  show ENNReal.ofReal 0 = 0; simp
 
 @[simp]
-lemma ofEReal_real (r : ℝ) : ofEReal r = ENNReal.ofReal r := by simp [Real.toEReal, ofEReal]
+lemma ofEReal_real (r : ℝ) : ofEReal r = ENNReal.ofReal r := by rfl
 
 
 lemma ofEReal_eq_zero_iff (w : EReal) : w ≤ 0 <-> ofEReal w = 0 := by
@@ -363,100 +364,48 @@ def eexp (y : EReal) : ENNReal :=
   | ⊤ => ⊤
   | some (some r) => ENNReal.ofReal (Real.exp r)
 
--- MARKUSDE: cleanup?
 @[simp]
 lemma elog_of_pos_real {r : ℝ} (H : 0 < r) : elog (ENNReal.ofReal r) = Real.log r := by
-  rw [elog.eq_def]
-  split
-  · simp at *
-  · split
-    · rename_i r' heq h
-      exfalso
-      rw [h] at heq
-      simp at heq
-      linarith
-    · rename_i h' r' heq h
-      simp_all
-      congr
-      simp [ENNReal.ofReal] at heq
-      rw [<- heq]
-      exact (Real.coe_toNNReal r (le_of_lt H))
+  simp only [ENNReal.ofReal, elog]
+  simp [Real.toNNReal_eq_zero, Real.coe_toNNReal r (le_of_lt H), H]
 
 @[simp]
-lemma elog_zero : elog 0 = ⊥ := by simp [elog]
+lemma elog_zero : elog 0 = ⊥ := by
+  show (if (0 : NNReal) = 0 then ⊥ else (Real.log (0 : NNReal) : EReal)) = ⊥; simp
 
 @[simp]
-lemma elog_top : elog ⊤ = ⊤ := by simp [elog]
+lemma elog_top : elog ⊤ = ⊤ := by rfl
 
 @[simp]
-lemma eexp_bot : eexp ⊥ = 0 := by simp [eexp]
+lemma eexp_bot : eexp ⊥ = 0 := by rfl
 
 @[simp]
-lemma eexp_top : eexp ⊤ = ⊤ := by simp [eexp]
+lemma eexp_top : eexp ⊤ = ⊤ := by rfl
 
 @[simp]
-lemma eexp_zero : eexp 0 = 1 := by simp [eexp]
+lemma eexp_zero : eexp 0 = 1 := by
+  show ENNReal.ofReal (Real.exp 0) = 1; simp
 
 @[simp]
-lemma eexp_ofReal {r : ℝ} : eexp r = ENNReal.ofReal (Real.exp r) := by
-  simp [ENNReal.ofReal, eexp]
-  rfl
+lemma eexp_ofReal {r : ℝ} : eexp r = ENNReal.ofReal (Real.exp r) := by rfl
 
 @[simp]
 lemma elog_eexp {x : ENNReal} : eexp (elog x) = x := by
-  rw [elog.eq_def]
-  split
-  · simp
-  · rename_i _ r'
-    split
-    · simp
-      rename_i _ h
-      rw [h]
-    · rename_i _ H
-      simp
-      rw [NNReal.toReal]
-      simp
-      rw [Real.exp_log]
-      rw [ofReal_coe_nnreal]
-      rcases r' with ⟨ v , Hv ⟩
-      apply lt_of_le_of_ne
-      · simpa
-      · simp
-        intro Hk
-        apply H
-        apply NNReal.coe_eq_zero.mp
-        simp
-        rw [Hk]
+  all_goals case_ENNReal_isReal_zero x
+  rename_i r _ Hr
+  simp [Real.exp_log Hr]
 
 
 @[simp]
 lemma eexp_elog {w : EReal} : (elog (eexp w)) = w := by
   cases w
-  · simp [eexp, elog]
-  · simp only [eexp, elog]
-    rename_i v'
-    simp [Real.toEReal, ENNReal.ofReal]
-    split
-    · rename_i Hcont
-      have Hcont' : 0 < rexp v' := by exact exp_pos v'
-      linarith
-    · rename_i H
-      have RW : (max (rexp v') 0) = (rexp v') := by
-        apply max_eq_left_iff.mpr
-        linarith
-      simp [RW]
-  · simp [eexp, elog]
+  · simp [eexp_bot, elog_zero]
+  · rename_i v'
+    simp [elog_of_pos_real (exp_pos v'), Real.log_exp]
+  · simp [eexp_top, elog_top]
 
 lemma elog_ENNReal_ofReal_of_pos {x : ℝ} (H : 0 < x) : (ENNReal.ofReal x).elog = x.log.toEReal := by
-  simp [ENNReal.ofReal, ENNReal.elog]
-  rw [ite_eq_iff']
-  apply And.intro
-  · intro
-    exfalso
-    linarith
-  · intro H
-    simp at H
-    rw [max_eq_left_of_lt H]
+  exact elog_of_pos_real H
 
 @[simp]
 lemma elog_mul {x y : ENNReal} : elog x + elog y = elog (x * y) := by
@@ -491,39 +440,11 @@ lemma eexp_add {w z : EReal} : eexp w * eexp z = eexp (w + z) := by
 
 
 lemma eexp_injective {w z : EReal} : eexp w = eexp z -> w = z := by
-  rw [eexp.eq_def, eexp.eq_def]
-  intro H
-  cases w <;> cases z <;> try tauto
-  · rename_i v
-    simp [Real.toEReal] at H
-    exfalso
-    have Hv' := exp_pos v
-    linarith
-  · rename_i v
-    simp [Real.toEReal] at H
-    have Hv' := exp_pos v
-    linarith
-  · rename_i v₁ v₂
-    congr
-    simp [Real.toEReal, ENNReal.ofReal] at H
-    apply NNReal.coe_inj.mpr at H
-    simp at H
-    have RW (r : ℝ) : (max (rexp r) 0) = (rexp r) := by
-      apply max_eq_left_iff.mpr
-      exact exp_nonneg r
-    rw [RW v₁] at H
-    rw [RW v₂] at H
-    exact exp_eq_exp.mp H
+  intro H; have := congrArg elog H; simp at this; exact this
 
 
 lemma elog_injective {x y : ENNReal} : elog x = elog y -> x = y := by
-  all_goals case_ENNReal_isReal_zero x
-  all_goals case_ENNReal_isReal_zero y
-  rename_i r₁ Hr₁ HPr₁ r₂ Hr₂ HPr₂
-  intro Hlog_eq
-  suffices r₁ = r₂ by simp [this]
-  apply Real.log_injOn_pos
-  all_goals simp_all
+  intro H; have := congrArg eexp H; simp at this; exact this
 
 
 lemma eexp_zero_iff {w : EReal} : eexp w = 0 <-> w = ⊥ := by
@@ -576,21 +497,9 @@ lemma eexp_mono_lt {w z : EReal} : (w < z) <-> eexp w < eexp z := by
 
 
 lemma eexp_mono_le {w z : EReal} : (w <= z) <-> eexp w <= eexp z := by
-  apply Iff.intro
-  · intro H
-    cases (LE.le.lt_or_eq H)
-    · apply LT.lt.le
-      apply eexp_mono_lt.mp
-      assumption
-    · simp_all
-  · intro H
-    cases (LE.le.lt_or_eq H)
-    · apply LT.lt.le
-      apply eexp_mono_lt.mpr
-      assumption
-    · apply Eq.le
-      apply eexp_injective
-      assumption
+  constructor
+  · exact fun h => h.lt_or_eq.elim (fun h => (eexp_mono_lt.mp h).le) (fun h => by simp [h])
+  · exact fun h => h.lt_or_eq.elim (fun h => (eexp_mono_lt.mpr h).le) (fun h => (eexp_injective h).le)
 
 
 lemma eexp_mul_nonneg {r w : EReal} (HR : 0 ≤ r) (HR2 : r ≠ ⊤) : eexp (r * w) = (eexp w) ^ (EReal.toReal r) := by
@@ -651,21 +560,9 @@ lemma elog_mono_lt {x y : ENNReal} : (x < y) <-> elog x < elog y := by
 
 
 lemma elog_mono_le {x y : ENNReal} : (x <= y) <-> elog x <= elog y := by
-  apply Iff.intro
-  · intro H
-    cases (LE.le.lt_or_eq H)
-    · apply LT.lt.le
-      apply elog_mono_lt.mp
-      assumption
-    · simp_all
-  · intro H
-    cases (LE.le.lt_or_eq H)
-    · apply LT.lt.le
-      apply elog_mono_lt.mpr
-      assumption
-    · apply Eq.le
-      apply elog_injective
-      assumption
+  constructor
+  · exact fun h => h.lt_or_eq.elim (fun h => (elog_mono_lt.mp h).le) (fun h => by simp [h])
+  · exact fun h => h.lt_or_eq.elim (fun h => (elog_mono_lt.mpr h).le) (fun h => (elog_injective h).le)
 
 lemma galois_connection_eexp : GaloisConnection eexp elog := by
   rw [GaloisConnection]

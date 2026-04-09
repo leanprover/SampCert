@@ -398,7 +398,7 @@ theorem Renyi_Jensen_strict_real [t2 : MeasurableSingletonClass T] [tcount : Cou
       · rename_i Heqx
         -- Rewrite the average
         rw [MeasureTheory.average] at Heqx
-        rw [MeasureTheory.integral_countable'] at Heqx
+        rw [MeasureTheory.integral_countable] at Heqx
         · simp at Heqx
           conv at Heqx =>
             rhs

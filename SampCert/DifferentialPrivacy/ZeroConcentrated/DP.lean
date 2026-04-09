@@ -521,10 +521,10 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
           · exact ne_of_beq_false rfl
           · exact EReal.add_top_iff_ne_bot.mp rfl
     conv =>
-      enter [1, 1, u]
-      rw [H u]
+      enter [1, 1, x]
+      rw [H x]
     clear H
-    rw [<- RenyiDivergence_def_exp _ _ Hα]
+    erw [<- RenyiDivergence_def_exp (m l₁) (m l₂) Hα]
     apply ENNReal.eexp_mono_le.mp
     refine ENNReal.ereal_le_smul_left (↑α - 1) ?Hr1 ?Hr2 ?H
     case Hr1 => exact Hα'
@@ -744,9 +744,8 @@ lemma ACNeighbour_of_DP (ε : NNReal) (q : List T -> PMF U) (H : SLang.PureDP q 
   apply Classical.by_contradiction
   intro Hx1
   unfold SLang.DP_singleton at H
-  have H' := H l₁ l₂ HN x
-  rw [Hx2] at H'
-  rw [ENNReal.div_zero Hx1] at H'
+  have H' : (q l₁) x / (q l₂) x ≤ ENNReal.ofReal (Real.exp ↑ε) := H l₁ l₂ HN x
+  rw [Hx2, ENNReal.div_zero Hx1] at H'
   simp at H'
 
 
@@ -961,41 +960,46 @@ lemma A_expectation (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε))
     rw [mul_comm]
   generalize HCD : (C * D) = CD
   cases CD
-  · simp
+  · apply ENNReal.mul_eq_top.mp at HCD
+    cases HCD
+    · exfalso
+      rename_i h
+      rcases h with ⟨ _ , h ⟩
+      rw [<- HD] at h
+      simp at h
+    · exfalso
+      rename_i h
+      rcases h with ⟨ h , _ ⟩
+      rw [<- HC] at h
+      apply ENNReal.div_eq_top.mp at h
+      cases h
+      · rename_i h'
+        rcases h' with ⟨ h1, h2 ⟩
+        apply h1
+        apply Hac
+        apply h2
+      · rename_i h
+        rcases h with ⟨ h, _ ⟩
+        apply PMF.apply_ne_top p x h
   rename_i CD
   rw [ENNReal.ofNNReal]
-  repeat rw [<- WithTop.coe_sub]
-  repeat rw [<- WithTop.coe_add]
-  congr
-
-  -- Now convert to Real substraction
-  repeat rw [NNReal.sub_def]
-  rw [<- Real.toNNReal_add ?G1 ?G2]
-  case G1 =>
-    rw [sub_nonneg]
-    apply (ENNReal.ofReal_le_ofReal_iff ?G3).mp
-    case G3 => exact NNReal.zero_le_coe
-    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HCE]
-    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HED]
-    rw [mul_comm]
-    apply mul_le_mul'
-    · rfl
-    rw [<- HC, <- HD]
-    apply Hpq
-  case G2 =>
-    rw [sub_nonneg]
-    apply (ENNReal.ofReal_le_ofReal_iff ?G3).mp
-    case G3 => exact NNReal.zero_le_coe
-    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HED]
-    rw [ENNReal.ofReal, Real.toNNReal_coe, <- HCD]
-    apply mul_le_mul'
-    · rw [<- HE, <- HC]
-      apply Hqp
-    · rfl
-
-  -- Real subtraction is easier
-  congr 1
-  linarith
+  rw [add_comm]
+  apply tsub_add_tsub_cancel
+  · -- CD ≥ ED: need E * D ≤ C * D
+    have h : E * D ≤ C * D := by
+      apply mul_le_mul'
+      · rw [← HE, ← HC]; apply Hqp
+      · rfl
+    rw [HED] at h; rw [HCD] at h
+    exact h
+  · -- ED ≥ CE: need C * E ≤ E * D
+    have h : C * E ≤ E * D := by
+      rw [mul_comm E D]
+      apply mul_le_mul'
+      · rw [← HC, ← HD]; apply Hpq
+      · rfl
+    rw [HCE] at h; rw [HED] at h
+    exact h
 
 
 
@@ -1697,7 +1701,7 @@ lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 
       apply Continuous.comp
       · apply Real.continuous_tanh
       · apply Continuous.mul
-        · apply continuous_mul_left
+        · apply continuous_const_mul
         · apply continuous_const
     · apply Continuous.neg
       apply Continuous.mul
@@ -1706,7 +1710,7 @@ lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 
         rw [Hfunc]
         apply Continuous.comp
         · apply Real.continuous_tanh
-        · apply continuous_mul_right
+        · apply continuous_mul_const
 
   apply Convex.mul_sub_le_image_sub_of_le_deriv (convex_Icc 0 2)
   · trivial
@@ -1962,7 +1966,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   -- Derive absolute continuity facts from the pure DP bound
   have Hacpq : AbsCts p q := by
     dsimp [p, q]
-    simp [DFunLike.coe, PMF.instFunLike]
+    simp [DFunLike.coe]
     intro u' Hu'
     rcases u' with ⟨ u'' , _ ⟩
     simp
@@ -1971,7 +1975,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
 
   have Hacqp : AbsCts q p := by
     dsimp [p, q]
-    simp [DFunLike.coe, PMF.instFunLike]
+    simp [DFunLike.coe]
     intro u' Hu'
     rcases u' with ⟨ u'' , _ ⟩
     simp
@@ -1997,7 +2001,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
         apply ENNReal.div_ne_zero.mpr
         apply And.intro
         · dsimp [p]
-          simp [DFunLike.coe, PMF.instFunLike]
+          simp [DFunLike.coe]
           rcases x with ⟨ x', Hx' ⟩
           simp
           trivial
@@ -2009,7 +2013,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
         · rename_i h
           rcases h with ⟨ h1 , h2 ⟩
           dsimp [p] at h2
-          simp [DFunLike.coe, PMF.instFunLike] at h2
+          simp [DFunLike.coe] at h2
           rcases x with ⟨ x' , Hx' ⟩
           trivial
         · rename_i h
@@ -2271,10 +2275,8 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   rw [<- EReal.coe_mul]
   rw [<- EReal.coe_mul]
   rw [<- EReal.coe_mul]
-  rw [ENNReal.eexp.eq_def, Real.toEReal]
-  simp
-  rw [ENNReal.toReal_ofReal ?G1]
-  case G1 => apply Real.exp_nonneg
+  rw [ENNReal.eexp_ofReal]
+  rw [ENNReal.toReal_ofReal (Real.exp_nonneg _)]
   apply Eq.le
   congr 1
   linarith
