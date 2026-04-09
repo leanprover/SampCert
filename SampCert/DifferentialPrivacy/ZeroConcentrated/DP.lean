@@ -76,6 +76,19 @@ lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε�
       · linarith
 
 /--
+Algebraic identity used in the proof that zCDP implies approximate DP.
+
+Given `S = (2 * D)^(1/2)`, `α - 1 = S / ε`, and `ε' = ε²/2 + ε * S`,
+this shows `(α - 1) * (ε² * α / 2) = (α - 1) * ε' + log(δ)`.
+-/
+lemma HαSpecial_algebraic {ε S D : ℝ} (Hε : ε ≠ 0) (HS : S * S = 2 * D) :
+    ε⁻¹ * S * (2⁻¹ * ε ^ 2 * (ε⁻¹ * S + 1)) =
+    ε⁻¹ * S * (ε ^ 2 / 2 + ε * S) + (-D) := by
+  have Hε2 : ε ^ 2 ≠ 0 := pow_ne_zero 2 Hε
+  field_simp
+  nlinarith [sq_nonneg ε, sq_nonneg S]
+
+/--
 Obtain an approximate DP bound from a zCDP bound, when ε > 0 and δ < 1
 -/
 lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
@@ -201,134 +214,18 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
               exact (one_le_inv₀ Hδ0).mpr (le_of_lt Hδ1)
         · simp
     rw [<- Dε']
-    simp
-    repeat rw [mul_add]
-
-
-    have SC1 : 0 < -(2 * Real.log δ.toReal) := by
-      simp
-      apply mul_neg_of_pos_of_neg
-      · simp
-      · exact Real.log_neg Hδ0 Hδ1
-
-    -- Cancel square roots
-    conv =>
-      congr
-      · congr
-        · skip
-          rw [mul_comm]
-          repeat rw [mul_assoc]
-          enter [2, 2, 2]
-          rw [mul_comm]
-          rw [mul_assoc]
-          enter [2]
-          rw [<- Real.rpow_add SC1]
-          rw [<- two_mul]
-          simp
-        · simp
-      · enter [1, 2]
-        repeat rw [mul_assoc]
-        enter [2]
-        rw [mul_comm]
-        rw [mul_assoc]
-        enter [2]
-        rw [<- Real.rpow_add SC1]
-        rw [<- two_mul]
-        simp
-    clear SC1
-
-    have SC1 : ε ≠ 0 := by linarith
-    conv =>
-      congr
-      · congr
-        · enter [2]
-          repeat rw [<- mul_assoc]
-          enter [1]
-          rw [sq]
-          simp
-          rw [mul_inv_cancel₀ SC1]
-        · rw [sq]
-          rw [mul_comm]
-          repeat rw [mul_assoc]
-          enter [2, 2]
-          repeat rw [<- mul_assoc]
-          enter [1]
-          rw [mul_inv_cancel₀ SC1]
-          skip
-      · enter [1]
-        congr
-        · rw [division_def]
-          rw [sq]
-          repeat rw [mul_assoc]
-          rw [mul_comm]
-          rw [mul_assoc]
-          enter [2]
-          rw [mul_comm]
-          repeat rw [<- mul_assoc]
-          enter [1, 1]
-          rw [inv_mul_cancel₀ SC1]
-          skip
-        · repeat rw [<- mul_assoc]
-          rw [inv_mul_cancel₀ SC1]
-          simp
-    clear SC1
-    simp
-
-    -- Quality of life
-    have R1 : (-(2 * Real.log δ.toReal)) = 2 * Real.log (1/δ.toReal) := by simp
-    rw [R1]
-    have R2 : (-Real.log δ.toReal) = Real.log (1/δ.toReal) := by simp
-    rw [R2]
-    generalize HD : Real.log (1 / δ.toReal) = D
-    have HDnn : 0 ≤ D := by
-      rw [<- HD]
-      apply Real.log_nonneg
-      apply one_le_one_div Hδ0
-      exact le_of_lt Hδ1
-    clear R1 R2
-
-    -- Simplify more
-    conv =>
-      congr
-      · rw [Real.mul_rpow (by simp) HDnn]
-        enter [2]
-        repeat rw [<- mul_assoc]
-        enter [1]
-        rw [mul_comm]
-        rw [<- mul_assoc]
-        enter [1]
-        rw [<- Real.rpow_neg_one]
-        rw [<- Real.rpow_add (by simp)]
-      · rw [Real.mul_rpow (by simp) HDnn]
-        enter [1, 1]
-        rw [mul_comm]
-        repeat rw [mul_assoc]
-        enter [2]
-        repeat rw [<- mul_assoc]
-        enter [1]
-        rw [<- Real.rpow_neg_one]
-        rw [<- Real.rpow_add (by simp)]
-        rw [add_comm]
-
-    generalize HW : (2 : ℝ) ^ ((2 : ℝ) ^ (-(1 : ℝ)) + -(1 : ℝ) : ℝ) = W
-    -- Cancel the ε * W * D terms
-    conv =>
-      enter [1]
-      rw [add_comm]
-      enter [1, 1]
-      rw [mul_comm]
-    conv =>
-      enter [2, 1, 1]
-      repeat rw [<- mul_assoc]
-    rw [add_assoc]
-    congr 1
-    clear HW W
-
-    -- Cancel the D terms
-    rw [<- one_add_one_eq_two]
-    rw [add_mul]
-    rw [<- HD]
-    simp
+    simp only [one_div]
+    rw [show Real.log (↑δ)⁻¹ = -Real.log ↑δ from Real.log_inv (↑δ)]
+    rw [show -(2 * Real.log ↑δ) = 2 * -Real.log ↑δ from by ring]
+    have Hlog_pos : 0 < 2 * -Real.log ↑δ := by
+      apply mul_pos (by norm_num)
+      exact neg_pos.mpr (Real.log_neg Hδ0 Hδ1)
+    have HSsq : (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ * (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ = 2 * -Real.log ↑δ := by
+      rw [<- Real.rpow_add Hlog_pos]
+      rw [show (2 : ℝ)⁻¹ + (2 : ℝ)⁻¹ = 1 from by norm_num]
+      exact Real.rpow_one _
+    conv => rhs; enter [2]; rw [show Real.log ↑δ = -(-Real.log ↑δ) from by ring]
+    exact HαSpecial_algebraic (by linarith) HSsq
 
 
   -- Privacy loss random variable
@@ -439,7 +336,6 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
           rename_i HK1 HK2
           apply HK1
           rw [ge_iff_le] at HK2
-          -- apply ENNReal.eexp_mono_le.mp at HK2
           rw [<- ENNReal.eexp_ofReal]
           apply ENNReal.eexp_mono_le.mp
           simp
@@ -637,12 +533,10 @@ Obtain an approximate DP bound from a zCDP bound
 theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
     (ε : ℝ) (Hε : 0 ≤ ε) (h : zCDPBound m ((1/2) * ε^2)) (Hm : ACNeighbour m) :
     ∀ δ : NNReal, (0 < (δ : ℝ)) -> DP' m (ε^2/2 + ε * (2*Real.log (1/δ))^(1/2 : ℝ)) δ := by
-  cases LE.le.lt_or_eq Hε
-  · rename_i Hε
-    intro δ a
+  obtain Hε | Hε' := LE.le.lt_or_eq Hε
+  · intro δ a
     exact ApproximateDP_of_zCDP_pos m ε Hε h Hm δ a
-  · rename_i Hε'
-    intro δ Hδ
+  · intro δ Hδ
     rw [<- Hε']
     rw [<- Hε'] at h
     rw [zCDPBound] at h
@@ -717,10 +611,8 @@ lemma zCDP_ApproximateDP [Countable U] {m : Mechanism T U} :
       ∀ (δ : NNReal) (_ : 0 < δ) (ε' : NNReal),
      (zCDP m (zCDP_of_adp δ ε') -> ApproximateDP m ε' δ) := by
   intro δ Hδ0 ε' H
-  cases Classical.em (1 ≤ δ)
-  · rename_i Hδ1
-    exact ApproximateDP_gt1 m (↑ε') Hδ1
-  rename_i Hδ1
+  obtain Hδ1 | Hδ1 := Classical.em (1 ≤ δ)
+  · exact ApproximateDP_gt1 m (↑ε') Hδ1
   simp at Hδ1
   unfold ApproximateDP
 
@@ -776,16 +668,12 @@ lemma β_ne_top (Hε : 0 < ε) : β ε p q x ≠ ⊤ := by
   unfold β
   intro HK
   apply ENNReal.div_eq_top.mp at HK
-  cases HK
-  · rename_i HK
-    rcases HK with ⟨ _ , HK' ⟩
-    rw [<- ENNReal.ofReal_sub] at HK'
+  rcases HK with ⟨ _ , HK' ⟩ | ⟨ HK', _ ⟩
+  · rw [<- ENNReal.ofReal_sub] at HK'
     · simp at HK'
       apply not_le.mpr Hε HK'
     · apply Real.exp_nonneg
-  · rename_i HK
-    rcases HK with ⟨ HK', _ ⟩
-    apply ENNReal.sub_eq_top_iff.mp at HK'
+  · apply ENNReal.sub_eq_top_iff.mp at HK'
     simp at HK'
 
 
@@ -897,109 +785,42 @@ lemma A_expectation (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε))
     have Hac := Hac x
     intro HK
     apply ENNReal.div_eq_top.mp at HK
-    cases HK
-    · simp_all only [imp_false, not_true_eq_false]
-    · rename_i HK'
-      cases HK'
-      apply PMF.apply_ne_top p x
-      trivial
+    rcases HK with ⟨ h1, h2 ⟩ | ⟨ h, _ ⟩
+    · exact absurd (Hac h2) h1
+    · exact PMF.apply_ne_top p x h
 
   conv =>
     enter [1, 2, 2]
     rw [mul_comm]
 
-  -- Arithmetic
-  -- ENNReal subtraction is difficult
-  -- Handle ⊤ cases to convert to NNReal
-  generalize HED : (E * D) = ED
-  cases ED
-  · exfalso
-    apply ENNReal.mul_eq_top.mp at HED
-    cases HED
-    · rename_i h
-      rcases h with ⟨ _ , h ⟩
-      rw [<- HD] at h
-      simp at h
-    · exfalso
-      rename_i h
-      rcases h with ⟨ h , _ ⟩
-      rw [<- HE] at h
-      simp at h
-  rename_i ED
+  -- Arithmetic: prove finiteness of all products to avoid ⊤ case analysis
+  have HD_ne_top : D ≠ ⊤ := by simp [<- HD]
+  have HE_ne_top : E ≠ ⊤ := by simp [<- HE]
+  have HC_ne_top : C ≠ ⊤ := by
+    rw [<- HC]
+    intro HK
+    apply ENNReal.div_eq_top.mp at HK
+    rcases HK with ⟨ h1, h2 ⟩ | ⟨ h, _ ⟩
+    · exact h1 (Hac x h2)
+    · exact PMF.apply_ne_top p x h
 
   conv =>
     enter [1, 1, 2]
     rw [mul_comm]
-  generalize HCE : (C * E) = CE
-  cases CE
-  · simp
-    apply ENNReal.mul_eq_top.mp at HCE
-    cases HCE
-    · exfalso
-      rename_i h
-      rcases h with ⟨ _ , h ⟩
-      rw [<- HE] at h
-      simp at h
-    · rename_i h
-      rcases h with ⟨ h , _ ⟩
-      exfalso
-      rw [<- HC] at h
-      apply ENNReal.div_eq_top.mp at h
-      cases h
-      · rename_i h'
-        rcases h' with ⟨ h1, h2 ⟩
-        apply h1
-        apply Hac
-        apply h2
-      · rename_i h
-        rcases h with ⟨ h, _ ⟩
-        apply PMF.apply_ne_top p x h
-  rename_i CE
   conv =>
     enter [1, 2, 1]
     rw [mul_comm]
-  generalize HCD : (C * D) = CD
-  cases CD
-  · apply ENNReal.mul_eq_top.mp at HCD
-    cases HCD
-    · exfalso
-      rename_i h
-      rcases h with ⟨ _ , h ⟩
-      rw [<- HD] at h
-      simp at h
-    · exfalso
-      rename_i h
-      rcases h with ⟨ h , _ ⟩
-      rw [<- HC] at h
-      apply ENNReal.div_eq_top.mp at h
-      cases h
-      · rename_i h'
-        rcases h' with ⟨ h1, h2 ⟩
-        apply h1
-        apply Hac
-        apply h2
-      · rename_i h
-        rcases h with ⟨ h, _ ⟩
-        apply PMF.apply_ne_top p x h
-  rename_i CD
-  rw [ENNReal.ofNNReal]
   rw [add_comm]
   apply tsub_add_tsub_cancel
   · -- CD ≥ ED: need E * D ≤ C * D
-    have h : E * D ≤ C * D := by
-      apply mul_le_mul'
-      · rw [← HE, ← HC]; apply Hqp
-      · rfl
-    rw [HED] at h; rw [HCD] at h
-    exact h
+    apply mul_le_mul'
+    · rw [← HE, ← HC]; apply Hqp
+    · rfl
   · -- ED ≥ CE: need C * E ≤ E * D
-    have h : C * E ≤ E * D := by
-      rw [mul_comm E D]
-      apply mul_le_mul'
-      · rw [← HC, ← HD]; apply Hpq
-      · rfl
-    rw [HCE] at h; rw [HED] at h
-    exact h
+    rw [mul_comm E D]
+    apply mul_le_mul'
+    · rw [← HC, ← HD]; apply Hpq
+    · rfl
 
 
 
@@ -1323,46 +1144,28 @@ lemma B_eval_true (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) �
   generalize HE1 : (Real.exp ε.toReal) = E1
   generalize HE2 : (Real.exp (-ε.toReal)) = E2
 
-  apply (ENNReal.eq_div_iff ?G1 ?G2).mpr
-  case G1 =>
-    rw [<- ENNReal.ofReal_sub _ ?G3]
-    case G3 =>
-      rw [<- HE2]
-      apply Real.exp_nonneg
+  have Hexp_nn : 0 ≤ E2 := by rw [<- HE2]; exact Real.exp_nonneg _
+  have Hdiff_ne : ENNReal.ofReal E1 - ENNReal.ofReal E2 ≠ 0 := by
+    rw [<- ENNReal.ofReal_sub _ Hexp_nn]
     simp
     rw [<- HE2, <- HE1]
     apply Real.exp_lt_exp.mpr
     simp
     trivial
-  case G2 =>
-    rw [<- ENNReal.ofReal_sub _ ?G3]
-    case G3 =>
-      rw [<- HE2]
-      apply Real.exp_nonneg
-    simp
+  have Hdiff_ne_top : ENNReal.ofReal E1 - ENNReal.ofReal E2 ≠ ⊤ := by
+    rw [<- ENNReal.ofReal_sub _ Hexp_nn]; simp
+
+  apply (ENNReal.eq_div_iff Hdiff_ne Hdiff_ne_top).mpr
   rw [ENNReal.mul_sub ?G1]
   case G1 =>
     intros
     exact Ne.symm (ne_of_beq_false rfl)
   simp
-  rw [division_def]
-  rw [<- mul_assoc]
+  rw [division_def, <- mul_assoc]
   conv =>
     enter [1, 2, 1]
     rw [mul_comm]
-  rw [mul_assoc]
-  rw [ENNReal.mul_inv_cancel ?G1 ?G2]
-  case G1 =>
-    rw [<- ENNReal.ofReal_sub _ ?G3]
-    case G3 =>
-      rw [<- HE2]
-      apply Real.exp_nonneg
-    simp
-    rw [<- HE2, <- HE1]
-    apply Real.exp_lt_exp.mpr
-    simp
-    trivial
-  case G2 => exact Ne.symm (ne_of_beq_false rfl)
+  rw [mul_assoc, ENNReal.mul_inv_cancel Hdiff_ne Hdiff_ne_top]
   simp
 
   rw [<- ENNReal.ofReal_sub _ ?G1]
@@ -1656,7 +1459,6 @@ lemma tanh_lt_id_nonneg {x : ℝ} (Hx : 0 ≤ x) : Real.tanh x ≤ x := by
 
 
 
--- This proof is repetitive and can be cleaned up
 lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) := by
   let f (z : ℝ) :=  Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)
   suffices 0 ≤ f y by
@@ -1864,9 +1666,8 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
   -- Special case: (εα/2 > 1)
-  cases (Classical.em (ε * α > 2))
-  · rename_i Hεα
-    have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
+  obtain Hεα | Hεα := Classical.em (ε * α > 2)
+  · have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
       apply RenyiDivergence_le_MaxDivergence
       · trivial
       · intro x
@@ -1895,7 +1696,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
         · simp
       · simp
     linarith
-  rename_i Hεα
   apply le_of_not_gt at Hεα
 
   -- Open RenyiDivergence
@@ -2009,16 +1809,12 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       case G5 =>
         intro HK
         apply ENNReal.div_eq_top.mp at HK
-        cases HK
-        · rename_i h
-          rcases h with ⟨ h1 , h2 ⟩
-          dsimp [p] at h2
+        rcases HK with ⟨ h1, h2 ⟩ | ⟨ h, _ ⟩
+        · dsimp [p] at h2
           simp [DFunLike.coe] at h2
           rcases x with ⟨ x' , Hx' ⟩
           trivial
-        · rename_i h
-          rcases h with ⟨ h , _ ⟩
-          apply (PMF.apply_ne_top _ _ h)
+        · exact PMF.apply_ne_top _ _ h
       rw [ENNReal.toReal_inv]
       repeat rw [ENNReal.toReal_div]
       rw [inv_div]
@@ -2042,7 +1838,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
 
   -- Rewrite to A
   -- Next step won't work with ε=0, must separate the case.
-  cases (Classical.em (ε = 0))
+  obtain rfl | Hε' := Classical.em (ε = 0)
   · -- Follows from the DP bound
     simp_all
     rw [SLang.PureDP] at H
@@ -2064,7 +1860,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       · exact Hpq i
       · linarith
     · simp
-  rename_i Hε'
 
   have Hε : 0 < ε := by exact pos_iff_ne_zero.mpr Hε'
 
