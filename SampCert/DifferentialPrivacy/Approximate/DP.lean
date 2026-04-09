@@ -39,7 +39,9 @@ theorem ApproximateDP_gt1 (m : Mechanism T U) (ε : ℝ) {δ : NNReal} (Hδ : 1 
     rw [<- PMF.tsum_coe (m l₁)]
     apply ENNReal.tsum_le_tsum
     intro u
-    split <;> simp
+    split
+    · exact le_refl _
+    · exact zero_le _
   apply le_trans H1
   conv =>
     left

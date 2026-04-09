@@ -5,7 +5,7 @@ package «sampcert» where
   testDriver := "test"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.28.0"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.29.0"
 
 -- From doc-gen4
 meta if get_config? env = some "doc" then

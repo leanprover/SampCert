@@ -109,7 +109,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
       case G1 =>
         rw [tsum_eq_finsum ?G1]
         case G1 =>
-          simp [Function.support]
+          simp [Function.HasFiniteSupport, Function.support]
         simp
         have R := @finsum_induction ENNReal T _ (fun _ => 1) (fun z => z ≠ ⊤) (by simp) (by aesop) (by simp)
         simp at R

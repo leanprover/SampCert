@@ -29,7 +29,7 @@ lemma privPostProcess_DP_bound {nq : Mechanism T U} {ε : NNReal} (h : PureDP nq
   replace h := h l₁ l₂ neighbours
   simp [privPostProcess]
   apply ENNReal.div_le_of_le_mul
-  simp [SPMF.instFunLike]
+  simp [DFunLike.coe]
   rw [← ENNReal.tsum_mul_left]
   apply ENNReal.tsum_le_tsum
   intro i

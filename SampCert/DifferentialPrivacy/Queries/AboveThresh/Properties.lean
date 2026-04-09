@@ -63,22 +63,11 @@ lemma probBind_congr_strong (p : SLang T) (f : T -> SLang U) (g : T -> SLang U) 
   unfold probBind
   apply SLang.ext
   intro u
-  apply Equiv.tsum_eq_tsum_of_support ?G1
-  case G1 =>
-    apply Set.BijOn.equiv (fun x => x)
-    simp [Function.support]
-    have Heq : {x | ¬p x = 0 ∧ ¬f x u = 0} =  {x | ¬p x = 0 ∧ ¬g x u = 0} := by
-      apply Set.sep_ext_iff.mpr
-      intro t Ht
-      rw [Hcong]
-      apply Ht
-    rw [Heq]
-    apply Set.bijOn_id
-  simp [Function.support]
-  intro t Hp _
-  simp [Set.BijOn.equiv]
-  rw [Hcong]
-  exact Hp
+  apply tsum_congr
+  intro t
+  by_cases hp : p t = 0
+  · simp [hp]
+  · rw [Hcong t hp]
 
 
 
@@ -1680,6 +1669,8 @@ def sv6_sv7_eq (qs :  sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (l : List sv
         intro K
         simp [K] at HL
     · simp
+      intros
+      rfl
 
 /-
 ## Program v8
@@ -1733,6 +1724,7 @@ lemma sv7_sv8_cond_eq (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : List sv_T)
   · intro v0 init
     simp [sv6_cond_rec, sv4_aboveThreshC, sv1_aboveThreshC, sv1_threshold, sv1_noise, List.length]
     simp [sv8_G, sv8_sum]
+    rfl
   · intro vi init
     rename_i vi_1 rest IH
     have IH' := IH vi_1 (init ++ [vi])
@@ -1763,7 +1755,8 @@ def sv7_sv8_eq (qs :  sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (l : List sv
   rename_i point'
   simp only []
   repeat (apply tsum_congr; intro _; congr 1)
-  simp only [sv7_sv8_cond_eq, sv6_cond]
+  simp [sv7_sv8_cond_eq, sv6_cond]
+  rfl
 
 
 /-

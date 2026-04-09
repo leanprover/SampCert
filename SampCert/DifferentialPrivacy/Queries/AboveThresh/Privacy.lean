@@ -45,7 +45,7 @@ lemma tsum_shift (Δ : ℤ) (f : ℤ → ENNReal) : (∑'(x : ℤ), f x = ∑'(x
 lemma laplace_inequality' (τ τ' : ℤ) (Δ : ℕ+) :
       ((ENNReal.ofReal (Real.exp (-abs τ' / (Δ * ε₂ / ε₁)))) * ((DiscreteLaplaceGenSamplePMF (Δ * ε₂) ε₁ 0 τ))) ≤
       (DiscreteLaplaceGenSamplePMF (Δ * ε₂) ε₁ 0) (τ + τ') := by
-  simp [DiscreteLaplaceGenSamplePMF, PMF.instFunLike]
+  simp [DiscreteLaplaceGenSamplePMF, DFunLike.coe]
   generalize HA : (Real.exp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) - 1) = A
   generalize HB : (Real.exp (↑↑ε₁ / (↑↑Δ * ↑↑ε₂)) + 1) = B
   generalize HC : ((Δ : Real) * ε₂ / ε₁) = C

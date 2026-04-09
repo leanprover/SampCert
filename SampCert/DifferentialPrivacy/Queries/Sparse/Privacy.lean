@@ -25,14 +25,9 @@ variable (qs : sv_query sv_T)
 lemma shift_qs_add {T : Type} (qs' : sv_query T) (A B : ℕ) : (shift_qs A (shift_qs B qs')) = (shift_qs (A + B) qs') := by
   apply funext; simp [shift_qs, add_assoc]
 
-local instance : MeasurableSpace (List ℕ) where
-  MeasurableSet' _ := True
-  measurableSet_empty := by simp only
-  measurableSet_compl := by simp only [imp_self, implies_true]
-  measurableSet_iUnion := by simp only [implies_true]
-
+local instance : MeasurableSpace (List ℕ) := ⊤
 local instance : DiscreteMeasurableSpace (List ℕ) where
-  forall_measurableSet := by simp only [MeasurableSpace.measurableSet_top, implies_true]
+  forall_measurableSet _ := .congr trivial rfl
 
 lemma privSparseAux_DP
     (HDP : ∀ N H, ∀ ε : NNReal, (ε = ε₁ / ε₂) -> dps.prop (sv1_aboveThresh_PMF (shift_qs N qs) T H ε₁ ε₂) ε)

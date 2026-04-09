@@ -15,6 +15,8 @@ open Classical Set
 
 namespace SLang
 
+set_option pp.coercions false
+
 -- Better proof for Pure DP adaptive composition
 theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → PMF V) (ε₁ ε₂ ε : NNReal) (h1 : PureDP nq1 ε₁)  (h2 : ∀ u : U, PureDP (nq2 u) ε₂) (Hε : ε₁ + ε₂ = ε ) :
   PureDP (privComposeAdaptive nq1 nq2) ε := by
@@ -30,31 +32,35 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
   rw [ENNReal.ofReal_mul ?s1]
   case s1 => apply Real.exp_nonneg
   rw [ENNReal.div_eq_inv_mul]
-
+  simp [DFunLike.coe]
   cases Classical.em ((nq1 l₂) u * (nq2 u l₂) v = 0)
   · rename_i Hz
+    simp only [DFunLike.coe] at Hz
     rw [Hz]
     simp
     simp at Hz
     cases Hz
     · cases (Classical.em (nq1 l₁ u = 0))
-      · simp_all
+      · simp_all [DFunLike.coe]
       · rename_i HA HB
+        simp_all only [DFunLike.coe]
         exfalso
         have hcont := h1 l₁ l₂ Hl₁l₂ u
         simp [HA, division_def] at hcont
         rw [ENNReal.mul_top HB] at hcont
         simp_all
     · cases (Classical.em (nq2 u l₁ v = 0))
-      · simp_all
+      · simp_all [DFunLike.coe]
       · rename_i HA HB
         exfalso
         have hcont := h2 u
         rw [event_eq_singleton] at hcont
         simp [DP_singleton] at hcont
         have hcont := hcont l₁ l₂ Hl₁l₂ v
+        simp [DFunLike.coe] at hcont
         simp [HA, division_def] at hcont
-        rw [ENNReal.mul_top HB] at hcont
+        rw [ENNReal.mul_top ?G] at hcont
+        case G => exact (Ne.intro (HB ·.symm)).symm
         simp_all
   · rw [ENNReal.mul_inv]
     · rw [<- mul_assoc]
@@ -73,8 +79,8 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
     · left
       rename_i hnz
       intro HK
-      simp_all
+      simp_all [DFunLike.coe]
     · right
       intro HK
-      simp_all
+      simp_all [DFunLike.coe]
 end SLang

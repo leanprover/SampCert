@@ -146,7 +146,6 @@ lemma compose_sum_rw_adaptive (nq1 : List T → SPMF U) (nq2 : U -> List T → S
   rw [tsum_ite_eq]
   exact MulOneClass.mul_one (nq2 u l v)
 
-
 /--
 Chain rule relating the adaptive composition definitions
 
@@ -157,9 +156,7 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
   intros u v
   rw [<- compose_sum_rw_adaptive]
   simp [privComposeAdaptive]
-  simp [SPMF.instFunLike]
-
-
+  simp [DFunLike.coe]
 
 -- @[simp]
 -- lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → PMF A) :

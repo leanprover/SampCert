@@ -80,7 +80,7 @@ instance : Inhabited (Histogram T numBins B) where
   default := emptyHistogram numBins B
 
 instance : DiscreteMeasurableSpace (Histogram T numBins B) where
-  forall_measurableSet := by simp
+  forall_measurableSet _ :=  MeasurableSet.congr trivial rfl
 
 namespace SLang
 

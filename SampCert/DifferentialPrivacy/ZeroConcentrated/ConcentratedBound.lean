@@ -188,7 +188,7 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
       left
       simp
       ring_nf
-    have E : ∀ x : ℤ, x * μ * α * 2 + (-x ^ 2 - μ ^ 2 * α) = - (x - α * μ)^2 + α * (α -1) * μ^2 := by
+    have E : ∀ x : ℤ, (x : ℝ) * μ * α * 2 - x ^ 2 - μ ^ 2 * α = - (x - α * μ)^2 + α * (α -1) * μ^2 := by
       intro x
       ring_nf
     conv =>
@@ -264,7 +264,7 @@ theorem Renyi_divergence_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℤ) (α : ℝ) (
         right
         left
         ring_nf
-      have X : ∀ x : ℤ, x * ↑μ * α * 2 + (-x ^ 2 - μ ^ 2 * α) = -(x - α * μ)^2 + α * (α -1) * μ^2 := by
+      have X : ∀ x : ℤ, (x : ℝ) * ↑μ * α * 2 - x ^ 2 - μ ^ 2 * α = -(x - α * μ)^2 + α * (α -1) * μ^2 := by
         intro x
         ring_nf
       conv =>
@@ -371,10 +371,10 @@ lemma SG_Renyi_shift {σ : ℝ} (h : σ ≠ 0) (α : ℝ) (μ ν τ : ℤ) :
       rw [Int.cast_add]
       rw [add_sub_assoc]
       rw [add_sub_assoc]
-    have X : ∀ x : ℤ, ↑x * ↑β * 2 - ↑x * ↑μ * α * 2 + (↑x * α * ↑ν * 2 - ↑x * ↑ν * 2) + (↑x ^ 2 - ↑β * ↑μ * α * 2) +
-                (↑β * α * ↑ν * 2 - ↑β * ↑ν * 2) +
+    have X : ∀ x : ℤ, (x : ℝ) * ↑β * 2 - ↑x * ↑μ * α * 2 + ↑x * α * ↑ν * 2 - ↑x * ↑ν * 2 + ↑x ^ 2 - ↑β * ↑μ * α * 2 +
+                ↑β * α * ↑ν * 2 - ↑β * ↑ν * 2 +
               ↑β ^ 2 +
-            (↑μ ^ 2 * α - α * ↑ν ^ 2) +
+            ↑μ ^ 2 * α - α * ↑ν ^ 2 +
           ↑ν ^ 2 =
           (↑x ^ 2 - 2 * x * (-↑β + ↑μ * α - α * ↑ν + ↑ν)) + (- ↑β * ↑μ * α * 2 + ↑β * α * ↑ν * 2 - ↑β * ↑ν * 2 + ↑β ^ 2 + ↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2) := by
       intro x
@@ -490,7 +490,7 @@ theorem Renyi_Gauss_summable {σ : ℝ} (h : σ ≠ 0) (μ ν : ℤ) (α : ℝ) 
     ring_nf
 
   have X : ∀ x : ℤ,
-    ↑x * ↑μ * α * 2 - ↑x * α * ↑ν * 2 + ↑x * ↑ν * 2 + (-↑x ^ 2 - ↑μ ^ 2 * α) + (α * ↑ν ^ 2 - ↑ν ^ 2)
+    (x : ℝ) * ↑μ * α * 2 - ↑x * α * ↑ν * 2 + ↑x * ↑ν * 2 - ↑x ^ 2 - ↑μ ^ 2 * α + α * ↑ν ^ 2 - ↑ν ^ 2
            = - ((↑x ^ 2 - 2 * x * (↑μ * α - α * ↑ν + ↑ν)) + (↑μ ^ 2 * α - α * ↑ν ^ 2 + ↑ν ^ 2)) := by
         intro x
         ring_nf
@@ -620,7 +620,7 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
     cases num
     cases den
     simp
-    apply And.intro <;> linarith
+    constructor <;> (intro h; exact absurd (Nat.cast_eq_zero.mp h) (by omega))
   have Hpmf (w : ℤ) : (discrete_gaussian_pmf A w = DiscreteGaussianGenPMF num den w) := by
     simp [discrete_gaussian_pmf]
     simp [DiscreteGaussianGenPMF]
@@ -657,8 +657,8 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
       · simp
       apply pow_pos
       apply mul_pos
-      · positivity
-      · apply inv_pos.mpr; positivity
+      · exact NNReal.coe_pos.mpr (Nat.cast_pos.mpr Ha)
+      · apply inv_pos.mpr; exact NNReal.coe_pos.mpr (Nat.cast_pos.mpr Hb)
     congr
     rw [ENNReal.ofReal_mul ?G1]
     case G1 => simp
@@ -668,8 +668,9 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
     rw [ENNReal.ofReal_mul (by positivity)]
     rw [ENNReal.ofReal_pow (by positivity)]
     rw [ENNReal.ofReal_pow (by positivity)]
-    rw [ENNReal.ofReal_inv_of_pos (by positivity)]
-    rw [ENNReal.ofReal_coe_nnreal, ENNReal.ofReal_coe_nnreal]
+    rw [ENNReal.ofReal_coe_nnreal]
+    rw [ENNReal.ofReal_inv_of_pos (by exact NNReal.coe_pos.mpr (Nat.cast_pos.mpr Hb))]
+    rw [ENNReal.ofReal_coe_nnreal]
     rw [← mul_pow]
 
 end SLang

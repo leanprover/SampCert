@@ -99,9 +99,10 @@ theorem ApproximateDP_of_DP (m : Mechanism T U) (ε : ℝ) (h : DP m ε) :
       apply ENNReal.tsum_le_tsum
       intro u
       split <;> simp
-    rw [PMF.tsum_coe] at H1
     intro HK
     simp_all
+    have HK'' : ∑' (x : U), (m l₂) x = 1 := HasSum.tsum_eq (m l₂ |>.property)
+    simp [HK''] at H1
   apply le_trans h
   simp
 
