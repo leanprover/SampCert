@@ -88,6 +88,323 @@ lemma HαSpecial_algebraic {ε S D : ℝ} (Hε : ε ≠ 0) (HS : S * S = 2 * D) 
   field_simp
   nlinarith [sq_nonneg ε, sq_nonneg S]
 
+lemma ApproximateDP_ite_eq (α ε' : ℝ) (Hα' : 0 < α.toEReal - 1) (Hε' : 0 ≤ ε')
+    (z : EReal)
+    (D : Decidable (ENNReal.ofReal (Real.exp ((α - 1) * ε')) ≤ ENNReal.eexp ((↑α - 1) * z)))
+    (D' : Decidable (z ≥ ↑(ENNReal.ofReal ε'))) :
+    (@ite ENNReal (ENNReal.ofReal (Real.exp ((α - 1) * ε')) ≤ ENNReal.eexp ((↑α - 1) * z)) D 1 0) =
+    (@ite ENNReal (z ≥ ↑(ENNReal.ofReal ε')) D' 1 0) := by
+  split
+  · split
+    · rfl
+    · exfalso
+      rename_i HK1 HK2
+      apply HK2
+      simp only [ge_iff_le]
+      have HK1' : ((α - 1) * ε' ≤ (↑α - 1) * z) := by exact ENNReal.eexp_mono_le.mpr HK1
+      have HK1'' : ↑ε' ≤ z := by
+        apply ENNReal.ereal_smul_le_left (α - 1) ?SC1 ?SC2 HK1'
+        case SC1 => apply Hα'
+        case SC2 =>
+          rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+            rw [EReal.coe_sub, EReal.coe_one]]
+          exact EReal.coe_lt_top _
+      simp
+      rw [max_eq_left Hε']
+      exact HK1''
+  · split
+    · exfalso
+      rename_i HK1 HK2
+      apply HK1
+      rw [ge_iff_le] at HK2
+      rw [<- ENNReal.eexp_ofReal]
+      apply ENNReal.eexp_mono_le.mp
+      simp
+      refine ENNReal.ereal_le_smul_left (α.toEReal - OfNat.ofNat 1) Hα' ?G1 ?G2
+      case G1 =>
+        rw [show (α.toEReal - OfNat.ofNat 1) = ((α - 1 : ℝ) : EReal) from by
+          rw [EReal.coe_sub, EReal.coe_one]]
+        exact EReal.coe_lt_top _
+      simp only [EReal.coe_ennreal_ofReal] at HK2
+      rw [max_eq_left Hε'] at HK2
+      exact HK2
+    · rfl
+
+lemma ApproximateDP_renyi_pointwise_eq {V : Type*} (p q : PMF V)
+    (Hpq : AbsCts p q) (Hqp : AbsCts q p) (α : ℝ) (Hα : 1 < α) (u : V) :
+    p u * (p u / q u) ^ (α.toEReal - 1).toReal =
+    (p u) ^ α * (q u) ^ (1 - α) := by
+  cases (Classical.em (q u = 0))
+  · rename_i HZ2
+    have HZ1 : p u = 0 := Hpq u HZ2
+    simp [HZ2, HZ1]
+    left
+    linarith
+  · rw [division_def]
+    rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G3]
+    case G1 => exact PMF.apply_ne_top p u
+    case G3 =>
+      apply ENNReal.inv_ne_top.mpr
+      assumption
+    rw [<- mul_assoc]
+    congr 1
+    · conv =>
+        enter [1, 1]
+        rw [<- ENNReal.rpow_one (p u)]
+      rw [<- (ENNReal.rpow_add 1 _ ?G1 ?G3)]
+      case G1 =>
+        intro HK
+        rename_i HK1
+        exact HK1 (Hqp u HK)
+      case G3 => exact PMF.apply_ne_top p u
+      congr 1
+      exact add_eq_of_eq_sub' rfl
+    · rw [<- ENNReal.rpow_neg_one]
+      rw [← ENNReal.rpow_mul]
+      congr
+      simp
+      rw [neg_eq_iff_add_eq_zero]
+      rw [EReal.toReal_sub (EReal.coe_ne_top _) (EReal.coe_ne_bot _) ?_ ?_]
+      · simp
+      · rw [← EReal.coe_one]; exact EReal.coe_ne_top _
+      · rw [← EReal.coe_one]; exact EReal.coe_ne_bot _
+
+lemma ApproximateDP_ε'_nonneg (ε : ℝ) (Hε : 0 ≤ ε) (δ : NNReal)
+    (Hδ0 : 0 < (δ : ℝ)) (Hδ1 : (δ : ℝ) < 1) :
+    0 ≤ ε^2/2 + ε * (2 * Real.log (1/δ))^(1/2 : ℝ) := by
+  apply add_nonneg
+  · apply div_nonneg
+    · apply sq_nonneg
+    · simp
+  · apply mul_nonneg
+    · exact Hε
+    · apply Real.rpow_nonneg
+      apply mul_nonneg
+      · simp
+      · apply Real.log_nonneg
+        apply one_le_one_div Hδ0
+        exact le_of_lt Hδ1
+
+lemma ApproximateDP_α_gt_one (ε : ℝ) (Hε_pos : 0 < ε) (δ : NNReal)
+    (Hδ0 : 0 < (δ : ℝ)) (Hδ1 : (δ : ℝ) < 1) :
+    1 < (1 / ε) * (2 * Real.log (1 / δ))^(1/2 : ℝ) + 1 := by
+  conv =>
+    lhs
+    rw [<- zero_add 1]
+  apply (add_lt_add_iff_right 1).mpr
+  conv =>
+    lhs
+    rw [<- mul_zero 0]
+  apply mul_lt_mul_of_nonneg_of_pos
+  · apply one_div_pos.mpr
+    exact Hε_pos
+  · apply Real.rpow_nonneg
+    apply mul_nonneg
+    · simp
+    · apply Real.log_nonneg
+      apply one_le_one_div Hδ0
+      exact le_of_lt Hδ1
+  · simp
+  · apply Real.rpow_pos_of_pos
+    apply mul_pos
+    · simp
+    · apply Real.log_pos
+      apply one_lt_one_div
+      · apply Hδ0
+      · exact Hδ1
+
+lemma ApproximateDP_α_toEReal_sub_one_pos (ε : ℝ) (Hε_pos : 0 < ε) (δ : NNReal)
+    (Hδ0 : 0 < (δ : ℝ)) (Hδ1 : (δ : ℝ) < 1) :
+    0 < (((1 / ε) * (2 * Real.log (1 / δ))^(1/2 : ℝ) + 1 : ℝ) : EReal) - 1 := by
+  rw [EReal.coe_add]
+  simp only [one_div, EReal.coe_mul, EReal.coe_one]
+  rw [add_sub_assoc]
+  have HZ : (1 - 1 : EReal) = 0 := by
+    rw [← EReal.coe_one]
+    rw [← EReal.coe_sub]
+    simp
+  rw [HZ]
+  simp only [add_zero, gt_iff_lt]
+  apply EReal.mul_pos
+  · apply EReal.coe_pos.mpr
+    exact inv_pos_of_pos Hε_pos
+  · apply EReal.coe_pos.mpr
+    apply Real.rpow_pos_of_pos
+    apply mul_pos
+    · simp
+    · apply Real.log_pos
+      exact (one_lt_inv₀ Hδ0).mpr Hδ1
+
+lemma ApproximateDP_HαSpecial_bound (ε : ℝ) (Hε_pos : 0 < ε) (δ : NNReal)
+    (Hδ0 : 0 < (δ : ℝ)) (Hδ1 : (δ : ℝ) < 1)
+    (α : ℝ) (Dα : α = (1 / ε) * (2 * Real.log (1 / δ)) ^ (1/2 : ℝ) + 1)
+    (ε' : ℝ) (Dε' : ε^2/2 + ε * (2 * Real.log (1/δ))^(1/2 : ℝ) = ε') :
+    ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤
+    ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ := by
+  apply Eq.le
+  rw [Dα]
+  conv =>
+    enter [1, 1, 1]
+    simp
+    rw [add_sub_assoc]
+    rw [← EReal.coe_one]
+    rw [← EReal.coe_sub]
+    simp
+  conv =>
+    enter [2, 1, 1, 1, 1]
+    simp
+  simp only [one_div, EReal.coe_ennreal_ofReal]
+  repeat rw [← EReal.coe_mul]
+  rw [ENNReal.eexp_ofReal]
+  rw [ENNReal.ofReal]
+  rw [ENNReal.ofReal]
+  rw [← ENNReal.coe_mul]
+  congr 1
+  rw [<- @Real.toNNReal_coe δ]
+  rw [<- Real.toNNReal_mul ?G1]
+  case G1 => apply Real.exp_nonneg
+  congr 1
+  conv =>
+    enter [2, 2]
+    rw [<- @Real.exp_log (δ.toReal) Hδ0]
+  conv =>
+    enter [2]
+    rw [<- Real.exp_add]
+  congr 1
+  simp only [Real.toNNReal_coe]
+  rw [max_eq_left ?G5]
+  case G5 =>
+    apply mul_nonneg
+    · apply mul_nonneg
+      · simp
+      · apply sq_nonneg
+    · apply add_nonneg
+      · apply mul_nonneg
+        · apply inv_nonneg_of_nonneg
+          exact le_of_lt Hε_pos
+        · apply Real.rpow_nonneg
+          apply mul_nonneg
+          · simp
+          · apply Real.log_nonneg
+            exact (one_le_inv₀ Hδ0).mpr (le_of_lt Hδ1)
+      · simp
+  rw [<- Dε']
+  simp only [one_div]
+  rw [show Real.log (↑δ)⁻¹ = -Real.log ↑δ from Real.log_inv (↑δ)]
+  rw [show -(2 * Real.log ↑δ) = 2 * -Real.log ↑δ from by ring]
+  have Hlog_pos : 0 < 2 * -Real.log ↑δ := by
+    apply mul_pos (by norm_num)
+    exact neg_pos.mpr (Real.log_neg Hδ0 Hδ1)
+  have HSsq : (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ * (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ = 2 * -Real.log ↑δ := by
+    rw [<- Real.rpow_add Hlog_pos]
+    rw [show (2 : ℝ)⁻¹ + (2 : ℝ)⁻¹ = 1 from by norm_num]
+    exact Real.rpow_one _
+  conv => rhs; enter [2]; rw [show Real.log ↑δ = -(-Real.log ↑δ) from by ring]
+  exact HαSpecial_algebraic (by linarith) HSsq
+
+lemma ApproximateDP_HB_bound {U : Type*} (f : U → ENNReal) (S : Set U) (P : U → Prop)
+    [DecidablePred (· ∈ S)] [DecidablePred P] :
+    ∑' (a : U), f a * ((if a ∈ S then (1 : ENNReal) else 0) * if P a then 1 else 0) ≤
+    ∑' (a : U), f a * (if P a then (1 : ENNReal) else 0) := by
+  apply ENNReal.tsum_le_tsum
+  intro x
+  apply mul_le_mul'
+  · rfl
+  split
+  · simp
+  · simp
+
+lemma ApproximateDP_HDP_bound {U : Type*} (p q : PMF U) (Hac : AbsCts p q)
+    (S : Set U) [DecidablePred (· ∈ S)] (ε' : ℝ) (Hε' : 0 ≤ ε') :
+    ∑' (a : U), p a * ((if a ∈ S then (1 : ENNReal) else 0) *
+        if ENNReal.elog (p a / q a) < (ENNReal.ofReal ε' : EReal) then 1 else 0) ≤
+    ENNReal.ofReal (Real.exp ε') * ∑' (a : U), q a * (if a ∈ S then (1 : ENNReal) else 0) := by
+  rw [<- ENNReal.tsum_mul_left]
+  apply ENNReal.tsum_le_tsum
+  intro u
+  cases (Classical.em ((q u = 0)))
+  · have Hpu : p u = 0 := by
+      rename_i h
+      exact Hac u h
+    simp_all
+  rename_i hnz
+  conv =>
+    congr
+    · rw [mul_comm]
+      rw [mul_assoc]
+    · rw [mul_comm]
+      enter [1]
+      rw [mul_comm]
+  rw [mul_assoc]
+  apply mul_le_mul'
+  · rfl
+  split <;> simp
+  rename_i H
+  apply ENNReal.eexp_mono_lt.mp at H
+  simp only [ENNReal.elog_eexp] at H
+  rw [mul_comm]
+  cases (Classical.em (DFunLike.coe q u = ⊤))
+  · simp_all
+  rename_i Hnt
+  apply (ENNReal.div_le_iff hnz Hnt).mp
+  simp at H
+  rw [max_eq_left ?G5] at H
+  case G5 => linarith
+  exact le_of_lt H
+
+lemma ApproximateDP_renyi_tsum_le [Countable U] (m₁ m₂ : PMF U)
+    (Hm12 : AbsCts m₁ m₂) (Hm21 : AbsCts m₂ m₁)
+    (ε : ℝ) (Hε : 0 ≤ ε) (α : ℝ) (Hα : 1 < α) (Hα' : 0 < α.toEReal - 1)
+    (h : RenyiDivergence m₁ m₂ α ≤ ENNReal.ofReal (2⁻¹ * ε^2 * α)) :
+    ∑' (u : U), m₁ u * (m₁ u / m₂ u)^(α.toEReal - 1).toReal ≤
+    ENNReal.eexp ((α - 1) * ENNReal.ofReal (2⁻¹ * ε^2 * α)) := by
+  conv_lhs =>
+    rw [show (fun x => m₁ x * (m₁ x / m₂ x) ^ (α.toEReal - 1).toReal) =
+           (fun x => m₁ x ^ α * m₂ x ^ (1 - α)) from
+      funext fun x => ApproximateDP_renyi_pointwise_eq m₁ m₂ Hm12 Hm21 α Hα x]
+  erw [<- RenyiDivergence_def_exp m₁ m₂ Hα]
+  apply ENNReal.eexp_mono_le.mp
+  refine ENNReal.ereal_le_smul_left (↑α - 1) ?Hr1 ?Hr2 ?H
+  case Hr1 => exact Hα'
+  case Hr2 =>
+    rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+      rw [EReal.coe_sub, EReal.coe_one]]
+    exact EReal.coe_lt_top _
+  rw [RenyiDivergence] at h
+  rw [<- ENNReal.ofEReal_ofReal_toENNReal] at h
+  apply ENNReal.ofEReal_le_mono_conv_nonneg at h
+  · apply (le_trans h)
+    rw [EReal.coe_mul]
+    rw [ENNReal.ofReal_mul ?G1]
+    case G1 =>
+      apply mul_nonneg
+      · simp
+      · exact sq_nonneg ε
+    rw [ENNReal.ofReal_mul ?G1]
+    case G1 => simp
+    rw [EReal.coe_mul]
+    simp
+    apply Eq.le
+    rw [max_eq_left (sq_nonneg ε), max_eq_left (by linarith : (0 : ℝ) ≤ α)]
+    rw [EReal.coe_pow]
+    congr 1
+    congr 1
+    norm_num
+    simp
+    refine (EReal.toReal_eq_toReal ?_ ?_ ?_ ?_).mp ?_ <;> try simp
+  · apply @RenyiDivergence_def_nonneg U ⊤ ?G1 _ m₁ m₂ Hm12 _ Hα
+    infer_instance
+  · simp
+    apply mul_nonneg
+    · apply mul_nonneg
+      · apply EReal.coe_nonneg.mpr
+        apply inv_nonneg_of_nonneg
+        exact zero_le_two
+      · rw [sq]
+        apply mul_nonneg <;> exact EReal.coe_nonneg.mpr Hε
+    · apply EReal.coe_nonneg.mpr
+      linarith
+
 /--
 Obtain an approximate DP bound from a zCDP bound, when ε > 0 and δ < 1
 -/
@@ -101,131 +418,16 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
   simp [DP']
   have Hε' : 0 ≤ ε' := by
     rw [<- Dε']
-    apply add_nonneg
-    · apply div_nonneg
-      · apply sq_nonneg
-      · simp
-    · apply mul_nonneg
-      · trivial
-      · apply Real.rpow_nonneg
-        apply mul_nonneg
-        · simp
-        · apply Real.log_nonneg
-          apply one_le_one_div Hδ0
-          exact le_of_lt Hδ1
+    exact ApproximateDP_ε'_nonneg ε Hε δ Hδ0 Hδ1
   intros l₁ l₂ neighs S
 
-
-  -- Different value of α from the paper, since our definition of ε-zCDP is their (1/2)ε^2-zCDP
   let α : Real := ((1 / ε) * (2*Real.log (1/δ))^(1/2 : ℝ)) + 1
   have Dα : α = (((1 / ε) * (2*Real.log (1/δ))^(1/2 : ℝ)) + 1 : ℝ) := by rfl
-  have Hα : (1 < α) := by
-    rw [Dα]
-    conv =>
-      lhs
-      rw [<- zero_add 1]
-    apply (add_lt_add_iff_right 1).mpr
-    conv =>
-      lhs
-      rw [<- mul_zero 0]
-    apply mul_lt_mul_of_nonneg_of_pos
-    · apply one_div_pos.mpr
-      trivial
-    · apply Real.rpow_nonneg
-      apply mul_nonneg
-      · simp
-      · apply Real.log_nonneg
-        apply one_le_one_div Hδ0
-        exact le_of_lt Hδ1
-    · simp
-    · apply Real.rpow_pos_of_pos
-      apply mul_pos
-      · simp
-      · apply Real.log_pos
-        apply one_lt_one_div
-        · apply Hδ0
-        · trivial
-  have Hα' : (0 < α.toEReal - 1) := by
-    rw [EReal.coe_add]
-    simp only [one_div, EReal.coe_mul, EReal.coe_one]
-    rw [add_sub_assoc]
-    have HZ : (1 - 1 : EReal) = 0 := by
-      rw [← EReal.coe_one]
-      rw [← EReal.coe_sub]
-      simp
-    rw [HZ]
-    simp only [add_zero, gt_iff_lt]
-    apply EReal.mul_pos
-    · apply EReal.coe_pos.mpr
-      exact inv_pos_of_pos Hε_pos
-    · apply EReal.coe_pos.mpr
-      apply Real.rpow_pos_of_pos
-      apply mul_pos
-      · simp
-      · apply Real.log_pos
-        exact (one_lt_inv₀ Hδ0).mpr Hδ1
-  have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ := by
-    apply Eq.le
-    rw [Dα]
-    -- Cancel 1 - 1
-    conv =>
-      enter [1, 1, 1]
-      simp
-      rw [add_sub_assoc]
-      rw [← EReal.coe_one]
-      rw [← EReal.coe_sub]
-      simp
-    conv =>
-      enter [2, 1, 1, 1, 1]
-      simp
-    simp only [one_div, EReal.coe_ennreal_ofReal]
-    repeat rw [← EReal.coe_mul]
-    rw [ENNReal.eexp_ofReal]
-    rw [ENNReal.ofReal]
-    rw [ENNReal.ofReal]
-    rw [← ENNReal.coe_mul]
-    congr 1
-    rw [<- @Real.toNNReal_coe δ]
-    rw [<- Real.toNNReal_mul ?G1]
-    case G1 => apply Real.exp_nonneg
-    congr 1
-    conv =>
-      enter [2, 2]
-      rw [<- @Real.exp_log (δ.toReal) Hδ0]
-    conv =>
-      enter [2]
-      rw [<- Real.exp_add]
-    congr 1
-    simp only [Real.toNNReal_coe]
-    rw [max_eq_left ?G5]
-    case G5 =>
-      apply mul_nonneg
-      · apply mul_nonneg
-        · simp
-        · apply sq_nonneg
-      · apply add_nonneg
-        · apply mul_nonneg
-          · apply inv_nonneg_of_nonneg
-            trivial
-          · apply Real.rpow_nonneg
-            apply mul_nonneg
-            · simp
-            · apply Real.log_nonneg
-              exact (one_le_inv₀ Hδ0).mpr (le_of_lt Hδ1)
-        · simp
-    rw [<- Dε']
-    simp only [one_div]
-    rw [show Real.log (↑δ)⁻¹ = -Real.log ↑δ from Real.log_inv (↑δ)]
-    rw [show -(2 * Real.log ↑δ) = 2 * -Real.log ↑δ from by ring]
-    have Hlog_pos : 0 < 2 * -Real.log ↑δ := by
-      apply mul_pos (by norm_num)
-      exact neg_pos.mpr (Real.log_neg Hδ0 Hδ1)
-    have HSsq : (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ * (2 * -Real.log ↑δ) ^ (2 : ℝ)⁻¹ = 2 * -Real.log ↑δ := by
-      rw [<- Real.rpow_add Hlog_pos]
-      rw [show (2 : ℝ)⁻¹ + (2 : ℝ)⁻¹ = 1 from by norm_num]
-      exact Real.rpow_one _
-    conv => rhs; enter [2]; rw [show Real.log ↑δ = -(-Real.log ↑δ) from by ring]
-    exact HαSpecial_algebraic (by linarith) HSsq
+  have Hα : (1 < α) := ApproximateDP_α_gt_one ε Hε_pos δ Hδ0 Hδ1
+  have Hα' : (0 < α.toEReal - 1) := ApproximateDP_α_toEReal_sub_one_pos ε Hε_pos δ Hδ0 Hδ1
+  have HαSpecial : ENNReal.eexp (((α - 1)) * ENNReal.ofReal (2⁻¹ * ε ^ 2 * α)) ≤
+      ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ :=
+    ApproximateDP_HαSpecial_bound ε Hε_pos δ Hδ0 Hδ1 α Dα ε' Dε'
 
 
   -- Privacy loss random variable
@@ -284,18 +486,8 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
   rw [ENNReal.tsum_add]
 
   -- Bound right term above
-  have HB :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a ≥ ENNReal.ofReal ε' then 1 else 0) ≤
-      ∑' (a : U), (m l₁) a * (if z a ≥ ENNReal.ofReal ε' then 1 else 0) := by
-    apply ENNReal.tsum_le_tsum
-    intro x
-    apply mul_le_mul'
-    · rfl
-    split
-    · simp
-    · simp
-  refine le_trans (add_le_add_right HB _) ?_
-  clear HB
+  refine le_trans (add_le_add_right
+    (ApproximateDP_HB_bound (m l₁) S (fun a => z a ≥ ENNReal.ofReal ε')) _) ?_
 
   -- Bound right term above by Markov inequality
   --  Pr[Z > ε'] ≤ δ
@@ -311,52 +503,9 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
     rw [m1_measure_lintegral_sum] at HM
     rw [m1_measure_eval] at HM
 
-    -- Convert between equivalent indicator functions
-    have H (u : U) D D' :
-        (@ite _ (ENNReal.ofReal (Real.exp ((α - 1) * ε')) ≤ ENNReal.eexp ((↑α - 1) * z u)) D (1 : ENNReal) 0) =
-        (@ite _ (z u ≥ ↑(ENNReal.ofReal ε')) D' (1 : ENNReal) 0) := by
-      split
-      · split
-        · rfl
-        · exfalso
-          rename_i HK1 HK2
-          apply HK2
-          simp only [ge_iff_le]
-          have HK1' : ((α - 1) * ε' ≤ (↑α - 1) * z u) := by exact ENNReal.eexp_mono_le.mpr HK1
-          have HK1'' : ↑ε' ≤ z u  := by
-            apply ENNReal.ereal_smul_le_left (α - 1) ?SC1 ?SC2 HK1'
-            case SC1 => apply Hα'
-            case SC2 =>
-              show ((α : EReal) - 1) < ⊤
-              rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
-                rw [EReal.coe_sub, EReal.coe_one]]
-              exact EReal.coe_lt_top _
-          simp
-          rw [max_eq_left]
-          · trivial
-          linarith
-      · split
-        · exfalso
-          rename_i HK1 HK2
-          apply HK1
-          rw [ge_iff_le] at HK2
-          rw [<- ENNReal.eexp_ofReal]
-          apply ENNReal.eexp_mono_le.mp
-          simp
-          refine ENNReal.ereal_le_smul_left (α.toEReal - OfNat.ofNat 1) Hα' ?G1 ?G2
-          case G1 =>
-            rw [show (α.toEReal - OfNat.ofNat 1) = ((α - 1 : ℝ) : EReal) from by
-              rw [EReal.coe_sub, EReal.coe_one]]
-            exact EReal.coe_lt_top _
-          simp only [EReal.coe_ennreal_ofReal] at HK2
-          rw [max_eq_left] at HK2
-          · trivial
-          linarith
-        · rfl
     conv at HM =>
       enter [1, 2, 1, u, 2]
-      rw [H u]
-    clear H
+      rw [ApproximateDP_ite_eq α ε' Hα' Hε' (z u) _ _]
 
     -- Use the Markov inequality
     suffices ENNReal.ofReal (Real.exp ((α - 1) * ε')) * (∑' (a : U), (m l₁) a * if z a ≥ ↑(ENNReal.ofReal ε') then 1 else 0) ≤ ENNReal.ofReal (Real.exp ((α - 1) * ε')) * ↑δ by
@@ -381,147 +530,27 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
       simp
 
     -- Apply Renyi divergence inequality
-    have h := h α Hα l₁ l₂ neighs
-    rw [RenyiDivergence] at h
     apply (le_trans _ HαSpecial)
-
-    -- After this point the bound should be as tight as it's going to get
-
-    have H (u : U) : (m l₁) u * ((m l₁) u / (m l₂) u) ^ (α.toEReal - 1).toReal =
-                     ((m l₁) u) ^ α * ((m l₂) u) ^ (1 - α) := by
-      cases (Classical.em ((m l₂) u = 0))
-      · rename_i HZ2
-        have HZ1 : (m l₁ u = 0) := by exact Hm l₁ l₂ neighs u HZ2
-        simp [HZ2, HZ1]
-        left
-        linarith
-      · rw [division_def]
-        rw [ENNReal.mul_rpow_of_ne_top ?G1 ?G3]
-        case G1 => exact PMF.apply_ne_top (m l₁) u
-        case G3 =>
-          apply ENNReal.inv_ne_top.mpr
-          trivial
-        rw [<- mul_assoc]
-        congr 1
-        · conv =>
-            enter [1, 1]
-            rw [<- ENNReal.rpow_one ((m l₁) u)]
-          rw [<- (ENNReal.rpow_add 1 _ ?G1 ?G3)]
-          case G1 =>
-            intro HK
-            rename_i HK1
-            apply HK1
-            apply (Hm l₂ l₁ (Neighbour_symm l₁ l₂ neighs))
-            trivial
-          case G3 => exact PMF.apply_ne_top (m l₁) u
-          congr 1
-          exact add_eq_of_eq_sub' rfl
-        · rw [<- ENNReal.rpow_neg_one]
-          rw [← ENNReal.rpow_mul]
-          congr
-          simp
-          rw [neg_eq_iff_add_eq_zero]
-          rw [EReal.toReal_sub (EReal.coe_ne_top _) (EReal.coe_ne_bot _) ?_ ?_]
-          · simp
-          · rw [← EReal.coe_one]; exact EReal.coe_ne_top _
-          · rw [← EReal.coe_one]; exact EReal.coe_ne_bot _
-    conv =>
-      enter [1, 1, x]
-      rw [H x]
-    clear H
-    erw [<- RenyiDivergence_def_exp (m l₁) (m l₂) Hα]
-    apply ENNReal.eexp_mono_le.mp
-    refine ENNReal.ereal_le_smul_left (↑α - 1) ?Hr1 ?Hr2 ?H
-    case Hr1 => exact Hα'
-    case Hr2 =>
-      rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
-        rw [EReal.coe_sub, EReal.coe_one]]
-      exact EReal.coe_lt_top _
-    rw [<- ENNReal.ofEReal_ofReal_toENNReal] at h
-    apply ENNReal.ofEReal_le_mono_conv_nonneg at h
-    · apply (le_trans h)
-      rw [EReal.coe_mul]
-      rw [ENNReal.ofReal_mul ?G1]
-      case G1 =>
-        apply mul_nonneg
-        · simp
-        · exact sq_nonneg ε
-      rw [ENNReal.ofReal_mul ?G1]
-      case G1 => simp
-      rw [EReal.coe_mul]
-      simp
-      apply Eq.le
-      rw [max_eq_left (sq_nonneg ε), max_eq_left (by linarith : (0 : ℝ) ≤ α)]
-      rw [EReal.coe_pow]
-      congr 1
-      congr 1
-      norm_num
-      simp
-      refine (EReal.toReal_eq_toReal ?_ ?_ ?_ ?_).mp ?_ <;> try simp
-    · apply @RenyiDivergence_def_nonneg U ⊤ ?G1 _ (m l₁) (m l₂) (Hm l₁ l₂ neighs) _ Hα
-      infer_instance
-    · simp
-      apply mul_nonneg
-      · apply mul_nonneg
-        · apply EReal.coe_nonneg.mpr
-          apply inv_nonneg_of_nonneg
-          exact zero_le_two
-        · rw [sq]
-          apply mul_nonneg <;> exact EReal.coe_nonneg.mpr Hε
-      · apply EReal.coe_nonneg.mpr
-        linarith
+    exact ApproximateDP_renyi_tsum_le (m l₁) (m l₂)
+      (Hm l₁ l₂ neighs) (Hm l₂ l₁ (Neighbour_symm l₁ l₂ neighs))
+      ε Hε α Hα Hα' (h α Hα l₁ l₂ neighs)
   apply (le_trans (add_le_add_right HMarkov _))
   clear HMarkov
 
 
 
 
-  -- Bound left term above
-  have HDP :
-      ∑' (a : U), (m l₁) a * ((if a ∈ S then 1 else 0) * if z a < ENNReal.ofReal ε' then 1 else 0) ≤
-      ENNReal.ofReal (Real.exp ε') * ∑' (a : U), (m l₂) a * (if a ∈ S then 1 else 0) := by
-    -- Eliminate the indicator function
-    rw [<- ENNReal.tsum_mul_left]
-    apply ENNReal.tsum_le_tsum
-    intro u
-
-    -- Eliminate edge case by absolute continuity
-    cases (Classical.em ((m l₂) u = 0))
-    · have Hz : (m l₁ u = 0) := by
-        rename_i h
-        exact Hm l₁ l₂ neighs u h
-      simp_all
-    rename_i hnz
-
-    conv =>
-      congr
-      · rw [mul_comm]
-        rw [mul_assoc]
-      · rw [mul_comm]
-        enter [1]
-        rw [mul_comm]
-    rw [mul_assoc]
-    apply mul_le_mul'
-    · rfl
-    split <;> simp
-    rename_i H
-    rw [Hz] at H
-    apply ENNReal.eexp_mono_lt.mp at H
-    simp only [ENNReal.elog_eexp] at H
-    rw [mul_comm]
-    cases (Classical.em (DFunLike.coe (m l₂) u = ⊤))
-    · simp_all
-    rename_i Hnt
-    apply (ENNReal.div_le_iff hnz Hnt).mp
-    simp at H
-    rw [max_eq_left ?G5] at H
-    case G5 => linarith
-    exact le_of_lt H
-  apply (le_trans (add_le_add_left HDP _))
-  clear HDP
-
-  -- Conclude by simplification
-  simp [add_comm]
+  apply (le_trans (add_le_add_left
+    (ApproximateDP_HDP_bound (m l₁) (m l₂) (Hm l₁ l₂ neighs) S ε' Hε') _))
+  rw [add_comm]
+  apply le_of_eq
+  congr 1
+  congr 1
+  apply tsum_congr
+  intro a
+  split
+  · exact mul_one _
+  · exact mul_zero _
 
 
 
@@ -962,6 +991,123 @@ lemma B_eval_open (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x)
   rw [mul_comm]
 
 
+lemma B_eval_false_closed_form (Hε : 0 < ε) (Bval : ENNReal) (HBtop : Bval ≠ ⊤) (HBle : Bval ≤ 1)
+    (Hrel : ENNReal.ofReal (Real.exp (-ε)) * Bval
+          + ENNReal.ofReal (Real.exp ε) * (1 - Bval) = 1) :
+    Bval = (ENNReal.ofReal (Real.exp ε) - 1)
+         / (ENNReal.ofReal (Real.exp ε) - ENNReal.ofReal (Real.exp (-ε))) := by
+  conv =>
+    enter [2, 1, 2]
+    rw [<- Hrel]
+  generalize HE1 : (Real.exp ε.toReal) = E1
+  generalize HE2 : (Real.exp (-ε.toReal)) = E2
+  generalize HB : Bval = B
+  rw [HB] at HBtop HBle
+  apply (ENNReal.toReal_eq_toReal_iff' ?G1 ?G2).mp
+  case G1 => exact HBtop
+  case G2 =>
+    apply lt_top_iff_ne_top.mp
+    apply ENNReal.div_lt_top
+    · apply ENNReal.sub_ne_top
+      apply ENNReal.ofReal_ne_top
+    · intro HK
+      rw [<- ENNReal.ofReal_sub _ ?G3] at HK
+      case G3 =>
+        rw [<- HE2]
+        apply Real.exp_nonneg
+      simp at HK
+      rw [<- HE1, <- HE2] at HK
+      apply Real.exp_le_exp.mp at HK
+      simp at HK
+      apply LE.le.not_gt at HK
+      apply HK
+      trivial
+  rw [ENNReal.toReal_div]
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 =>
+    rw [<- HE2]
+    apply Real.exp_nonneg
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 =>
+    simp
+    rw [<- HE2, <- HE1]
+    apply Real.exp_le_exp.mpr
+    simp
+  rw [ENNReal.mul_sub ?G1]
+  case G1 =>
+    intros
+    apply ENNReal.ofReal_ne_top
+  have HHB : B = ENNReal.ofReal (ENNReal.toReal B) := by
+    rw [ENNReal.ofReal_toReal]
+    exact HBtop
+  rw [HHB]
+  rw [<- ENNReal.ofReal_mul ?G1]
+  case G1 =>
+    rw [<- HE2]
+    apply Real.exp_nonneg
+  rw [<- ENNReal.ofReal_mul ?G1]
+  case G1 =>
+    rw [<- HE1]
+    apply Real.exp_nonneg
+  simp
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 =>
+    apply mul_nonneg
+    · rw [<- HE1]
+      apply Real.exp_nonneg
+    · apply ENNReal.toReal_nonneg
+  have SC1 : 0 ≤ E1 - E1 * B.toReal := by
+    simp
+    conv =>
+      rhs
+      rw [<- mul_one E1]
+    apply mul_le_mul
+    · simp
+    · apply ENNReal.ofReal_le_one.mp
+      rw [ENNReal.ofReal_toReal HBtop]
+      exact HBle
+    · apply ENNReal.toReal_nonneg
+    · rw [<- HE1]
+      apply Real.exp_nonneg
+  have SC2 : 0 ≤ E2 * B.toReal + (E1 - E1 * B.toReal) := by
+    apply add_nonneg
+    · apply mul_nonneg
+      · rw [<- HE2]
+        apply Real.exp_nonneg
+      · apply ENNReal.toReal_nonneg
+    · apply SC1
+  have SC3 : 0 ≤ E1 - (E2 * B.toReal + (E1 - E1 * B.toReal)) := by
+    rw [tsub_add_eq_tsub_tsub_swap]
+    rw [sub_nonneg]
+    simp
+    rw [<- HE2, <- HE1]
+    apply mul_le_mul
+    · apply Real.exp_le_exp.mpr
+      simp
+    · simp
+    · apply ENNReal.toReal_nonneg
+    · apply Real.exp_nonneg
+  rw [<- ENNReal.ofReal_add ?G1 ?G2]
+  case G1 =>
+    apply mul_nonneg
+    · rw [<- HE2]
+      apply Real.exp_nonneg
+    · apply ENNReal.toReal_nonneg
+  case G2 => apply SC1
+  rw [<- ENNReal.ofReal_sub _ ?G1]
+  case G1 => apply SC2
+  rw [ENNReal.toReal_ofReal ?G1]
+  case G1 => apply SC3
+  apply eq_div_of_mul_eq
+  · apply sub_ne_zero.mpr
+    symm
+    apply LT.lt.ne
+    rw [<- HE1, <- HE2]
+    apply Real.exp_lt_exp.mpr
+    simp
+    trivial
+  ring_nf
+
 /--
 closed form for B false
 -/
@@ -976,127 +1122,7 @@ lemma B_eval_false (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) 
     rw [add_comm]
 
   suffices (ENNReal.ofReal (Real.exp (- ε)) * B ε p q Hqp false + ENNReal.ofReal (Real.exp ε) * (1 - B ε p q Hqp false) = 1) by
-    conv =>
-      enter [2, 1, 2]
-      rw [<- this]
-
-    -- Quality of life
-    generalize HE1 : (Real.exp ε.toReal) = E1
-    generalize HE2 : (Real.exp (-ε.toReal)) = E2
-    generalize HB : DFunLike.coe (B ε p q Hqp) false = B
-
-    -- Convert to Real types
-    apply (ENNReal.toReal_eq_toReal_iff' ?G1 ?G2).mp
-    case G1 =>
-      rw [<- HB]
-      apply PMF.apply_ne_top
-    case G2 =>
-      apply lt_top_iff_ne_top.mp
-      apply ENNReal.div_lt_top
-      · apply ENNReal.sub_ne_top
-        apply ENNReal.ofReal_ne_top
-      · intro HK
-        rw [<- ENNReal.ofReal_sub _ ?G3] at HK
-        case G3 =>
-          rw [<- HE2]
-          apply Real.exp_nonneg
-        simp at HK
-        rw [<- HE1, <- HE2] at HK
-        apply Real.exp_le_exp.mp at HK
-        simp at HK
-        apply LE.le.not_gt at HK
-        apply HK
-        trivial
-    rw [ENNReal.toReal_div]
-    rw [<- ENNReal.ofReal_sub _ ?G1]
-    case G1 =>
-      rw [<- HE2]
-      apply Real.exp_nonneg
-    rw [ENNReal.toReal_ofReal ?G1]
-    case G1 =>
-      simp
-      rw [<- HE2, <- HE1]
-      apply Real.exp_le_exp.mpr
-      simp
-    rw [ENNReal.mul_sub ?G1]
-    case G1 =>
-      intros
-      apply ENNReal.ofReal_ne_top
-    have HHB : B = ENNReal.ofReal (ENNReal.toReal B) := by
-      rw [ENNReal.ofReal_toReal]
-      rw [<- HB]
-      apply PMF.apply_ne_top
-    rw [HHB]
-    rw [<- ENNReal.ofReal_mul ?G1]
-    case G1 =>
-      rw [<- HE2]
-      apply Real.exp_nonneg
-    rw [<- ENNReal.ofReal_mul ?G1]
-    case G1 =>
-      rw [<- HE1]
-      apply Real.exp_nonneg
-    simp
-    rw [<- ENNReal.ofReal_sub _ ?G1]
-    case G1 =>
-      apply mul_nonneg
-      · rw [<- HE1]
-        apply Real.exp_nonneg
-      · apply ENNReal.toReal_nonneg
-
-    have SC1 : 0 ≤ E1 - E1 * B.toReal := by
-      simp
-      conv =>
-        rhs
-        rw [<- mul_one E1]
-      apply mul_le_mul
-      · simp
-      · rw [<- HB]
-        apply ENNReal.ofReal_le_one.mp
-        rw [ENNReal.ofReal_toReal ?G1]
-        case G1 => apply PMF.apply_ne_top
-        apply PMF.coe_le_one
-      · apply ENNReal.toReal_nonneg
-      · rw [<- HE1]
-        apply Real.exp_nonneg
-    have SC2 : 0 ≤ E2 * B.toReal + (E1 - E1 * B.toReal) := by
-      apply add_nonneg
-      · apply mul_nonneg
-        · rw [<- HE2]
-          apply Real.exp_nonneg
-        · rw [<- HB]
-          apply ENNReal.toReal_nonneg
-      · apply SC1
-    have SC3 : 0 ≤ E1 - (E2 * B.toReal + (E1 - E1 * B.toReal)) := by
-      rw [tsub_add_eq_tsub_tsub_swap]
-      rw [sub_nonneg]
-      simp
-      rw [<- HE2, <- HE1]
-      apply mul_le_mul
-      · apply Real.exp_le_exp.mpr
-        simp
-      · simp
-      · apply ENNReal.toReal_nonneg
-      · apply Real.exp_nonneg
-    rw [<- ENNReal.ofReal_add ?G1 ?G2]
-    case G1 =>
-      apply mul_nonneg
-      · rw [<- HE2]
-        apply Real.exp_nonneg
-      · apply ENNReal.toReal_nonneg
-    case G2 => apply SC1
-    rw [<- ENNReal.ofReal_sub _ ?G1]
-    case G1 => apply SC2
-    rw [ENNReal.toReal_ofReal ?G1]
-    case G1 => apply SC3
-    apply eq_div_of_mul_eq
-    · apply sub_ne_zero.mpr
-      symm
-      apply LT.lt.ne
-      rw [<- HE1, <- HE2]
-      apply Real.exp_lt_exp.mpr
-      simp
-      trivial
-    ring_nf
+    exact B_eval_false_closed_form (ε := ε) Hε _ (PMF.apply_ne_top _ _) (PMF.coe_le_one _ _) this
 
   suffices ∑'(x : U), (∑'(b : Bool), A_val ε b * A_pmf ε p q Hqp x b) * q x = 1 by
     conv at this =>
@@ -1471,6 +1497,145 @@ lemma tanh_lt_id_nonneg {x : ℝ} (Hx : 0 ≤ x) : Real.tanh x ≤ x := by
 
 
 
+lemma lemma_step_3_aux_differentiable (x : ℝ) :
+    Differentiable ℝ (fun z : ℝ => Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)) := by
+  apply Differentiable.sub
+  · have Hfunc : (fun y : ℝ => Real.tanh (x * y / 4)) =
+                 ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => x * z / 4)) := by
+      rw [Function.comp_def]
+    rw [Hfunc]
+    apply Differentiable.comp
+    · exact Differentiable.differentiable_tanh
+    · apply Differentiable.mul_const
+      apply Differentiable.const_mul
+      exact differentiable_id
+  · apply Differentiable.const_mul
+    have Hfunc : (fun y : ℝ => Real.tanh (y / 2)) =
+                 ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => z / 2)) := by
+      rw [Function.comp_def]
+    rw [Hfunc]
+    apply Differentiable.comp
+    · exact Differentiable.differentiable_tanh
+    · apply Differentiable.mul_const
+      exact differentiable_id
+
+lemma lemma_step_3_aux_continuous (x : ℝ) :
+    Continuous (fun z : ℝ => Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)) :=
+  (lemma_step_3_aux_differentiable x).continuous
+
+lemma lemma_step_3_deriv_nonneg (x z : ℝ) (Hx : x ≤ 2) (Hx' : 0 ≤ x) (Hz0 : 0 ≤ z) :
+    0 ≤ deriv (fun z => Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)) z := by
+  have Hfunc_xz4 : (fun z => Real.tanh (x * z / 4)) = Real.tanh ∘ (fun z => x * z / 4) := by rw [Function.comp_def]
+  have Hfunc_z2 : (fun z => Real.tanh (z / 2)) = Real.tanh ∘ (fun z => z / 2) := by rw [Function.comp_def]
+  have Heq : (fun z => Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2))
+      = (fun z => Real.tanh (x * z / 4)) - (fun z => Real.tanh (x / 2) * Real.tanh (z / 2)) := by
+    funext; simp
+  rw [Heq]
+  rw [deriv_sub ?G1 ?G2]
+  case G1 =>
+    apply Differentiable.differentiableAt
+    rw [Hfunc_xz4]
+    apply Differentiable.comp
+    · apply Differentiable.differentiable_tanh
+    · apply Differentiable.mul_const
+      apply Differentiable.const_mul
+      apply differentiable_id
+  case G2 =>
+    apply Differentiable.differentiableAt
+    apply Differentiable.const_mul
+    rw [Hfunc_z2]
+    apply Differentiable.comp
+    · apply Differentiable.differentiable_tanh
+    · apply Differentiable.mul_const
+      apply differentiable_id
+  rw [sub_nonneg]
+  simp
+  rw [Hfunc_xz4]
+  rw [Hfunc_z2]
+  rw [deriv_comp _ ?G1 ?G2]
+  case G1 =>
+    apply Differentiable.differentiableAt
+    apply Differentiable.differentiable_tanh
+  case G2 =>
+    apply Differentiable.differentiableAt
+    apply Differentiable.mul_const
+    apply differentiable_id
+  simp
+  rw [deriv_comp _ ?G1 ?G2]
+  case G1 =>
+    apply Differentiable.differentiableAt
+    apply Differentiable.differentiable_tanh
+  case G2 =>
+    apply Differentiable.differentiableAt
+    apply Differentiable.mul_const
+    apply Differentiable.const_mul
+    apply differentiable_id
+  simp
+  rw [deriv_const_mul _ ?G1]
+  case G1 =>
+    apply Differentiable.differentiableAt
+    apply differentiable_id
+  simp
+  rw [deriv.deriv_tanh]
+  rw [deriv.deriv_tanh]
+  suffices ((x / 2) * (1 / Real.cosh (z / 2) ^ 2 * 2⁻¹) ≤ 1 / Real.cosh (x * z / 4) ^ 2 * (x / 4)) by
+    apply (le_trans _ this)
+    apply mul_le_mul
+    · apply tanh_lt_id_nonneg
+      linarith
+    · apply Eq.le
+      rfl
+    · apply mul_nonneg
+      · apply div_nonneg
+        · simp
+        · apply sq_nonneg
+      · simp
+    · linarith
+  conv =>
+    enter [1]
+    rw [mul_comm]
+    rw [mul_assoc]
+    enter [2]
+    rw [mul_comm]
+    rw [<- division_def]
+    rw [div_div]
+  apply mul_le_mul
+  · apply (div_le_div_iff_of_pos_left _ _ _).mpr
+    · apply sq_le_sq'
+      · apply (@le_trans _ _ _ 0)
+        · apply neg_nonneg.mp
+          simp
+          apply (LT.lt.le (Real.cosh_pos _))
+        · apply (LT.lt.le (Real.cosh_pos _))
+      · apply Real.cosh_le_cosh.mpr
+        apply abs_le_abs
+        · apply (div_le_div_iff₀ (by simp) (by simp)).mpr
+          rw [mul_assoc]
+          rw [mul_comm]
+          rw [mul_assoc]
+          apply mul_le_mul <;> linarith
+        · apply (@le_trans _ _ _ 0)
+          · apply neg_nonneg.mp
+            simp
+            apply div_nonneg
+            · apply mul_nonneg
+              · linarith
+              · linarith
+            · simp
+          · linarith
+    · simp
+    · apply sq_pos_of_pos
+      apply Real.cosh_pos
+    · apply sq_pos_of_pos
+      apply Real.cosh_pos
+  · apply Eq.le
+    congr
+    linarith
+  · apply div_nonneg <;> linarith
+  · apply div_nonneg
+    · linarith
+    apply sq_nonneg
+
 lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 2) * Real.tanh (y / 2) ≤ Real.tanh (x * y / 4) := by
   let f (z : ℝ) :=  Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2)
   suffices 0 ≤ f y by
@@ -1482,174 +1647,17 @@ lemma lemma_step_3 (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) : Real.tanh (x / 
     dsimp [f]
     simp
     trivial
-  have Hdiff : DifferentiableOn ℝ f (interior (Set.Icc 0 2)) := by
-    apply Differentiable.differentiableOn
-    dsimp [f]
-    apply Differentiable.add
-    · have Hfunc : (fun y => Real.tanh (x * y / 4)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => x * z / 4)) := by
-        rw [Function.comp_def]
-      rw [Hfunc]
-      clear Hfunc
-      apply Differentiable.comp
-      · apply Differentiable.differentiable_tanh
-      · apply Differentiable.mul_const
-        apply Differentiable.const_mul
-        apply differentiable_id
-    · apply Differentiable.neg
-      apply Differentiable.const_mul
-      have Hfunc : (fun y => Real.tanh (y / 2)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => z / 2)) := by rw [Function.comp_def]
-      rw [Hfunc]
-      apply Differentiable.comp
-      · apply Differentiable.differentiable_tanh
-      · apply Differentiable.mul_const
-        apply differentiable_id
-
-  -- Can't see a way to derive this from Hdiff but it might be out there
-  have Hcts : ContinuousOn f (Set.Icc 0 2) := by
-    apply Continuous.continuousOn
-    dsimp [f]
-    apply Continuous.add
-    · have Hfunc : (fun y => Real.tanh (x * y / 4)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => x * z / 4)) := by rw [Function.comp_def]
-      rw [Hfunc]
-      clear Hfunc
-      apply Continuous.comp
-      · apply Real.continuous_tanh
-      · apply Continuous.mul
-        · apply continuous_const_mul
-        · apply continuous_const
-    · apply Continuous.neg
-      apply Continuous.mul
-      · apply continuous_const
-      · have Hfunc : (fun y => Real.tanh (y / 2)) = ((fun (y : ℝ) => Real.tanh y) ∘ (fun (z : ℝ) => z / 2)) := by rw [Function.comp_def]
-        rw [Hfunc]
-        apply Continuous.comp
-        · apply Real.continuous_tanh
-        · apply continuous_mul_const
+  have Hdiff : DifferentiableOn ℝ f (interior (Set.Icc 0 2)) :=
+    (lemma_step_3_aux_differentiable x).differentiableOn
+  have Hcts : ContinuousOn f (Set.Icc 0 2) :=
+    (lemma_step_3_aux_continuous x).continuousOn
 
   apply Convex.mul_sub_le_image_sub_of_le_deriv (convex_Icc 0 2)
   · trivial
   · trivial
   · simp
     intros z Hz0 _
-    dsimp [f]
-    have Hfunc_xz4 : (fun z => Real.tanh (x * z / 4)) = Real.tanh ∘ (fun z => x * z / 4) := by rw [Function.comp_def]
-    have Hfunc_z2 : (fun z => Real.tanh (z / 2)) = Real.tanh ∘ (fun z => z / 2) := by rw [Function.comp_def]
-
-    -- Rewrite f back into derivative bound
-    have Heq : (fun z => Real.tanh (x * z / 4) - Real.tanh (x / 2) * Real.tanh (z / 2))
-        = (fun z => Real.tanh (x * z / 4)) - (fun z => Real.tanh (x / 2) * Real.tanh (z / 2)) := by
-      funext; simp
-    rw [Heq]
-    rw [deriv_sub ?G1 ?G2]
-    case G1 =>
-      apply Differentiable.differentiableAt
-      rw [Hfunc_xz4]
-      apply Differentiable.comp
-      · apply Differentiable.differentiable_tanh
-      · apply Differentiable.mul_const
-        apply Differentiable.const_mul
-        apply differentiable_id
-    case G2 =>
-      apply Differentiable.differentiableAt
-      apply Differentiable.const_mul
-      rw [Hfunc_z2]
-      apply Differentiable.comp
-      · apply Differentiable.differentiable_tanh
-      · apply Differentiable.mul_const
-        apply differentiable_id
-    rw [sub_nonneg]
-
-    -- Compute derivatives
-    simp
-    rw [Hfunc_xz4]
-    rw [Hfunc_z2]
-    rw [deriv_comp _ ?G1 ?G2]
-    case G1 =>
-      apply Differentiable.differentiableAt
-      apply Differentiable.differentiable_tanh
-    case G2 =>
-      apply Differentiable.differentiableAt
-      apply Differentiable.mul_const
-      apply differentiable_id
-    simp
-    rw [deriv_comp _ ?G1 ?G2]
-    case G1 =>
-      apply Differentiable.differentiableAt
-      apply Differentiable.differentiable_tanh
-    case G2 =>
-      apply Differentiable.differentiableAt
-      apply Differentiable.mul_const
-      apply Differentiable.const_mul
-      apply differentiable_id
-    simp
-    rw [deriv_const_mul _ ?G1]
-    case G1 =>
-      apply Differentiable.differentiableAt
-      apply differentiable_id
-    simp
-    rw [deriv.deriv_tanh]
-    rw [deriv.deriv_tanh]
-
-    -- Apply the tanh bound
-    suffices ((x / 2) * (1 / Real.cosh (z / 2) ^ 2 * 2⁻¹) ≤ 1 / Real.cosh (x * z / 4) ^ 2 * (x / 4)) by
-      apply (le_trans _ this)
-      apply mul_le_mul
-      · apply tanh_lt_id_nonneg
-        linarith
-      · apply Eq.le
-        rfl
-      · apply mul_nonneg
-        · apply div_nonneg
-          · simp
-          · apply sq_nonneg
-        · simp
-      · linarith
-
-    -- Simplify
-    conv =>
-      enter [1]
-      rw [mul_comm]
-      rw [mul_assoc]
-      enter [2]
-      rw [mul_comm]
-      rw [<- division_def]
-      rw [div_div]
-    apply mul_le_mul
-    · apply (div_le_div_iff_of_pos_left _ _ _).mpr
-      · apply sq_le_sq'
-        · apply (@le_trans _ _ _ 0)
-          · apply neg_nonneg.mp
-            simp
-            apply (LT.lt.le (Real.cosh_pos _))
-          · apply (LT.lt.le (Real.cosh_pos _))
-        · apply Real.cosh_le_cosh.mpr
-          apply abs_le_abs
-          · apply (div_le_div_iff₀ (by simp) (by simp)).mpr
-            rw [mul_assoc]
-            rw [mul_comm]
-            rw [mul_assoc]
-            apply mul_le_mul <;> linarith
-          · apply (@le_trans _ _ _ 0)
-            · apply neg_nonneg.mp
-              simp
-              apply div_nonneg
-              · apply mul_nonneg
-                · linarith
-                · linarith
-              · simp
-            · linarith
-      · simp
-      · apply sq_pos_of_pos
-        apply Real.cosh_pos
-      · apply sq_pos_of_pos
-        apply Real.cosh_pos
-    · apply Eq.le
-      congr
-      linarith
-    · apply div_nonneg <;> linarith
-    · apply div_nonneg
-      · linarith
-      apply sq_nonneg
+    exact lemma_step_3_deriv_nonneg x z Hx (by linarith) (le_of_lt Hz0)
   · simp
   · simp
     apply And.intro <;> linarith
@@ -1669,6 +1677,169 @@ lemma sinh_inequality (Hy : 0 ≤ y) (Hyx : y < x) (Hx : x ≤ 2) :
 
 end sinh_inequality
 
+lemma ofDP_bound_large_εα {U : Type} (q' : List T → PMF U) (ε : NNReal)
+    (H : SLang.PureDP q' ε) (α : ℝ) (Hα : 1 < α)
+    (l₁ l₂ : List T) (HN : Neighbour l₁ l₂) (Hεα : ε * α > 2) :
+    RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal (1/2 * ↑ε^2 * α) := by
+  have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
+    apply RenyiDivergence_le_MaxDivergence
+    · exact Hα
+    · intro x
+      apply SLang.event_to_singleton at H
+      rw [SLang.DP_singleton] at H
+      apply (le_trans (H _ _ HN x))
+      simp [ENNReal.toEReal]
+  apply (le_trans H1)
+  apply ENNReal.ofReal_le_ofReal_iff'.mpr
+  left
+  rw [sq]
+  rw [mul_assoc]
+  have H2 : (1 / 2 * (↑ε * 2)) ≤ (1 / 2 * (↑ε * ↑ε * α)) := by
+    apply mul_le_mul
+    · rfl
+    · rw [mul_assoc]
+      apply mul_le_mul
+      · rfl
+      · exact le_of_lt Hεα
+      · simp
+      · exact NNReal.zero_le_coe
+    · apply mul_nonneg
+      · exact NNReal.zero_le_coe
+      · simp
+    · simp
+  linarith
+
+lemma ofDP_bound_SC0 (ε : NNReal) (Hε : 0 < ε) :
+    ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)) ≠ 0 := by
+  apply ne_of_gt
+  simp
+  apply ENNReal.ofReal_lt_ofReal_iff'.mpr
+  refine ⟨?_, Real.exp_pos _⟩
+  apply Real.exp_lt_exp.mpr
+  simp
+  exact Hε
+
+lemma ofDP_bound_SC1 (ε : NNReal) (Hε : 0 < ε) (α : ℝ) (Hα : 0 ≤ α) :
+    ENNReal.ofReal (Real.exp (-↑ε)) ^ α *
+    ((ENNReal.ofReal (Real.exp ↑ε) - 1) /
+     (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
+  apply ENNReal.mul_ne_top
+  · exact ENNReal.rpow_ne_top_of_nonneg Hα ENNReal.ofReal_ne_top
+  apply lt_top_iff_ne_top.mp
+  apply ENNReal.div_lt_top
+  · exact ENNReal.sub_ne_top ENNReal.ofReal_ne_top
+  · exact ofDP_bound_SC0 ε Hε
+
+lemma ofDP_bound_SC2 (ε : NNReal) (Hε : 0 < ε) (α : ℝ) (Hα : 0 ≤ α) :
+    ENNReal.ofReal (Real.exp ↑ε) ^ α *
+    ((1 - ENNReal.ofReal (Real.exp (-↑ε))) /
+     (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
+  apply ENNReal.mul_ne_top
+  · exact ENNReal.rpow_ne_top_of_nonneg Hα ENNReal.ofReal_ne_top
+  apply lt_top_iff_ne_top.mp
+  apply ENNReal.div_lt_top
+  · exact ENNReal.sub_ne_top ENNReal.one_ne_top
+  · exact ofDP_bound_SC0 ε Hε
+
+lemma ofDP_bound_ratio_inv {V : Type*} (p q : PMF V) (ε : ℝ) (x : V)
+    (Hpx : p x ≠ 0)
+    (H : q x / p x ≤ ENNReal.ofReal (Real.exp ε)) :
+    ENNReal.ofReal (Real.exp (-ε)) ≤ p x / q x := by
+  apply ENNReal.inv_le_inv.mp
+  rw [<- ENNReal.ofReal_inv_of_pos ?G4]
+  case G4 => apply Real.exp_pos
+  rw [<- Real.exp_neg]
+  simp
+  apply (le_trans _ H)
+  apply Eq.le
+  apply (ENNReal.toReal_eq_toReal_iff' ?G4 ?G5).mp
+  case G4 =>
+    apply ENNReal.inv_ne_top.mpr
+    apply ENNReal.div_ne_zero.mpr
+    refine ⟨Hpx, PMF.apply_ne_top _ _⟩
+  case G5 =>
+    intro HK
+    apply ENNReal.div_eq_top.mp at HK
+    rcases HK with ⟨ _, h2 ⟩ | ⟨ h, _ ⟩
+    · exact Hpx h2
+    · exact PMF.apply_ne_top _ _ h
+  rw [ENNReal.toReal_inv]
+  repeat rw [ENNReal.toReal_div]
+  rw [inv_div]
+
+lemma ofDP_bound_sinh_step (ε α : ℝ) (Hε : 0 < ε) (Hα : 1 < α) (Hεα : ε * α ≤ 2) :
+    Real.exp (-ε) ^ α * ((Real.exp ε - 1) / (Real.exp ε - Real.exp (-ε))) +
+    Real.exp ε ^ α * ((1 - Real.exp (-ε)) / (Real.exp ε - Real.exp (-ε))) ≤
+    Real.exp ((α - 1) * (1/2 * ε^2 * α)) := by
+  rw [division_def]
+  rw [division_def]
+  repeat rw [<- mul_assoc]
+  rw [<- add_mul]
+  rw [mul_sub]
+  rw [mul_sub]
+  simp only [mul_one]
+  repeat rw [<- Real.exp_mul]
+  repeat rw [<- Real.exp_add]
+  have X : (Real.exp (-ε * α + ε) - Real.exp (-ε * α) + (Real.exp (ε * α) - Real.exp (ε * α + -ε))) =
+           (Real.exp (-ε * α + ε) - Real.exp (ε * α + -ε)) + ((Real.exp (ε * α) - Real.exp (-ε * α))) := by
+    linarith
+  rw [X]
+  clear X
+  have X : ε * α + -ε = (ε * (α - 1)) := by linarith
+  rw [X]
+  clear X
+  have X : (-ε * α + ε) = -(ε * (α - 1)) := by linarith
+  rw [X]
+  clear X
+  have X : (-ε * α) = -(ε * α) := by linarith
+  rw [X]
+  clear X
+  have X : (Real.exp (-(ε * (α - OfNat.ofNat 1))) - Real.exp (ε * (α - OfNat.ofNat 1)) +
+              (Real.exp (ε * α) - Real.exp (-(ε * α)))) =
+           ((Real.exp (ε * α) - Real.exp (-(ε * α))) -
+             (Real.exp (ε * (α - OfNat.ofNat 1)) - Real.exp (-(ε * (α - OfNat.ofNat 1))))) := by
+    linarith
+  rw [X]
+  clear X
+  have Hsinh (x : ℝ) : (Real.exp x - Real.exp (-x)) = 2 * Real.sinh x := by
+    rw [Real.sinh_eq]
+    linarith
+  rw [Hsinh]
+  rw [Hsinh]
+  rw [Hsinh]
+  have X : (OfNat.ofNat 2 * Real.sinh (ε * α) - OfNat.ofNat 2 * Real.sinh (ε * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (OfNat.ofNat 2 * Real.sinh ε)⁻¹ =
+           (Real.sinh (ε * α) - Real.sinh (ε * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (Real.sinh ε)⁻¹ := by
+    rw [mul_inv]
+    repeat rw [<- mul_assoc]
+    congr 1
+    rw [mul_comm]
+    rw [mul_sub]
+    repeat rw [<- mul_assoc]
+    rw [inv_mul_cancel₀ ?G1]
+    case G1 => simp
+    simp
+  rw [X]
+  clear X
+  rw [<- division_def]
+  have W : ε = (ε * α) - ((ε * (α - 1))) := by linarith
+  conv =>
+    enter [1, 2]
+    rw [W]
+  clear W
+  apply (le_trans (sinh_inequality _ _ ?G1 ?G2 ?G3))
+  case G1 =>
+    apply mul_nonneg
+    · exact le_of_lt Hε
+    linarith
+  case G2 =>
+    apply (mul_lt_mul_of_pos_left)
+    · exact sub_one_lt α
+    · exact Hε
+  case G3 => linarith
+  apply Eq.le
+  congr 1
+  linarith
+
 /--
 Convert ε-DP bound to `(1/2)ε²`-zCDP bound
 
@@ -1677,37 +1848,8 @@ Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) : zCDPBound q' ((1/2) * ε^2) := by
   rw [zCDPBound]
   intro α Hα l₁ l₂ HN
-  -- Special case: (εα/2 > 1)
   obtain Hεα | Hεα := Classical.em (ε * α > 2)
-  · have H1 : RenyiDivergence (q' l₁) (q' l₂) α ≤ ENNReal.ofReal ε := by
-      apply RenyiDivergence_le_MaxDivergence
-      · trivial
-      · intro x
-        apply SLang.event_to_singleton at H
-        rw [SLang.DP_singleton] at H
-        apply (le_trans (H _ _ HN x))
-        simp [ENNReal.toEReal]
-    apply (le_trans H1)
-    apply ENNReal.ofReal_le_ofReal_iff'.mpr
-    left
-    rw [sq]
-    rw [mul_assoc]
-    have H2 : (1 / 2 * (↑ε * 2)) ≤ (1 / 2 * (↑ε * ↑ε * α)) := by
-      apply mul_le_mul
-      · rfl
-      · rw [mul_assoc]
-        apply mul_le_mul
-        · rfl
-        · apply GT.gt.lt at Hεα
-          apply LT.lt.le at Hεα
-          assumption
-        · simp
-        · exact NNReal.zero_le_coe
-      · apply mul_nonneg
-        · exact NNReal.zero_le_coe
-        · simp
-      · simp
-    linarith
+  · exact ofDP_bound_large_εα q' ε H α Hα l₁ l₂ HN Hεα
   apply le_of_not_gt at Hεα
 
   -- Open RenyiDivergence
@@ -1798,46 +1940,18 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     trivial
 
   have Hqp : ∀ (x : U'), ENNReal.ofReal (Real.exp (-↑ε)) ≤ p x / q x := by
-    rw [SLang.PureDP] at H
-    apply SLang.event_to_singleton at H
-    suffices (∀ (x : U'), q x / p x ≤ ENNReal.ofReal (Real.exp ↑ε)) by
-      intro x
-      apply ENNReal.inv_le_inv.mp
-      rw [<- ENNReal.ofReal_inv_of_pos ?G4]
-      case G4 => apply Real.exp_pos
-      rw [<- Real.exp_neg]
-      simp
-      apply (le_trans _ (this x))
-      apply Eq.le
-
-      apply (ENNReal.toReal_eq_toReal_iff' ?G4 ?G5).mp
-      case G4 =>
-        apply ENNReal.inv_ne_top.mpr
-        apply ENNReal.div_ne_zero.mpr
-        apply And.intro
-        · dsimp [p]
-          simp [DFunLike.coe]
-          rcases x with ⟨ x', Hx' ⟩
-          simp
-          trivial
-        · apply PMF.apply_ne_top
-      case G5 =>
-        intro HK
-        apply ENNReal.div_eq_top.mp at HK
-        rcases HK with ⟨ h1, h2 ⟩ | ⟨ h, _ ⟩
-        · dsimp [p] at h2
-          simp [DFunLike.coe] at h2
-          rcases x with ⟨ x' , Hx' ⟩
-          trivial
-        · exact PMF.apply_ne_top _ _ h
-      rw [ENNReal.toReal_inv]
-      repeat rw [ENNReal.toReal_div]
-      rw [inv_div]
     intro x
-    rcases x with ⟨ x' , _ ⟩
-    apply (le_trans _ (H _ _ (Neighbour_symm _ _ HN) x'))
-    dsimp [p, q]
-    simp [DFunLike.coe]
+    apply ofDP_bound_ratio_inv p q ε x
+    · rcases x with ⟨ x' , Hx' ⟩
+      dsimp [p]
+      simp [DFunLike.coe]
+      exact Hx'
+    · rw [SLang.PureDP] at H
+      apply SLang.event_to_singleton at H
+      rcases x with ⟨ x' , _ ⟩
+      apply (le_trans _ (H _ _ (Neighbour_symm _ _ HN) x'))
+      dsimp [p, q]
+      simp [DFunLike.coe]
 
   have Hpq : ∀ (x : U'), p x / q x ≤ ENNReal.ofReal (Real.exp ↑ε) := by
     rw [SLang.PureDP] at H
@@ -1924,34 +2038,9 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   simp only [A_val]
 
 
-  -- Convert to real-valued inequality, simplify the left-hand side
-  have SC0 : ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)) ≠ 0 := by
-    apply ne_of_gt
-    simp
-    apply ENNReal.ofReal_lt_ofReal_iff'.mpr
-    apply And.intro
-    · apply Real.exp_lt_exp.mpr
-      simp
-      trivial
-    · apply Real.exp_pos
-  have SC1 : ENNReal.ofReal (Real.exp (-↑ε)) ^ α * ((ENNReal.ofReal (Real.exp ↑ε) - 1) / (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
-    apply ENNReal.mul_ne_top
-    · apply ENNReal.rpow_ne_top_of_nonneg
-      · linarith
-      · exact ENNReal.ofReal_ne_top
-    apply lt_top_iff_ne_top.mp
-    apply ENNReal.div_lt_top
-    · exact ENNReal.sub_ne_top ENNReal.ofReal_ne_top
-    · apply SC0
-  have SC2 : ENNReal.ofReal (Real.exp ↑ε) ^ α * ((1 - ENNReal.ofReal (Real.exp (-↑ε))) / (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
-    apply ENNReal.mul_ne_top
-    · apply ENNReal.rpow_ne_top_of_nonneg
-      · linarith
-      · exact ENNReal.ofReal_ne_top
-    apply lt_top_iff_ne_top.mp
-    apply ENNReal.div_lt_top
-    · exact ENNReal.sub_ne_top ENNReal.one_ne_top
-    · apply SC0
+  have SC0 := ofDP_bound_SC0 ε Hε
+  have SC1 := ofDP_bound_SC1 ε Hε α (by linarith)
+  have SC2 := ofDP_bound_SC2 ε Hε α (by linarith)
   apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
   case G1 =>
     apply ENNReal.add_ne_top.mpr
@@ -1999,97 +2088,14 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   rw [ENNReal.toReal_ofReal ?G1]
   case G1 => apply Real.exp_nonneg
   simp
-
-  -- Combine the fractions
-  rw [division_def]
-  rw [division_def]
-  repeat rw [<- mul_assoc]
-  rw [<- add_mul]
-
-  -- Distribute, rearrange
-  rw [mul_sub]
-  rw [mul_sub]
-  simp only [mul_one]
-  repeat rw [<- Real.exp_mul]
-  repeat rw [<- Real.exp_add]
-
-  -- Rewrite to apply sinh lemma (combine these steps)
-  have X : (Real.exp (-ε.toReal * α + ε.toReal) - Real.exp (-ε.toReal * α) + (Real.exp (ε.toReal * α) - Real.exp (ε.toReal * α + -ε.toReal))) =
-           (Real.exp (-ε.toReal * α + ε.toReal) - Real.exp (ε.toReal * α + -ε.toReal)) + ((Real.exp (ε.toReal * α) - Real.exp (-ε.toReal * α))) := by
-    linarith
-  rw [X]
-  clear X
-  have X : ε.toReal * α + -ε.toReal = (ε.toReal * (α - 1)) := by linarith
-  rw [X]
-  clear X
-  have X : (-ε.toReal * α + ε.toReal) = -(ε.toReal * (α - 1)) := by linarith
-  rw [X]
-  clear X
-  have X : (-ε.toReal * α) = -(ε.toReal * α) := by linarith
-  rw [X]
-  clear X
-  have X : (Real.exp (-(ε.toReal * (α - OfNat.ofNat 1))) - Real.exp (ε.toReal * (α - OfNat.ofNat 1)) +
-              (Real.exp (ε.toReal * α) - Real.exp (-(ε.toReal * α)))) =
-           ((Real.exp (ε.toReal * α) - Real.exp (-(ε.toReal * α))) -
-             (Real.exp (ε.toReal * (α - OfNat.ofNat 1)) - Real.exp (-(ε.toReal * (α - OfNat.ofNat 1))))) := by
-    linarith
-  rw [X]
-  clear X
-
-  have Hsinh (x : ℝ) : (Real.exp x - Real.exp (-x)) = 2 * Real.sinh x := by
-    rw [Real.sinh_eq]
-    linarith
-  rw [Hsinh]
-  rw [Hsinh]
-  rw [Hsinh]
-  have X : (OfNat.ofNat 2 * Real.sinh (ε.toReal * α) - OfNat.ofNat 2 * Real.sinh (ε.toReal * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (OfNat.ofNat 2 * Real.sinh ε.toReal)⁻¹ =
-           (Real.sinh (ε.toReal * α) - Real.sinh (ε.toReal * (α - OfNat.ofNat (OfNat.ofNat 1)))) * (Real.sinh ε.toReal)⁻¹ := by
-    rw [mul_inv]
-    repeat rw [<- mul_assoc]
-    congr 1
-    rw [mul_comm]
-    rw [mul_sub]
-    repeat rw [<- mul_assoc]
-    rw [inv_mul_cancel₀ ?G1]
-    case G1 => simp
-    simp
-  rw [X]
-  clear X
-  rw [<- division_def]
-  simp
-
-  -- Apply the sinh inequality
-  have W : ε.toReal = (ε.toReal * α) - ((ε.toReal * (α - 1))) := by linarith
-  conv =>
-    enter [1, 2]
-    rw [W]
-  clear W
-  apply (le_trans (sinh_inequality _ _ ?G1 ?G2 ?G3))
-  case G1 =>
-    apply mul_nonneg
-    · exact NNReal.zero_le_coe
-    linarith
-  case G2 =>
-    apply (mul_lt_mul_of_pos_left)
-    · exact sub_one_lt α
-    · trivial
-  case G3 => linarith
-
-  -- Simplify the eexp
-  rw [sq]
-  rw [<- EReal.coe_mul]
-  rw [<- sq]
-  have X : (α.toEReal - OfNat.ofNat 1) = (α - 1 : ℝ).toEReal := by rfl
-  rw [X]
-  clear X
-  rw [<- EReal.coe_mul]
-  rw [<- EReal.coe_mul]
-  rw [<- EReal.coe_mul]
+  apply le_trans (ofDP_bound_sinh_step ε.toReal α (NNReal.coe_pos.mpr Hε) Hα Hεα)
+  rw [show ((↑α - 1 : EReal) * (↑((2⁻¹ : ℝ)) * (↑(↑ε : ℝ) ^ 2) * ↑α)) =
+         (((α - 1) * (2⁻¹ * (↑ε : ℝ)^2 * α) : ℝ) : EReal) by
+    push_cast; ring_nf]
   rw [ENNReal.eexp_ofReal]
   rw [ENNReal.toReal_ofReal (Real.exp_nonneg _)]
   apply Eq.le
-  congr 1
-  linarith
+  ring_nf
 
 /-
 Convert ε-DP to `(1/2)ε²`-zCDP.
