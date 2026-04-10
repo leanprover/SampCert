@@ -326,7 +326,11 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
           have HK1'' : ↑ε' ≤ z u  := by
             apply ENNReal.ereal_smul_le_left (α - 1) ?SC1 ?SC2 HK1'
             case SC1 => apply Hα'
-            case SC2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+            case SC2 =>
+              show ((α : EReal) - 1) < ⊤
+              rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+                rw [EReal.coe_sub, EReal.coe_one]]
+              exact EReal.coe_lt_top _
           simp
           rw [max_eq_left]
           · trivial
@@ -340,7 +344,10 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
           apply ENNReal.eexp_mono_le.mp
           simp
           refine ENNReal.ereal_le_smul_left (α.toEReal - OfNat.ofNat 1) Hα' ?G1 ?G2
-          case G1 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+          case G1 =>
+            rw [show (α.toEReal - OfNat.ofNat 1) = ((α - 1 : ℝ) : EReal) from by
+              rw [EReal.coe_sub, EReal.coe_one]]
+            exact EReal.coe_lt_top _
           simp only [EReal.coe_ennreal_ofReal] at HK2
           rw [max_eq_left] at HK2
           · trivial
@@ -362,13 +369,15 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
     apply (le_trans ?G1 _)
     case G1 => apply HM
     clear HM
-    clear HM
 
     -- Rewrite z and simplify
     conv =>
       enter [1, 1, u]
       rw [Hz]
-      rw [ENNReal.eexp_mul_nonneg (le_of_lt Hα') (by exact Ne.symm (ne_of_beq_false rfl))]
+      rw [ENNReal.eexp_mul_nonneg (le_of_lt Hα') (by
+        rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+          rw [EReal.coe_sub, EReal.coe_one]]
+        exact (EReal.coe_lt_top _).ne)]
       simp
 
     -- Apply Renyi divergence inequality
@@ -412,10 +421,10 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
           congr
           simp
           rw [neg_eq_iff_add_eq_zero]
-          rw [EReal.toReal_sub]
-          all_goals (try simp)
-          · exact ne_of_beq_false rfl
-          · exact EReal.add_top_iff_ne_bot.mp rfl
+          rw [EReal.toReal_sub (EReal.coe_ne_top _) (EReal.coe_ne_bot _) ?_ ?_]
+          · simp
+          · rw [← EReal.coe_one]; exact EReal.coe_ne_top _
+          · rw [← EReal.coe_one]; exact EReal.coe_ne_bot _
     conv =>
       enter [1, 1, x]
       rw [H x]
@@ -424,7 +433,10 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
     apply ENNReal.eexp_mono_le.mp
     refine ENNReal.ereal_le_smul_left (↑α - 1) ?Hr1 ?Hr2 ?H
     case Hr1 => exact Hα'
-    case Hr2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    case Hr2 =>
+      rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+        rw [EReal.coe_sub, EReal.coe_one]]
+      exact EReal.coe_lt_top _
     rw [<- ENNReal.ofEReal_ofReal_toENNReal] at h
     apply ENNReal.ofEReal_le_mono_conv_nonneg at h
     · apply (le_trans h)
@@ -1159,7 +1171,7 @@ lemma B_eval_true (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) �
   rw [ENNReal.mul_sub ?G1]
   case G1 =>
     intros
-    exact Ne.symm (ne_of_beq_false rfl)
+    exact ENNReal.ofReal_ne_top
   simp
   rw [division_def, <- mul_assoc]
   conv =>
@@ -1757,7 +1769,10 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       rw [<- EReal.coe_sub]
       apply EReal.coe_pos.mpr
       linarith
-    case G2 => exact Batteries.compareOfLessAndEq_eq_lt.mp rfl
+    case G2 =>
+      rw [show ((α : EReal) - 1) = ((α - 1 : ℝ) : EReal) from by
+        rw [EReal.coe_sub, EReal.coe_one]]
+      exact EReal.coe_lt_top _
     apply ENNReal.eexp_mono_le.mpr
     trivial
   rw [RenyiDivergence_def_exp _ _ Hα]
@@ -1926,7 +1941,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       · exact ENNReal.ofReal_ne_top
     apply lt_top_iff_ne_top.mp
     apply ENNReal.div_lt_top
-    · exact Ne.symm (ne_of_beq_false rfl)
+    · exact ENNReal.sub_ne_top ENNReal.ofReal_ne_top
     · apply SC0
   have SC2 : ENNReal.ofReal (Real.exp ↑ε) ^ α * ((1 - ENNReal.ofReal (Real.exp (-↑ε))) / (ENNReal.ofReal (Real.exp ↑ε) - ENNReal.ofReal (Real.exp (-↑ε)))) ≠ ⊤ := by
     apply ENNReal.mul_ne_top
@@ -1935,7 +1950,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       · exact ENNReal.ofReal_ne_top
     apply lt_top_iff_ne_top.mp
     apply ENNReal.div_lt_top
-    · exact Ne.symm (ne_of_beq_false rfl)
+    · exact ENNReal.sub_ne_top ENNReal.one_ne_top
     · apply SC0
   apply (ENNReal.toReal_le_toReal ?G1 ?G2).mp
   case G1 =>
@@ -1943,7 +1958,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     apply And.intro
     · trivial
     · trivial
-  case G2 =>  exact Ne.symm (ne_of_beq_false rfl)
+  case G2 => exact ENNReal.ofReal_ne_top
 
   simp
   rw [ENNReal.toReal_add ?G1 ?G2]
