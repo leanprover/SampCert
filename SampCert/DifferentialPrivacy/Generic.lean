@@ -79,34 +79,6 @@ lemma privParComp_eval xu xv :
   split <;> split <;> simp_all
 -/
 
--- FIXME: Cleanup
-lemma privParCompose_eval xu xv :
-    ((privParCompose m1 m2 f l) : SLang (U × V)) (xu, xv) =
-      (m1 (List.filter f l) : SLang U) xu * (m2 (List.filter ((! ·) ∘ f) l) : SLang V) xv := by
-  simp [privParCompose]
-  simp_rw [← ENNReal.tsum_mul_left]
-  conv=>
-    lhs
-    enter [1, a, 1, b]
-    rw [mul_ite]
-  rw [ENNReal.tsum_eq_add_tsum_ite xu, ENNReal.tsum_eq_add_tsum_ite xv]
-  simp
-  conv=>
-    rhs
-    rw [<- add_zero (_ * _)]
-  congr
-  · conv=>
-      rhs
-      rw [<- add_zero (_ * _)]
-    congr
-    simp
-    intro _ H1 H2
-    exfalso; apply H2 ▸ H1; rfl
-  · simp
-    intro _ H1 H2
-    exfalso; apply H2 ▸ H1; rfl
-
-
 end privParComp
 
 noncomputable section
@@ -157,6 +129,17 @@ lemma privComposeChainRule (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (l :
   rw [<- compose_sum_rw_adaptive]
   simp [privComposeAdaptive]
   simp [DFunLike.coe]
+
+lemma privParCompose_eval xu xv :
+    ((privParCompose m1 m2 f l) : SLang (U × V)) (xu, xv) =
+      (m1 (List.filter f l) : SLang U) xu * (m2 (List.filter ((! ·) ∘ f) l) : SLang V) xv := by
+  simpa [privParCompose, privComposeAdaptive, DFunLike.coe] using
+    (privComposeChainRule
+      (nq1 := fun l => m1 (List.filter f l))
+      (nq2 := fun _ l => m2 (List.filter ((! ·) ∘ f) l))
+      l
+      xu
+      xv)
 
 -- @[simp]
 -- lemma bind_bind_indep (p : Mechanism T U) (q : Mechanism T V) (h : U → V → PMF A) :
