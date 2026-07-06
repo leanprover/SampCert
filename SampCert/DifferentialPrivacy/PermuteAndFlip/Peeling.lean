@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Privacy
 
 noncomputable section
@@ -32,7 +37,7 @@ namespace RangePrivate
 @[simp] theorem const {n : CandidateCount} (α : ENNReal) (u : U) :
     RangePrivate α 0 (fun _ : Scores n => SLang.probPure u) := by
   intro q q' x
-  simp [RangePrivate, SLang.probPure]
+  simp [SLang.probPure]
 
 theorem const_of_le_one {n : CandidateCount} {α : ENNReal} {steps : ℕ}
     (hα : α ≤ 1) (u : U) :
@@ -115,7 +120,7 @@ lemma privacyBase_pow_antitone {ε₁ : ℕ} {ε₂ : ℕ+} {a b : ℕ}
         = privacyBase ε₁ ε₂ ^ a * privacyBase ε₁ ε₂ ^ c := by
             rw [pow_add]
     _ ≤ privacyBase ε₁ ε₂ ^ a * 1 := by
-      exact mul_le_mul_left' (pow_le_one' (privacyBase_le_one ε₁ ε₂) c) _
+      exact mul_le_mul_right (pow_le_one' (privacyBase_le_one ε₁ ε₂) c) _
     _ = privacyBase ε₁ ε₂ ^ a := by simp
 
 /-- Restrict a score vector to the candidates listed in `l`. -/
@@ -207,7 +212,7 @@ lemma subsetPermuteAndFlip_range_private {n : CandidateCount}
           permuteAndFlipSLang (l.length - 1) (restrictScores q l hl) ε₁ ε₂ r
             ≤
           α ^ dr * permuteAndFlipSLang (l.length - 1) (restrictScores q l hl) ε₁ ε₂ r := by
-      exact mul_le_mul_right' hpow _
+      exact mul_le_mul_left hpow _
     have hfinal : α ^ (1 * rangeDistance q q') *
           permuteAndFlipSLang (l.length - 1) (restrictScores q l hl) ε₁ ε₂ r
             ≤
@@ -245,10 +250,9 @@ theorem peelPermuteAndFlipSLangAux_range_private {n : CandidateCount} :
   intro l hl k
   induction k generalizing l with
   | zero =>
-    intro ε₁ ε₂
-    intro q q' ys
+    intro ε₁ ε₂ q q' ys
     by_cases hys : ys = [] <;>
-      simp [RangePrivate, peelPermuteAndFlipSLangAux, SLang.probPure, hys]
+      simp [peelPermuteAndFlipSLangAux, SLang.probPure, hys]
   | succ k ih =>
       intro ε₁ ε₂
       cases l with

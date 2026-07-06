@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Paper.ClosedForm
 
 noncomputable section
@@ -44,23 +49,26 @@ theorem permuteAndFlipPMF_bumpScore_self_of_le
               exact congrArg
                 (fun x => PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ * x)
                 (selectPMF_bumpScore_self_of_le_map_canonicalOrder σ q r k ε₁ ε₂ hmax)
-  simp [permuteAndFlipPMF, PMF.bind_apply]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
   -- Summing the fixed-permutation equalities over all permutations yields the
   -- full PMF statement.
   rw [← ENNReal.tsum_mul_left]
   refine tsum_congr (fun σ => ?_)
-  simpa [PMF.uniformOfFintype_apply] using hterm σ
+  simpa [selectPMF_map_canonicalOrder_eq_selectWeight] using hterm σ
 
 theorem permuteAndFlipPMF_bumpScore_self_of_gap_zero_le
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (k ε₁ : ℕ) (ε₂ : ℕ+)
     (hgap : gap q r = 0) :
     permuteAndFlipPMF n q ε₁ ε₂ r ≤
       permuteAndFlipPMF n (bumpScore q r k) ε₁ ε₂ r := by
-  simp [permuteAndFlipPMF, PMF.bind_apply]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
   apply ENNReal.tsum_le_tsum
   intro σ
-  exact mul_le_mul' le_rfl
-    (selectPMF_bumpScore_self_of_gap_zero_le_map_canonicalOrder σ q r k ε₁ ε₂ hgap)
+  exact mul_le_mul' le_rfl <|
+    by simpa [selectPMF_map_canonicalOrder_eq_selectWeight] using
+      (selectPMF_bumpScore_self_of_gap_zero_le_map_canonicalOrder σ q r k ε₁ ε₂ hgap)
 
 theorem permuteAndFlipPMF_lowerScore_other_of_max_eq_le
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (k ε₁ : ℕ) (ε₂ : ℕ+)
@@ -68,11 +76,13 @@ theorem permuteAndFlipPMF_lowerScore_other_of_max_eq_le
     (hmax : maxScore (lowerScore q s k) = maxScore q) :
     permuteAndFlipPMF n q ε₁ ε₂ r ≤
       permuteAndFlipPMF n (lowerScore q s k) ε₁ ε₂ r := by
-  simp [permuteAndFlipPMF, PMF.bind_apply]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
+  rw [permuteAndFlipPMF_eq_tsum_selectWeight]
   apply ENNReal.tsum_le_tsum
   intro σ
-  exact mul_le_mul' le_rfl
-    (selectPMF_lowerScore_other_of_max_eq_le_map_canonicalOrder σ q r s k ε₁ ε₂ hrs hk hmax)
+  exact mul_le_mul' le_rfl <|
+    by simpa [selectPMF_map_canonicalOrder_eq_selectWeight] using
+      (selectPMF_lowerScore_other_of_max_eq_le_map_canonicalOrder σ q r s k ε₁ ε₂ hrs hk hmax)
 
 /-! ### Lowering a competing candidate -/
 
@@ -393,7 +403,7 @@ theorem lowerOthersAlong_apply_of_mem
                     simp [lowerScore, hsub]
               _ = if i = r then q i else q' i := by
                     subst his
-                    simp [lowerOthersAlong, hsr]
+                    simp [hsr]
         | inr hi =>
             have his : i ≠ s := by
               intro his

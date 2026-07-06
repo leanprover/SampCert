@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -11,6 +11,7 @@ open scoped Classical
 
 namespace SLang
 namespace PermuteAndFlip
+namespace Reduction
 
 abbrev IntScores (n : ℕ) := Fin n.succ → ℤ
 abbrev IntMechanism (n : ℕ) := IntScores n → PMF (Fin n.succ)
@@ -259,8 +260,9 @@ theorem range_privacy_of_regular
       (r := r)
       (boundedInterval_scoreDiff q q')
   have hrange : rangeDistance q q' = b - a := by
-    simp [rangeDistance, s, a, b, hs]
+    simp [rangeDistance, s, a, b]
   simpa [hrange, add_scoreDiff q q'] using hinterval
 
+end Reduction
 end PermuteAndFlip
 end SLang

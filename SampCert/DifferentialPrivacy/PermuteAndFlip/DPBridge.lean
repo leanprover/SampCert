@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Privacy
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Analysis.SpecialFunctions.Exp
@@ -100,11 +105,11 @@ theorem permuteAndFlipPMF_DP_bound_of_rangeSensitive
       scoreMechanismPMF score ε₁ ε₂ l₁ r
           = 1 * scoreMechanismPMF score ε₁ ε₂ l₁ r := by simp
       _ ≤ (E * (privacyBase ε₁ ε₂) ^ d) * scoreMechanismPMF score ε₁ ε₂ l₁ r := by
-            exact mul_le_mul_right' hscale _
+            exact mul_le_mul_left hscale _
       _ = E * ((privacyBase ε₁ ε₂) ^ d * scoreMechanismPMF score ε₁ ε₂ l₁ r) := by
             ac_rfl
       _ ≤ E * scoreMechanismPMF score ε₁ ε₂ l₂ r := by
-            exact mul_le_mul_left' hbase E
+            exact mul_le_mul_right hbase E
   exact ENNReal.div_le_of_le_mul hmul
 
 /--

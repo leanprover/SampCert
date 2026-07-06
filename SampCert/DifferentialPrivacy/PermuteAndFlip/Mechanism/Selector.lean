@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -60,8 +60,9 @@ theorem permuteAndFlipPMF_permute
         ext x
         simp }
   simp [permuteAndFlipPMF, PMF.bind_apply]
-  conv_lhs => rw [← Equiv.tsum_eq e]
-  refine tsum_congr (fun σ => ?_)
+  conv_lhs => rw [← Equiv.sum_comp e]
+  apply Fintype.sum_congr
+  intro σ
   simpa [e, Function.comp, PMF.uniformOfFintype_apply] using
     congrArg (fun x => (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) (e σ)) * x)
       (selectPMF_map_canonicalOrder_permute σ τ q ε₁ ε₂ r)
@@ -91,7 +92,7 @@ theorem permuteAndFlipPMF_eq_coin_mul_tsum_beforeSet_prod
       exactCoinPMF (gap q r * ε₁) ε₂ true *
         ∑' σ : Equiv.Perm (Fin n.succ),
           PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-            ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false := by
+            Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false) := by
   rw [permuteAndFlipPMF_eq_tsum_selectWeight]
   calc
     ∑' σ : Equiv.Perm (Fin n.succ),
@@ -101,7 +102,7 @@ theorem permuteAndFlipPMF_eq_coin_mul_tsum_beforeSet_prod
         ∑' σ : Equiv.Perm (Fin n.succ),
           PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
             (exactCoinPMF (gap q r * ε₁) ε₂ true *
-              ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false) := by
+              Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false)) := by
               -- Replace the fixed-order selector weight by its prefix-product formula.
               refine tsum_congr (fun σ => ?_)
               exact congrArg
@@ -113,14 +114,14 @@ theorem permuteAndFlipPMF_eq_coin_mul_tsum_beforeSet_prod
         ∑' σ : Equiv.Perm (Fin n.succ),
           exactCoinPMF (gap q r * ε₁) ε₂ true *
             (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-              ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false) := by
+              Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false)) := by
               refine tsum_congr (fun σ => ?_)
               ac_rfl
     _ =
         exactCoinPMF (gap q r * ε₁) ε₂ true *
           ∑' σ : Equiv.Perm (Fin n.succ),
             PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-              ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false := by
+              Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false) := by
               -- The factor involving `r` is independent of the sampled
               -- permutation, so it can be pulled completely outside the sum.
               rw [ENNReal.tsum_mul_left]

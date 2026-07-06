@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -26,66 +26,82 @@ theorem hasDerivAt_paperPrimitivePoly
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) :
     HasDerivAt
       (paperPrimitivePoly q r ε₁ ε₂)
-      (∏ i in Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i))
+      (∏ i ∈ Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i))
       c := by
   unfold paperPrimitivePoly
   have hsum :
       HasDerivAt
-        (fun x =>
-          ∑ t in (Finset.univ.erase r).powerset,
-            (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (x ^ (t.card + 1)) *
-              ∏ i in t, paperProb q ε₁ ε₂ i)
-        (∑ t in (Finset.univ.erase r).powerset,
-          (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-            ∏ i in t, paperProb q ε₁ ε₂ i)
+        (∑ t ∈ (Finset.univ.erase r).powerset, fun x : ℝ =>
+          x ^ (t.card + 1) *
+            ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+              ∏ i ∈ t, paperProb q ε₁ ε₂ i))
+        (∑ t ∈ (Finset.univ.erase r).powerset,
+          c ^ t.card * (((t.card + 1 : ℝ)) *
+            ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+              ∏ i ∈ t, paperProb q ε₁ ε₂ i)))
         c := by
-          exact HasDerivAt.sum (fun t _ht => by
-            have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 1)) ((t.card + 1 : ℝ) * c ^ t.card) c := by
-              simpa using hasDerivAt_pow (t.card + 1) c
-            simpa [mul_assoc, mul_left_comm, mul_comm] using
-              hpow.const_mul
-                (((( -1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i in t, paperProb q ε₁ ε₂ i))
+          exact
+            (HasDerivAt.sum
+              (u := Finset.powerset (Finset.univ.erase r))
+              (A := fun t => fun x : ℝ =>
+                x ^ (t.card + 1) *
+                  ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+                    ∏ i ∈ t, paperProb q ε₁ ε₂ i))
+              (A' := fun t =>
+                c ^ t.card * (((t.card + 1 : ℝ)) *
+                  ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+                    ∏ i ∈ t, paperProb q ε₁ ε₂ i)))
+              (x := c)
+              (fun t _ht => by
+                have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 1)) ((t.card + 1 : ℝ) * c ^ t.card) c := by
+                  simpa using hasDerivAt_pow (t.card + 1) c
+                simpa [mul_assoc, mul_left_comm, mul_comm] using
+                  hpow.const_mul
+                    (((( -1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i ∈ t, paperProb q ε₁ ε₂ i)))
   have hderivEq :
-      (∑ t in (Finset.univ.erase r).powerset,
+      (∑ t ∈ (Finset.univ.erase r).powerset,
         (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-          ∏ i in t, paperProb q ε₁ ε₂ i)
+          ∏ i ∈ t, paperProb q ε₁ ε₂ i)
         =
-      ∏ i in Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i) := by
+      ∏ i ∈ Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i) := by
         -- This is the key algebraic step in the paper's analytic argument:
         -- differentiate the alternating subset sum termwise, then recognize the
         -- resulting sum as the product expansion of `∏ (1 - c * p_i)`.
         calc
-          ∑ t in (Finset.univ.erase r).powerset,
+          ∑ t ∈ (Finset.univ.erase r).powerset,
               (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-                ∏ i in t, paperProb q ε₁ ε₂ i
-            = ∑ t in (Finset.univ.erase r).powerset,
-                (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+                ∏ i ∈ t, paperProb q ε₁ ε₂ i
+            = ∑ t ∈ (Finset.univ.erase r).powerset,
+                (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
                   apply Finset.sum_congr rfl
                   intro t _ht
                   have hne : ((t.card : ℝ) + 1) ≠ 0 := by positivity
                   field_simp [hne]
-                  ring
-          _ = ∑ t in (Finset.univ.erase r).powerset,
-                ∏ i in t, (-(c * paperProb q ε₁ ε₂ i)) := by
+                  -- ring
+          _ = ∑ t ∈ (Finset.univ.erase r).powerset,
+                ∏ i ∈ t, (-(c * paperProb q ε₁ ε₂ i)) := by
                   apply Finset.sum_congr rfl
                   intro t _ht
                   have hpowneg : ((-c : ℝ) ^ t.card) = ((-1 : ℝ) ^ t.card) * c ^ t.card := by
                     rw [neg_eq_neg_one_mul, mul_pow]
                   calc
-                    (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i in t, paperProb q ε₁ ε₂ i
-                      = ((-c : ℝ) ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+                    (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i ∈ t, paperProb q ε₁ ε₂ i
+                      = ((-c : ℝ) ^ t.card) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
                           rw [hpowneg]
-                    _ = (∏ _i in t, (-c : ℝ)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+                    _ = (∏ _i ∈ t, (-c : ℝ)) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
                           rw [Finset.prod_const]
-                    _ = ∏ i in t, ((-c : ℝ) * paperProb q ε₁ ε₂ i) := by
+                    _ = ∏ i ∈ t, ((-c : ℝ) * paperProb q ε₁ ε₂ i) := by
                           rw [← Finset.prod_mul_distrib]
-                    _ = ∏ i in t, (-(c * paperProb q ε₁ ε₂ i)) := by
+                    _ = ∏ i ∈ t, (-(c * paperProb q ε₁ ε₂ i)) := by
                           apply Finset.prod_congr rfl
                           intro i _hi
                           ring
-          _ = ∏ i in Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i) := by
+          _ = ∏ i ∈ Finset.univ.erase r, (1 - c * paperProb q ε₁ ε₂ i) := by
                 exact sum_powerset_neg_prod_eq_prod_one_sub (Finset.univ.erase r) (fun i => c * paperProb q ε₁ ε₂ i)
-  exact hderivEq ▸ hsum
+  convert hsum using 1
+  · ext x
+    simp [mul_assoc, mul_comm]
+  · simpa [mul_assoc, mul_left_comm, mul_comm] using hderivEq.symm
 
 theorem paperPrimitivePoly_monotoneOn_Icc
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
@@ -132,30 +148,30 @@ theorem paperAltScaled_mul_le_paperAlt
 theorem beforeSet_prod_expand
     {n : CandidateCount} (σ : Equiv.Perm (Fin n.succ)) (q : Scores n)
     (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
-    ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i) =
-      ∑ t in (Finset.univ.erase r).powerset,
-        if t ⊆ beforeSet σ r then ∏ i in t, (-paperProb q ε₁ ε₂ i) else 0 := by
+    ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i) =
+      ∑ t ∈ (Finset.univ.erase r).powerset,
+        if t ⊆ beforeSet σ r then ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) else 0 := by
   calc
-    ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
-      = ∑ t in (beforeSet σ r).powerset, ∏ i in t, (-paperProb q ε₁ ε₂ i) := by
+    ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
+      = ∑ t ∈ (beforeSet σ r).powerset, ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) := by
           -- Expand the finite product by the standard powerset identity:
           -- each subset chooses the `-p_i` term for exactly the indices it contains.
           symm
           exact sum_powerset_neg_prod_eq_prod_one_sub (beforeSet σ r) (paperProb q ε₁ ε₂)
     _ =
-        ∑ t in (Finset.univ.erase r).powerset,
-          if t ⊆ beforeSet σ r then ∏ i in t, (-paperProb q ε₁ ε₂ i) else 0 := by
+        ∑ t ∈ (Finset.univ.erase r).powerset,
+          if t ⊆ beforeSet σ r then ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) else 0 := by
             -- Re-express the same sum over the larger ambient powerset
             -- `powerset (univ.erase r)`, with an indicator telling us whether
             -- the subset actually lies inside `beforeSet σ r`.
-            exact sum_powerset_beforeSet_eq_sum_filter σ r (fun t => ∏ i in t, (-paperProb q ε₁ ε₂ i))
+            exact sum_powerset_beforeSet_eq_sum_filter σ r (fun t => ∏ i ∈ t, (-paperProb q ε₁ ε₂ i))
 
 theorem sum_perm_powerset_comm
     {n : CandidateCount} (r : Fin n.succ)
     (f : Equiv.Perm (Fin n.succ) → Finset (Fin n.succ) → ℝ) :
-    ∑ σ : Equiv.Perm (Fin n.succ), ∑ t in (Finset.univ.erase r).powerset, f σ t
+    ∑ σ : Equiv.Perm (Fin n.succ), ∑ t ∈ (Finset.univ.erase r).powerset, f σ t
       =
-    ∑ t in (Finset.univ.erase r).powerset, ∑ σ : Equiv.Perm (Fin n.succ), f σ t := by
+    ∑ t ∈ (Finset.univ.erase r).powerset, ∑ σ : Equiv.Perm (Fin n.succ), f σ t := by
   classical
   simpa using
     (Finset.sum_comm'
@@ -172,26 +188,26 @@ theorem sum_beforeSet_prod_eq_sum_neg_prod_coeff
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
     ∑ σ : Equiv.Perm (Fin n.succ),
         (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
-          ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
+          ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
       =
-    ∑ t in (Finset.univ.erase r).powerset,
-      (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i in t, (-paperProb q ε₁ ε₂ i) := by
+    ∑ t ∈ (Finset.univ.erase r).powerset,
+      (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) := by
   let P : Finset (Finset (Fin n.succ)) := (Finset.univ.erase r).powerset
-  let G : Finset (Fin n.succ) → ℝ := fun t => ∏ i in t, (-paperProb q ε₁ ε₂ i)
+  let G : Finset (Fin n.succ) → ℝ := fun t => ∏ i ∈ t, (-paperProb q ε₁ ε₂ i)
   calc
     ∑ σ : Equiv.Perm (Fin n.succ),
         (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
-          ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
+          ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)
       =
         ∑ σ : Equiv.Perm (Fin n.succ),
-          ∑ t in P,
+          ∑ t ∈ P,
             (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
               (if t ⊆ beforeSet σ r then G t else 0) := by
                 apply Finset.sum_congr rfl
                 intro σ _hσ
                 simp [P, G, beforeSet_prod_expand σ q r ε₁ ε₂, Finset.mul_sum]
     _ =
-        ∑ t in P,
+        ∑ t ∈ P,
           ∑ σ : Equiv.Perm (Fin n.succ),
             (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
               (if t ⊆ beforeSet σ r then G t else 0) := by
@@ -203,7 +219,7 @@ theorem sum_beforeSet_prod_eq_sum_neg_prod_coeff
                       (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
                         (if t ⊆ beforeSet σ r then G t else 0)))
     _ =
-        ∑ t in P,
+        ∑ t ∈ P,
           (∑ σ : Equiv.Perm (Fin n.succ),
             (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
               (if t ⊆ beforeSet σ r then 1 else 0)) * G t := by
@@ -224,7 +240,7 @@ theorem sum_beforeSet_prod_eq_sum_neg_prod_coeff
                           split <;> ring
                 rw [hfactor, Finset.sum_mul]
     _ =
-        ∑ t in P, (((t.card + 1 : ℕ) : ℝ)⁻¹) * G t := by
+        ∑ t ∈ P, (((t.card + 1 : ℕ) : ℝ)⁻¹) * G t := by
           apply Finset.sum_congr rfl
           intro t ht
           have ht' : t ⊆ Finset.univ.erase r := by
@@ -233,38 +249,38 @@ theorem sum_beforeSet_prod_eq_sum_neg_prod_coeff
             intro h
             exact (Finset.mem_erase.mp (ht' (by simp [h]))).1 rfl
           rw [real_subset_beforeSet_coeff (r := r) (t := t) hr']
-    _ = ∑ t in (Finset.univ.erase r).powerset,
-          (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i in t, (-paperProb q ε₁ ε₂ i) := by
+    _ = ∑ t ∈ (Finset.univ.erase r).powerset,
+          (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) := by
             rfl
 
 theorem tsum_beforeSet_prod_eq_ofReal_paperAlt
     (n : CandidateCount) (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+) (r : Fin n.succ) :
     ∑' σ : Equiv.Perm (Fin n.succ),
       PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-        ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
+        ∏ i ∈ beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
       = ENNReal.ofReal (paperAlt q r ε₁ ε₂) := by
   rw [tsum_fintype]
   calc
     ∑ σ : Equiv.Perm (Fin n.succ),
         PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-          ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
+          ∏ i ∈ beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
       =
         ∑ σ : Equiv.Perm (Fin n.succ),
           ENNReal.ofReal
             ((PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
-              ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+              ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
             apply Finset.sum_congr rfl
             intro σ _hσ
             have hprod :
-                ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false =
-                  ENNReal.ofReal (∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+                ∏ i ∈ beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false =
+                  ENNReal.ofReal (∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
               calc
-                ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
-                  = ∏ i in beforeSet σ r, ENNReal.ofReal (1 - paperProb q ε₁ ε₂ i) := by
+                ∏ i ∈ beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
+                  = ∏ i ∈ beforeSet σ r, ENNReal.ofReal (1 - paperProb q ε₁ ε₂ i) := by
                       apply Finset.prod_congr rfl
                       intro i _hi
                       exact (ofReal_one_sub_paperProb_eq_exactCoin_false q ε₁ ε₂ i).symm
-                _ = ENNReal.ofReal (∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+                _ = ENNReal.ofReal (∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
                       symm
                       apply ENNReal.ofReal_prod_of_nonneg
                       intro i _hi
@@ -272,23 +288,23 @@ theorem tsum_beforeSet_prod_eq_ofReal_paperAlt
                       exact sub_nonneg.mpr hle
             calc
               PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ *
-                  ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
+                  ∏ i ∈ beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false
                 = ENNReal.ofReal ((PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal) *
-                    ENNReal.ofReal (∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+                    ENNReal.ofReal (∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
                       rw [ENNReal.ofReal_toReal]
                       · rw [hprod]
                       · simp
               _ =
                   ENNReal.ofReal
                     ((PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
-                      ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+                      ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
                         rw [← ENNReal.ofReal_mul]
                         exact ENNReal.toReal_nonneg
     _ =
         ENNReal.ofReal
           (∑ σ : Equiv.Perm (Fin n.succ),
             (PMF.uniformOfFintype (Equiv.Perm (Fin n.succ)) σ).toReal *
-              ∏ i in beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
+              ∏ i ∈ beforeSet σ r, (1 - paperProb q ε₁ ε₂ i)) := by
                 -- Convert the finite ENNReal average into an ordinary real-valued
                 -- sum, where the counting lemmas can be applied directly.
                 symm
@@ -333,7 +349,7 @@ theorem permuteAndFlipPMF_max_eq_ofReal_paperAlt
     (hgap : gap q r = 0) :
     permuteAndFlipPMF n q ε₁ ε₂ r = ENNReal.ofReal (paperAlt q r ε₁ ε₂) := by
   rw [permuteAndFlipPMF_eq_exactCoin_mul_ofReal_paperAlt]
-  simp [hgap, exactCoinPMF_zero_apply_true]
+  simp [hgap]
 
 theorem permuteAndFlipPMF_bumpScore_self_one_of_gap_zero_eq_ofReal_paperAltScaled
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+)

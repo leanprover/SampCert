@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -105,10 +105,10 @@ theorem latestIn_swap_iff {n : CandidateCount}
       · by_cases hsxt : σ x = t
         · have : r = t := hsxr.symm.trans hsxt
           subst this
-          simp [Equiv.trans_apply, Equiv.swap_apply_def, hsxr]
-        · simp [Equiv.trans_apply, Equiv.swap_apply_def, hsxr, hsxt]
+          simp [hsxr]
+        · simp [Equiv.trans_apply, hsxr]
       · by_cases hsxt : σ x = t
-        · simp [Equiv.trans_apply, Equiv.swap_apply_def, hsxr, hsxt]
+        · simp [Equiv.trans_apply, hsxt]
         · simp [Equiv.trans_apply, Equiv.swap_apply_def, hsxr, hsxt]
     simpa [hcomp] using h'
 
@@ -135,10 +135,10 @@ theorem card_filter_latestIn_eq {n : CandidateCount}
     · by_cases hsxt : σ x = t
       · have : r = t := hsxr.symm.trans hsxt
         subst this
-        simp [Equiv.swap_apply_def, hsxr]
-      · simp [Equiv.swap_apply_def, hsxr, hsxt]
+        simp [hsxr]
+      · simp [hsxr]
     · by_cases hsxt : σ x = t
-      · simp [Equiv.swap_apply_def, hsxr, hsxt]
+      · simp [hsxt]
       · simp [Equiv.swap_apply_def, hsxr, hsxt]
   · intro σ _hσ
     ext x
@@ -147,10 +147,10 @@ theorem card_filter_latestIn_eq {n : CandidateCount}
     · by_cases hsxr : σ x = r
       · have : t = r := hsxt.symm.trans hsxr
         subst this
-        simp [Equiv.swap_apply_def, hsxt]
-      · simp [Equiv.swap_apply_def, hsxr, hsxt]
+        simp [hsxt]
+      · simp [hsxt]
     · by_cases hsxr : σ x = r
-      · simp [Equiv.swap_apply_def, hsxr, hsxt]
+      · simp [hsxr]
       · simp [Equiv.swap_apply_def, hsxr, hsxt]
 
 def latestChoice {n : CandidateCount}
@@ -179,12 +179,12 @@ theorem latestChoice_eq_iff {n : CandidateCount}
 
 theorem sum_card_filter_latestIn
     {n : CandidateCount} (s : Finset (Fin n.succ)) (hs : s.Nonempty) :
-    ∑ r in s, (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s r).card =
+    Finset.sum s (fun r => (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s r).card) =
       Fintype.card (Equiv.Perm (Fin n.succ)) := by
   classical
   calc
-    ∑ r in s, (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s r).card
-      = ∑ r in s, (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestChoice s hs σ = r).card := by
+    Finset.sum s (fun r => (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s r).card)
+      = Finset.sum s (fun r => (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestChoice s hs σ = r).card) := by
           apply Finset.sum_congr rfl
           intro r _hr
           congr
@@ -208,7 +208,7 @@ theorem card_filter_latestIn_eq_card_div
     exact card_filter_latestIn_eq s hs hr ht
   calc
     s.card * (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s r).card
-      = ∑ t in s, (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s t).card := by
+      = Finset.sum s (fun t => (Finset.univ.filter fun σ : Equiv.Perm (Fin n.succ) => latestIn σ s t).card) := by
           exact (Finset.sum_const_nat hconst).symm
     _ = Fintype.card (Equiv.Perm (Fin n.succ)) := by
           exact sum_card_filter_latestIn s hs
@@ -319,31 +319,23 @@ theorem subset_beforeSet_iff_latestIn_insert
     have hir : i ≠ r := by
       intro hir
       exact hr (hir ▸ hi)
-    simp [beforeSet, hir, hi, h i hi]
+    simp [beforeSet, hir, h i hi]
 
 theorem latestInMass_eq_inv_card_succ
     {n : CandidateCount} (σ : Equiv.Perm (Fin n.succ)) (r : Fin n.succ) (t : Finset (Fin n.succ))
     (hr : r ∉ t) :
     latestInMass σ r t = ((t.card + 1 : ℕ) : ENNReal)⁻¹ := by
   rw [latestInMass_eq_inv_card_insert σ r t hr]
-  rw [Finset.card_insert_of_not_mem hr]
+  rw [Finset.card_insert_of_notMem hr]
 
 theorem indexOf_map_canonicalOrder
     {n : CandidateCount} (σ : Equiv.Perm (Fin n.succ)) (r : Fin n.succ) :
-    (((List.finRange n.succ).map σ).indexOf r) = (σ.symm r).1 := by
+    (((List.finRange n.succ).map σ).idxOf r) = (σ.symm r).1 := by
+  have hnodup : (((List.finRange n.succ).map σ)).Nodup := by
+    simpa using (List.nodup_finRange n.succ).map σ.injective
   have hlen : (σ.symm r).1 < (((List.finRange n.succ).map σ)).length := by
-    simp
-  calc
-    (((List.finRange n.succ).map σ).indexOf r : ℕ)
-      = (((List.finRange n.succ).map σ)[(σ.symm r).1]'hlen
-          |> fun x => ((List.finRange n.succ).map σ).indexOf x) := by
-            simp [List.getElem_map, hlen]
-    _ = (σ.symm r).1 := by
-      exact List.indexOf_getElem
-        (l := ((List.finRange n.succ).map σ))
-        (H := by simpa using (List.nodup_finRange n.succ).map σ.injective)
-        (i := (σ.symm r).1)
-        (h := hlen)
+    simpa using (σ.symm r).2
+  simpa [List.getElem_map, hlen] using hnodup.idxOf_getElem (σ.symm r).1 hlen
 
 theorem take_ofFn_eq_ofFn_prefix
     {α : Type} {n : ℕ} (f : Fin n → α) (k : Fin n) :
@@ -352,18 +344,17 @@ theorem take_ofFn_eq_ofFn_prefix
   · simp
   · intro i hi₁ hi₂
     have hk : (i : ℕ) < (k : ℕ) := by
-      simpa [List.length_ofFn] using hi₂
+      simpa [List.length_ofFn] using hi₁
     have hi_len : (i : ℕ) < (List.ofFn f).length := by
-      simpa [List.length_ofFn] using Nat.lt_trans hk k.2
+      simpa [List.length_ofFn] using Nat.lt_trans hi₂ (by simp [List.length_ofFn])
     calc
-      (List.take (k : ℕ) (List.ofFn f))[i]
+      ((List.ofFn f).take k)[i]
         = (List.ofFn f)[i] := by
-            symm
-            exact List.getElem_take (L := List.ofFn f) hi_len hk
+            exact List.getElem_take (h := hi₁)
       _ = f ⟨i, by simpa [List.length_ofFn] using hi_len⟩ := by
             simp [List.getElem_ofFn]
       _ = (List.ofFn fun j : Fin k => f ⟨j, Nat.lt_trans j.2 k.2⟩)[i] := by
-            simp [List.getElem_ofFn, hk]
+            simp [List.getElem_ofFn]
 
 def beforeEmbedding {n : CandidateCount}
     (σ : Equiv.Perm (Fin n.succ)) (r : Fin n.succ) : Fin (σ.symm r) ↪ Fin n.succ where
@@ -410,7 +401,7 @@ theorem beforeSet_eq_map_beforeEmbedding
 theorem prefix_prod_eq_beforeSet_prod
     {n : CandidateCount} (σ : Equiv.Perm (Fin n.succ)) (r : Fin n.succ)
     (g : Fin n.succ → ENNReal) :
-    (((List.ofFn σ).take (σ.symm r)).map g).prod = ∏ i in beforeSet σ r, g i := by
+    (((List.ofFn σ).take (σ.symm r)).map g).prod = ∏ i ∈ beforeSet σ r, g i := by
   rw [take_ofFn_eq_ofFn_prefix σ (σ.symm r), List.map_ofFn, List.prod_ofFn]
   rw [beforeSet_eq_map_beforeEmbedding σ r]
   rw [Finset.prod_map]
@@ -465,8 +456,8 @@ theorem powerset_beforeSet_eq_filter
 theorem sum_powerset_beforeSet_eq_sum_filter
     {n : CandidateCount} (σ : Equiv.Perm (Fin n.succ)) (r : Fin n.succ)
     (F : Finset (Fin n.succ) → ℝ) :
-    ∑ t in (beforeSet σ r).powerset, F t =
-      ∑ t in (Finset.univ.erase r).powerset, if t ⊆ beforeSet σ r then F t else 0 := by
+    ∑ t ∈ (beforeSet σ r).powerset, F t =
+      ∑ t ∈ (Finset.univ.erase r).powerset, if t ⊆ beforeSet σ r then F t else 0 := by
   rw [powerset_beforeSet_eq_filter σ r, Finset.sum_filter]
 
 theorem real_subset_beforeSet_coeff
@@ -503,36 +494,39 @@ theorem real_subset_beforeSet_coeff
             congrArg ENNReal.toReal
               (latestInMass_eq_inv_card_succ (σ := Equiv.refl (Fin n.succ)) r t hr)
           have htoRealInv : ((((t.card + 1 : ℕ) : ENNReal)⁻¹).toReal) = ((t.card + 1 : ℕ) : ℝ)⁻¹ := by
-            simpa using ENNReal.toReal_inv ((t.card + 1 : ℕ) : ENNReal)
+            rw [ENNReal.toReal_inv]
+            rw [ENNReal.toReal_natCast]
           rw [htoRealInv] at hmass
           simpa [u, latestInMass, PMF.uniformOfFintype_apply] using hmass
 
 theorem prod_neg_paperProb
     {n : CandidateCount} (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+) (t : Finset (Fin n.succ)) :
-    ∏ i in t, (-paperProb q ε₁ ε₂ i) =
-      ((-1 : ℝ) ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+    ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) =
+      ((-1 : ℝ) ^ t.card) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
   calc
-    ∏ i in t, (-paperProb q ε₁ ε₂ i)
-      = ∏ i in t, ((-1 : ℝ) * paperProb q ε₁ ε₂ i) := by
+    ∏ i ∈ t, (-paperProb q ε₁ ε₂ i)
+      = ∏ i ∈ t, ((-1 : ℝ) * paperProb q ε₁ ε₂ i) := by
           apply Finset.prod_congr rfl
           intro i _hi
           ring
-    _ = (∏ _i in t, (-1 : ℝ)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+    _ = (∏ _i ∈ t, (-1 : ℝ)) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
           rw [Finset.prod_mul_distrib]
-    _ = ((-1 : ℝ) ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+    _ = ((-1 : ℝ) ^ t.card) * ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
           rw [Finset.prod_const]
 
 theorem paperAlt_eq_sum_neg_prod
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
     paperAlt q r ε₁ ε₂ =
-      ∑ t in (Finset.univ.erase r).powerset,
-        (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i in t, (-paperProb q ε₁ ε₂ i) := by
+      ∑ t ∈ (Finset.univ.erase r).powerset,
+        (((t.card + 1 : ℕ) : ℝ)⁻¹) * ∏ i ∈ t, (-paperProb q ε₁ ε₂ i) := by
   unfold paperAlt
   apply Finset.sum_congr rfl
   intro t _ht
   rw [prod_neg_paperProb q ε₁ ε₂ t]
   have hne : ((t.card : ℝ) + 1) ≠ 0 := by positivity
   field_simp [hne]
+  rw [Nat.cast_add, Nat.cast_one, mul_add, mul_one]
+  ring
 
 theorem paperProb_bumpScore_other_of_gap_zero
     {n : CandidateCount} (q : Scores n) (r i : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+)
@@ -547,7 +541,11 @@ theorem paperProb_bumpScore_other_of_gap_zero
         ((((gap q i * ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) +
           ((((ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) := by
     have hden : (((ε₂ : NNReal) : ℝ)) ≠ 0 := by positivity
-    field_simp [hden]
+    have hnum : ((gap q i * ε₁ + ε₁ : ℕ) : NNReal) =
+        ((gap q i * ε₁ : ℕ) : NNReal) + ((ε₁ : ℕ) : NNReal) := by
+      exact_mod_cast (show gap q i * ε₁ + ε₁ = gap q i * ε₁ + ε₁ by rfl)
+    rw [hnum, NNReal.coe_div, NNReal.coe_div]
+    simp [add_div]
   have hdiv' :
       - ((((gap q i * ε₁ + ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) =
         - ((((ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) +
@@ -572,9 +570,9 @@ theorem paperAlt_bumpScore_self_one_of_gap_zero
   have hrnot : r ∉ t := by
     exact fun hrmem => (Finset.mem_erase.mp (ht' hrmem)).1 rfl
   calc
-    (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i in t, paperProb (bumpScore q r 1) ε₁ ε₂ i
+    (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i ∈ t, paperProb (bumpScore q r 1) ε₁ ε₂ i
       = (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
-          ∏ i in t, (Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) * paperProb q ε₁ ε₂ i) := by
+          ∏ i ∈ t, (Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) * paperProb q ε₁ ε₂ i) := by
             congr 1
             apply Finset.prod_congr rfl
             intro i hi
@@ -583,16 +581,16 @@ theorem paperAlt_bumpScore_self_one_of_gap_zero
             exact hrnot (hir ▸ hi)
             exact hgap
     _ = (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
-          ((∏ _i in t, Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂))) *
-            ∏ i in t, paperProb q ε₁ ε₂ i) := by
+          ((∏ _i ∈ t, Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂))) *
+            ∏ i ∈ t, paperProb q ε₁ ε₂ i) := by
               rw [Finset.prod_mul_distrib]
     _ = (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
           (((Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂))) ^ t.card) *
-            ∏ i in t, paperProb q ε₁ ε₂ i) := by
+            ∏ i ∈ t, paperProb q ε₁ ε₂ i) := by
               rw [Finset.prod_const]
     _ = (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
           (Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) ^ t.card) *
-            ∏ i in t, paperProb q ε₁ ε₂ i := by
+            ∏ i ∈ t, paperProb q ε₁ ε₂ i := by
               ring
 
 theorem paperProb_lowerScore_other_of_unique_max_one
@@ -620,7 +618,11 @@ theorem paperProb_lowerScore_other_of_unique_max_one
         (((((gap q i - 1) * ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) +
           ((((ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) := by
     have hden : (((ε₂ : NNReal) : ℝ)) ≠ 0 := by positivity
-    field_simp [hden]
+    have hnum : ((((gap q i - 1) * ε₁ + ε₁ : ℕ) : NNReal)) =
+        ((((gap q i - 1) * ε₁ : ℕ) : NNReal)) + ((ε₁ : ℕ) : NNReal) := by
+      exact_mod_cast (show (gap q i - 1) * ε₁ + ε₁ = (gap q i - 1) * ε₁ + ε₁ by rfl)
+    rw [hnum, NNReal.coe_div, NNReal.coe_div]
+    simp [add_div]
   have hdiv' :
       - (((((gap q i - 1) * ε₁ + ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) =
         - ((((ε₁ : ℕ) : NNReal) / ε₂ : NNReal) : ℝ) +
@@ -647,9 +649,9 @@ theorem paperAlt_eq_paperAltGapZeroScaled_lowerScore_unique_max_one
   intro t ht
   calc
     (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-        ∏ i in t, paperProb q ε₁ ε₂ i
+        ∏ i ∈ t, paperProb q ε₁ ε₂ i
       = (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-          ∏ i in t,
+          ∏ i ∈ t,
             (Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) *
               paperProb (lowerScore q s 1) ε₁ ε₂ i) := by
             congr 1
@@ -661,16 +663,16 @@ theorem paperAlt_eq_paperAltGapZeroScaled_lowerScore_unique_max_one
             simp at this
             exact huniq
     _ = (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-          ((∏ _i in t, Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂))) *
-            ∏ i in t, paperProb (lowerScore q s 1) ε₁ ε₂ i) := by
+          ((∏ _i ∈ t, Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂))) *
+            ∏ i ∈ t, paperProb (lowerScore q s 1) ε₁ ε₂ i) := by
               rw [Finset.prod_mul_distrib]
     _ = (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
           ((Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) ^ t.card) *
-            ∏ i in t, paperProb (lowerScore q s 1) ε₁ ε₂ i) := by
+            ∏ i ∈ t, paperProb (lowerScore q s 1) ε₁ ε₂ i) := by
               rw [Finset.prod_const]
     _ = (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
           (Real.exp (- (((ε₁ : ℕ) : NNReal) / ε₂)) ^ t.card) *
-            ∏ i in t, paperProb (lowerScore q s 1) ε₁ ε₂ i := by
+            ∏ i ∈ t, paperProb (lowerScore q s 1) ε₁ ε₂ i := by
               ring
 
 

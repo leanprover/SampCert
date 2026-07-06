@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -20,7 +20,8 @@ Paper polynomial and analytic lemmas for the paper-style proof.
 
 theorem sum_powerset_neg_prod_eq_prod_one_sub
     {α : Type} [DecidableEq α] (s : Finset α) (f : α → ℝ) :
-    ∑ t in s.powerset, ∏ i in t, (-f i) = ∏ i in s, (1 - f i) := by
+    Finset.sum s.powerset (fun t => Finset.prod t fun i => -f i) =
+      Finset.prod s (fun i => 1 - f i) := by
   simpa [sub_eq_add_neg, add_comm] using
     (Finset.prod_add (f := fun i => -f i) (g := fun _ => (1 : ℝ)) s).symm
 
@@ -36,14 +37,14 @@ The paper's alternating subset sum `A_r(q)`. Later modules show that this is
 exactly the PMF mass on `r`, after factoring out the direct success term for `r`.
 -/
 def paperAlt {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) : ℝ :=
-  ∑ t in (Finset.univ.erase r).powerset,
-    (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i in t, paperProb q ε₁ ε₂ i
+  Finset.sum (Finset.powerset (Finset.univ.erase r))
+    (fun t => (((-1 : ℝ) ^ t.card) / (t.card + 1)) * Finset.prod t (paperProb q ε₁ ε₂))
 
 /-- The scaled version of `paperAlt`, used when all non-`r` terms are multiplied by a common factor. -/
 def paperAltScaled {n : CandidateCount}
     (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) : ℝ :=
-  ∑ t in (Finset.univ.erase r).powerset,
-    (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i
+  Finset.sum (Finset.powerset (Finset.univ.erase r))
+    (fun t => (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ t.card) * Finset.prod t (paperProb q ε₁ ε₂))
 
 /--
 The paper primitive `c ↦ c * paperAltScaled ... c`.
@@ -64,9 +65,10 @@ do or do not contain a candidate with gap `0`.
 -/
 def paperAltGapZeroScaled {n : CandidateCount}
     (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) : ℝ :=
-  ∑ t in ((Finset.univ.erase r).erase s).powerset,
-    (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-      (c ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i
+  Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+    (fun t =>
+      (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+        (c ^ t.card) * Finset.prod t (paperProb q ε₁ ε₂))
 
 /--
 An antiderivative-like helper for `paperAltGapZeroScaled`.
@@ -84,9 +86,10 @@ finite sum.
 -/
 def paperGapZeroPrimitive {n : CandidateCount}
     (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) : ℝ :=
-  ∑ t in ((Finset.univ.erase r).erase s).powerset,
-    (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
-      (c ^ (t.card + 1)) * ∏ i in t, paperProb q ε₁ ε₂ i
+  Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+    (fun t =>
+      (((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+        (c ^ (t.card + 1)) * Finset.prod t (paperProb q ε₁ ε₂))
 
 theorem paperAltScaled_one
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
@@ -102,9 +105,10 @@ theorem paperAlt_eq_sum_erase_gap_zero
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+)
     (hrs : s ≠ r) (hs : gap q s = 0) :
     paperAlt q r ε₁ ε₂ =
-      ∑ t in ((Finset.univ.erase r).erase s).powerset,
-        (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-          ∏ i in t, paperProb q ε₁ ε₂ i := by
+      Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+        (fun t =>
+          (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+            Finset.prod t (paperProb q ε₁ ε₂)) := by
   have hs_not_mem : s ∉ (Finset.univ.erase r).erase s := by simp
   have hsplit :
       (Finset.univ.erase r).powerset =
@@ -123,10 +127,10 @@ theorem paperAlt_eq_sum_erase_gap_zero
       have hts : s ∉ t := by
         intro hst
         exact hs_not_mem ((Finset.mem_powerset.mp ht) hst)
-      have hcard : (insert s t).card = t.card + 1 := Finset.card_insert_of_not_mem hts
+      have hcard : (insert s t).card = t.card + 1 := Finset.card_insert_of_notMem hts
       have hprod :
-          ∏ i in insert s t, paperProb q ε₁ ε₂ i =
-            ∏ i in t, paperProb q ε₁ ε₂ i := by
+          Finset.prod (insert s t) (paperProb q ε₁ ε₂) =
+            Finset.prod t (paperProb q ε₁ ε₂) := by
         rw [Finset.prod_insert hts]
         unfold paperProb
         simp [hs]
@@ -141,18 +145,18 @@ theorem paperAlt_eq_sum_erase_gap_zero
           field_simp [hne1, hne2]
           ring
       calc
-        (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i in t, paperProb q ε₁ ε₂ i +
+        (((-1 : ℝ) ^ t.card) / (t.card + 1)) * Finset.prod t (paperProb q ε₁ ε₂) +
             (((-1 : ℝ) ^ (insert s t).card) / ((insert s t).card + 1)) *
-              ∏ i in insert s t, paperProb q ε₁ ε₂ i
+              Finset.prod (insert s t) (paperProb q ε₁ ε₂)
           =
             (((( -1 : ℝ) ^ t.card) / (t.card + 1)) +
               (((-1 : ℝ) ^ (t.card + 1)) / (t.card + 2))) *
-                ∏ i in t, paperProb q ε₁ ε₂ i := by
+                Finset.prod t (paperProb q ε₁ ε₂) := by
                   rw [hcard, hprod]
                   norm_num
                   ring
         _ = (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-              ∏ i in t, paperProb q ε₁ ε₂ i := by
+              Finset.prod t (paperProb q ε₁ ε₂) := by
               rw [hcoeff]
     · intro a ha b hb hab
       have ha_not : s ∉ a := by
@@ -188,9 +192,10 @@ theorem paperGapZeroDoublePrimitive_eq_sum
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
     paperGapZeroDoublePrimitive q r s ε₁ ε₂ =
       fun c =>
-        ∑ t in ((Finset.univ.erase r).erase s).powerset,
-          (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-            (c ^ (t.card + 2)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+        Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+          (fun t =>
+            (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+              (c ^ (t.card + 2)) * Finset.prod t (paperProb q ε₁ ε₂)) := by
   funext c
   unfold paperGapZeroDoublePrimitive paperAltGapZeroScaled
   -- Push the outer factor `c^2` inside the finite sum so that each summand is a
@@ -205,9 +210,10 @@ theorem paperPrimitiveScaled_eq_sum
     {n : CandidateCount} (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
     paperPrimitiveScaled q r ε₁ ε₂ =
       fun c =>
-        ∑ t in (Finset.univ.erase r).powerset,
-          (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ (t.card + 1)) *
-            ∏ i in t, paperProb q ε₁ ε₂ i := by
+        Finset.sum (Finset.powerset (Finset.univ.erase r))
+          (fun t =>
+            (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ (t.card + 1)) *
+              Finset.prod t (paperProb q ε₁ ε₂)) := by
   funext c
   unfold paperPrimitiveScaled paperAltScaled
   -- Similarly, rewrite `c * paperAltScaled ... c` as a single power inside each summand.
@@ -221,18 +227,48 @@ theorem hasDerivAt_paperGapZeroDoublePrimitive
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) :
     HasDerivAt
       (paperGapZeroDoublePrimitive q r s ε₁ ε₂)
-      (∑ t in ((Finset.univ.erase r).erase s).powerset,
-        (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
-          ((t.card + 2 : ℝ) * c ^ (t.card + 1)) *
-            ∏ i in t, paperProb q ε₁ ε₂ i)
+      (Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+        (fun t =>
+          (((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+            ((t.card + 2 : ℝ) * c ^ (t.card + 1)) *
+              Finset.prod t (paperProb q ε₁ ε₂)))
       c := by
   rw [paperGapZeroDoublePrimitive_eq_sum]
-  exact HasDerivAt.sum (fun t _ht => by
-    have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 2)) ((t.card + 2 : ℝ) * c ^ (t.card + 1)) c := by
-      simpa using hasDerivAt_pow (t.card + 2) c
-    simpa [mul_assoc, mul_left_comm, mul_comm] using
-      hpow.const_mul
-        (((( -1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) * ∏ i in t, paperProb q ε₁ ε₂ i))
+  have hsum :
+      HasDerivAt
+        (∑ t ∈ Finset.powerset ((Finset.univ.erase r).erase s), fun x : ℝ =>
+          x ^ (t.card + 2) *
+            ((((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+              Finset.prod t (paperProb q ε₁ ε₂)))
+        (Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+          (fun t =>
+            c ^ (t.card + 1) * (((t.card + 2 : ℝ)) *
+              ((((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+                Finset.prod t (paperProb q ε₁ ε₂)))))
+        c := by
+          exact
+            (HasDerivAt.sum
+              (u := Finset.powerset ((Finset.univ.erase r).erase s))
+              (A := fun t => fun x : ℝ =>
+                x ^ (t.card + 2) *
+                  ((((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+                    Finset.prod t (paperProb q ε₁ ε₂)))
+              (A' := fun t =>
+                c ^ (t.card + 1) * (((t.card + 2 : ℝ)) *
+                  ((((-1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+                    Finset.prod t (paperProb q ε₁ ε₂))))
+              (x := c)
+              (fun (t : Finset (Fin n.succ)) _ht => by
+                have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 2)) ((t.card + 2 : ℝ) * c ^ (t.card + 1)) c := by
+                  simpa using hasDerivAt_pow (t.card + 2) c
+                simpa [mul_assoc, mul_left_comm, mul_comm] using
+                  hpow.const_mul
+                    (((( -1 : ℝ) ^ t.card) / ((t.card + 1) * (t.card + 2))) *
+                      Finset.prod t (paperProb q ε₁ ε₂))))
+  convert hsum using 1
+  · ext x
+    simp [mul_assoc, mul_comm]
+  · simp [mul_assoc, mul_comm]
 
 theorem deriv_paperGapZeroDoublePrimitive_eq_paperGapZeroPrimitive
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) :
@@ -242,71 +278,93 @@ theorem deriv_paperGapZeroDoublePrimitive_eq_paperGapZeroPrimitive
   unfold paperGapZeroPrimitive
   apply Finset.sum_congr rfl
   intro t _ht
-  have hne : ((t.card : ℝ) + 2) ≠ 0 := by positivity
-  field_simp [hne]
-  ring
+  have ht1 : ((t.card : ℝ) + 1) ≠ 0 := by positivity
+  have ht2 : ((t.card : ℝ) + 2) ≠ 0 := by positivity
+  change
+    (((-1 : ℝ) ^ t.card) / (((t.card : ℝ) + 1) * ((t.card : ℝ) + 2)) *
+        (((t.card : ℝ) + 2) * c ^ (t.card + 1)) * Finset.prod t (paperProb q ε₁ ε₂)) =
+      (((-1 : ℝ) ^ t.card) / ((t.card : ℝ) + 1) * c ^ (t.card + 1) *
+        Finset.prod t (paperProb q ε₁ ε₂))
+  field_simp [ht1, ht2]
 
 theorem hasDerivAt_paperGapZeroPrimitive
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) :
     HasDerivAt
       (paperGapZeroPrimitive q r s ε₁ ε₂)
-      (∏ i in ((Finset.univ.erase r).erase s), (1 - c * paperProb q ε₁ ε₂ i))
+      (Finset.prod ((Finset.univ.erase r).erase s) (fun i => 1 - c * paperProb q ε₁ ε₂ i))
       c := by
   unfold paperGapZeroPrimitive
   have hsum :
       HasDerivAt
-        (fun x =>
-          ∑ t in ((Finset.univ.erase r).erase s).powerset,
-            (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (x ^ (t.card + 1)) *
-              ∏ i in t, paperProb q ε₁ ε₂ i)
-        (∑ t in ((Finset.univ.erase r).erase s).powerset,
-          (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-            ∏ i in t, paperProb q ε₁ ε₂ i)
+        (∑ t ∈ Finset.powerset ((Finset.univ.erase r).erase s), fun x : ℝ =>
+          x ^ (t.card + 1) *
+            ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+              Finset.prod t (paperProb q ε₁ ε₂)))
+        (Finset.sum (Finset.powerset ((Finset.univ.erase r).erase s))
+          (fun t =>
+            c ^ t.card * (((t.card + 1 : ℝ)) *
+              ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+                Finset.prod t (paperProb q ε₁ ε₂)))))
         c := by
-          exact HasDerivAt.sum (fun t _ht => by
-            have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 1)) ((t.card + 1 : ℝ) * c ^ t.card) c := by
-              simpa using hasDerivAt_pow (t.card + 1) c
-            simpa [mul_assoc, mul_left_comm, mul_comm] using
-              hpow.const_mul
-                (((( -1 : ℝ) ^ t.card) / (t.card + 1)) * ∏ i in t, paperProb q ε₁ ε₂ i))
+          exact
+            (HasDerivAt.sum
+              (u := Finset.powerset ((Finset.univ.erase r).erase s))
+              (A := fun t => fun x : ℝ =>
+                x ^ (t.card + 1) *
+                  ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+                    Finset.prod t (paperProb q ε₁ ε₂)))
+              (A' := fun t =>
+                c ^ t.card * (((t.card + 1 : ℝ)) *
+                  ((((-1 : ℝ) ^ t.card) / (t.card + 1)) *
+                    Finset.prod t (paperProb q ε₁ ε₂))))
+              (x := c)
+              (fun (t : Finset (Fin n.succ)) _ht => by
+                have hpow : HasDerivAt (fun x : ℝ => x ^ (t.card + 1)) ((t.card + 1 : ℝ) * c ^ t.card) c := by
+                  simpa using hasDerivAt_pow (t.card + 1) c
+                simpa [mul_assoc, mul_left_comm, mul_comm] using
+                  hpow.const_mul
+                    (((( -1 : ℝ) ^ t.card) / (t.card + 1)) *
+                      Finset.prod t (paperProb q ε₁ ε₂))))
   have hderivEq :
-      (∑ t in ((Finset.univ.erase r).erase s).powerset,
-        (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-          ∏ i in t, paperProb q ε₁ ε₂ i)
+      Finset.sum ((Finset.univ.erase r).erase s).powerset
+        (fun t => (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
+          Finset.prod t (paperProb q ε₁ ε₂))
         =
-      ∏ i in ((Finset.univ.erase r).erase s), (1 - c * paperProb q ε₁ ε₂ i) := by
+      Finset.prod ((Finset.univ.erase r).erase s) (fun i => 1 - c * paperProb q ε₁ ε₂ i) := by
         calc
-          ∑ t in ((Finset.univ.erase r).erase s).powerset,
-              (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
-                ∏ i in t, paperProb q ε₁ ε₂ i
-            = ∑ t in ((Finset.univ.erase r).erase s).powerset,
-                (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+          Finset.sum ((Finset.univ.erase r).erase s).powerset
+              (fun t => (((-1 : ℝ) ^ t.card) / (t.card + 1)) * ((t.card + 1 : ℝ) * c ^ t.card) *
+                Finset.prod t (paperProb q ε₁ ε₂))
+            = Finset.sum ((Finset.univ.erase r).erase s).powerset
+                (fun t => (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * Finset.prod t (paperProb q ε₁ ε₂)) := by
                   apply Finset.sum_congr rfl
                   intro t _ht
                   have hne : ((t.card : ℝ) + 1) ≠ 0 := by positivity
                   field_simp [hne]
-                  ring
-          _ = ∑ t in ((Finset.univ.erase r).erase s).powerset,
-                ∏ i in t, (-(c * paperProb q ε₁ ε₂ i)) := by
+          _ = Finset.sum ((Finset.univ.erase r).erase s).powerset
+                (fun t => Finset.prod t (fun i => -(c * paperProb q ε₁ ε₂ i))) := by
                   apply Finset.sum_congr rfl
                   intro t _ht
                   have hpowneg : ((-c : ℝ) ^ t.card) = ((-1 : ℝ) ^ t.card) * c ^ t.card := by
                     rw [neg_eq_neg_one_mul, mul_pow]
                   calc
-                    (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * ∏ i in t, paperProb q ε₁ ε₂ i
-                      = ((-c : ℝ) ^ t.card) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+                    (((-1 : ℝ) ^ t.card) * (c ^ t.card)) * Finset.prod t (paperProb q ε₁ ε₂)
+                      = ((-c : ℝ) ^ t.card) * Finset.prod t (paperProb q ε₁ ε₂) := by
                           rw [hpowneg]
-                    _ = (∏ _i in t, (-c : ℝ)) * ∏ i in t, paperProb q ε₁ ε₂ i := by
+                    _ = (Finset.prod t (fun _i => (-c : ℝ))) * Finset.prod t (paperProb q ε₁ ε₂) := by
                           rw [Finset.prod_const]
-                    _ = ∏ i in t, ((-c : ℝ) * paperProb q ε₁ ε₂ i) := by
+                    _ = Finset.prod t (fun i => ((-c : ℝ) * paperProb q ε₁ ε₂ i)) := by
                           rw [← Finset.prod_mul_distrib]
-                    _ = ∏ i in t, (-(c * paperProb q ε₁ ε₂ i)) := by
+                    _ = Finset.prod t (fun i => -(c * paperProb q ε₁ ε₂ i)) := by
                           apply Finset.prod_congr rfl
                           intro i _hi
                           ring
-          _ = ∏ i in ((Finset.univ.erase r).erase s), (1 - c * paperProb q ε₁ ε₂ i) := by
+          _ = Finset.prod ((Finset.univ.erase r).erase s) (fun i => 1 - c * paperProb q ε₁ ε₂ i) := by
                 exact sum_powerset_neg_prod_eq_prod_one_sub (((Finset.univ.erase r).erase s)) (fun i => c * paperProb q ε₁ ε₂ i)
-  exact hderivEq ▸ hsum
+  convert hsum using 1
+  · ext x
+    simp [mul_assoc, mul_comm]
+  · simpa [mul_assoc, mul_left_comm, mul_comm] using hderivEq.symm
 
 theorem paperGapZeroPrimitive_monotoneOn_Icc
     {n : CandidateCount} (q : Scores n) (r s : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
@@ -415,8 +473,13 @@ theorem paperAltGapZeroScaled_mul_le_paperAltGapZero
         (paperGapZeroDoublePrimitive q r s ε₁ ε₂ c -
             paperGapZeroDoublePrimitive q r s ε₁ ε₂ 0) / (c - 0) =
           c * paperAltGapZeroScaled q r s ε₁ ε₂ c := by
-      field_simp [paperGapZeroDoublePrimitive, hcz]
-      ring
+      rw [hzero]
+      calc
+        (paperGapZeroDoublePrimitive q r s ε₁ ε₂ c - 0) / (c - 0)
+            = (c ^ 2 * paperAltGapZeroScaled q r s ε₁ ε₂ c) / c := by
+                simp [paperGapZeroDoublePrimitive]
+        _ = c * paperAltGapZeroScaled q r s ε₁ ε₂ c := by
+              field_simp [hcz]
     have h1_eq :
         (paperGapZeroDoublePrimitive q r s ε₁ ε₂ 1 -
             paperGapZeroDoublePrimitive q r s ε₁ ε₂ 0) / (1 - 0) =
@@ -428,9 +491,9 @@ theorem paperAltGapZeroScaled_mul_le_paperAltGapZero
 
 def paperPrimitivePoly {n : CandidateCount}
     (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) (c : ℝ) : ℝ :=
-  ∑ t in (Finset.univ.erase r).powerset,
-    (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ (t.card + 1)) *
-      ∏ i in t, paperProb q ε₁ ε₂ i
+  Finset.sum (Finset.powerset (Finset.univ.erase r))
+    (fun t => (((-1 : ℝ) ^ t.card) / (t.card + 1)) * (c ^ (t.card + 1)) *
+      Finset.prod t (paperProb q ε₁ ε₂))
 
 @[simp]
 theorem paperPrimitiveScaled_eq_paperPrimitivePoly

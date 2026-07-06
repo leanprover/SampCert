@@ -1,11 +1,11 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
 import SampCert.SLang
 import SampCert.Samplers.BernoulliNegativeExponential.Basic
-import Mathlib.Algebra.BigOperators.Ring
+import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Analysis.Calculus.Deriv.Pow
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Convex.Deriv
@@ -223,7 +223,7 @@ theorem maxScore_lowerScore_unique_max_one {n : CandidateCount}
     intro i
     by_cases his : i = s
     · subst his
-      simp [lowerScore]
+      simp
     · have hlt : q i < q s := huniq i his
       have hle : q i ≤ q s - 1 := Nat.le_pred_of_lt hlt
       simpa [lowerScore, his] using hle
@@ -299,18 +299,21 @@ theorem exists_gap_zero {n : CandidateCount} (q : Scores n) :
   exact Nat.sub_eq_zero_of_le (hi j (by simp)) ▸ Nat.zero_le 0
 
 def exactCoinPMF (num : ℕ) (den : ℕ+) : PMF Bool :=
-  PMF.bernoulli (ENNReal.ofReal (Real.exp (- ((num : NNReal) / den)))) (by
+  PMF.bernoulli ⟨Real.exp (- ((num : NNReal) / den)), by positivity⟩ (by
     have hnonneg : 0 ≤ ((num : NNReal) / den : ℝ) := by positivity
     have hle : Real.exp (-((num : NNReal) / den : ℝ)) ≤ Real.exp 0 := by
       exact Real.exp_le_exp.mpr (by linarith)
-    have h' : ENNReal.ofReal (Real.exp (- ((num : NNReal) / den : ℝ))) ≤ ENNReal.ofReal 1 := by
-      exact ENNReal.ofReal_le_ofReal (by simpa using hle)
+    have h' : (⟨Real.exp (- ((num : NNReal) / den : ℝ)), by positivity⟩ : NNReal) ≤ 1 := by
+      change Real.exp (- ((num : NNReal) / den : ℝ)) ≤ 1
+      simpa using hle
     simpa using h')
 
 @[simp]
 theorem exactCoinPMF_apply_true (num : ℕ) (den : ℕ+) :
     exactCoinPMF num den true = ENNReal.ofReal (Real.exp (- ((num : NNReal) / den))) := by
   simp [exactCoinPMF]
+  simpa using
+    (ENNReal.coe_nnreal_eq (⟨Real.exp (- ((num : NNReal) / den : ℝ)), by positivity⟩ : NNReal))
 
 @[simp]
 theorem exactCoinPMF_zero_apply_true (den : ℕ+) :
@@ -322,6 +325,9 @@ theorem exactCoinPMF_zero_apply_true (den : ℕ+) :
 theorem exactCoinPMF_apply_false (num : ℕ) (den : ℕ+) :
     exactCoinPMF num den false = 1 - ENNReal.ofReal (Real.exp (- ((num : NNReal) / den))) := by
   simp [exactCoinPMF]
+  congr 1
+  simpa using
+    (ENNReal.coe_nnreal_eq (⟨Real.exp (- ((num : NNReal) / den : ℝ)), by positivity⟩ : NNReal))
 
 @[simp]
 theorem exactCoinPMF_zero_apply_false (den : ℕ+) :
@@ -338,10 +344,15 @@ theorem exactCoinPMF_true_mul_exactCoinPMF_true
   rw [← ENNReal.ofReal_mul]
   · congr 1
     rw [← Real.exp_add]
-    congr 1
     have hden : (((den : NNReal) : ℝ)) ≠ 0 := by positivity
-    field_simp [hden]
-    ring
+    have hsum :
+        - ((a : NNReal) / den : ℝ) + - ((b : NNReal) / den : ℝ) =
+          - (((a + b : ℕ) : NNReal) / den : ℝ) := by
+      field_simp [hden]
+      ring_nf
+      simp [Nat.cast_add]
+      ring
+    exact congrArg Real.exp hsum
   · positivity
 
 theorem exactCoinPMF_false_mono
@@ -362,7 +373,11 @@ theorem exactCoinPMF_false_mono
 theorem bernoulliExpNegSample_eq_exactCoinPMF (num : ℕ) (den : ℕ+) :
     (BernoulliExpNegSample num den : SLang Bool) = exactCoinPMF num den := by
   ext b
-  cases b <;> simp [exactCoinPMF, BernoulliExpNegSample_apply_true, BernoulliExpNegSample_apply_false]
+  cases b
+  · rw [BernoulliExpNegSample_apply_false, exactCoinPMF_apply_false]
+    simp
+  · rw [BernoulliExpNegSample_apply_true, exactCoinPMF_apply_true]
+    simp
 
 def selectPMFCore {n : CandidateCount} :
     List (Fin n.succ) → Scores n → ℕ → ℕ+ → PMF (Option (Fin n.succ))
@@ -423,7 +438,7 @@ theorem selectSLangCore_eq_selectPMFCore {n : CandidateCount}
       intro b
       by_cases hb : b = true
       · subst hb
-        simp [probPure_apply_eq_pure_apply]
+        simp
       · simp [hb, ih]
 
 @[simp]
@@ -432,9 +447,6 @@ theorem selectSLang_eq_selectPMF {n : CandidateCount}
     selectSLang l q ε₁ ε₂ = selectPMF l q ε₁ ε₂ := by
   ext i
   simp [selectSLang, selectPMF, collapseOptionSLang, collapseOptionPMF, selectSLangCore_eq_selectPMFCore]
-  apply tsum_congr
-  intro a
-  cases a <;> rfl
 
 @[simp]
 theorem selectPMFCore_permute {n : CandidateCount}
@@ -449,25 +461,17 @@ theorem selectPMFCore_permute {n : CandidateCount}
       | none =>
           unfold selectPMFCore
           simp [gap_permute]
-          apply tsum_congr
-          intro b
-          by_cases hb : b = true
-          · subst hb
-            simp [probPure_apply_eq_pure_apply]
-          · simp [hb]
-            exact congrArg
+          simpa using
+            congrArg
               (fun t => (1 - ENNReal.ofReal (Real.exp (-((gap q a * ε₁ : NNReal) / ε₂)))) * t) ih
       | some r =>
           unfold selectPMFCore
           simp [gap_permute]
-          apply tsum_congr
-          intro b
-          by_cases hb : b = true
-          · subst hb
-            simp [probPure_apply_eq_pure_apply]
-          · simp [hb]
-            exact congrArg
-              (fun t => (1 - ENNReal.ofReal (Real.exp (-((gap q a * ε₁ : NNReal) / ε₂)))) * t) ih
+          simpa using
+            congrArg
+              (fun t =>
+                (if r = a then ENNReal.ofReal (Real.exp (-((gap q a * ε₁ : NNReal) / ε₂))) else 0) +
+                  (1 - ENNReal.ofReal (Real.exp (-((gap q a * ε₁ : NNReal) / ε₂)))) * t) ih
 
 @[simp]
 theorem selectPMFCore_shift {n : CandidateCount}
@@ -493,12 +497,12 @@ theorem selectPMFCore_none_of_gap_zero {n : CandidateCount}
       simp at hi
       rcases hi with rfl | hi
       · unfold selectPMFCore
-        simp [hgap, exactCoinPMF_zero_apply_true, exactCoinPMF_zero_apply_false]
+        simp [hgap]
       · unfold selectPMFCore
         have ih' := ih hi hgap
         by_cases hb : gap q a * ε₁ = 0
         · simp [hb]
-        · simp [hb, ih']
+        · simp [ih']
 
 theorem selectPMFCore_some_eq_zero_of_not_mem {n : CandidateCount}
     (l : List (Fin n.succ)) (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+)
@@ -519,7 +523,7 @@ theorem selectPMFCore_some_eq_zero_of_not_mem {n : CandidateCount}
       unfold selectPMFCore
       by_cases hb : exactCoinPMF (gap q a * ε₁) ε₂ true = 0
       · simp [PMF.bind_apply, hb, hra, ih hrtail]
-      · simp [PMF.bind_apply, hb, hra, ih hrtail]
+      · simp [PMF.bind_apply, hra, ih hrtail]
 
 
 end PermuteAndFlip

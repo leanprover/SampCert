@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Mechanism.Core
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Mechanism.SelectorCore
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Mechanism.Selector

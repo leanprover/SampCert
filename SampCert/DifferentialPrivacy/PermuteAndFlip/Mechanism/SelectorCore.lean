@@ -1,5 +1,5 @@
 /-
-Copyright (c) 2026 Michael Shoemate.
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Michael Shoemate
 -/
@@ -41,7 +41,7 @@ theorem selectWeight_eq_prefix_prod
     {n : CandidateCount} (l : List (Fin n.succ)) (hl : l.Nodup)
     (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+) (r : Fin n.succ) (hr : r ∈ l) :
     selectWeight l q ε₁ ε₂ r =
-      ((l.take (l.indexOf r)).map (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false)).prod *
+      ((l.take (l.idxOf r)).map (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false)).prod *
         exactCoinPMF (gap q r * ε₁) ε₂ true := by
   induction l with
   | nil =>
@@ -51,7 +51,7 @@ theorem selectWeight_eq_prefix_prod
       rcases hl with ⟨ha, hnodup⟩
       simp at hr
       rcases hr with rfl | hr
-      · simp [selectWeight, List.indexOf_cons_self]
+      · simp [selectWeight, List.idxOf_cons_self]
       · have har : a ≠ r := by
           intro h
           apply ha
@@ -60,7 +60,7 @@ theorem selectWeight_eq_prefix_prod
             exactCoinPMF (gap q a * ε₁) ε₂ false * selectWeight l q ε₁ ε₂ r by
               simp [selectWeight, har]]
         rw [ih hnodup hr]
-        simp [List.indexOf_cons_ne, har, List.take, har]
+        simp [har]
         ac_rfl
 
 theorem selectWeight_map_finRange_eq_coin_mul_beforeSet_prod
@@ -68,7 +68,7 @@ theorem selectWeight_map_finRange_eq_coin_mul_beforeSet_prod
     (q : Scores n) (r : Fin n.succ) (ε₁ : ℕ) (ε₂ : ℕ+) :
     selectWeight ((List.finRange n.succ).map σ) q ε₁ ε₂ r =
       exactCoinPMF (gap q r * ε₁) ε₂ true *
-        ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false := by
+        Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false) := by
   have hnodup : (((List.finRange n.succ).map σ).Nodup) := by
     simpa using (List.nodup_finRange n.succ).map σ.injective
   have hr : r ∈ ((List.finRange n.succ).map σ) := by
@@ -76,8 +76,8 @@ theorem selectWeight_map_finRange_eq_coin_mul_beforeSet_prod
   rw [selectWeight_eq_prefix_prod ((List.finRange n.succ).map σ) hnodup q ε₁ ε₂ r hr]
   have hprod :
       (List.map (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false)
-          (List.take (((List.finRange n.succ).map σ).indexOf r) ((List.finRange n.succ).map σ))).prod
-        = ∏ i in beforeSet σ r, exactCoinPMF (gap q i * ε₁) ε₂ false := by
+          (List.take (((List.finRange n.succ).map σ).idxOf r) ((List.finRange n.succ).map σ))).prod
+        = Finset.prod (beforeSet σ r) (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false) := by
     simpa only [List.ofFn_eq_map, indexOf_map_canonicalOrder] using
       (prefix_prod_eq_beforeSet_prod σ r (fun i => exactCoinPMF (gap q i * ε₁) ε₂ false))
   rw [hprod]
@@ -89,14 +89,14 @@ theorem selectPMFCore_cons_eq_head_of_not_mem {n : CandidateCount}
     (a : Fin n.succ) (l : List (Fin n.succ)) (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+)
     (ha : a ∉ l) :
     selectPMFCore (a :: l) q ε₁ ε₂ (some a) = exactCoinPMF (gap q a * ε₁) ε₂ true := by
-  simp [selectPMFCore, PMF.bind_apply, tsum_bool, selectPMFCore_some_eq_zero_of_not_mem l q ε₁ ε₂ ha]
+  simp [selectPMFCore, PMF.bind_apply, selectPMFCore_some_eq_zero_of_not_mem l q ε₁ ε₂ ha]
 
 theorem selectPMFCore_cons_eq_tail_of_ne {n : CandidateCount}
     (a r : Fin n.succ) (l : List (Fin n.succ)) (q : Scores n) (ε₁ : ℕ) (ε₂ : ℕ+)
     (har : r ≠ a) :
     selectPMFCore (a :: l) q ε₁ ε₂ (some r) =
       exactCoinPMF (gap q a * ε₁) ε₂ false * selectPMFCore l q ε₁ ε₂ (some r) := by
-  simp [selectPMFCore, PMF.bind_apply, tsum_bool, har]
+  simp [selectPMFCore, PMF.bind_apply, har]
 
 @[simp]
 theorem selectPMFCore_eq_selectWeight

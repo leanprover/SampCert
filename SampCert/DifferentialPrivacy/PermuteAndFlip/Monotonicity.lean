@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.MonotonicityLocal
 
 /-!
@@ -147,7 +152,7 @@ theorem bumpScore_self_privacy_pow
               simp [α, pow_succ']
               ac_rfl
         _ ≤ α ^ k * permuteAndFlipPMF n (bumpScore q r k) ε₁ ε₂ r := by
-              exact mul_le_mul_left' hstep (α ^ k)
+              exact mul_le_mul_right hstep (α ^ k)
         _ ≤ permuteAndFlipPMF n q ε₁ ε₂ r := by
               simpa [α] using ih (q := q)
 

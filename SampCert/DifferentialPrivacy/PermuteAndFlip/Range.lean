@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Michael Shoemate
+-/
 import SampCert.DifferentialPrivacy.PermuteAndFlip.Mechanism.Core
 
 /-!
@@ -91,7 +96,7 @@ theorem shiftedDiff_eq_targetShift
   have hcast :
       ((q i + shiftedDiff q q' i : ℕ) : ℤ) = (q' i + diffShift q q' : ℕ) := by
     dsimp [shiftedDiff]
-    rw [Int.ofNat_add, Int.ofNat_add, Int.toNat_of_nonneg hnonneg]
+    rw [Int.toNat_of_nonneg hnonneg]
     simp [scoreDiff]
     omega
   exact Int.ofNat.inj hcast
@@ -132,7 +137,7 @@ theorem upperEndpoint_eq_lowerEndpoint_add_rangeDistance
   have hsum_nonneg : 0 ≤ diffMax q q' + diffShift q q' := by
     omega
   apply Int.ofNat.inj
-  simp [upperEndpoint, lowerEndpoint, rangeDistance, Int.ofNat_add,
+  simp [upperEndpoint, lowerEndpoint, rangeDistance,
     Int.toNat_of_nonneg hleft_nonneg, Int.toNat_of_nonneg hwidth_nonneg,
     Int.toNat_of_nonneg hsum_nonneg]
   omega
