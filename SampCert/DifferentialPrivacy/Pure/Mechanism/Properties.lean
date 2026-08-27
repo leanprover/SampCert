@@ -50,7 +50,7 @@ Differential privacy bound for a ``privNoisedQueryPure``
 -/
 theorem privNoisedQueryPure_DP_bound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ+) (bounded_sensitivity : sensitivity query Δ) :
   DP (privNoisedQueryPure query Δ ε₁ ε₂) ((ε₁ : ℝ) / ε₂) := by
-  rw [event_eq_singleton] at *
+  apply (event_eq_singleton _ _).mpr
   simp [DP_singleton] at *
   intros l₁ l₂ neighbours x
   simp [privNoisedQueryPure]

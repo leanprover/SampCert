@@ -115,7 +115,7 @@ open Classical Nat Int Real ENNReal
 
 instance SPMF.instFunLike : FunLike (SPMF α) α ℝ≥0∞ where
   coe p a := p.1 a
-  coe_injective' _ _ h := Subtype.ext h
+  coe_injective _ _ h := Subtype.ext h
 
 
 lemma compose_sum_rw_adaptive (nq1 : List T → SPMF U) (nq2 : U -> List T → SPMF V) (u : U) (v : V) (l : List T) :
@@ -185,7 +185,7 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
     rw [A]
   rw [ENNReal.tsum_eq_add_tsum_ite b]
   simp
-  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 x * ∑' (a_1 : V), if c = a_1 then nq2 a_1 else 0 else 0) = 0 := by
+  have B : ∀ x : U, (if x = b then 0 else if b = x then nq1 x * nq2 c else 0) = 0 := by
     intro x
     split
     · simp
@@ -200,25 +200,6 @@ lemma compose_sum_rw (nq1 : U -> ENNReal) (nq2 : V -> ENNReal) (b : U) (c : V) :
     arg 1
     ext x
     rw [B]
-  simp
-  congr 1
-  rw [ENNReal.tsum_eq_add_tsum_ite c]
-  simp
-  have C :∀ x : V,  (if x = c then 0 else if c = x then nq2 x else 0) = 0 := by
-    intro x
-    split
-    · simp
-    · split
-      · rename_i h1 h2
-        subst h2
-        contradiction
-      · simp
-  conv =>
-    left
-    right
-    arg 1
-    ext X
-    rw [C]
   simp
 
 

@@ -136,54 +136,12 @@ theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
     decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SLang.pure_apply]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   simp only [support, ↓reduceIte, mul_one]
-  have A : ∀ x_1, @ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
-          (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n)
-          ((2 ^ log 2 (↑(2 : ℕ+) * ↑n))⁻¹ * (1 - ∑' (x : ℕ), @ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))⁻¹ *
-          @ite ℝ≥0∞ (x = x_1) (propDecidable (x = x_1)) 1 0)
-          0) = 0 := by
-    intro x1
-    split
-    · simp only
-    · split
-      · split
-        · rename_i h1 h2 h3
-          subst h3
-          contradiction
-        · simp only [mul_zero]
-      · simp only
-  conv =>
-    left
-    right
-    arg 1
-    ext x1
-    rw [A]
-  clear A
-  simp only [tsum_zero, add_zero]
-  have A : ∀ x : ℕ, (@ite ℝ≥0∞ (x < ↑n) (decLt x ↑n) 0 (UniformPowerOfTwoSample (2 * n) x))
-           =
-           (@ite ℝ≥0∞ (↑n ≤ x) (decLe ↑n x) (UniformPowerOfTwoSample (2 * n) x) 0) := by
-    intro x
-    split
-    · split
-      · rename_i h1 h2
-        rw [← not_lt] at h2
-        contradiction
-      · simp only
-    · split
-      · rename_i h1 h2
-        simp only
-      · rename_i h1 h2
-        simp only [not_lt] at h1
-        contradiction
-  conv =>
-    left
-    right
-    right
-    right
-    arg 1
-    ext x
-    rw [A]
-  rw [uniformPowerOfTwoSample_autopilot]
+  have A : ∀ x_1 : ℕ, (@ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
+          (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n) 0 (UniformPowerOfTwoSample (2 * n) x_1)))
+          = (@ite ℝ≥0∞ (↑n ≤ x_1) (decLe ↑n x_1) (UniformPowerOfTwoSample (2 * n) x_1) 0) := by
+    intro x_1
+    split_ifs <;> first | rfl | (exfalso; omega)
+  rw [tsum_congr A, zero_add, uniformPowerOfTwoSample_autopilot]
   simp only [rw_ite, one_div, sum_simple]
   rw [rw1 n]
   rw [rw2 n]

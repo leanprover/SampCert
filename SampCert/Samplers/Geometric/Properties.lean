@@ -99,8 +99,9 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
     (trial true) * probWhileCut geoLoopCond (geoLoopBody trial) fuel (true, n + 1) st := by
   cases st
   rename_i b m
-  simp only [probWhileCut, probWhileFunctional, geoLoopCond, geoLoopBody, ite_apply,
-    Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply, if_true]
+  simp only [probWhileCut, probWhileFunctional, geoLoopBody, ite_apply,
+    Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
+  rw [if_pos (show geoLoopCond (true, n) = true by rfl)]
   rw [ENNReal.tsum_prod']
   simp only [tsum_bool, Prod.mk.injEq, true_and]
   rw [tsum_eq_single (n + 1) (by intro b hb; simp [hb])]
@@ -323,18 +324,9 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
     simp
   · rename_i fuel IH
     intro n k b
-    simp [probWhileCut,probWhileFunctional,geoLoopBody,geoLoopCond]
-    unfold probBind
-    unfold probPure
-    simp [ite_apply]
-    split
-    · rename_i h
-      subst h
-      simp [IH]
-    · rename_i h
-      simp at h
-      subst h
-      simp
+    cases b
+    · simp [probWhileCut, probWhileFunctional, geoLoopBody, geoLoopCond, probBind, probPure]
+    · simp [probWhileCut, probWhileFunctional, geoLoopBody, geoLoopCond, probBind, probPure, IH]
 
 lemma if_simpl_geo (x n : ℕ) :
   (@ite ENNReal (x = n) (propDecidable (x = n)) 0 (@ite ENNReal (x = 0) (instDecidableEqNat x 0) 0 ((trial true ^ (x - 1) * trial false) * (@ite ENNReal (n = x) (propDecidable (n = (false, x).2)) 1 0)))) = 0 := by
@@ -404,7 +396,7 @@ theorem probGeometric_normalizes
   · apply trial_sum_ne_top' trial trial_spec'
   · rw [Pi.le_def]
     intro i
-    have A : 0 ≤ trial true ^ i := by exact _root_.zero_le (trial true ^ i)
+    have A : 0 ≤ trial true ^ i := by exact _root_.zero_le
     have B := trial_le_1 trial trial_spec 1
     have C := @mul_le_of_le_one_right ENNReal _ _ _ _ _ _ A B
     simp only [pow_one] at C

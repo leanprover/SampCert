@@ -35,7 +35,7 @@ def DiscreteGaussianSampleLoop (num den t : PNat) (mix : ℕ) : SLang (Int × Bo
 -/
 def DiscreteGaussianSample (num : PNat) (den : PNat) (mix : ℕ) : SLang ℤ := do
   let ti : Nat := num.val / den
-  let t : PNat := ⟨ ti + 1 , by simp only [add_pos_iff, zero_lt_one, or_true] ⟩
+  let t : PNat := ti.succPNat
   let num := num^2
   let den := den^2
   let r ← probUntil (DiscreteGaussianSampleLoop num den t mix) (λ x : Int × Bool => x.2)

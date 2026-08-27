@@ -288,8 +288,10 @@ theorem BernoulliExpNegSampleUnitAux_preservation (num : ℕ) (den : ℕ+) (fuel
     -- rewrites of plus_* properties do not work because the type is wrong
     have B : ¬ plus_two k 0 = plus_one k + 1 + 1 := by
       intro h
-      have := congrArg PNat.val h
-      simp [plus_two, plus_one] at this
+      have h2 := congrArg PNat.val h
+      have e1 : (plus_two k 0 : ℕ) = 0 + k + 2 := rfl
+      have e2 : ((plus_one k + 1 + 1 : ℕ+) : ℕ) = k + 1 + 1 + 1 := rfl
+      omega
     simp [B]
   · rename_i fuel IH
     intro fuel' k h1
@@ -461,15 +463,6 @@ theorem BernoulliExpNegSampleUnitAux_apply (num : ℕ) (den : ℕ+) (n : ℕ+) (
   rw [tsum_bool]
   simp [probWhile]
   simp [BernoulliExpNegSampleUnitAux_sup]
-  rw [ENNReal.tsum_eq_add_tsum_ite n]
-  simp
-  conv =>
-    left
-    right
-    arg 1
-    intro x
-    rw [if_simpl']
-  simp
 
 @[simp]
 theorem BernoulliExpNegSampleUnitAux_at_one (num : ℕ) (den : ℕ+) (wf : num ≤ den) :
@@ -1030,7 +1023,6 @@ theorem series_step_4_pre (γ : ENNReal) (h : γ ≠ ⊤) (h' : γ ≤ 1) :
             conv =>
               right
               rw [← X]
-            simp
             clear A B X
             unfold mass''
             simp
@@ -1121,7 +1113,9 @@ theorem BernoulliExpNegSampleGenLoop_normalizes (iter : Nat) :
     -- Goal: e * true + (e * false + (1 - e)) = 1
     rw [← add_assoc, ← mul_add, add_comm (BernoulliExpNegSampleGenLoop iter true), IH, mul_one,
         add_comm]
-    exact tsub_add_cancel_of_le (by simp : ENNReal.ofReal (Real.exp (-1)) ≤ 1)
+    have A := BernoulliExpNegSampleUnit_normalizes 1 1 (by exact Nat.le_refl 1) _ rfl
+    rw [tsum_bool] at A
+    exact A
 
 theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
   (BernoulliExpNegSampleGenLoop iter) true = ENNReal.ofReal (Real.exp (- iter)) := by
@@ -1135,6 +1129,8 @@ theorem BernoulliExpNegSampleGenLoop_apply_true (iter : Nat) :
       simp
       simp [IH]
       clear IH
+      rw [BernoulliExpNegSampleUnit_apply_true 1 1 (by exact Nat.le_refl 1) _ rfl]
+      simp
       rw [← ENNReal.ofReal_mul (Real.exp_nonneg _), ← Real.exp_add]
 
 theorem BernoulliExpNegSampleGenLoop_apply_false (iter : Nat) :

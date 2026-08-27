@@ -666,11 +666,15 @@ theorem discrete_GaussianGenSample_ZeroConcentrated {α : ℝ} (h : 1 < α) (num
     congr
     rw [division_def, mul_pow]
     rw [ENNReal.ofReal_mul (by positivity)]
-    rw [ENNReal.ofReal_pow (by positivity)]
-    rw [ENNReal.ofReal_pow (by positivity)]
+    rw [ENNReal.ofReal_pow ?G2]
+    case G2 => exact NNReal.coe_nonneg _
+    rw [ENNReal.ofReal_pow ?G3]
+    case G3 => exact inv_nonneg.mpr (NNReal.coe_nonneg _)
+    simp [← mul_pow]
+    show (ENNReal.ofReal ((a : NNReal) : ℝ) * ENNReal.ofReal (((b : NNReal) : ℝ))⁻¹) ^ 2
+        = (((a : NNReal) : ENNReal) * ((b : NNReal) : ENNReal)⁻¹) ^ 2
     rw [ENNReal.ofReal_coe_nnreal]
     rw [ENNReal.ofReal_inv_of_pos (by exact NNReal.coe_pos.mpr (Nat.cast_pos.mpr Hb))]
     rw [ENNReal.ofReal_coe_nnreal]
-    rw [← mul_pow]
 
 end SLang

@@ -25,9 +25,11 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
   simp [PureDP] at *
   rw [event_eq_singleton] at *
   simp [DP_singleton] at *
+  replace h1 := (event_eq_singleton _ _).mp h1
+  replace h2 := fun u => (event_eq_singleton _ _).mp (h2 u)
   intros l₁ l₂ Hl₁l₂ u v
-  rw [privComposeChainRule]
-  rw [privComposeChainRule]
+  erw [privComposeChainRule]
+  erw [privComposeChainRule]
   rw [Real.exp_add]
   rw [ENNReal.ofReal_mul ?s1]
   case s1 => apply Real.exp_nonneg
@@ -46,6 +48,7 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
         simp_all only [DFunLike.coe]
         exfalso
         have hcont := h1 l₁ l₂ Hl₁l₂ u
+        simp only [DFunLike.coe] at hcont
         simp [HA, division_def] at hcont
         rw [ENNReal.mul_top HB] at hcont
         simp_all
@@ -54,8 +57,6 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
       · rename_i HA HB
         exfalso
         have hcont := h2 u
-        rw [event_eq_singleton] at hcont
-        simp [DP_singleton] at hcont
         have hcont := hcont l₁ l₂ Hl₁l₂ v
         simp [DFunLike.coe] at hcont
         simp [HA, division_def] at hcont
@@ -73,8 +74,6 @@ theorem PureDP_ComposeAdaptive' (nq1 : List T → PMF U) (nq2 : U -> List T → 
       rw [← ENNReal.div_eq_inv_mul]
       rw [← ENNReal.div_eq_inv_mul]
       have h2a'_pre := h2 u
-      rw [event_eq_singleton] at h2a'_pre
-      simp [DP_singleton] at h2a'_pre
       exact (mul_le_mul' (h1 l₁ l₂ Hl₁l₂ u) (h2a'_pre l₁ l₂ Hl₁l₂ v))
     · left
       rename_i hnz

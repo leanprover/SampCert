@@ -128,6 +128,14 @@ def probWhileCut (cond : T → Bool) (body : T → SLang T) (n : Nat) (a : T) : 
   | Nat.zero => probZero
   | succ n => probWhileFunctional cond body (probWhileCut cond body n) a
 
+@[simp]
+theorem probWhileCut_zero (cond : T → Bool) (body : T → SLang T) (a : T) :
+    probWhileCut cond body 0 a = probZero := rfl
+
+theorem probWhileCut_succ (cond : T → Bool) (body : T → SLang T) (n : Nat) (a : T) :
+    probWhileCut cond body (n + 1) a
+      = probWhileFunctional cond body (probWhileCut cond body n) a := rfl
+
 
 /--
 ``SLang`` value for an unbounded iteration of a loop.

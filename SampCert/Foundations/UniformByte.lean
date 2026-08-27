@@ -128,7 +128,6 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
     rw [@Nat.card_eq_of_equiv_fin T (2^(8 - i)) ?G1]
     case G1 =>
       rw [<- HT]
-      simp
       apply Equiv.ofBijective
       case f =>
         intro v
@@ -177,9 +176,8 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
                 trivial
               ),
             (by
-              unfold UInt8.ofNatLT
-              unfold UInt8.toNat
-              simp
+              show x = _ / _
+              rw [UInt8.toNat_ofNatLT]
               apply (nat_div_eq_le_lt_iff (by simp)).mpr
               apply And.intro
               · exact Nat.le_add_left (x * 2 ^ (8 - i)) f'
@@ -360,13 +358,6 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
     simp
 
     -- Simplify the singleton sums
-    rw [tsum_eq_single p ?G1]
-    case G1 =>
-      intro _ HK
-      simp
-      intro HK'
-      exfalso
-      exact HK (id (Eq.symm HK'))
     have X : (UInt8.ofNatLT q Hq).toNat = q := UInt8.toNat_ofNatLT
     rw [tsum_eq_single (UInt8.ofNatLT q Hq) ?G1]
     case G1 =>

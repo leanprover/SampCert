@@ -69,7 +69,6 @@ theorem norm_simplify (x : ENNReal) (h : x ≠ ⊤) :
   · contradiction
   · rename_i v
     simp
-    rfl
 
 theorem convergent_subset {p : T → ENNReal} (f : T → V) (conv : ∑' (x : T), p x ≠ ⊤) :
   ∑' (x : { y : T| x = f y }), p x ≠ ⊤ := by
@@ -166,7 +165,7 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
 
   -- Eliminate elements with probability zero
   split
-  case h.isTrue =>
+  case isTrue =>
     rename_i H
     repeat rw [condition_to_subset]
     rw [H]
@@ -247,8 +246,8 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
 
   -- Name the normalization constants for each fiber
   let N (l : List T) := (∑' (x : {n // i = f n}), nq l x)⁻¹
-  have N_def (l : List T) : N l =  (∑' (x : {n // i = f n}), nq l x)⁻¹ := by exact rfl
-  have N_inv (l : List T) : (∑' (x : {n // i = f n}), nq l x) = (N l)⁻¹ := by
+  have N_def (l : List T) : N l =  (∑' (x : ↑{n | i = f n}), nq l x)⁻¹ := by exact rfl
+  have N_inv (l : List T) : (∑' (x : ↑{n | i = f n}), nq l x) = (N l)⁻¹ := by
     exact Eq.symm (inv_inv (∑' (x : { n // i = f n }), (nq l) ↑x))
   have N1_nz : N l₁ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts1)
   have N2_nz : N l₂ ≠ 0 := ENNReal.inv_ne_zero.mpr (nq_restriction_nts2)
@@ -481,7 +480,6 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
       apply inhabited_of_nonempty
       exact Set.Nonempty.to_subtype x_witness
     case GNorm1 =>
-      simp
       rw [<- HasSum.tsum_eq (HNorm l₁)]
       have HSup4 : Function.support (fun u => nq l₁ u) ⊆ { u | nq l₁ u ≠ 0 } := by simp [Function.support]
       rw [<- tsum_subtype_eq_of_support_subset HSup4]
@@ -489,7 +487,6 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
       apply Summable.hasSum
       exact ENNReal.summable
     case GNorm2 =>
-      simp
       rw [<- HasSum.tsum_eq (HNorm l₂)]
       have HSup4 : Function.support (fun u => nq l₂ u) ⊆ { u | nq l₁ u ≠ 0 } := by
         simp [Function.support]
@@ -507,11 +504,10 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
       intro a _ H2
       exact Habs a (Habs' a (Habs a H2))
     case Gnz => simp
-    simp at HR
     apply HR
   · rename_i x_empty
     simp at *
-    haveI Hempty : IsEmpty {x // ¬nq l₁ x = 0} := by
+    haveI Hempty : IsEmpty ↑{u : U | ¬(nq l₁) u = 0} := by
       exact Subtype.isEmpty_of_false fun a a_1 => a_1 (x_empty a)
     simp only [tsum_empty]
     simp
@@ -563,7 +559,7 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
 privPostProcess preserves absolute continuity between neighbours
 -/
 def privPostProcess_AC {f : U → V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
-  rw [ACNeighbour] at *
+  simp only [ACNeighbour] at *
   unfold AbsCts at *
   intro l₁ l₂ Hn v
   have Hac := Hac l₁ l₂ Hn

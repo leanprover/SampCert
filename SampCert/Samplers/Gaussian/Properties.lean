@@ -242,7 +242,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
   unfold gauss_term_ℝ
   simp
   simp only [DiscreteGaussianSample, Bind.bind, Pure.pure, SLang.bind_apply]
-  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) { val := ↑num / ↑den + 1, property := (Add1 (↑num / ↑den)  : 0 < ↑num / ↑den + 1) } mix
+  have A := DiscreteGaussianSampleLoop_normalizes (num ^ 2) (den ^ 2) (↑num / ↑den : ℕ).succPNat mix
 
   conv =>
     left
@@ -253,7 +253,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
   clear A
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
-    PNat.mk_coe, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
+    Nat.succPNat_coe, Nat.succ_eq_add_one, PNat.mk_coe, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
     zero_mul, SLang.pure_apply, div_pow, Bool.false_eq_true]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>

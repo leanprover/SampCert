@@ -284,7 +284,6 @@ theorem Renyi_Jensen_strict_real [t2 : MeasurableSingletonClass T] [tcount : Cou
     (MeasureTheory.ae_of_all (PMF.toMeasure q) h2)
     (Integrable_of_MemLp_one_lt h mem)
     (by rw [Function.comp_def]; exact Integrable_rpow_of_one_lt h h2 mem)
-  simp at D
   · rcases D with Hae_eq | Hint_lt
     · -- Case: f equals the average AE. Since T is countable and q t ≠ 0 everywhere,
       -- AE-equality becomes pointwise equality.

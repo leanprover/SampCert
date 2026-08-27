@@ -364,7 +364,7 @@ lemma sv9_aboveThresh_pmf_DP (Hqs_sens : ∀ i, sensitivity (qs i) 1) HL (ε : N
       apply Eq.le
       suffices ((sv8_G qs l₁ [] v0 ↑vs < τ + cov_τ + T) = (sv8_G qs l₂ [] v0 ↑vs < τ + T)) ∧
                ((τ + cov_τ + T ≤ qs (point + 1) l₁ + (vk + cov_vk)) = (τ + T ≤ qs (point + 1) l₂ + vk)) by
-        simp_all
+        simp_all [vs.2]
       apply And.intro
       · -- cov_τ
         apply propext

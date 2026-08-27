@@ -5,10 +5,10 @@ package «sampcert» where
   testDriver := "test"
 
 require «doc-gen4» from git
-  "https://github.com/leanprover/doc-gen4" @ "v4.29.0"
+  "https://github.com/leanprover/doc-gen4" @ "v4.33.1"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.29.0"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.33.1"
 
 target ffi.o (pkg : NPackage __name__) : FilePath := do
   let oFile := pkg.buildDir / "ffi.o"

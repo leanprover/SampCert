@@ -51,13 +51,13 @@ theorem privNoisedQuery_zCDPBound (query : List T → ℤ) (Δ ε₁ ε₂ : ℕ
       apply ofReal_le_ofReal
       refine sq_le_sq.mpr ?G4.h.a
       simp only [NNReal.ofPNat, Nonneg.mk_natCast]
-      rw [NNReal.abs_eq]
-      rw [← Int.cast_abs]
       have X1 : |query l₁ - query l₂| ≤ (Δ.val : ℤ) := by
         rw [Int.abs_eq_natAbs]
         exact_mod_cast bounded_sensitivity
-      have : (|query l₁ - query l₂| : ℝ) ≤ ((Δ.val : ℤ) : ℝ) := by exact_mod_cast X1
-      simpa using this
+      refine le_trans ?_ (le_abs_self _)
+      show |((query l₁ - query l₂ : ℤ) : ℝ)| ≤ ((((Δ : ℕ+) : ℕ) : NNReal) : ℝ)
+      rw [NNReal.coe_natCast, ← Int.cast_abs]
+      exact_mod_cast X1
   apply le_trans
   · apply X
   clear X
@@ -109,7 +109,7 @@ lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) 
 privNoisedQuery preserves absolute continuity between neighbours
 -/
 def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeighbour (privNoisedQuery query Δ ε₁ ε₂) := by
-  rw [ACNeighbour]
+  simp only [ACNeighbour]
   intro l₁ l₂ _
   rw [AbsCts]
   intro n Hk

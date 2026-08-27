@@ -190,6 +190,10 @@ theorem DiscreteLaplaceSampleLoop_apply (num : PNat) (den : PNat) (n : ℕ) (b :
   · simp only [probGeometric_apply, add_eq_zero, one_ne_zero, and_false, ↓reduceIte,
       add_tsub_cancel_right, and_true]
     cases b <;> simp
+    · erw [BernoulliSample_apply_false]
+      norm_num
+    · erw [BernoulliSample_apply_true]
+      norm_num
   · intro x hx
     by_cases hx0 : x = 0
     · simp [hx0]
@@ -803,8 +807,15 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
       congr
       apply funext
       intro y
-      split <;> try simp
-      all_goals (try (cases b <;> simp))
+      have HB : ∀ c : Bool, BernoulliSample 1 2 (Nat.le.step Nat.le.refl) c = 2⁻¹ := by
+        intro c
+        cases c
+        · erw [BernoulliSample_apply_false]
+          norm_num
+        · erw [BernoulliSample_apply_true]
+          norm_num
+      split <;> try simp [HB]
+      all_goals (try (cases b <;> simp [HB]))
   rw [H]
   clear H
   congr
@@ -1071,7 +1082,6 @@ theorem DiscreteLaplaceSampleOptimized_apply (num den : PNat) (x : ℤ) :
 theorem DiscreteLaplaceSampleMixed_normalizes (num den : PNat) (mix : ℕ) :
     ∑' x : ℤ, (DiscreteLaplaceSampleMixed num den mix) x = 1 := by
   rw [DiscreteLaplaceSampleMixed]
-  simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_normalizes num den
   · exact DiscreteLaplaceSampleOptimized_normalizes num den
@@ -1083,7 +1093,6 @@ Closed form for the evaluation of the ``SLang`` Laplace sampler.
 theorem DiscreteLaplaceSampleMixed_apply (num den : PNat) (mix : ℕ) (x : ℤ) :
     (DiscreteLaplaceSampleMixed num den mix) x = ENNReal.ofReal (((exp (1/((num : NNReal) / (den : NNReal))) - 1) / (exp (1/((num : NNReal) / (den : NNReal))) + 1)) * (exp (- (abs x / ((num : NNReal) / (den : NNReal)))))) := by
   rw [DiscreteLaplaceSampleMixed]
-  simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · exact DiscreteLaplaceSample_apply num den x
   · exact DiscreteLaplaceSampleOptimized_apply num den x
@@ -1094,7 +1103,6 @@ Equivalence between discrete Laplace sampelrs
 lemma DiscreteLaplaceSampleMixed_equiv (num den : PNat) (mix : ℕ) :
     DiscreteLaplaceSampleMixed num den mix = DiscreteLaplaceSample num den := by
   rw [DiscreteLaplaceSampleMixed]
-  simp only [Bind.bind, Pure.pure, bind_pure]
   split
   · rfl
   · symm

@@ -41,7 +41,7 @@ theorem ApproximateDP_gt1 (m : Mechanism T U) (ε : ℝ) {δ : NNReal} (Hδ : 1 
     intro u
     split
     · exact le_refl _
-    · exact zero_le _
+    · exact zero_le
   apply le_trans H1
   conv =>
     left
@@ -50,8 +50,8 @@ theorem ApproximateDP_gt1 (m : Mechanism T U) (ε : ℝ) {δ : NNReal} (Hδ : 1 
   · simp
     trivial
   · apply mul_nonneg
-    · exact zero_le (ENNReal.ofReal (Real.exp ε))
-    · exact zero_le (∑' (x : U), if x ∈ S then (m l₂) x else 0)
+    · exact zero_le
+    · exact zero_le
 
 
 end SLang

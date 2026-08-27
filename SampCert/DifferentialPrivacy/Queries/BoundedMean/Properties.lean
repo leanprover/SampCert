@@ -36,7 +36,7 @@ theorem privNoisedBoundedMean_DP (U : ℕ+) (ε₁ ε₂ : ℕ+) (ε : NNReal)
   (HP_half : dpn.noise_priv ε₁ (2 * ε₂) (ε / 2)) :
   dps.prop (privNoisedBoundedMean U ε₁ ε₂) ε := by
   unfold privNoisedBoundedMean
-  rw [bind_bind_indep]
+  erw [bind_bind_indep]
   apply dps.postprocess_prop
   apply dps.compose_prop ?SC1
   · apply privNoisedBoundedSum_DP

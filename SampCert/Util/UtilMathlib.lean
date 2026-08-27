@@ -25,7 +25,7 @@ theorem exists_summable_bound_exp_mul_sq {R : ℝ} (hR : 0 < R) :
     gcongr rexp ?_ ^ _
     rwa [mul_le_mul_left_of_neg (neg_lt_zero.mpr pi_pos)]
   all_goals
-    simpa only [Int.natAbs_neg, Int.natAbs_ofNat'] using
+    simpa only [Int.natAbs_neg, Int.natAbs_natCast] using
       summable_geometric_of_lt_one (Real.exp_pos _).le h
 
 theorem summable_exp_mul_sq {τ : ℂ} (hτ : 0 < τ.im) :

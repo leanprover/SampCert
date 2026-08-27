@@ -236,7 +236,7 @@ lemma ofEReal_toENNReal {x : ENNReal} : ofEReal (ENNReal.toEReal x) = x := by ca
 -/
 @[simp]
 lemma ofEReal_ofReal_toENNReal : ENNReal.ofEReal (Real.toEReal r) = ENNReal.ofReal r := by
-  simp [ofEReal, Real.toEReal, ENNReal.ofReal]
+  rfl
 
 
 lemma ofEReal_le_mono {w z : EReal} (H : w ≤ z) : ofEReal w ≤ ofEReal z := by
@@ -325,7 +325,7 @@ lemma galois_connection_ofReal : GaloisConnection ENNReal.ofEReal ENNReal.toERea
     · exact coe_ennreal_nonneg b
   · intro _
     rw [(ofEReal_eq_zero_iff a).mp]
-    · exact zero_le b
+    · exact zero_le
     · exact le_of_lt Hneg
 
 end ofEReal
@@ -628,12 +628,6 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
   · exfalso
     simp at Hr1
   · rename_i s_R
-    have Hsr : some (some s_R) = Real.toEReal s_R := rfl
-    rw [<- Hsr] at H
-    rw [<- Hsr] at Hr1
-    rw [<- Hsr] at Hr2
-    clear Hsr
-
     cases w
     · apply left_eq_inf.mp
       rfl
@@ -641,14 +635,10 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
     cases z
     · rw [EReal.mul_bot_of_pos] at H
       apply le_bot_iff.mp at H
-      · have Hwr : some (some s_R) = Real.toEReal s_R := rfl
-        rw [Hwr] at H
-        rw [<- EReal.coe_mul] at H
+      · rw [<- EReal.coe_mul] at H
         cases H
       · apply Hr1
     rename_i z_R
-    have Hsr : some (some s_R) = Real.toEReal s_R := rfl
-    rw [Hsr] at H
 
     apply EReal.coe_le_coe_iff.mpr
     repeat rw [<- EReal.coe_mul] at H
@@ -661,7 +651,7 @@ lemma ereal_smul_le_left {w z : EReal} (s : EReal) (Hr1 : 0 < s) (Hr2 : s < ⊤)
         case_EReal_isReal z
         · rw [EReal.mul_bot_of_pos] at H
           · cases H
-          · exact Hr1
+          · exact EReal.coe_pos.mpr Hr1
         · simp [Real.toEReal] at H
           cases H
       · exact Hr1

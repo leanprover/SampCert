@@ -67,5 +67,5 @@ lemma privUnboundedMax_DP (ε : NNReal) (Hε : ε = ε₁ / ε₂) :
   apply funext
   intro l
   congr
-  rw [<- sv8_sv9_eq, <- sv7_sv8_eq, <- sv6_sv7_eq, <- sv5_sv6_eq,
+  erw [<- sv8_sv9_eq, <- sv7_sv8_eq, <- sv6_sv7_eq, <- sv5_sv6_eq,
       <- sv4_sv5_eq, <- sv3_sv4_eq, <- sv2_sv3_eq, <- sv1_sv2_eq]

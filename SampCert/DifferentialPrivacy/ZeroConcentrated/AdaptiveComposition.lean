@@ -79,7 +79,7 @@ lemma privComposeAdaptive_renyi_bound {nq1 : List T → PMF U} {nq2 : U -> List 
   apply eexp_mono_le.mpr
   rw [<- eexp_add]
   rw [RenyiDivergence_def_exp _ _ Hα]
-  rw [RenyiDivergence_def_exp _ _ Hα]
+  rw [RenyiDivergence_def_exp (privComposeAdaptive nq1 nq2 l₁) (privComposeAdaptive nq1 nq2 l₂) Hα]
 
   rw [sup_lemma Hanz Hant]
   conv =>
@@ -131,10 +131,10 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
   (HAC1 : ACNeighbour nq1) (HAC2 : ∀ u, ACNeighbour (nq2 u))
   (h1 : zCDPBound nq1 ε₁) (h2 : ∀ u, zCDPBound (nq2 u) ε₂) :
   zCDPBound (privComposeAdaptive nq1 nq2) (ε₁ + ε₂) := by
-  rw [zCDPBound]
+  simp only [zCDPBound]
   intro α Hα l₁ l₂ Hneighbours
   -- Rewrite the upper bounds in terms of Renyi divergences of nq1/nq2
-  rw [zCDPBound] at h1
+  simp only [zCDPBound] at h1
   -- have marginal_ub := h1 α Hα l₁ l₂ Hneighbours
   have conditional_ub : (⨆ (u : U),  RenyiDivergence (nq2 u l₁) (nq2 u l₂) α) ≤ ENNReal.ofReal (ε₂ * α) :=
     by exact iSup_le fun i => h2 i α Hα l₁ l₂ Hneighbours
@@ -156,7 +156,7 @@ Adaptive composition preserves absolute continuity
 -/
 def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ∀ u, ACNeighbour (nq2 u)) :
     ACNeighbour (privComposeAdaptive nq1 nq2) := by
-  rw [ACNeighbour]
+  simp only [ACNeighbour]
   simp [privComposeAdaptive]
   intro l₁ l₂ HN x Hx
   rcases x with ⟨ u, v ⟩

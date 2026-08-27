@@ -32,7 +32,7 @@ def gauss_term_ℝ (σ μ : ℝ) (x : ℝ) : ℝ :=
 /--
 ℂ-valued closed form for the Gaussian over ℝ (as a continuous function).
 -/
-instance gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
+def gauss_term_ℂ (σ μ : ℝ) : C(ℝ,ℂ) where
   toFun := fun x : ℝ => ((gauss_term_ℝ σ μ x) : ℂ)
   continuous_toFun := by
     unfold gauss_term_ℝ

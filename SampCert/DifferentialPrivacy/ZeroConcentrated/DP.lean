@@ -62,7 +62,7 @@ lemma zCDP_mono {m : List T -> PMF U} {ε₁ ε₂ : NNReal} (H : ε₁ ≤ ε�
   rw [zCDP] at *
   apply And.intro
   · assumption
-  · rw [zCDPBound] at *
+  · simp only [zCDPBound] at *
     intro α Hα l₁ l₂ N
     apply (@le_trans _ _ _ (ENNReal.ofReal (ε₁ * α)) _ ?G1)
     case G1 => apply Hε <;> trivial
@@ -580,7 +580,7 @@ theorem ApproximateDP_of_zCDP [Countable U] (m : Mechanism T U)
   · intro δ Hδ
     rw [<- Hε']
     rw [<- Hε'] at h
-    rw [zCDPBound] at h
+    simp only [zCDPBound] at h
     simp at *
     intro l₁ l₂ HN S
     have h := h 2 (by simp) l₁ l₂ HN
@@ -1571,11 +1571,6 @@ lemma lemma_step_3_deriv_nonneg (x z : ℝ) (Hx : x ≤ 2) (Hx' : 0 ≤ x) (Hz0 
     apply Differentiable.const_mul
     apply differentiable_id
   simp
-  rw [deriv_const_mul _ ?G1]
-  case G1 =>
-    apply Differentiable.differentiableAt
-    apply differentiable_id
-  simp
   rw [deriv.deriv_tanh]
   rw [deriv.deriv_tanh]
   suffices ((x / 2) * (1 / Real.cosh (z / 2) ^ 2 * 2⁻¹) ≤ 1 / Real.cosh (x * z / 4) ^ 2 * (x / 4)) by
@@ -1686,7 +1681,7 @@ lemma ofDP_bound_large_εα {U : Type} (q' : List T → PMF U) (ε : NNReal)
     · exact Hα
     · intro x
       apply SLang.event_to_singleton at H
-      rw [SLang.DP_singleton] at H
+      simp only [SLang.DP_singleton] at H
       apply (le_trans (H _ _ HN x))
       simp [ENNReal.toEReal]
   apply (le_trans H1)
@@ -1846,7 +1841,7 @@ Convert ε-DP bound to `(1/2)ε²`-zCDP bound
 Note that `zCDPBound _ ε` corresponds to `(1/2)ε²`-zCDP (not `ε`-zCDP).
 -/
 lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) : zCDPBound q' ((1/2) * ε^2) := by
-  rw [zCDPBound]
+  simp only [zCDPBound]
   intro α Hα l₁ l₂ HN
   obtain Hεα | Hεα := Classical.em (ε * α > 2)
   · exact ofDP_bound_large_εα q' ε H α Hα l₁ l₂ HN Hεα
@@ -1861,7 +1856,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   have K1 : Function.support (fun (x : U) => DFunLike.coe (q' l₁) x ) ⊆ { u : U | q' l₁ u ≠ 0 } := by simp [Function.support]
   have Hp_pre := PMF.tsum_coe (q' l₁)
   rw [<- tsum_subtype_eq_of_support_subset K1 ] at Hp_pre
-  simp only [Set.coe_setOf, Set.mem_setOf_eq] at Hp_pre
   have K2 : Function.support (fun (x : U) => DFunLike.coe (q' l₂) x ) ⊆ { u : U | q' l₁ u ≠ 0 } := by
     simp [Function.support]
     intro a Ha Hk
@@ -1870,7 +1864,6 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
     apply Hk
   have Hq_pre := PMF.tsum_coe (q' l₂)
   rw [<- tsum_subtype_eq_of_support_subset K2 ] at Hq_pre
-  simp only [Set.coe_setOf, Set.mem_setOf_eq] at Hq_pre
   let U' : Type := { x // DFunLike.coe (q' l₁) x ≠ 0 }
 
   let p : PMF U' :=
@@ -1946,7 +1939,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       dsimp [p]
       simp [DFunLike.coe]
       exact Hx'
-    · rw [SLang.PureDP] at H
+    · simp only [SLang.PureDP] at H
       apply SLang.event_to_singleton at H
       rcases x with ⟨ x' , _ ⟩
       apply (le_trans _ (H _ _ (Neighbour_symm _ _ HN) x'))
@@ -1954,7 +1947,7 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
       simp [DFunLike.coe]
 
   have Hpq : ∀ (x : U'), p x / q x ≤ ENNReal.ofReal (Real.exp ↑ε) := by
-    rw [SLang.PureDP] at H
+    simp only [SLang.PureDP] at H
     apply SLang.event_to_singleton at H
     intro x
     rcases x with ⟨ x' , _ ⟩
@@ -1970,9 +1963,9 @@ lemma ofDP_bound (ε : NNReal) (q' : List T -> PMF U) (H : SLang.PureDP q' ε) :
   obtain rfl | Hε' := Classical.em (ε = 0)
   · -- Follows from the DP bound
     simp_all
-    rw [SLang.PureDP] at H
+    simp only [SLang.PureDP] at H
     apply SLang.event_to_singleton at H
-    rw [SLang.DP_singleton] at H
+    simp only [SLang.DP_singleton] at H
     have H := H l₁ l₂ HN
     simp at H
     apply (@le_trans _ _ _ (∑' (x : U'), 1 ^ α * q x))
