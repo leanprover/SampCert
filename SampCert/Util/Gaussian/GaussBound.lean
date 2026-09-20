@@ -113,16 +113,7 @@ theorem sum_gauss_term_bound {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
             simp
             rw [← Real.sqrt_zero]
             congr 1
-            have P1 : |π| = π := by
-              rw [_root_.abs_of_nonneg]
-              rw [le_iff_lt_or_eq]
-              left
-              apply pi_pos
-            rw [P1]
-            rw [← mul_add]
-            simp
-            right
-            ring_nf
+            ring
           · simp
       rw [← X]
       rw [H]

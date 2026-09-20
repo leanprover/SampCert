@@ -358,31 +358,31 @@ lemma Renyi_Jensen_f_MemLp [MeasurableSpace T] [MeasurableSingletonClass T] [Cou
   haveI : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   have HRJf_nonneg (a : T) : 0 ≤ Renyi_Jensen_f p q a := toReal_nonneg
   have HRJf_nt := Renyi_Jensen_div_ne_top p q H Hspecial
-  refine ⟨?_, ?_⟩
+  have hp_ne_zero : ENNReal.ofReal α ≠ 0 := by simp; linarith
+  have hp_ne_top : ENNReal.ofReal α ≠ ⊤ := by simp
+  rw [memLp_iff]
+  rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hp_ne_zero hp_ne_top]
+  rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
+  apply ENNReal.rpow_lt_top_of_nonneg (by positivity)
+  rw [MeasureTheory.lintegral_countable']
+  have Hsummand_eq : ∀ a : T,
+      ‖Renyi_Jensen_f p q a‖ₑ ^ α * (PMF.toMeasure q) {a} = (p a / q a) ^ α * q a := by
+    intro a
+    congr 1
+    · show (‖Renyi_Jensen_f p q a‖₊ : ENNReal) ^ α = (p a / q a) ^ α
+      rw [← Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
+      show (ENNReal.ofReal (Renyi_Jensen_f p q a)) ^ α = (p a / q a) ^ α
+      rw [show Renyi_Jensen_f p q a = (p a / q a).toReal from rfl,
+          ENNReal.ofReal_toReal (HRJf_nt a)]
+    · exact PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _)
+  simp_rw [Hsummand_eq]
+  exact Hnts
   · apply MeasureTheory.StronglyMeasurable.aestronglyMeasurable
     apply Measurable.stronglyMeasurable
     apply Measurable.ennreal_toReal
     show Measurable (fun x => p x / q x)
     simp_rw [division_def]
     exact (Measurable.of_discrete).mul ((Measurable.of_discrete).inv)
-  · have hp_ne_zero : ENNReal.ofReal α ≠ 0 := by simp; linarith
-    have hp_ne_top : ENNReal.ofReal α ≠ ⊤ := by simp
-    rw [eLpNorm_eq_lintegral_rpow_enorm_toReal hp_ne_zero hp_ne_top]
-    rw [toReal_ofReal (le_of_lt (lt_trans zero_lt_one h))]
-    apply ENNReal.rpow_lt_top_of_nonneg (by positivity)
-    rw [MeasureTheory.lintegral_countable']
-    have Hsummand_eq : ∀ a : T,
-        ‖Renyi_Jensen_f p q a‖ₑ ^ α * (PMF.toMeasure q) {a} = (p a / q a) ^ α * q a := by
-      intro a
-      congr 1
-      · show (‖Renyi_Jensen_f p q a‖₊ : ENNReal) ^ α = (p a / q a) ^ α
-        rw [← Real.toNNReal_eq_nnnorm_of_nonneg (HRJf_nonneg a)]
-        show (ENNReal.ofReal (Renyi_Jensen_f p q a)) ^ α = (p a / q a) ^ α
-        rw [show Renyi_Jensen_f p q a = (p a / q a).toReal from rfl,
-            ENNReal.ofReal_toReal (HRJf_nt a)]
-      · exact PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton _)
-    simp_rw [Hsummand_eq]
-    exact Hnts
 
 /--
 Jensen's inequality applied to ENNReals, in the case that q is nonzero.
