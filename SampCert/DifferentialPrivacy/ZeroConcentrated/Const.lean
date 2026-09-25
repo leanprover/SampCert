@@ -33,10 +33,11 @@ theorem privConst_zCDPBound {u : U} : zCDPBound (privConst u : Mechanism T U) 0 
   refine (RenyiDivergence_aux_zero (PMF.pure u) (PMF.pure u) ?G1 fun x a => a).mp rfl
   linarith
 
+omit [MeasurableSpace U] [MeasurableSingletonClass U] [Countable U] in
 /--
 Constant query satisfies absolute continuity
 -/
-def privConst_AC {u : U} : ACNeighbour (privConst u : Mechanism T U) := by
+theorem privConst_AC {u : U} : ACNeighbour (privConst u : Mechanism T U) := by
   simp [ACNeighbour, AbsCts, privConst]
 
 /--

@@ -340,7 +340,7 @@ theorem discrete_gaussian_normalizes {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) :
 /--
 Discrete Gaussian cast to ENNReal has sum 1
 -/
-def discrete_gaussian_normal {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) : HasSum (fun z : ℤ => ENNReal.ofReal (discrete_gaussian σ μ z)) 1 := by
+theorem discrete_gaussian_normal {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) : HasSum (fun z : ℤ => ENNReal.ofReal (discrete_gaussian σ μ z)) 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   rw [<- ENNReal.ofReal_tsum_of_nonneg]
   case hf_nonneg =>

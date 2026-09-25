@@ -40,10 +40,10 @@ variable (a a' : α)
 theorem pure_apply : probPure a a' = if a' = a then 1 else 0 := rfl
 
 theorem pure_apply_self : probPure a a = 1 :=
-  if_pos rfl
+  ite_eq_left rfl
 
 theorem pure_apply_of_ne (h : a' ≠ a) : probPure a a' = 0 :=
-  if_neg h
+  ite_eq_right h
 
 variable (p : SLang α) (f : α → SLang β) (g : β → SLang γ)
 

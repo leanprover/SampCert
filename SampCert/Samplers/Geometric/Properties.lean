@@ -101,7 +101,7 @@ theorem geometric_succ_true (fuel n : ℕ) (st : Bool × ℕ) :
   rename_i b m
   simp only [probWhileCut, probWhileFunctional, geoLoopBody, ite_apply,
     Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply]
-  rw [if_pos (show geoLoopCond (true, n) = true by rfl)]
+  rw [ite_eq_left (show geoLoopCond (true, n) = true by rfl)]
   rw [ENNReal.tsum_prod']
   simp only [tsum_bool, Prod.mk.injEq, true_and]
   rw [tsum_eq_single (n + 1) (by intro b hb; simp [hb])]
@@ -325,7 +325,7 @@ theorem geometric_returns_false (n fuel k : ℕ) (b : Bool) :
   · rename_i fuel IH
     intro n k b
     cases b
-    · simp [probWhileCut, probWhileFunctional, geoLoopBody, geoLoopCond, probBind, probPure]
+    · simp [probWhileCut, probWhileFunctional, geoLoopCond, probPure]
     · simp [probWhileCut, probWhileFunctional, geoLoopBody, geoLoopCond, probBind, probPure, IH]
 
 lemma if_simpl_geo (x n : ℕ) :

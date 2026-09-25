@@ -74,7 +74,7 @@ theorem BernoulliExpNegSampleUnitAux_succ_true (num : ℕ) (den : ℕ+) (fuel : 
   cases st
   rename_i b' r'
   simp only [probWhileCut, probWhileFunctional, ite_apply, BernoulliExpNegSampleUnitLoop,
-    Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply, if_true]
+    Bind.bind, Pure.pure, SLang.bind_apply, SLang.pure_apply, ite_true]
   rw [ENNReal.tsum_prod']
   simp only [tsum_bool]
   rw [tsum_eq_single (r + 1) (by intro b hb; simp [hb])]

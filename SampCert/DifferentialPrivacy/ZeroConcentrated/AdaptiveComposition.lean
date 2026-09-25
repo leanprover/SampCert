@@ -151,10 +151,11 @@ theorem privComposeAdaptive_zCDPBound {nq1 : List T → PMF U} {nq2 : U -> List 
     exact _root_.add_le_add (h1 α Hα l₁ l₂ Hneighbours) conditional_ub
   exact privComposeAdaptive_renyi_bound Hα Hneighbours HAC1 HAC2
 
+omit HU HU_meas HU_discr HU_count [MeasurableSpace V] [MeasurableSingletonClass V] [Countable V] in
 /--
 Adaptive composition preserves absolute continuity
 -/
-def privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ∀ u, ACNeighbour (nq2 u)) :
+theorem privComposeAdaptive_AC (nq1 : Mechanism T U) (nq2 : U -> Mechanism T V) (Hac1 : ACNeighbour nq1) (Hac2 : ∀ u, ACNeighbour (nq2 u)) :
     ACNeighbour (privComposeAdaptive nq1 nq2) := by
   simp only [ACNeighbour]
   simp [privComposeAdaptive]

@@ -278,7 +278,7 @@ theorem Renyi_Jensen_strict_real [t2 : MeasurableSingletonClass T] [tcount : Cou
   have A := strictConvexOn_rpow h
   have B := continuousOn_rpow_Ici_of_one_lt h
   have C : IsClosed (Set.Ici (0 : ℝ)) := isClosed_Ici
-  haveI : IsProbabilityMeasure (PMF.toMeasure q) := PMF.toMeasure.isProbabilityMeasure q
+  have : IsProbabilityMeasure (PMF.toMeasure q) := PMF.toMeasure.isProbabilityMeasure q
   have D := @StrictConvexOn.ae_eq_const_or_map_average_lt T ℝ t1 _ _ _ (PMF.toMeasure q)
     (Set.Ici 0) f (fun (x : ℝ) => x ^ α) inferInstance A B C
     (MeasureTheory.ae_of_all (PMF.toMeasure q) h2)
@@ -306,7 +306,7 @@ theorem Renyi_Jensen_strict_real [t2 : MeasurableSingletonClass T] [tcount : Cou
         show f x = ∑' y : T, (q y).toReal * f y
         simpa using Heqx
       · -- `q x` is nonzero but the indicator forces it to vanish — contradiction.
-        simp only [Set.mem_setOf_eq, Set.indicator_apply, if_pos Heqx] at Hx
+        simp only [Set.mem_ofPred_eq, Set.indicator_apply, ite_eq_left Heqx] at Hx
         exact absurd Hx (HT_nz x)
     · -- Case: strict Jensen gave `(∫ f)^α < ∫ f^α`.
       left
@@ -355,7 +355,7 @@ lemma Renyi_Jensen_f_MemLp [MeasurableSpace T] [MeasurableSingletonClass T] [Cou
     (Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤))
     (Hnts : ∑' (a : T), (p a / q a) ^ α * q a ≠ ⊤) :
     MemLp (Renyi_Jensen_f p q) (ENNReal.ofReal α) (PMF.toMeasure q) := by
-  haveI : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
+  have : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   have HRJf_nonneg (a : T) : 0 ≤ Renyi_Jensen_f p q a := toReal_nonneg
   have HRJf_nt := Renyi_Jensen_div_ne_top p q H Hspecial
   have hp_ne_zero : ENNReal.ofReal α ≠ 0 := by simp; linarith
@@ -390,7 +390,7 @@ Jensen's inequality applied to ENNReals, in the case that q is nonzero.
 lemma Renyi_Jensen_ENNReal_reduct [MeasurableSpace T] [MeasurableSingletonClass T] [Countable T]
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) :
   (∑' x : T, (p x / q x) * q x) ^ α ≤ (∑' x : T, (p x / q x) ^ α * q x) := by
-  haveI : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
+  have : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   by_cases Hnts : ∑' (a : T), (p a / q a) ^ α * q a = ⊤
   · rw [Hnts]; exact OrderTop.le_top _
   by_cases Hspecial : ∀ x : T, ¬(p x = ⊤ ∧ q x ≠ 0 ∧ q x ≠ ⊤)
@@ -452,7 +452,7 @@ lemma Renyi_Jensen_ENNReal_converse_reduct [MeasurableSpace T] [MeasurableSingle
   (p q : PMF T) {α : ℝ} (h : 1 < α) (H : AbsCts p q) (Hq : ∀ t, q t ≠ 0)
   (Hsumeq : (∑' x : T, (p x / q x) * q x) ^ α = (∑' x : T, (p x / q x) ^ α * q x)) :
   (p = q) := by
-  haveI : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
+  have : DiscreteMeasurableSpace T := MeasurableSingletonClass.toDiscreteMeasurableSpace
   by_cases Hnts : ∑' (a : T), (p a / q a) ^ α * q a = ⊤
   · -- One of the series is Top, so the other series is too
     rw [Hnts] at Hsumeq
