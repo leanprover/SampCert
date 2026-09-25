@@ -26,7 +26,7 @@ inductive Neighbour (l₁ l₂ : List T) : Prop where
 /--
 Neighbour relation is symmetric.
 -/
-def Neighbour_symm (l₁ l₂ : List T) (H : Neighbour l₁ l₂) : Neighbour l₂ l₁ := by
+theorem Neighbour_symm (l₁ l₂ : List T) (H : Neighbour l₁ l₂) : Neighbour l₂ l₁ := by
   cases H
   · rename_i _ _ _ Hl1 Hl2
     exact Neighbour.Deletion Hl2 Hl1

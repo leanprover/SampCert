@@ -253,7 +253,7 @@ theorem DiscreteGaussianSample_apply (num : PNat) (den : PNat) (mix : ℕ) (x : 
   clear A
 
   simp only [ENNReal.tsum_prod', tsum_bool, ↓reduceIte, DiscreteGaussianSampleLoop_apply_true,
-    Nat.succPNat_coe, Nat.succ_eq_add_one, PNat.mk_coe, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
+    Nat.succPNat_coe, Nat.succ_eq_add_one, cast_add, cast_one, PNat.pow_coe, cast_pow, zero_add, ite_mul,
     zero_mul, SLang.pure_apply, div_pow, Bool.false_eq_true]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
   conv =>

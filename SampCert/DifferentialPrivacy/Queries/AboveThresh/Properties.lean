@@ -333,7 +333,6 @@ lemma sv1_loop_ub (qs : sv_query sv_T) (T τ : ℤ) (ε₁ ε₂ : ℕ+) (l : Li
         conv =>
           enter [1, a]
           rw [← ENNReal.tsum_mul_right]
-          simp
         rw [ENNReal.tsum_comm]
         enter [1, b]
 
@@ -761,13 +760,15 @@ def sv4_loop (qs : sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (τ : ℤ) (l :
   let v <- probWhileCut (sv4_aboveThreshC qs T τ l) sv4_aboveThreshF (point + 1) (init, presamples)
   return v.1
 
+omit dps dpn in
 /-- Total mass of a point distribution restricted to the states with a given
 first component. -/
 lemma tsum_indicator_pure (X : sv4_state) (fs : sv1_state) (h : fs = X.1) :
     (∑' (a : sv4_state), if fs = a.1 then probPure X a else 0) = 1 := by
-  rw [tsum_eq_single X (fun b hb => by simp [SLang.pure_apply_of_ne _ _ hb, hb])]
-  simp [h, SLang.pure_apply_self]
+  rw [tsum_eq_single X (fun b hb => by simp [hb])]
+  simp [h]
 
+omit dps dpn in
 /-- When `sv4`'s loop condition fails the loop halts immediately. -/
 lemma sv4_probWhileCut_succ_false (qs : sv_query sv_T) (T τ : ℤ) (l : List sv_T) (n : ℕ)
     (s : sv1_state) (ps : List ℤ) (h : ¬ sv1_aboveThreshC qs T τ l s = true) :
@@ -775,9 +776,10 @@ lemma sv4_probWhileCut_succ_false (qs : sv_query sv_T) (T τ : ℤ) (l : List sv
     probPure (s, ps) := by
   have hC : ¬ sv4_aboveThreshC qs T τ l (s, ps) = true := h
   simp only [probWhileCut, probWhileFunctional]
-  rw [if_neg hC]
+  rw [ite_eq_right hC]
   rfl
 
+omit dps dpn in
 /-- One step of `sv4`'s loop: when the condition holds, the head presample is
 consumed and the state advances. -/
 lemma sv4_probWhileCut_succ (qs : sv_query sv_T) (T τ : ℤ) (l : List sv_T) (n : ℕ)
@@ -785,7 +787,7 @@ lemma sv4_probWhileCut_succ (qs : sv_query sv_T) (T τ : ℤ) (l : List sv_T) (n
     probWhileCut (sv4_aboveThreshC qs T τ l) sv4_aboveThreshF (n + 1) (s, p :: ps) =
     probWhileCut (sv4_aboveThreshC qs T τ l) sv4_aboveThreshF n ((s.1 ++ [s.2], p), ps) := by
   have hC : sv4_aboveThreshC qs T τ l (s, p :: ps) = true := h
-  simp only [probWhileCut, probWhileFunctional, hC, if_true, sv4_aboveThreshF,
+  simp only [probWhileCut, probWhileFunctional, hC, ite_true, sv4_aboveThreshF,
     Bind.bind, Pure.pure]
   exact SLang.pure_bind _ _
 
@@ -856,7 +858,7 @@ lemma sv4_presample_eval (ε₁ ε₂ : ℕ+) (n : ℕ) (s : { l : List ℤ // L
       rw [← HF]
       rw [← this]
       rw [mul_comm]
-    haveI : RightCommutative F := by
+    have : RightCommutative F := by
       subst HF
       exact ⟨fun b a₁ a₂ => mul_right_comm _ _ _⟩
     rw [← List.foldl_cons]
@@ -920,6 +922,7 @@ lemma sv4_presample_split' (ε₁ ε₂ : ℕ+) (point : ℕ) (z : ℤ) (p : { l
       trivial
 
 
+omit dps dpn in
 lemma foldl_mul_left (g : ℤ → ENNReal) (a : ENNReal) (l : List ℤ) :
     List.foldl (fun acc b => acc * g b) a l = a * List.foldl (fun acc b => acc * g b) 1 l := by
   induction l generalizing a with
@@ -934,7 +937,7 @@ lemma sv4_presample_split'' (ε₁ ε₂ : ℕ+) (point : ℕ) (z : ℤ) (p : { 
     sv4_presample ε₁ ε₂ (point + 1) ⟨ (p.1 ++ [z]), HP ⟩ := by rw [sv4_presample_split']
 
 -- Splits and rearranges the functions
-def sv4_presample_split (ε₁ ε₂ : ℕ+) (point : ℕ) :
+theorem sv4_presample_split (ε₁ ε₂ : ℕ+) (point : ℕ) :
     sv4_presample ε₁ ε₂ (point + 1) =
     (do
       let presample_1 <- sv4_presample ε₁ ε₂ 1
@@ -965,7 +968,7 @@ def sv4_presample_split (ε₁ ε₂ : ℕ+) (point : ℕ) :
   simp_all [len_list_append_rev]
 
   -- Join the sv4_presamples
-  simp only [mul_ite, mul_zero, sv4_presample_split']
+  simp only [sv4_presample_split']
   rw [vector_sum_merge]
   rw [vector_sum_merge]
 
@@ -983,14 +986,14 @@ def sv4_presample_split (ε₁ ε₂ : ℕ+) (point : ℕ) :
   · simp
     intro A B C
     right
-    apply if_neg
+    apply ite_eq_right
     intro K
     apply C
     subst K
     apply Subtype.ext
     exact (cons_headI_tail (by intro K'; subst K'; simp at B)).symm
 
-  rw [ENNReal.tsum_eq_add_tsum_ite ⟨[vsm_last final_state] ++ (vsm_init final_state), by simp [(vsm_init final_state).2, Nat.add_comm] ⟩ ]
+  rw [ENNReal.tsum_eq_add_tsum_ite ⟨[vsm_last final_state] ++ (vsm_init final_state), by simp [(vsm_init final_state).2] ⟩ ]
   refine Eq.trans (zero_add _).symm ?_
   conv =>
     rhs
@@ -999,7 +1002,7 @@ def sv4_presample_split (ε₁ ε₂ : ℕ+) (point : ℕ) :
   · symm
     simp
     intro A B C
-    apply if_neg
+    apply ite_eq_right
     intro K
     apply C
     subst K
@@ -1208,7 +1211,7 @@ lemma sv3_sv4_loop_eq_zero (qs : sv_query sv_T) (T τ : ℤ) (ε₁ ε₂ : ℕ+
       show (if sv1_aboveThreshC qs T τ l init = true then
               ((sv4_aboveThreshF (init, ([] : List ℤ))).probBind fun _ => probZero)
             else probPure (init, ([] : List ℤ))) i = 0
-      rw [if_neg hcond]
+      rw [ite_eq_right hcond]
       apply pure_apply_of_ne
       intro HK
       apply hk2
@@ -1258,8 +1261,6 @@ theorem sv3_sv4_loop_eq (qs : sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (τ 
     unfold sv4_loop
     conv =>
       enter [2]
-      unfold probWhileCut
-      unfold probWhileFunctional
       unfold sv4_aboveThreshC
 
     split
@@ -1290,10 +1291,6 @@ theorem sv3_sv4_loop_eq (qs : sv_query sv_T) (T : ℤ) (ε₁ ε₂ : ℕ+) (τ 
       match vs1, Hvs1 with
       | [], Hvs1 => exact absurd Hvs1 (by simp)
       | vs1 :: vs_emp, Hvs1 =>
-      conv =>
-        enter [2, 1, a, 1]
-        unfold sv4_aboveThreshF
-        simp [len_list_append_rev]
       have Hemp : vs_emp = [] := by cases vs_emp <;> simp_all
       subst Hemp
       show probWhileCut (sv4_aboveThreshC qs T τ l) sv4_aboveThreshF (point + 1)
@@ -1434,7 +1431,7 @@ lemma sv5_sv6_loop_base_case (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : Lis
   unfold probWhileFunctional
   split
   · next h =>
-    simp [probWhileCut, sv6_loop]
+    simp [sv6_loop]
     rw [h]
     simp
   · next h =>
@@ -1448,7 +1445,7 @@ lemma sv5_sv6_loop_base_case (qs :  sv_query sv_T) (T : ℤ) (τ : ℤ) (l : Lis
     have Hpt : point = sv1_threshold (past, pres) := by
       simp [sv1_threshold]
       omega
-    rw [if_pos Hpt]
+    rw [ite_eq_left Hpt]
     conv =>
       lhs; rw [← add_zero (1 : ENNReal)]
     congr 1
@@ -1827,9 +1824,9 @@ lemma sv1_lb_advance (τ : ℤ) (ε₁ ε₂ : ℕ+) (l : List sv_T) (cut : ℕ)
   rw [Hunroll]
   unfold probWhileFunctional
   by_cases hcond : sv1_aboveThreshC qs T τ l (H, v) = true
-  · rw [if_pos hcond]
+  · rw [ite_eq_left hcond]
     simp
-  · rw [if_neg hcond]
+  · rw [ite_eq_right hcond]
     simp
     apply ENNReal.tsum_lb_single (List.length H)
     apply ENNReal.tsum_lb_single (H, v)
@@ -1863,7 +1860,7 @@ lemma sv1_lb_advance (τ : ℤ) (ε₁ ε₂ : ℕ+) (l : List sv_T) (cut : ℕ)
       enter [1, b]
       rw [X b]
     clear X
-    simp [sv1_aboveThreshF, probBind]
+    simp [sv1_aboveThreshF]
     apply le_trans
     · apply ENNReal.tsum_le_tsum
       intro a
@@ -2155,7 +2152,7 @@ lemma sv1_lb (lucky_guess : has_lucky qs T) ε₁ ε₂ l :
       show (∑' (a : { t // PLucky t }), (privNoiseGuess ε₁ ε₂) ↑a) = _
       congr 1
       ext a
-      rw [if_pos (by simp [sv1_threshold])]
+      rw [ite_eq_left (by simp [sv1_threshold])]
       rcases a with ⟨a, Ha⟩
       have hcond : sv1_aboveThreshC qs T τ l (H ++ [v], a) = false := by
         simp [sv1_aboveThreshC, sv1_noise, sv1_threshold]

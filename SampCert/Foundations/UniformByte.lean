@@ -39,7 +39,7 @@ local instance : Finite UInt8 := by
 /--
 ProbUniformByte is a proper distribution
 -/
-def probUniformByte_normalizes : HasSum probUniformByte 1 := by
+theorem probUniformByte_normalizes : HasSum probUniformByte 1 := by
   rw [Summable.hasSum_iff ENNReal.summable]
   unfold SLang.probUniformByte
   rw [division_def]
@@ -62,7 +62,7 @@ def probUniformByte_PMF : PMF UInt8 := ⟨ probUniformByte, probUniformByte_norm
 /--
 Evaluation of ``probUniformByteUpperBits`` for inside the support
 -/
-def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
+theorem probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
     probUniformByteUpperBits i x = 2^(8 - i) / UInt8.size := by
   simp [probUniformByteUpperBits]
   rw [Nat.sub_eq_max_sub]
@@ -96,7 +96,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
       rename_i h val property
       subst HT
       simp_all only
-      simp_all only [Set.mem_setOf_eq]
+      simp_all only [Set.mem_ofPred_eq]
     conv =>
       enter [1, 1, a]
       rw [H a]
@@ -217,7 +217,7 @@ def probUniformByteUpperBits_eval_support {i x : ℕ} (Hx : x < 2 ^ (min 8 i)) :
 /--
 Evaluation of ``probUniformByteUpperBits`` for zero-shifts outside of the support
 -/
-def probUniformByteUpperBits_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ (min 8 i)) :
+theorem probUniformByteUpperBits_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ (min 8 i)) :
     probUniformByteUpperBits i x = 0 := by
   simp [probUniformByteUpperBits]
   rw [Nat.sub_eq_max_sub]
@@ -259,7 +259,7 @@ lemma UIint8_cast_lt_size (a : UInt8) : a.toNat < UInt8.size := by
 /--
 Evaluation of ``probUniformP2`` for inside the support
 -/
-def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
+theorem probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
     probUniformP2 i x = (1 / 2 ^ i) := by
   revert x
   induction i using Nat.strong_induction_on with | _ i ih => ?_
@@ -408,7 +408,7 @@ def probUniformP2_eval_support {i x : ℕ} (Hx : x < 2 ^ i):
 /--
 Evaluation of ``probUniformP2`` for zero-shifts outside of the support
 -/
-def probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
+theorem probUniformP2_eval_zero {i x : ℕ} (Hx : x ≥ 2 ^ i):
     probUniformP2 i x = 0 := by
   revert x
   induction i using Nat.strong_induction_on with | _ i ih => ?_

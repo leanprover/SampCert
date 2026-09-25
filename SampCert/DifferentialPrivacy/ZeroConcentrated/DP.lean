@@ -467,9 +467,9 @@ lemma ApproximateDP_of_zCDP_pos_lt_one [Countable U] (m : Mechanism T U)
   have HK (x : U) : (1 : ENNReal) = (if (z x < ENNReal.ofReal ε') then 1 else 0) + (if (z x ≥ ENNReal.ofReal ε') then 1 else 0) := by
     by_cases h : z x < ENNReal.ofReal ε'
     · have h2 : ¬ (z x ≥ ENNReal.ofReal ε') := not_le.mpr h
-      rw [if_pos h, if_neg h2]; simp
+      rw [ite_eq_left h, ite_eq_right h2]; simp
     · have h2 : z x ≥ ENNReal.ofReal ε' := le_of_not_gt h
-      rw [if_neg h, if_pos h2]; simp
+      rw [ite_eq_right h, ite_eq_left h2]; simp
   conv =>
     enter [1, 1, a]
     rw [<- mul_one (_ * _)]
@@ -1156,7 +1156,7 @@ lemma B_eval_false (Hε : 0 < ε) (Hqp : ∀ x, ENNReal.ofReal (Real.exp (-ε)) 
   · simp [Function.Injective]
   · intro x Hx
     simp [Function.support] at Hx
-    simp_all only [Subtype.range_coe_subtype, Function.mem_support, ne_eq, Set.mem_setOf_eq, not_false_eq_true]
+    simp_all only [Subtype.range_coe_subtype, Function.mem_support, ne_eq, Set.mem_ofPred_eq, not_false_eq_true]
   · simp [Function.support]
     intros x _
     rw [PMF_mul_mul_inv_eq_mul_cancel p q Hac x]

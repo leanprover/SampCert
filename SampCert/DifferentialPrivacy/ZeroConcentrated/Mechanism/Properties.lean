@@ -108,7 +108,7 @@ lemma discrete_gaussian_shift {σ : ℝ} (h : σ ≠ 0) (μ : ℝ) (τ x : ℤ) 
 /--
 privNoisedQuery preserves absolute continuity between neighbours
 -/
-def privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeighbour (privNoisedQuery query Δ ε₁ ε₂) := by
+theorem privNoisedQuery_AC (query : List T -> ℤ) (Δ ε₁ ε₂ : ℕ+) : ACNeighbour (privNoisedQuery query Δ ε₁ ε₂) := by
   simp only [ACNeighbour]
   intro l₁ l₂ _
   rw [AbsCts]

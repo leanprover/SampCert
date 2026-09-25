@@ -28,7 +28,7 @@ variable (numBins : ℕ+)
 
 def predBins : ℕ := numBins.natPred
 
-def predBins_lt_numBins : predBins numBins < numBins := by
+theorem predBins_lt_numBins : predBins numBins < numBins := by
   rw [predBins]
   cases numBins
   rename_i v Hv

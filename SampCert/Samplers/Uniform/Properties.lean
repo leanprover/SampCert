@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Jean-Baptiste Tristan
 -/
 import SampCert.Foundations.Basic
-import Mathlib.Data.ENNReal.Basic
+import Mathlib.Basic.ENNReal.Basic
 import SampCert.Samplers.Uniform.Code
 
 /-!
@@ -132,10 +132,10 @@ Evaluation of the ``UniformSample`` distribution inside its support.
 @[simp]
 theorem UniformSample_apply (n : PNat) (x : Nat) (support : x < n) :
   UniformSample n x = 1 / n := by
-  simp only [UniformSample, Bind.bind, Pure.pure, SLang.bind_apply, probUntil_apply,
-    decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul, SLang.pure_apply]
+  simp only [UniformSample, probUntil_apply,
+    decide_eq_true_eq, rw_ite, one_div, ite_mul, zero_mul]
   rw [ENNReal.tsum_eq_add_tsum_ite x]
-  simp only [support, ↓reduceIte, mul_one]
+  simp only [support, ↓reduceIte]
   have A : ∀ x_1 : ℕ, (@ite ℝ≥0∞ (x_1 = x) (propDecidable (x_1 = x)) 0
           (@ite ℝ≥0∞ (x_1 < ↑n) (decLt x_1 ↑n) 0 (UniformPowerOfTwoSample (2 * n) x_1)))
           = (@ite ℝ≥0∞ (↑n ≤ x_1) (decLe ↑n x_1) (UniformPowerOfTwoSample (2 * n) x_1) 0) := by

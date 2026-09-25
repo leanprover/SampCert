@@ -18,8 +18,17 @@ import Init.Data.UInt.Lemmas
 
 open SLang PMF
 
-def combineConcentrated := @privNoisedBoundedMean_DP zCDPSystem
-def combinePure := @privNoisedBoundedMean_DP PureDPSystem
+theorem combineConcentrated [dpn : DPNoise (zCDPSystem (T := ℕ))] (U ε₁ ε₂ : ℕ+) (ε : NNReal)
+    (h : dpn.noise_priv ε₁ (2 * ε₂) (ε / 2)) :
+    @DPSystem.prop ℕ (zCDPSystem (T := ℕ)) ℚ
+      (@privNoisedBoundedMean (zCDPSystem (T := ℕ)) dpn U ε₁ ε₂) ε :=
+  @privNoisedBoundedMean_DP (zCDPSystem (T := ℕ)) dpn U ε₁ ε₂ ε h
+
+theorem combinePure [dpn : DPNoise (PureDPSystem (T := ℕ))] (U ε₁ ε₂ : ℕ+) (ε : NNReal)
+    (h : dpn.noise_priv ε₁ (2 * ε₂) (ε / 2)) :
+    @DPSystem.prop ℕ (PureDPSystem (T := ℕ)) ℚ
+      (@privNoisedBoundedMean (PureDPSystem (T := ℕ)) dpn U ε₁ ε₂) ε :=
+  @privNoisedBoundedMean_DP (PureDPSystem (T := ℕ)) dpn U ε₁ ε₂ ε h
 
 /-
 ##  Example: execute the histogram mean on a list

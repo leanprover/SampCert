@@ -264,8 +264,6 @@ theorem privPostPocess_DP_pre_reduct {U : Type} [m2 : MeasurableSpace U] [count 
     rw [δF₂_Eq]
     simp [δpmf]
     unfold δ
-    repeat rw [DFunLike.coe]
-    repeat rw [PMF.instFunLike]
     simp
     rw [<- N_def]
     rw [<- N_def]
@@ -447,7 +445,7 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
     simp [Function.support]
     exact fun a _ a_2 a_3 => a_2 (Habs' a a_3)
   have HSup3 : Function.support (fun (a : U) => nq l₁ a ^ α * nq l₂ a ^ (1 - α)) ⊆ { u : U | nq l₁ u ≠ 0 } := by
-    simp only [Function.support, Set.setOf_subset_setOf]
+    simp only [Function.support, Set.ofPred_subset_ofPred]
     intro a Hnz
     apply mul_ne_zero_iff.mp at Hnz
     rcases Hnz with ⟨ H1 , _ ⟩
@@ -507,7 +505,7 @@ theorem privPostPocess_DP_pre {nq : List T → PMF U} (HNorm : ∀ l, HasSum (nq
     apply HR
   · rename_i x_empty
     simp at *
-    haveI Hempty : IsEmpty ↑{u : U | ¬(nq l₁) u = 0} := by
+    have Hempty : IsEmpty ↑{u : U | ¬(nq l₁) u = 0} := by
       exact Subtype.isEmpty_of_false fun a a_1 => a_1 (x_empty a)
     simp only [tsum_empty]
     simp
@@ -531,12 +529,7 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
   rw [PMF.instFunLike]
   simp
   conv =>
-    enter [1, 1, 2, 1, 1, x]
-    repeat rw [SLang.toPMF]
-    simp
-  conv =>
     enter [2, 1, 2, 1, 1, x]
-    repeat rw [SLang.toPMF]
     repeat rw [DFunLike.coe]
     repeat rw [PMF.instFunLike]
     simp
@@ -555,10 +548,11 @@ theorem privPostProcess_zCDPBound {nq : Mechanism T U} {ε : ℝ}
   · apply Hac l₂ l₁
     exact Neighbour_symm l₁ l₂ h2
 
+omit [MeasurableSpace U] [Countable U] [DiscreteMeasurableSpace U] in
 /--
 privPostProcess preserves absolute continuity between neighbours
 -/
-def privPostProcess_AC {f : U → V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
+theorem privPostProcess_AC {f : U → V} (nq : Mechanism T U) (Hac : ACNeighbour nq) : ACNeighbour (privPostProcess nq f) := by
   simp only [ACNeighbour] at *
   unfold AbsCts at *
   intro l₁ l₂ Hn v

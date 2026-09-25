@@ -7,7 +7,7 @@ import SampCert.DifferentialPrivacy.Generic
 import SampCert.DifferentialPrivacy.Pure.DP
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Prod
-import Mathlib.Logic.IsEmpty.Basic
+import Mathlib.Basic.IsEmpty.Basic
 
 noncomputable section
 

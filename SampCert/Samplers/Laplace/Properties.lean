@@ -9,7 +9,7 @@ import SampCert.Samplers.Uniform.Basic
 import SampCert.Samplers.Bernoulli.Basic
 import SampCert.Samplers.BernoulliNegativeExponential.Basic
 import SampCert.Samplers.Geometric.Basic
-import Mathlib.Data.ENNReal.Inv
+import Mathlib.Basic.ENNReal.Inv
 import SampCert.Samplers.Laplace.Code
 
 /-!
@@ -119,7 +119,7 @@ theorem DiscreteLaplaceSampleLoopIn1_apply (t : PNat) (n : ℕ) (support : n < t
       (if (i + (t : ℕ) < (t : ℕ))
         then ENNReal.ofReal (rexp (-((↑(i + ↑t) : ℝ) / ↑↑t))) / ↑↑t else (0 : ENNReal)) = 0 := by
     intro i
-    rw [if_neg (by omega)]
+    rw [ite_eq_right (by omega)]
   simp_rw [hzero, tsum_zero, add_zero]
   rw [sum_ite]
   simp only [mem_range, imp_self, forall_const, filter_true_of_mem, not_lt, not_le,
@@ -815,7 +815,7 @@ theorem DiscreteLaplaceSampleLoop_equiv (num : PNat) (den : PNat) :
         · erw [BernoulliSample_apply_true]
           norm_num
       split <;> try simp [HB]
-      all_goals (try (cases b <;> simp [HB]))
+      all_goals (try (cases b <;> simp))
   rw [H]
   clear H
   congr
