@@ -20,3 +20,5 @@ def privNoisedQueryPure (query : List T → ℤ) (Δ : ℕ+) (ε₁ ε₂ : ℕ+
   DiscreteLaplaceGenSamplePMF (Δ * ε₂) ε₁ (query l)
 
 end SLang
+
+end

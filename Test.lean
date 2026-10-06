@@ -6,6 +6,8 @@ Authors: Jean-Baptiste Tristan
 import SampCert
 import SampCert.SLang
 import SampCert.Samplers.Gaussian.Properties
+import SampCert.DifferentialPrivacy.Queries.MWEM.Basic
+import SampCert.DifferentialPrivacy.Queries.MWEM.Updaters.Float
 import Init.Data.Float
 
 open SLang Std Int Array PMF
@@ -269,7 +271,117 @@ def sparseVector_tests : IO Unit := do
 
 
 
+def mwem_tests : IO Unit := do
+  let mwemBins : ℕ+ := 10
+  let mwemQueries : Fin 10 → Fin mwemBins → ℤ :=
+    fun i b => if i.val = b.val then 1 else 0
+  have mwemBound : ∀ (i : Fin 10) (b : Fin mwemBins), |mwemQueries i b| ≤ ((1 : ℕ+) : ℤ) := by
+    intro i b
+    show |if i.val = b.val then (1 : ℤ) else 0| ≤ 1
+    split <;> decide
+  let bias : List (Fin mwemBins) :=
+    (List.replicate 200 (3 : Fin mwemBins)) ++
+    (List.replicate 50 (1 : Fin mwemBins)) ++
+    (List.replicate 50 (7 : Fin mwemBins))
+  let nData := bias.length
+  let updater := floatMWUpdater (numBins := mwemBins) (n := 9) (Δ := 1) nData mwemQueries mwemBound
+  let ε₁ : ℕ+ := 1
+  let ε₂ : ℕ+ := 1
+  let T : ℕ := 5
+  let A₀ : Fin mwemBins → Float := floatInit nData mwemBins
+
+  IO.println s!"[mwem] testing float-valued MWEM, ({(ε₁ : ℕ)} / {(ε₂ : ℕ)})-DP per primitive, {T} rounds → {2 * T} * {(ε₁ : ℕ)}/{(ε₂ : ℕ)} total"
+  IO.println s!"data: {bias.length} records over {(mwemBins : ℕ)} bins, biased toward bin 3"
+  IO.println s!"workload: {10} indicator queries (one per bin)"
+  IO.println ""
+
+  for trial in [:3] do
+    let transcript ← run <| mwemSPMF updater ε₁ ε₂ T A₀ bias
+    IO.println s!"#{trial} transcript: {transcript}"
+  IO.println ""
+
+def hardtBins : ℕ+ := 15
+def hardtNQ : ℕ := 12
+def hardtT : ℕ := 4
+def hardtN : ℕ := hardtNQ - 1
+
+def hardtRange (i : Fin hardtNQ) : ℕ × ℕ :=
+  let a : ℕ := i.val % 8
+  let len : ℕ := (i.val / 8) * 4 + 3
+  let c : ℕ := min (a + len) (hardtBins.val - 1)
+  (a, c)
+
+def hardtQueries : Fin hardtNQ → Fin hardtBins → ℤ := fun i b =>
+  let (a, c) := hardtRange i
+  if a ≤ b.val ∧ b.val ≤ c then 1 else 0
+
+theorem hardtBound : ∀ (i : Fin hardtNQ) (b : Fin hardtBins),
+    |hardtQueries i b| ≤ ((1 : ℕ+) : ℤ) := by
+  intro i b
+  show |if (hardtRange i).1 ≤ b.val ∧ b.val ≤ (hardtRange i).2 then (1 : ℤ) else 0| ≤ 1
+  split <;> decide
+
+def hardtData : List (Fin hardtBins) :=
+  let n := 200
+  let make (i : ℕ) : Fin hardtBins :=
+    ⟨ (i * 7 + 3) % 11 + 2, by simp [hardtBins]; omega ⟩
+  (List.range n).map make
+
+def replayFloatUpdate (nData : ℕ) (updater : SyntheticUpdater (Fin hardtBins) hardtN 1
+    (Fin hardtBins → Float) (floatInit nData hardtBins))
+    (transcript : List (Fin hardtNQ × ℤ)) : Fin hardtBins → Float :=
+  transcript.foldl (fun A (im : Fin hardtNQ × ℤ) => updater.update A im.1 im.2)
+    (floatInit nData hardtBins)
+
+def evalQueryOnFloat (q : Fin hardtBins → ℤ) (A : Fin hardtBins → Float) : Float :=
+  ((List.finRange hardtBins).map (fun b => intToFloat (q b) * A b)).foldr (· + ·) 0.0
+
+def evalQueryOnData (q : Fin hardtBins → ℤ) (D : List (Fin hardtBins)) : ℤ :=
+  (D.map q).sum
+
+def hardt_test : IO Unit := do
+  let nData := hardtData.length
+  let updater := floatMWUpdater (numBins := hardtBins) (n := hardtN) (Δ := 1) nData hardtQueries hardtBound
+  let ε₁ : ℕ+ := 1
+  let ε₂ : ℕ+ := 1
+  let A₀ : Fin hardtBins → Float := floatInit nData hardtBins
+
+  IO.println s!"[mwem-hardt] small-scale 1D range query experiment in the spirit of Hardt 2012, Section 3.1"
+  IO.println s!"  domain: {(hardtBins : ℕ)} bins"
+  IO.println s!"  workload: {hardtNQ} 1D range queries"
+  IO.println s!"  data: {hardtData.length} synthetic records"
+  IO.println s!"  T = {hardtT}, ε₁/ε₂ = {(ε₁ : ℕ)}/{(ε₂ : ℕ)} per primitive"
+  IO.println ""
+
+  let nTrials := 3
+  let mut total_avg_sq_err : Float := 0.0
+  for trial in [:nTrials] do
+    IO.println s!"  trial {trial}: running mwem..."
+    let transcript ← run <| mwemSPMF updater ε₁ ε₂ hardtT A₀ hardtData
+    IO.println s!"  trial {trial}: transcript = {transcript}"
+    IO.println s!"  trial {trial}: replaying updater..."
+    let A_T := replayFloatUpdate nData updater transcript
+    let A_T_norm := A_T
+
+    IO.println s!"  trial {trial}: evaluating workload..."
+    let mut sum_sq_err : Float := 0.0
+    for i in (List.finRange hardtNQ) do
+      let q : Fin hardtBins → ℤ := hardtQueries i
+      let synth_ans := evalQueryOnFloat q A_T_norm
+      let true_ans : Float := intToFloat (evalQueryOnData q hardtData)
+      let err := synth_ans - true_ans
+      sum_sq_err := sum_sq_err + err * err
+    let avg_sq_err := sum_sq_err / intToFloat (hardtNQ : ℤ)
+    total_avg_sq_err := total_avg_sq_err + avg_sq_err
+    IO.println s!"#{trial} avg squared error per query: {avg_sq_err}"
+
+  IO.println s!"mean over {nTrials} trials: {total_avg_sq_err / intToFloat (nTrials : ℤ)}"
+  IO.println s!"(units and parameter scale differ from Hardt's Figure 2; not a direct numerical comparison)"
+  IO.println ""
+
 def main : IO Unit := do
   sparseVector_tests
   query_tests
   statistical_tests
+  mwem_tests
+  hardt_test
